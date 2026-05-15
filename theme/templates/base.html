@@ -767,78 +767,107 @@
             .stat-label    { font-size: 0.75rem; font-weight: 0.6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
             .stat-value    { font-size: 1.875rem; font-weight: 0.7; }
             .stat-sub-text { font-size: 0.75rem; margin-top: 0.25rem; }
+
+            /* ── Navbar & top-bar utilities ────────────────────────────────── */
+            .topbar-flex   { display: flex; align-items: center; }
+            .topbar-gap-lg { gap: 16px; }
+            .topbar-gap-sm { gap: 8px; }
+            .logo-link     { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+            .logo-box      { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--btn-gradient); }
+            .logo-icon     { width: 18px; height: 18px; color: white; }
+            .logo-text     { font-weight: 700; color: var(--text-primary); font-size: 15px; letter-spacing: -0.02em; }
+            .logo-badge    { font-size: 10px; color: var(--text-muted); margin-left: 6px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+            .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
+            .nav-icon-svg  { width: 18px; height: 18px; }
+            .org-select    { max-width: 180px; background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; font-size: 12px; }
+            .org-label     { font-size: 11px; color: var(--text-muted); padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-alt); }
+            .org-form      { display: inline-flex; align-items: center; }
+            .navbar-badge  { position: absolute; top: -2px; right: -2px; }
+            .nav-separator { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
+            .profile-box   { display: flex; align-items: center; gap: 6px; }
+            .profile-link  { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; text-decoration: none; }
+            .avatar-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; background: var(--avatar-gradient); }
+            .username-text { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+            .logout-btn    { font-size: 11px; color: var(--text-muted); padding: 4px 8px; border-radius: 6px; background: none; border: none; cursor: pointer; transition: all 0.2s; }
+            .logout-form   { display: inline; }
+            .auth-link     { font-size: 14px; color: var(--text-secondary); padding: 8px 16px; font-weight: 500; transition: all 0.2s; text-decoration: none; }
+            .btn-primary-auth { font-size: 14px; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient); }
+            .btn-primary-sm { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: white; font-size: 13px; font-weight: 500; border-radius: 8px; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient); }
+            .btn-primary-sm svg { width: 14px; height: 14px; }
+            .sidebar-padding { padding: 12px 0; }
+            .main-content-pad { padding: 24px; }
         </style>
 </head>
-<body style="background: var(--content-bg); color: var(--text-primary);">
+<body class="c-primary-text">
     <div class="top-bar">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <a href="{% url 'dashboard' %}" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-                <div style="width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--btn-gradient);">
-                    <svg style="width: 18px; height: 18px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <div class="topbar-flex topbar-gap-lg">
+            <a href="{% url 'dashboard' %}" class="logo-link">
+                <div class="logo-box">
+                    <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
                 <div>
-                    <span style="font-weight: 700; color: var(--text-primary); font-size: 15px; letter-spacing: -0.02em;">CMS Aegis</span>
-                    <span style="font-size: 10px; color: var(--text-muted); margin-left: 6px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;">CLM</span>
+                    <span class="logo-text">CMS Aegis</span>
+                    <span class="logo-badge">CLM</span>
                 </div>
             </a>
         </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="topbar-flex topbar-gap-sm">
             {% if user.is_authenticated %}
                 {% if USER_ORGANIZATION_MEMBERSHIPS|length > 1 %}
-                    <form method="post" action="{% url 'contracts:switch_organization' %}" style="display: inline-flex; align-items: center;">
+                    <form method="post" action="{% url 'contracts:switch_organization' %}" class="org-form">
                         {% csrf_token %}
-                        <select name="organization_id" onchange="this.form.submit()" style="max-width: 180px; background: var(--surface-alt); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; font-size: 12px;">
+                        <select name="organization_id" onchange="this.form.submit()" class="org-select">
                             {% for membership in USER_ORGANIZATION_MEMBERSHIPS %}
                                 <option value="{{ membership.organization.id }}" {% if CURRENT_ORGANIZATION and membership.organization.id == CURRENT_ORGANIZATION.id %}selected{% endif %}>{{ membership.organization.name }}</option>
                             {% endfor %}
                         </select>
                     </form>
                 {% elif CURRENT_ORGANIZATION %}
-                    <span style="font-size: 11px; color: var(--text-muted); padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-alt);">{{ CURRENT_ORGANIZATION.name }}</span>
+                    <span class="org-label">{{ CURRENT_ORGANIZATION.name }}</span>
                 {% endif %}
-                <a href="{% url 'contracts:global_search' %}" style="padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none;" title="Search">
-                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <a href="{% url 'contracts:global_search' %}" class="nav-icon-link" title="Search">
+                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </a>
-                <a href="{% url 'contracts:organization_team' %}" style="padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none;" title="Organisatieteam">
-                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <a href="{% url 'contracts:organization_team' %}" class="nav-icon-link" title="Organisatieteam">
+                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </a>
-                <a href="{% url 'settings_hub' %}" style="padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none;" title="Instellingen">
-                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Instellingen">
+                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                 </a>
                 <button onclick="toggleTheme()" class="theme-toggle-btn" title="Thema wisselen">
-                    <svg class="icon-sun" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <svg class="icon-moon" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
-                <a href="{% url 'contracts:notification_list' %}" style="position: relative; padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none;" title="Meldingen">
-                    <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                <a href="{% url 'contracts:notification_list' %}" class="nav-icon-link" title="Meldingen">
+                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                     {% if UNREAD_NOTIFICATIONS %}
-                    <span class="nav-badge" style="position: absolute; top: -2px; right: -2px;">{{ UNREAD_NOTIFICATIONS }}</span>
+                    <span class="navbar-badge">{{ UNREAD_NOTIFICATIONS }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url 'contracts:contract_create' %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: white; font-size: 13px; font-weight: 500; border-radius: 8px; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient);">
-                    <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <a href="{% url 'contracts:contract_create' %}" class="btn-primary-sm">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     New Contract
                 </a>
-                <div style="width: 1px; height: 28px; background: var(--border); margin: 0 4px;"></div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <a href="{% url 'profile' %}" style="display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; text-decoration: none;">
-                        <div style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; background: var(--avatar-gradient);">
+                <div class="nav-separator"></div>
+                <div class="profile-box">
+                    <a href="{% url 'profile' %}" class="profile-link">
+                        <div class="avatar-circle">
                             {{ user.first_name|default:user.username|slice:":1"|upper }}
                         </div>
-                        <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">{{ user.first_name|default:user.username }}</span>
+                        <span class="username-text">{{ user.first_name|default:user.username }}</span>
                     </a>
-                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    <form method="post" action="{% url 'logout' %}" class="logout-form">
                         {% csrf_token %}
-                        <button type="submit" style="font-size: 11px; color: var(--text-muted); padding: 4px 8px; border-radius: 6px; background: none; border: none; cursor: pointer; transition: all 0.2s;">Uitloggen</button>
+                        <button type="submit" class="logout-btn">Uitloggen</button>
                     </form>
                 </div>
             {% else %}
                 <button onclick="toggleTheme()" class="theme-toggle-btn" title="Thema wisselen">
-                    <svg class="icon-sun" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <svg class="icon-moon" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
-                <a href="{% url 'login' %}" style="font-size: 14px; color: var(--text-secondary); padding: 8px 16px; font-weight: 500; transition: all 0.2s; text-decoration: none;">Sign in</a>
-                <a href="{% url 'register' %}" style="font-size: 14px; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient);">Get Started</a>
+                <a href="{% url 'login' %}" class="auth-link">Sign in</a>
+                <a href="{% url 'register' %}" class="btn-primary-auth">Get Started</a>
             {% endif %}
         </div>
     </div>
@@ -846,7 +875,7 @@
     {% if user.is_authenticated %}
     <div class="main-layout">
         <nav class="sidebar-container" id="sidebar">
-            <div style="padding: 12px 0;">
+            <div class="sidebar-padding">
                 <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     Dashboard
@@ -950,7 +979,7 @@
             </div>
             {% endif %}
 
-            <div style="padding: 24px;">
+            <div class="main-content-pad">
                 {% block content %}{% endblock %}
             </div>
         </div>
