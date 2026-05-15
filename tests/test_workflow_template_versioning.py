@@ -119,6 +119,7 @@ class WorkflowTemplateVersioningTests(TestCase):
                 'name': 'Signature',
                 'description': 'Collect signatures',
                 'order': '3',
+                'step_kind': 'TASK',
             },
         )
 

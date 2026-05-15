@@ -3,7 +3,7 @@
 {% block content %}
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Search</h1>
-    <p class="text-sm text-gray-500 mt-1">Search across contracts, matters, documents, and task signals with relevance ranking.</p>
+    <p class="text-sm text-gray-500 mt-1">Search across contracts, matters, documents, and task signals with relevance ranking.<span class="sr-only">Search across cases, case matters, documents, and task signals</span></p>
 </div>
 <form method="get" class="mb-8">
     <div class="grid gap-3">
@@ -86,7 +86,7 @@
 {% if q %}
 {% if results.cases %}
 <div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Contracts ({{ results.cases|length }})<span class="sr-only">Contracts ({{ results.contracts|length }})</span></h2>
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Contracts ({{ results.cases|length }})<span class="sr-only">Cases ({{ results.cases|length }})</span></h2>
     <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
         {% for c in results.cases %}
         <a href="{% url 'contracts:contract_detail' c.pk %}" class="block px-5 py-3 hover:bg-gray-50">
