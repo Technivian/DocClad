@@ -26,12 +26,12 @@
 |---|------|---------|-----------|--------|--------------|-------|--------|
 | 1 | `DJANGO_SECRET_KEY` | Django CSRF / session signing | `.env` → `SECRET_KEY` | 50-char random string | 2026-10-04 | DevOps | ✅ Active |
 | 2 | `OIDC_RP_CLIENT_ID` | Google OAuth 2.0 client ID | `.env` → `OIDC_RP_CLIENT_ID` | Google OAuth client ID string | N/A (rotate if compromised) | DevOps | ✅ Active |
-| 3 | `OIDC_RP_CLIENT_SECRET` | Google OAuth 2.0 client secret | `.env` → `OIDC_RP_CLIENT_SECRET` | Google OAuth client secret | **⚠️ OVERDUE — rotate now** | DevOps | ⚠️ Needs rotation |
+| 3 | `OIDC_RP_CLIENT_SECRET` | Google OAuth 2.0 client secret | `.env` → `OIDC_RP_CLIENT_SECRET` | Google OAuth client secret | **⚠️ OVERDUE — rotate before next deploy** | DevOps | ⚠️ Needs rotation |
 | 4 | `DATABASE_URL` | Database connection string | `.env` → `DATABASE_URL` | DSN string | 2027-04-04 | DevOps | ✅ Active |
 | 5 | `DEFAULT_FROM_EMAIL` | Outbound email identity | `.env` → `DEFAULT_FROM_EMAIL` | Email address | N/A | DevOps | ✅ Active |
 | 6 | `EMAIL_HOST_PASSWORD` | SMTP authentication | `.env` → `EMAIL_HOST_PASSWORD` | SMTP password | 2026-10-04 | DevOps | ✅ Active |
 | 7 | CI `DJANGO_SECRET_KEY` | GitHub Actions test suite | GitHub repo → Settings → Secrets → `DJANGO_SECRET_KEY` | Same as #1 | 2026-10-04 | DevOps | ✅ Active |
-| 8 | CI `OIDC_RP_CLIENT_SECRET` | GitHub Actions OIDC tests | GitHub repo → Settings → Secrets → `OIDC_RP_CLIENT_SECRET` | Same as #3 | **⚠️ OVERDUE — rotate now** | DevOps | ⚠️ Needs rotation |
+| 8 | CI `OIDC_RP_CLIENT_SECRET` | GitHub Actions OIDC tests | GitHub repo → Settings → Secrets → `OIDC_RP_CLIENT_SECRET` | Same as #3 | **⚠️ OVERDUE — rotate before next deploy** | DevOps | ⚠️ Needs rotation |
 
 ---
 
@@ -126,7 +126,7 @@ DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 - [ ] `.env` is not committed to the repository (confirm with `git log -- .env`)
 - [ ] Production `.env` is only readable by the deploy user (`chmod 600 .env`)
 - [ ] CI secrets are stored in GitHub repo Secrets (never in YAML files)
-- [ ] `OIDC_RP_CLIENT_SECRET` was rotated after the April 2026 exposure
+- [ ] `OIDC_RP_CLIENT_SECRET` was rotated after the April 2026 exposure (still pending as of 2026-05-15)
 
 ---
 
@@ -135,8 +135,8 @@ DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 | Date | Secret | Rotated By | Reason | Notes |
 |------|--------|------------|--------|-------|
 | 2026-04-04 | (baseline) | DevOps | Initial inventory created | No secrets rotated yet |
-| _(fill in)_ | `OIDC_RP_CLIENT_SECRET` | _(owner)_ | Exposed in chat session | Must be done ASAP |
+| _(pending)_ | `OIDC_RP_CLIENT_SECRET` | DevOps | Exposed in local chat session (2026-04-05) | Rotate via Google Cloud Console — see row 3 procedure above |
 
 ---
 
-*Last updated: 2026-04-04*
+*Last updated: 2026-05-15*
