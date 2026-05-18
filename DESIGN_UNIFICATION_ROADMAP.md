@@ -702,3 +702,36 @@ When Phases 1-5 are complete, CMS Aegis should present as one coherent enterpris
 - Retired class scan: no action-chip, no ad-hoc wrappers
 
 ### Status: ✅ Complete
+
+---
+
+## Batch 4 Step 3 — Slice A Token Cleanup (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/reports_dashboard.html`
+- `theme/templates/base.html`
+- `DESIGN_CONSTITUTION.md`
+
+### Tokens Added
+
+| Class | Value | Purpose |
+|---|---|---|
+| `.c-warning` | `color: #F59E0B` | Amber warning/attention text (A/R, overdue-adjacent) |
+| `.c-info` | `color: #60A5FA` | Informational blue text (upcoming deadlines, hints) |
+
+### Inline Styles Removed
+
+| Was | Now | Location |
+|---|---|---|
+| `style="color:#F59E0B"` on Outstanding A/R kpi-value | `c-warning` | `reports_dashboard.html` line 48 |
+| `style="color:#60A5FA"` on upcoming deadlines kpi-sub | `c-info` | `reports_dashboard.html` line 53 |
+
+### Validation
+
+- Template parse: reports_dashboard.html OK
+- manage.py check: 0 issues
+- Inline style scan: 0 remaining `style=` in reports_dashboard.html
+- No new undocumented primitives introduced
+
+### Status: ✅ Complete
