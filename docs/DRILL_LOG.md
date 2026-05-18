@@ -194,3 +194,83 @@ Result:
 - ICL-012 evidence objectives met for:
   - one documented game-day simulation
   - one documented security SLA cycle
+
+## 2026-05-16: Rollback Drill Replay (Live Evidence Pack)
+
+- Environment: local SQLite rehearsal
+- Operator: GitHub Copilot
+- Scope: re-run rollback drill path and capture current downgrade behavior
+
+### Clean Scratch DB
+
+Commands:
+
+```bash
+SQLITE_PATH=/tmp/cms-aegis-drill-clean-20260516.sqlite3 .venv/bin/python manage.py migrate --noinput
+SQLITE_PATH=/tmp/cms-aegis-drill-clean-20260516.sqlite3 .venv/bin/python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+SQLITE_PATH=/tmp/cms-aegis-drill-clean-20260516.sqlite3 .venv/bin/python manage.py migrate contracts 0006_approvalrequest_organization_and_more --noinput
+SQLITE_PATH=/tmp/cms-aegis-drill-clean-20260516.sqlite3 .venv/bin/python manage.py migrate --noinput
+SQLITE_PATH=/tmp/cms-aegis-drill-clean-20260516.sqlite3 .venv/bin/python manage.py audit_null_organizations
+```
+
+Result:
+
+- PASS after full re-apply
+- no `NULL organization` rows remained
+
+### Populated Copy
+
+Commands:
+
+```bash
+cp db.sqlite3 /tmp/cms-aegis-drill-populated-20260516.sqlite3
+SQLITE_PATH=/tmp/cms-aegis-drill-populated-20260516.sqlite3 .venv/bin/python manage.py migrate contracts 0005_add_org_fk_to_budget_and_due_diligence --noinput
+```
+
+Result:
+
+- FAIL
+- error: `django.db.utils.IntegrityError: NOT NULL constraint failed: new__contracts_trustaccount.client_id`
+
+Conclusion:
+
+- rollback downgrade on populated data remains unsafe without dedicated downgrade/data-remediation work
+- rollback confidence should rely on backup/restore drill execution in target PostgreSQL environment
+
+## 2026-05-16: PostgreSQL Backup/Restore Rehearsal (Rollback Confidence Increment)
+
+- Environment: local PostgreSQL rehearsal (`127.0.0.1:5432`)
+- Operator: GitHub Copilot
+- Source database: `cms_aegis_cutover_rehearsal`
+- Restore database: `cms_aegis_cutover_restore_20260516`
+
+### Commands
+
+```bash
+/opt/homebrew/opt/postgresql@16/bin/pg_dump -h 127.0.0.1 -p 5432 -U lessonry -Fc cms_aegis_cutover_rehearsal > /tmp/cms-aegis-backups/pre-cutover-20260516T133345.dump
+/opt/homebrew/opt/postgresql@16/bin/psql -h 127.0.0.1 -p 5432 -U lessonry -d postgres -c "DROP DATABASE IF EXISTS cms_aegis_cutover_restore_20260516;"
+/opt/homebrew/opt/postgresql@16/bin/psql -h 127.0.0.1 -p 5432 -U lessonry -d postgres -c "CREATE DATABASE cms_aegis_cutover_restore_20260516 OWNER lessonry;"
+/opt/homebrew/opt/postgresql@16/bin/pg_restore -h 127.0.0.1 -p 5432 -U lessonry -d cms_aegis_cutover_restore_20260516 /tmp/cms-aegis-backups/pre-cutover-20260516T133345.dump
+DATABASE_URL=postgresql://lessonry:lessonry@127.0.0.1:5432/cms_aegis_cutover_restore_20260516 .venv/bin/python manage.py audit_null_organizations
+DATABASE_URL=postgresql://lessonry:lessonry@127.0.0.1:5432/cms_aegis_cutover_restore_20260516 .venv/bin/python manage.py verify_postgres_cutover
+DATABASE_URL=postgresql://lessonry:lessonry@127.0.0.1:5432/cms_aegis_cutover_restore_20260516 .venv/bin/python manage.py migrate --check
+```
+
+### Timings and Backup Metadata
+
+- Start: `2026-05-16T11:33:45Z`
+- End: `2026-05-16T11:33:48Z`
+- Total elapsed: `3s`
+- Backup file: `/tmp/cms-aegis-backups/pre-cutover-20260516T133345.dump`
+- Backup size: `406,937 bytes`
+
+### Verification Results
+
+- `audit_null_organizations`: PASS (`No NULL organization rows found`)
+- `verify_postgres_cutover`: PASS (`cutover_ready=true`, engine `django.db.backends.postgresql`, migrations clean)
+- `migrate --check`: PASS (no output; no unapplied migrations)
+
+### Outcome
+
+- PostgreSQL backup/restore rollback mechanics are validated in local rehearsal.
+- Remaining requirement for final launch signoff: execute the same backup/restore drill in target staging/production-like environment and attach artifacts.

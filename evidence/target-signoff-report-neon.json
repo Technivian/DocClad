@@ -1,0 +1,31 @@
+{
+  "signoff_at": "2026-05-16T13:01:57Z",
+  "commit": "268c2a0",
+  "commit_sha": "268c2a05000510819624fb97d468fcc412be9812",
+  "environment": {
+    "allowed_hosts": "localhost,127.0.0.1,.neon.tech",
+    "org_slug": "demo-firm",
+    "org_name": "Demo Firm"
+  },
+  "gates": {
+    "postgres_cutover_ready": "True",
+    "sprint3_integration": "GO",
+    "esign_integration": "GO",
+    "release_gate": "GO",
+    "release_bundle": "GO",
+    "executive_analytics_captured_at": "2026-05-16T13:02:34.242632+00:00",
+    "retention_audit_captured_at": "2026-05-16T13:02:34.885321+00:00",
+    "backup_restore_drill": "PREVIOUSLY_COMPLETED"
+  },
+  "drill": {
+    "start": "2026-05-16T13:02:37Z",
+    "end": "2026-05-16T13:02:37Z",
+    "elapsed": "0s",
+    "backup_file": "none",
+    "backup_size_bytes": "0",
+    "restore_db": "none",
+    "outcome": "PREVIOUSLY_COMPLETED"
+  },
+  "failures": [],
+  "final_decision": "GO"
+}

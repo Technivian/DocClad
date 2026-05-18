@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}</h1>
-            <p style="color: var(--muted);">Create a new workflow to manage your contract process</p>
+            <p class="c-muted">Create a new workflow to manage your contract process</p>
         </div>
         <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-outline">
             Back to Dashboard
@@ -63,7 +63,7 @@
                     {{ form.title.label_tag }}
                     {{ form.title }}
                     {% if form.title.errors %}
-                        <p class="mt-1 text-sm" style="color: var(--danger);">{{ form.title.errors.0 }}</p>
+                        <p class="mt-1 text-sm c-red">{{ form.title.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -72,7 +72,7 @@
                     {{ form.contract.label_tag }}
                     {{ form.contract }}
                     {% if form.contract.errors %}
-                        <p class="mt-1 text-sm" style="color: var(--danger);">{{ form.contract.errors.0 }}</p>
+                        <p class="mt-1 text-sm c-red">{{ form.contract.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -81,9 +81,9 @@
                     {{ form.template.label_tag }}
                     {{ form.template }}
                     {% if form.template.errors %}
-                        <p class="mt-1 text-sm" style="color: var(--danger);">{{ form.template.errors.0 }}</p>
+                        <p class="mt-1 text-sm c-red">{{ form.template.errors.0 }}</p>
                     {% endif %}
-                    <p class="mt-1 text-sm" style="color: var(--muted);">Templates provide pre-configured workflow steps for common contract types.</p>
+                    <p class="mt-1 text-sm c-muted">Templates provide pre-configured workflow steps for common contract types.</p>
                 </div>
             </div>
 

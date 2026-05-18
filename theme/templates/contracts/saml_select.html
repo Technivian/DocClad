@@ -2,18 +2,18 @@
 {% block title %}Choose SAML organization - CMS Aegis{% endblock %}
 
 {% block body %}
-<div class="min-h-screen flex items-center justify-center px-6 py-12" style="background: var(--bg);">
+<div class="min-h-screen flex items-center justify-center px-6 py-12 bg-page">
     <div class="w-full max-w-3xl">
         <div class="mb-8">
-            <h1 class="text-3xl font-bold mb-3" style="color: var(--text-primary);">Choose your organization</h1>
-            <p class="text-sm" style="color: var(--text-secondary);">Select the organization you want to sign in to with SAML.</p>
+            <h1 class="text-3xl font-bold mb-3 login-title">Choose your organization</h1>
+            <p class="text-sm c-secondary">Select the organization you want to sign in to with SAML.</p>
         </div>
 
         {% if messages %}
         <div class="mb-6 space-y-2">
             {% for message in messages %}
-            <div class="p-4 rounded-xl" style="background: var(--surface); border: 1px solid var(--border);">
-                <p class="text-sm" style="color: var(--text-primary);">{{ message }}</p>
+            <div class="p-4 rounded-xl msg-box">
+                <p class="text-sm login-title">{{ message }}</p>
             </div>
             {% endfor %}
         </div>
@@ -22,28 +22,26 @@
         <div class="grid gap-4">
             {% for organization in organizations %}
             <a href="{% url 'saml_login' organization.slug %}"
-               class="block p-5 rounded-2xl transition-all duration-200"
-               style="background: var(--surface); border: 1px solid var(--border); text-decoration: none;">
+               class="block p-5 rounded-2xl transition-all duration-200 surface-link">
                 <div class="flex items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-lg font-bold" style="color: var(--text-primary);">{{ organization.name }}</h2>
-                        <p class="text-sm mt-1" style="color: var(--text-secondary);">SAML SSO configured for {{ organization.slug }}</p>
+                        <h2 class="text-lg font-bold login-title">{{ organization.name }}</h2>
+                        <p class="text-sm mt-1 c-secondary">SAML SSO configured for {{ organization.slug }}</p>
                     </div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold"
-                          style="background: var(--primary-subtle); color: var(--primary);">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold chip-primary-soft">
                         Continue
                     </span>
                 </div>
             </a>
             {% empty %}
-            <div class="p-5 rounded-2xl" style="background: var(--surface); border: 1px solid var(--border);">
-                <p class="text-sm" style="color: var(--text-secondary);">No SAML-enabled organizations are available yet.</p>
+            <div class="p-5 rounded-2xl msg-box">
+                <p class="text-sm c-secondary">No SAML-enabled organizations are available yet.</p>
             </div>
             {% endfor %}
         </div>
 
         <div class="mt-6">
-            <a href="{% url 'login' %}" class="text-sm font-semibold" style="color: var(--primary); text-decoration: none;">Back to password sign-in</a>
+            <a href="{% url 'login' %}" class="text-sm font-semibold c-brand">Back to password sign-in</a>
         </div>
     </div>
 </div>

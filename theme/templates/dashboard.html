@@ -175,7 +175,7 @@
                         <span class="port-count">{{ item.count }}</span>
                     </div>
                     <div class="progress-bar-bg">
-                        <div class="progress-bar-fill {{ item.tone }}" style="width: {% widthratio item.count flow_total 100 %}%;"></div>
+                        <div class="progress-bar-fill {{ item.tone }}" data-width="{% widthratio item.count flow_total 100 %}"></div>
                     </div>
                 </div>
                 {% endfor %}
@@ -457,4 +457,10 @@
     </div>
 
 </div>
+<script>
+document.querySelectorAll('.progress-bar-fill[data-width]').forEach((bar) => {
+    const width = Number(bar.dataset.width || 0);
+    bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
+});
+</script>
 {% endblock %}

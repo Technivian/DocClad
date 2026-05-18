@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-05-16T13:02:27.987146+00:00",
+  "cutover_ready": true,
+  "database": {
+    "connectivity_latency_ms": 149.99,
+    "engine": "django.db.backends.postgresql",
+    "name": "neondb",
+    "user": "neondb_owner",
+    "version": "PostgreSQL 18.2 (0f4c1a9) on aarch64-unknown-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit"
+  },
+  "environment": "production",
+  "migrations": {
+    "status": "clean",
+    "unapplied_count": 0
+  }
+}

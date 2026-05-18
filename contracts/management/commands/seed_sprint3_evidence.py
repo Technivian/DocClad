@@ -169,12 +169,47 @@ class Command(BaseCommand):
                 signed_at=now - timedelta(hours=1),
                 created_by=admin,
             )
+        else:
+            signature_request.status = SignatureRequest.Status.SIGNED
+            signature_request.external_id = signature_request.external_id or 'synth-esign-001'
+            signature_request.sent_at = now - timedelta(hours=2)
+            signature_request.viewed_at = now - timedelta(hours=1, minutes=30)
+            signature_request.signed_at = now - timedelta(hours=1)
+            signature_request.save(
+                update_fields=[
+                    'status',
+                    'external_id',
+                    'sent_at',
+                    'viewed_at',
+                    'signed_at',
+                ]
+            )
+            SignatureRequest.objects.filter(id=signature_request.id).update(created_at=now)
 
         if AuditLog.objects.filter(
             model_name='ESignEvent',
             object_id=signature_request.id,
             changes__applied=True,
         ).first() is None:
+            AuditLog.objects.create(
+                user=admin,
+                action=AuditLog.Action.UPDATE,
+                model_name='ESignEvent',
+                object_id=signature_request.id,
+                object_repr=str(signature_request),
+                changes={
+                    'applied': True,
+                    'dry_run': False,
+                    'event_id': 'synth-esign-event-001',
+                    'to_status': SignatureRequest.Status.SIGNED,
+                },
+            )
+        elif not AuditLog.objects.filter(
+            model_name='ESignEvent',
+            object_id=signature_request.id,
+            timestamp__gte=now - timedelta(days=7),
+            changes__applied=True,
+        ).exists():
             AuditLog.objects.create(
                 user=admin,
                 action=AuditLog.Action.UPDATE,

@@ -128,7 +128,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ workflow.progress_percentage }}%"></div>
+                                    <div class="bg-blue-600 h-2 rounded-full workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
                                 </div>
                                 <span class="text-sm text-gray-600">{{ workflow.progress_percentage }}%</span>
                             </div>
@@ -169,5 +169,10 @@ function toggleFilters() {
     const panel = document.getElementById('filters-panel');
     panel.classList.toggle('hidden');
 }
+
+document.querySelectorAll('.workflow-progress-fill[data-width]').forEach((bar) => {
+    const width = Number(bar.dataset.width || 0);
+    bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
+});
 </script>
 {% endblock %}

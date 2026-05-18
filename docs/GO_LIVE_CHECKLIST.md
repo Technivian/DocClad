@@ -13,11 +13,15 @@ As of the latest workspace check:
 - `npm --prefix client audit --audit-level=high` passed.
 - `npm --prefix theme/static_src audit --audit-level=high` passed.
 - `python -m pip_audit --disable-pip --no-deps -r requirements/runtime.txt` passed.
-- `manage.py generate_release_gate_report` returned `NO-GO` locally because:
-  - the current workspace DB has no recent successful Salesforce sync.
-  - the current workspace DB has no webhook delivery evidence.
+- strict Postgres rehearsal run passed end-to-end via `./scripts/run_live_evidence_pack.sh` with:
+  - `postgres-cutover-evidence.json` (`cutover_ready=true`)
+  - `sprint3-integration-report.json` (`GO`)
+  - `esign-integration-report.json` (`GO`)
+  - `release-gate-report.json` (`GO`)
+  - `release-bundle/release-evidence-bundle.json` (`GO`)
+  - `executive-analytics-evidence.json` and `retention-audit-actions.json`
 
-Treat that as the stop condition until the same gates are green in a network-enabled staging or production-like environment.
+Treat target-environment evidence capture as the remaining stop condition for launch.
 
 ## 1. Set Production-Shape Environment
 

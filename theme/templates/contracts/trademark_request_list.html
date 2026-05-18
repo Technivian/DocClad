@@ -8,7 +8,7 @@
         <h1 class="text-2xl font-bold c-primary">Trademark Requests</h1>
         <p class="text-sm mt-1 c-muted">Manage filing pipelines and linked client matters.</p>
     </div>
-    <a href="{% url 'contracts:trademark_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90" style="background:var(--btn-gradient)">
+    <a href="{% url 'contracts:trademark_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         New Request
     </a>
@@ -26,7 +26,7 @@
         <p class="stat-sub-text c-muted">awaiting action</p>
     </div>
     <div class="rounded-xl p-5 border stat-card-red">
-        <p class="stat-label" style="color:#86EFAC">Approved</p>
+        <p class="stat-label c-success-soft">Approved</p>
         <p class="stat-value c-accent">{{ approved_requests }}</p>
         <p class="stat-sub-text c-muted">completed approvals</p>
     </div>
@@ -64,7 +64,7 @@
 
 <div class="rounded-xl border overflow-hidden table-card">
     <table class="w-full text-sm">
-        <thead class="tbl-head" style="border-bottom:1px solid var(--border)">
+        <thead class="tbl-head">
             <tr>
                 <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Mark</th>
                 <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
@@ -96,7 +96,7 @@
                 <td class="px-5 py-3.5 text-right"><div class="inline-flex items-center gap-2"><a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary">View</a><a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost c-secondary">Edit</a></div></td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center" style="background:var(--surface)"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><p class="font-medium c-primary">No trademark requests found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_status %}Try adjusting your filters or <a href="{% url 'contracts:trademark_request_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:trademark_request_create' %}" class="c-link">creating your first request</a>.{% endif %}</p></div></div></td></tr>
+            <tr><td colspan="6" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><p class="font-medium c-primary">No trademark requests found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_status %}Try adjusting your filters or <a href="{% url 'contracts:trademark_request_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:trademark_request_create' %}" class="c-link">creating your first request</a>.{% endif %}</p></div></div></td></tr>
             {% endfor %}
         </tbody>
     </table>

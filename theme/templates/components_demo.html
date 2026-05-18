@@ -5,6 +5,10 @@
 {% block title %}Components Demo{% endblock %}
 
 {% block content %}
+<style>
+  .progress-w-75 { width: 75%; }
+  .progress-w-40 { width: 40%; }
+</style>
 <div class="container py-8">
   <div class="page-header">
     <h1>Design System Components</h1>
@@ -207,7 +211,7 @@
           <span>75%</span>
         </div>
         <div class="progress">
-          <div class="progress-bar" style="width: 75%"></div>
+          <div class="progress-bar progress-w-75"></div>
         </div>
       </div>
       
@@ -217,7 +221,7 @@
           <span>40%</span>
         </div>
         <div class="progress">
-          <div class="progress-bar" style="width: 40%"></div>
+          <div class="progress-bar progress-w-40"></div>
         </div>
       </div>
     </div>

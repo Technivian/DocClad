@@ -65,8 +65,8 @@
                     <span class="text-gray-700">{{ pa.practice_area }}</span>
                     <span class="text-gray-500">{{ pa.count }} matter{{ pa.count|pluralize }}</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-600 h-2 rounded-full" style="width: {% widthratio pa.count active_matters 100 %}%"></div>
+                <div class="report-progress-track">
+                    <div class="report-progress-fill" data-width="{% widthratio pa.count active_matters 100 %}"></div>
                 </div>
             </div>
             {% empty %}
@@ -129,13 +129,34 @@
 <script>
     const data = JSON.parse('{{ monthly_billing|safe }}');
     const chart = document.getElementById('billing-chart');
+
+    document.querySelectorAll('.report-progress-fill').forEach((bar) => {
+        const width = Number(bar.dataset.width || 0);
+        bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
+    });
+
     if (chart && data.length > 0) {
         const max = Math.max(...data.map(d => d.total), 1);
         data.forEach(d => {
             const bar = document.createElement('div');
             bar.className = 'flex flex-col items-center flex-1';
             const height = Math.max((d.total / max) * 160, 4);
-            bar.innerHTML = `<div class="text-xs text-gray-500 mb-1">$${Math.round(d.total/1000)}k</div><div class="w-full bg-blue-500 rounded-t" style="height:${height}px"></div><div class="text-xs text-gray-500 mt-1">${d.month.split(' ')[0]}</div>`;
+
+            const amount = document.createElement('div');
+            amount.className = 'text-xs text-gray-500 mb-1';
+            amount.textContent = `$${Math.round(d.total / 1000)}k`;
+
+            const fill = document.createElement('div');
+            fill.className = 'w-full bg-blue-500 rounded-t';
+            fill.style.height = `${height}px`;
+
+            const label = document.createElement('div');
+            label.className = 'text-xs text-gray-500 mt-1';
+            label.textContent = d.month.split(' ')[0];
+
+            bar.appendChild(amount);
+            bar.appendChild(fill);
+            bar.appendChild(label);
             chart.appendChild(bar);
         });
     }
@@ -148,7 +169,22 @@
             const bar = document.createElement('div');
             bar.className = 'flex flex-col items-center flex-1';
             const height = Math.max((d.total / maxRisk) * 160, 4);
-            bar.innerHTML = `<div class="text-xs text-gray-500 mb-1">${d.total}</div><div class="w-full bg-red-500 rounded-t" style="height:${height}px"></div><div class="text-xs text-gray-500 mt-1">${d.month.split(' ')[0]}</div>`;
+
+            const amount = document.createElement('div');
+            amount.className = 'text-xs text-gray-500 mb-1';
+            amount.textContent = String(d.total);
+
+            const fill = document.createElement('div');
+            fill.className = 'w-full bg-red-500 rounded-t';
+            fill.style.height = `${height}px`;
+
+            const label = document.createElement('div');
+            label.className = 'text-xs text-gray-500 mt-1';
+            label.textContent = d.month.split(' ')[0];
+
+            bar.appendChild(amount);
+            bar.appendChild(fill);
+            bar.appendChild(label);
             riskTrendChart.appendChild(bar);
         });
     }

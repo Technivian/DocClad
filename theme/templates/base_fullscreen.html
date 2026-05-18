@@ -124,19 +124,26 @@
         .icon-box-primary    { background: var(--primary-bg); border: 1px solid rgba(37,99,235,0.15); }
         .icon-box-accent     { background: var(--accent-bg); border: 1px solid rgba(34,197,94,0.15); }
         .icon-primary-filled { background: var(--primary); box-shadow: 0 2px 8px var(--primary-glow); }
+        .icon-soft-primary   { background: var(--primary-bg); }
         .c-brand             { color: var(--primary); }
         .c-brand-accent      { color: var(--accent); }
+        .c-secondary         { color: var(--text-secondary); }
         .c-muted             { color: var(--text-muted); }
         .c-error             { color: var(--error); }
         .msg-box             { background: var(--surface); border: 1px solid var(--border); }
+        .surface-link        { background: var(--surface); border: 1px solid var(--border); text-decoration: none; }
+        .chip-primary-soft   { background: var(--primary-subtle); color: var(--primary); }
+        .stat-tile-primary   { background: var(--primary-bg-light); border: 1px solid rgba(37,99,235,0.12); }
+        .stat-tile-accent    { background: var(--accent-bg-light); border: 1px solid rgba(34,197,94,0.12); }
         .alert-error         { background: var(--error-bg); border: 1px solid var(--error-border); }
         .checkbox-primary    { accent-color: var(--primary); }
         .glow-btn-primary    { background: var(--primary); box-shadow: 0 8px 32px var(--primary-glow), 0 2px 4px rgba(0,0,0,0.2); }
+        .glow-btn-primary-soft { background: var(--primary); box-shadow: 0 8px 24px var(--primary-glow); }
         .divider-line        { background: var(--border); }
         .btn-outline-surface { border-color: var(--border); color: var(--text-primary); background: var(--surface); }
     </style>
 </head>
-<body style="background: var(--bg); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif;">
+    <body class="bg-page login-title">
     {% block body %}
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="w-full max-w-md">

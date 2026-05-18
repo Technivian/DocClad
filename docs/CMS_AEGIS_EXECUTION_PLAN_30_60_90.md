@@ -1,5 +1,33 @@
 # CMS Aegis CMS Aegis Execution Plan (30/60/90)
 
+## Current North-Star Plan (Captured 2026-05-16)
+
+The original 2026-04-12 plan has mostly been executed through the security, tenancy, workflow, and release-evidence hardening layers. What remains now is not core product invention; it is production proof, release-gate completion, and enterprise polish.
+
+### Current Maturity Read
+
+- Core CLM product: strong and usable.
+- Identity / tenancy / RBAC: strong, with live IdP/SCIM proof still needed.
+- Workflow / clause / privacy / reporting: strong to good, with targeted UX and evidence gaps.
+- Integrations: partial, because live target-environment evidence is still missing.
+- Production readiness: partial, because rollback / restore / cutover proof is not yet complete.
+
+### Current 30/60/90 Focus
+
+| Window | Primary Goal | Main Deliverables | Exit Signal |
+|---|---|---|---|
+| Next 30 days | Close release gates | Finish SPR3-001, SPR3-002, SPR3-003; capture live Salesforce/webhook evidence; attach target-env Postgres cutover evidence | Release candidate can be evaluated with real evidence, not just synthetic proof |
+| Next 60 days | Lock in operational trust | Complete rollback / restore rehearsal, finish live NetSuite and e-sign validation, remove placeholder template actions, consolidate UI shells | Production change confidence is repeatable and supportable |
+| Next 90 days | Reach north-star maturity | Improve commercial/support surfaces, strengthen observability and compliance packaging, complete any remaining enterprise polish | The platform is production-complete in both function and operations |
+
+### What Still Keeps This Below 100%
+
+1. Live integration evidence for Salesforce, webhook, NetSuite, and e-sign.
+2. Staging/target-environment cutover and rollback proof with artifacts.
+3. UI consolidation and removal of placeholder/demo behaviors.
+4. Commercial readiness work such as onboarding, billing, and support surfaces.
+5. Stronger release discipline around repeatable evidence capture.
+
 ## Baseline Snapshot (captured 2026-04-12)
 
 Evidence from current workspace:

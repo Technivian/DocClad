@@ -57,12 +57,52 @@
     .stat-glow::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at center, rgba(37,99,235,0.04) 0%, transparent 70%); pointer-events: none; }
     .module-card { transition: all 0.25s ease; }
     .module-card:hover { transform: translateY(-2px); border-color: rgba(37,99,235,0.25) !important; box-shadow: 0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(37,99,235,0.1); }
+    .landing-root { background: var(--bg); color: var(--text-primary); }
+    .landing-nav { background: var(--nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .landing-edge-line {
+        position: absolute;
+        top: 0;
+        left: 10%;
+        right: 10%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .landing-nav-line {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+    .hero-glow-primary { background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0.03) 40%, transparent 70%); }
+    .hero-glow-accent { background: radial-gradient(circle, rgba(34,197,94,0.05) 0%, transparent 70%); }
+    .hero-pill {
+        background: rgba(37,99,235,0.08);
+        border: 1px solid rgba(37,99,235,0.15);
+        color: #60A5FA;
+    }
+    .hero-pill-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22C55E;
+        box-shadow: 0 0 6px rgba(34,197,94,0.6);
+    }
+    .landing-modules-bg { background: linear-gradient(180deg, var(--bg) 0%, var(--landing-section-end) 100%); }
+    .landing-security-bg { background: var(--landing-section-end); }
+    .landing-security-card { border: 1px solid rgba(37,99,235,0.15); }
+    .security-glow-right { background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%); transform: translate(30%, -30%); }
+    .security-glow-left { background: radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%); transform: translate(-30%, 30%); }
+    .landing-cta-bg { background: linear-gradient(180deg, var(--landing-section-end) 0%, var(--bg) 100%); }
+    .landing-footer-bg { background: var(--bg); }
 </style>
 
-<div class="landing-page min-h-screen" style="background: var(--bg); color: var(--text-primary);">
+<div class="landing-page landing-root min-h-screen">
 
-    <nav class="fixed top-0 left-0 right-0 z-50" style="background: var(--nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></div>
+    <nav class="fixed top-0 left-0 right-0 z-50 landing-nav">
+        <div class="landing-nav-line"></div>
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
             <div class="flex items-center justify-between h-16">
                 <a href="/" class="flex items-center gap-2.5">
@@ -82,18 +122,18 @@
                         <svg class="w-4 h-4 icon-moon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     </button>
                     <a href="{% url 'login' %}" class="landing-link text-sm px-3 py-2 font-medium">Sign in</a>
-                    <a href="{% url 'register' %}" class="glow-btn text-sm text-white px-5 py-2 rounded-lg font-semibold transition-all duration-200" style="background: #2563EB; box-shadow: 0 4px 16px rgba(37,99,235,0.4);">Get Started</a>
+                    <a href="{% url 'register' %}" class="glow-btn btn-glow-blue text-sm text-white px-5 py-2 rounded-lg font-semibold transition-all duration-200">Get Started</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <section class="pt-32 sm:pt-40 pb-24 px-5 sm:px-8 relative overflow-hidden">
-        <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full -z-10" style="background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, rgba(37,99,235,0.03) 40%, transparent 70%);"></div>
-        <div class="absolute top-40 left-1/4 w-[300px] h-[300px] rounded-full -z-10" style="background: radial-gradient(circle, rgba(34,197,94,0.05) 0%, transparent 70%);"></div>
+        <div class="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full -z-10 hero-glow-primary"></div>
+        <div class="absolute top-40 left-1/4 w-[300px] h-[300px] rounded-full -z-10 hero-glow-accent"></div>
         <div class="max-w-3xl mx-auto text-center">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase mb-8" style="background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.15); color: #60A5FA;">
-                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.6);"></span>
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-widest uppercase mb-8 hero-pill">
+                <span class="hero-pill-dot"></span>
                 Enterprise-Grade CLM Platform
             </div>
             <h1 class="landing-title text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6">
@@ -118,7 +158,7 @@
     <section class="section-fade py-20 px-5 sm:px-8" id="features">
         <div class="max-w-5xl mx-auto">
             <div class="text-center mb-12">
-                <p class="text-xs font-bold tracking-widest uppercase mb-3" style="color: #2563EB;">Core Capabilities</p>
+                <p class="text-xs font-bold tracking-widest uppercase mb-3 c-brand">Core Capabilities</p>
                 <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight">Built for legal professionals</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -147,10 +187,10 @@
         </div>
     </section>
 
-    <section class="section-fade py-20 px-5 sm:px-8" style="background: linear-gradient(180deg, var(--bg) 0%, var(--landing-section-end) 100%);" id="modules">
+    <section class="section-fade landing-modules-bg py-20 px-5 sm:px-8" id="modules">
         <div class="max-w-5xl mx-auto">
             <div class="text-center mb-12">
-                <p class="text-xs font-bold tracking-widest uppercase mb-3" style="color: #22C55E;">Complete Suite</p>
+                <p class="text-xs font-bold tracking-widest uppercase mb-3 c-accent">Complete Suite</p>
                 <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Everything your team needs</h2>
                 <p class="landing-muted-strong text-sm max-w-md mx-auto">Eight integrated modules covering every part of contract lifecycle management.</p>
             </div>
@@ -215,11 +255,11 @@
         </div>
     </section>
 
-    <section class="section-fade py-20 px-5 sm:px-8" style="background: var(--landing-section-end);" id="security">
+    <section class="section-fade landing-security-bg py-20 px-5 sm:px-8" id="security">
         <div class="max-w-4xl mx-auto">
-            <div class="rounded-2xl p-8 sm:p-12 text-center relative overflow-hidden gradient-bg-primary" style="border: 1px solid rgba(37,99,235,0.15);">
-                <div class="absolute top-0 right-0 w-64 h-64 rounded-full -z-0" style="background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%); transform: translate(30%, -30%);"></div>
-                <div class="absolute bottom-0 left-0 w-48 h-48 rounded-full -z-0" style="background: radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%); transform: translate(-30%, 30%);"></div>
+            <div class="rounded-2xl p-8 sm:p-12 text-center relative overflow-hidden gradient-bg-primary landing-security-card">
+                <div class="absolute top-0 right-0 w-64 h-64 rounded-full -z-0 security-glow-right"></div>
+                <div class="absolute bottom-0 left-0 w-48 h-48 rounded-full -z-0 security-glow-left"></div>
                 <div class="relative z-10">
                     <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-6 icon-bg-blue">
                         <svg class="w-7 h-7 icon-color-blue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -232,7 +272,7 @@
                             <p class="landing-muted-strong text-[11px] mt-1.5 font-medium">Role-based access</p>
                         </div>
                         <div class="stat-glow landing-panel rounded-xl p-5">
-                            <p class="text-xl sm:text-2xl font-extrabold" style="color: #22C55E;">100%</p>
+                            <p class="text-xl sm:text-2xl font-extrabold c-accent">100%</p>
                             <p class="landing-muted-strong text-[11px] mt-1.5 font-medium">Audit coverage</p>
                         </div>
                         <div class="stat-glow landing-panel rounded-xl p-5">
@@ -245,8 +285,8 @@
         </div>
     </section>
 
-    <section class="py-20 px-5 sm:px-8 relative" style="background: linear-gradient(180deg, var(--landing-section-end) 0%, var(--bg) 100%);">
-        <div style="position: absolute; top: 0; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, #1F2937, transparent);"></div>
+    <section class="landing-cta-bg py-20 px-5 sm:px-8 relative">
+        <div class="landing-edge-line"></div>
         <div class="max-w-2xl mx-auto text-center">
             <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Ready to modernize your contract operations?</h2>
             <p class="landing-muted-strong text-base mb-10">Join teams that trust CMS Aegis for CLM.</p>
@@ -260,8 +300,8 @@
         </div>
     </section>
 
-    <footer class="py-8 px-5 sm:px-8" style="background: var(--bg);">
-        <div style="position: absolute; left: 10%; right: 10%; height: 1px; background: linear-gradient(90deg, transparent, #1F2937, transparent);"></div>
+    <footer class="landing-footer-bg py-8 px-5 sm:px-8">
+        <div class="landing-edge-line"></div>
         <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 pt-6">
             <div class="flex items-center gap-2.5">
                 <div class="w-6 h-6 rounded-md flex items-center justify-center btn-glow-blue">

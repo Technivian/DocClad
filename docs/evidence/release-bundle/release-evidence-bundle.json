@@ -1,0 +1,104 @@
+{
+  "artifacts": {
+    "esign_integration_report": "docs/evidence/release-bundle/esign-integration-report.json",
+    "release_gate_report": "docs/evidence/release-bundle/release-gate-report.json",
+    "sprint3_integration_report": "docs/evidence/release-bundle/sprint3-integration-report.json"
+  },
+  "captured_at": "2026-05-16T09:33:16.153526+00:00",
+  "go_no_go": "GO",
+  "organization_name": "Demo Firm",
+  "organization_slug": "demo-firm",
+  "output_dir": "docs/evidence/release-bundle",
+  "reports": {
+    "esign_integration": {
+      "captured_at": "2026-05-16T09:33:16.152477+00:00",
+      "observed": {
+        "applied_event_count": 1,
+        "duplicate_or_stale_event_count": 0,
+        "latest_applied_event": {
+          "event_id": "synth-esign-event-001",
+          "id": 23,
+          "signature_request_id": 3,
+          "timestamp": "2026-05-16T09:33:11.200773+00:00",
+          "to_status": "SIGNED"
+        },
+        "terminal_signature_count": 1
+      },
+      "organization_slug": "demo-firm",
+      "requirements": {
+        "applied_esign_event_present": true,
+        "terminal_signature_state_present": true
+      },
+      "status": "GO",
+      "window_days": 14
+    },
+    "release_gate": {
+      "captured_at": "2026-05-16T09:33:14.735560+00:00",
+      "gates": {
+        "database": {
+          "status": "pass",
+          "unapplied_migrations": 0
+        },
+        "integrations": {
+          "latest_successful_salesforce_sync_at": "2026-05-16T09:32:26.512846+00:00",
+          "reason": null,
+          "status": "pass",
+          "webhook_dead_letter_count": 0
+        },
+        "security": {
+          "npm_client_audit": {
+            "command": "npm --prefix client audit --audit-level=high",
+            "exit_code": 0,
+            "status": "pass",
+            "stderr": "",
+            "stdout": "# npm audit report\n\npostcss  <8.5.10\nSeverity: moderate\nPostCSS has XSS via Unescaped </style> in its CSS Stringify Output - https://github.com/advisories/GHSA-qx2v-qp2m-jg93\nfix available via `npm audit fix`\nnode_modules/postcss\n\n1 moderate severity vulnerability\n\nTo address all issues, run:\n  npm audit fix\n"
+          },
+          "npm_theme_audit": {
+            "command": "npm --prefix theme/static_src audit --audit-level=high",
+            "exit_code": 0,
+            "status": "pass",
+            "stderr": "",
+            "stdout": "# npm audit report\n\npostcss  <8.5.10\nSeverity: moderate\nPostCSS has XSS via Unescaped </style> in its CSS Stringify Output - https://github.com/advisories/GHSA-qx2v-qp2m-jg93\nfix available via `npm audit fix`\nnode_modules/postcss\n\n1 moderate severity vulnerability\n\nTo address all issues, run:\n  npm audit fix\n"
+          },
+          "pip_audit": {
+            "command": "/Users/haroonwahed/Documents/Projects/CMS-Aegis/.venv/bin/python -m pip_audit --disable-pip --no-deps -r requirements/runtime.txt",
+            "exit_code": 0,
+            "status": "pass",
+            "stderr": "WARNING:pip_audit._cli:--no-deps is supported, but users are encouraged to fully hash their pinned dependencies\nWARNING:pip_audit._cli:Consider using a tool like `pip-compile`: https://pip-tools.readthedocs.io/en/latest/#using-hashes\nNo known vulnerabilities found\n",
+            "stdout": ""
+          }
+        }
+      },
+      "go_no_go": "GO",
+      "sprint_stage": "SPR3-001"
+    },
+    "sprint3_integration": {
+      "captured_at": "2026-05-16T09:33:16.149589+00:00",
+      "observed": {
+        "salesforce_sync_run": {
+          "completed_at": "2026-05-16T09:32:26.512846+00:00",
+          "created_count": 1,
+          "id": 4,
+          "organization_id": 16,
+          "status": "SUCCESS",
+          "updated_count": 0
+        },
+        "webhook_dead_letter_delivery": null,
+        "webhook_sent_delivery": {
+          "event_type": "salesforce.sync.completed",
+          "id": 4,
+          "organization_id": 16,
+          "sent_at": "2026-05-16T09:32:26.512846+00:00",
+          "status": "SENT"
+        }
+      },
+      "requirements": {
+        "salesforce_sync_created_or_updated_gt_zero": true,
+        "webhook_dead_letter_present": false,
+        "webhook_sent_event_present": true
+      },
+      "status": "GO",
+      "window_days": 14
+    }
+  }
+}

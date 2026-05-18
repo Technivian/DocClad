@@ -4,6 +4,16 @@ This list tracks the concrete execution backlog and completion evidence.
 
 ## Completed In This Pass
 
+- [x] Sprint 3 evidence runner expansion and strict Postgres validation (2026-05-16):
+  - expanded `scripts/run_live_evidence_pack.sh` from 6 to 8 stages.
+  - added artifact generation for:
+    - `evidence/executive-analytics-evidence.json`
+    - `evidence/retention-audit-actions.json`
+  - re-ran strict mode against Postgres rehearsal DB (`CUTOVER_MODE=require`) with exit code `0`.
+  - all generated evidence remained `GO` where applicable.
+  - added operator worksheet for target run:
+    - `docs/SPRINT3_TARGET_ENV_WORKSHEET_2026-05-16.md`
+
 - [x] `SPR3-001/002/005` go-live evidence orchestration automation:
   - added dedicated workflow: `.github/workflows/sprint3-go-live-evidence.yml`
   - workflow captures:
