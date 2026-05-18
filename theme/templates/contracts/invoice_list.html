@@ -1,57 +1,68 @@
 {% extends "base.html" %}
 {% block title %}Invoices - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div><h1 class="text-2xl font-bold text-gray-900">Invoices</h1></div>
-    <a href="{% url 'contracts:invoice_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Invoices</h1>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'contracts:invoice_create' %}" class="inline-flex items-center gap-2 btn-primary-grad">
+        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Invoice
-    </a>
-</div>
-<div class="grid grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Outstanding</div>
-        <div class="text-2xl font-bold text-orange-600">${{ total_outstanding|floatformat:0 }}</div>
+      </a>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Total Paid</div>
-        <div class="text-2xl font-bold text-green-600">${{ total_paid|floatformat:0 }}</div>
+  </div>
+
+  <div class="dash-grid mb-6">
+    <div class="rounded-xl p-4 border stat-card-amber">
+      <div class="text-xs c-muted mb-1">Outstanding</div>
+      <div class="text-2xl font-bold c-warning">${{ total_outstanding|floatformat:0 }}</div>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Overdue</div>
-        <div class="text-2xl font-bold text-red-600">{{ overdue_count }}</div>
+    <div class="rounded-xl p-4 border stat-card">
+      <div class="text-xs c-muted mb-1">Total Paid</div>
+      <div class="text-2xl font-bold text-green-600">${{ total_paid|floatformat:0 }}</div>
     </div>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="rounded-xl p-4 border stat-card-red">
+      <div class="text-xs c-muted mb-1">Overdue</div>
+      <div class="text-2xl font-bold c-danger">{{ overdue_count }}</div>
+    </div>
+  </div>
+
+  <div class="panel">
     <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Invoice #</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Client</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Issue Date</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for invoice in invoices %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3"><a href="{% url 'contracts:invoice_detail' invoice.pk %}" class="text-sm font-medium text-blue-600 hover:text-blue-800">#{{ invoice.invoice_number }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ invoice.client.name|truncatechars:25 }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ invoice.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3"><span class="text-xs px-2 py-1 rounded-full {% if invoice.status == 'PAID' %}bg-green-100 text-green-800{% elif invoice.status == 'OVERDUE' %}bg-red-100 text-red-800{% elif invoice.status == 'SENT' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ invoice.get_status_display }}</span></td>
-                <td class="px-5 py-3 text-sm text-gray-500">{{ invoice.issue_date|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-sm {% if invoice.is_overdue %}text-red-600 font-medium{% else %}text-gray-500{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-sm text-right font-medium">${{ invoice.total_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3 text-right"><a href="{% url 'contracts:invoice_update' invoice.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="px-5 py-12 text-center text-gray-400">No invoices found.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead class="tbl-head">
+        <tr>
+          <th class="text-left px-5 py-3 tbl-th">Invoice #</th>
+          <th class="text-left px-5 py-3 tbl-th">Client</th>
+          <th class="text-left px-5 py-3 tbl-th">Matter</th>
+          <th class="text-left px-5 py-3 tbl-th">Status</th>
+          <th class="text-left px-5 py-3 tbl-th">Issue Date</th>
+          <th class="text-left px-5 py-3 tbl-th">Due Date</th>
+          <th class="text-right px-5 py-3 tbl-th">Amount</th>
+          <th class="text-right px-5 py-3 tbl-th">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in invoices %}
+        <tr class="tbl-row{% if invoice.is_overdue %} row-overdue{% endif %}">
+          <td class="px-5 py-3 tbl-td"><a href="{% url 'contracts:invoice_detail' invoice.pk %}" class="text-sm font-semibold c-link">#{{ invoice.invoice_number }}</a></td>
+          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.client.name|truncatechars:25 }}</td>
+          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.matter.matter_number|default:"—" }}</td>
+          <td class="px-5 py-3 tbl-td">
+            <span class="badge-sm {% if invoice.status == 'PAID' %}badge-green{% elif invoice.status == 'OVERDUE' %}badge-red{% elif invoice.status == 'SENT' %}badge-blue{% else %}badge-gray{% endif %}">{{ invoice.get_status_display }}</span>
+          </td>
+          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.issue_date|date:"M d, Y" }}</td>
+          <td class="px-5 py-3 tbl-td text-sm {% if invoice.is_overdue %}c-danger font-semibold{% else %}c-muted{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</td>
+          <td class="px-5 py-3 tbl-td text-sm text-right font-semibold">${{ invoice.total_amount|floatformat:2 }}</td>
+          <td class="px-5 py-3 tbl-td text-right"><a href="{% url 'contracts:invoice_update' invoice.pk %}" class="text-xs c-muted hover:underline">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="empty-state">No invoices found.</td></tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
 {% endblock %}
+

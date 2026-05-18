@@ -1016,3 +1016,111 @@ Note: `status-dot` was already defined. `dot-{color}` family was already defined
 - All exceptions resolved or documented
 
 ### Status: ✅ Complete — Batch 5 page wave can begin
+
+---
+
+## Batch 5 Step 2 — Invoice Page Wave (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/invoice_list.html` → QueuePage
+- `theme/templates/contracts/invoice_detail.html` → WorkspacePage
+- `theme/templates/contracts/invoice_form.html` → CommandPage
+
+### invoice_list.html
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | none | `page-wrap` |
+| Header | raw `flex items-center justify-between mb-6` | `page-header` / `page-title` / `page-actions` |
+| New Invoice button | `bg-blue-600 text-white rounded-lg` | `btn-primary-grad` |
+| Plus SVG icon | no aria-hidden | `aria-hidden="true"` |
+| Stat cards (×3) | `bg-white rounded-xl border border-gray-200` | `stat-card-amber` / `stat-card` / `stat-card-red` |
+| Outstanding label | `text-gray-500` | `c-muted` |
+| Outstanding value | `text-orange-600` | `c-warning` |
+| Paid label | `text-gray-500` | `c-muted` |
+| Paid value | `text-green-600` | `text-green-600` (exception — no `c-success`) |
+| Overdue label | `text-gray-500` | `c-muted` |
+| Overdue value | `text-red-600` | `c-danger` |
+| Table wrapper | `bg-white rounded-xl border border-gray-200` | `panel` |
+| Table head | `bg-gray-50` | `tbl-head` |
+| TH cells | `text-xs font-medium text-gray-500 uppercase` | `tbl-th` |
+| TR rows | `hover:bg-gray-50` | `tbl-row` + `row-overdue` if `invoice.is_overdue` |
+| TD cells | raw padding | `tbl-td` |
+| Invoice # link | `text-blue-600` | `c-link` |
+| Client / Matter cells | `text-gray-600` | `c-muted` |
+| Status badge | ad-hoc `text-xs px-2 py-1 rounded-full bg-{color}-100 text-{color}-800` | `badge-sm badge-green/red/blue/gray` |
+| Date cells | `text-gray-500` | `c-muted` |
+| Overdue due date | `text-red-600 font-medium` | `c-danger font-semibold` |
+| Edit link | `text-gray-500 hover:text-blue-600` | `c-muted hover:underline` |
+| Empty state | `px-5 py-12 text-center text-gray-400` | `empty-state` |
+
+### invoice_detail.html
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | `max-w-3xl` | `page-wrap` |
+| Header | raw `flex items-center justify-between mb-6` | `page-header` / `page-title` / `page-subtitle` / `page-actions` |
+| Status badge | ad-hoc inline color classes | `badge-sm badge-green/red/blue/gray` |
+| Edit button | `bg-gray-100 text-gray-700 rounded-lg` | `btn-ghost` |
+| Main panel | `bg-white rounded-xl border border-gray-200 p-6` | `panel` + `panel-inner` |
+| Metadata grid | `grid grid-cols-2 gap-6 mb-6` | `panel-2col mb-6` |
+| Metadata labels | `text-gray-500` | `c-muted` |
+| Overdue date | `text-red-600 font-semibold` | `c-danger font-semibold` |
+| Totals section | `border-t border-gray-200 pt-4` | `panel-divider` + `role="region" aria-label="Invoice totals"` |
+| Subtotal/Tax labels | `text-gray-500` | `c-muted` |
+| Total row separator | `border-t border-gray-200 pt-2 mt-2` | `border-t pt-2 mt-2` (token-neutral border) |
+| Paid amount | `text-green-600` | `text-green-600` (exception — no `c-success`) |
+| Balance Due | `text-orange-600` | `c-warning` |
+| Notes panel | `bg-white rounded-xl border border-gray-200 p-5 mt-4` | `panel mt-4` + `panel-head` + `panel-inner` |
+| Notes heading | `text-sm font-semibold text-gray-500 uppercase` | `panel-title` |
+
+### invoice_form.html
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | `max-w-2xl` | `page-wrap` |
+| Header | raw `mb-6 h1 text-2xl font-bold text-gray-900` | `page-header` / `page-title` |
+| Form panel | `bg-white rounded-xl border border-gray-200 p-6` | `panel` + `panel-inner` |
+| Field label | `block text-sm font-medium text-gray-700 mb-1` | `form-label block mb-1` |
+| Error message | `text-red-500 text-xs mt-1` | `text-xs c-danger mt-1` |
+| Submit button | `bg-blue-600 text-white rounded-lg` | `btn-primary-grad` |
+| Cancel link | `bg-gray-100 text-gray-700 rounded-lg` | `btn-ghost` |
+
+### Behavior Preserved
+
+- All context variables: `invoices`, `total_outstanding`, `total_paid`, `overdue_count`, `invoice.*`, `form.*`
+- All routes: `invoice_create`, `invoice_detail`, `invoice_update`, `invoice_list`
+- All form fields, `{% csrf_token %}`, POST action, validation errors
+- `invoice.is_overdue` conditional preserved in list and detail
+- `invoice.tax_rate` conditional preserved
+- `invoice.amount_paid` / `invoice.balance_due` conditional preserved
+- `invoice.notes` conditional preserved
+- `form.instance.pk` conditional for create vs edit label preserved
+
+### Intentional Exceptions
+
+| Exception | Reason |
+|---|---|
+| `text-green-600` (Total Paid stat, Paid amount) | No `c-success` token defined — green positive balance |
+| `grid grid-cols-1 md:grid-cols-2 gap-4` in form | Responsive grid; `panel-2col` has no breakpoints |
+| `border-t pt-2 mt-2` on Total row | Inner separator, not a panel section divider |
+
+### Accessibility
+
+- Plus SVG in New Invoice button: `aria-hidden="true"` added
+- Totals region: `role="region" aria-label="Invoice totals"` added to `panel-divider` wrapper
+- Status badges: semantic color naming retained
+- All form labels preserved
+
+### Validation
+
+- Template parse: ✅ 3/3 OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0
+- Inline event handlers: ✅ 0
+- Retired classes: ✅ 0
+- Raw color exceptions: 2 `text-green-600` (intentional — no `c-success`)
+
+### Status: ✅ Complete — retention_policy wave can begin

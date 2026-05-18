@@ -740,3 +740,31 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 6 remain: chart JS className strings, responsive `lg:grid-cols-*` patterns (contract_detail, search_results), negotiation notes vertical stack, `divide-y` structure. All documented in DESIGN_CONSTITUTION.md §12 and BATCH4_POST_MIGRATION_AUDIT.md.
 
 ### Next: Batch 5 page wave (invoice_detail/list/form, retention_policy_*, organization templates)
+
+---
+
+## Batch 5 Step 2 — Invoice Page Wave ✅ COMPLETE (2026-05-18)
+
+### Files Changed
+
+| File | Archetype | Change |
+|---|---|---|
+| `theme/templates/contracts/invoice_list.html` | QueuePage | Full migration from raw Tailwind |
+| `theme/templates/contracts/invoice_detail.html` | WorkspacePage | Full migration from raw Tailwind |
+| `theme/templates/contracts/invoice_form.html` | CommandPage | Full migration from raw Tailwind |
+| `DESIGN_ARCHETYPE_MAP.md` | — | All 3 invoice templates marked MIGRATED |
+
+### Primitives Applied
+
+**invoice_list:** `page-wrap`, `page-header`, `page-title`, `page-actions`, `btn-primary-grad`, `stat-card-amber/stat-card/stat-card-red`, `c-muted`, `c-warning`, `c-danger`, `panel`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`, `row-overdue`, `badge-sm badge-green/red/blue/gray`, `c-link`, `empty-state`
+
+**invoice_detail:** `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `badge-sm`, `btn-ghost`, `panel`, `panel-inner`, `panel-2col`, `panel-divider`, `panel-head`, `panel-title`, `c-muted`, `c-danger`, `c-warning`
+
+**invoice_form:** `page-wrap`, `page-header`, `page-title`, `panel`, `panel-inner`, `form-label`, `c-danger` (errors), `btn-primary-grad`, `btn-ghost`
+
+### Intentional Exceptions
+
+- `text-green-600` on Total Paid stat card and Paid balance — no `c-success` token; deferred to Batch 6
+- `grid grid-cols-1 md:grid-cols-2 gap-4` in invoice_form — responsive grid, `panel-2col` has no breakpoints
+
+### Next: retention_policy wave (retention_policy_list.html, retention_policy_detail.html, retention_policy_form.html if it exists)
