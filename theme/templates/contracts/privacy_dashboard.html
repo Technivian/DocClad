@@ -60,7 +60,7 @@
     </a>
     <a href="{% url 'contracts:legal_hold_list' %}" class="kpi-card kpi-card-link">
       {# Preserve legal_hold_count urgency signal: red value when holds are active #}
-      <div class="kpi-value {% if legal_hold_count > 0 %}text-red-500{% endif %}">{{ legal_hold_count }}</div>
+      <div class="kpi-value {% if legal_hold_count > 0 %}c-danger{% endif %}">{{ legal_hold_count }}</div>
       <div class="kpi-label">Legal Holds</div>
       <div class="kpi-sub">Active holds</div>
     </a>

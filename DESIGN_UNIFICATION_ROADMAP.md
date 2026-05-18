@@ -455,6 +455,31 @@ Risk level:
 
 ---
 
+### 2026-05-18 - Batch 3 Post-Migration Audit
+
+**Verdict: PASS — All 8 templates consistent, regression-safe, and complete.**
+
+Audit actions taken:
+
+1. **Identified and fixed pre-existing violation:** `input-field` (undefined class, no CSS definition anywhere) found in `workflow_dashboard.html` filter form (3 instances). Replaced with `input-base` / `select-base`. Pre-existing — not introduced by Batch 3 migration.
+
+2. **Applied two minor canonical substitutions:**
+   - `privacy_dashboard.html`: `text-red-500` on legal-hold KPI → `c-danger`
+   - `operations_dashboard.html`: `text-red-500` on job error text → `c-danger`
+
+3. **Documented four token gaps for Batch 4:**
+   - `bg-blue-50` (unread row tint) → needs `--row-unread-bg` token
+   - `bg-red-50` (overdue row tint) → needs `--row-overdue-bg` token
+   - (Above `text-red-500` instances resolved; no longer gaps)
+
+4. **Documented one ARIA gap (not faked):** `legal_task_board.html` drag-and-drop keyboard column movement — deferred to Batch 4 JS work.
+
+5. **Updated DESIGN_ARCHETYPE_MAP.md:** All 8 Batch 3 template rows marked `MIGRATED`.
+
+Full audit report: `BATCH3_POST_MIGRATION_AUDIT.md`
+
+---
+
 ## Phase 1 - Foundation and Governance (Week 1)
 
 Task 1. Define design source-of-truth boundaries

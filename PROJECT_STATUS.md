@@ -440,3 +440,38 @@ Treat the app as:
 6. Consolidate experimental UI shells and demo templates.
 7. Keep release evidence bundle commands attached to the release workflow.
 8. Add stronger live E2E coverage for the major user flows.
+
+---
+
+## Batch 3 Post-Migration Audit (2026-05-18)
+
+**Verdict: PASS**
+
+All 8 Batch 3 templates passed the post-migration audit. Full report: `BATCH3_POST_MIGRATION_AUDIT.md`.
+
+### Audit Fixes Applied
+
+| Fix | File | Type |
+|---|---|---|
+| `input-field` × 3 → `input-base` / `select-base` | workflow_dashboard.html | Pre-existing violation fixed |
+| `text-red-500` → `c-danger` on legal-hold KPI | privacy_dashboard.html | Minor canonical substitution |
+| `text-red-500` → `c-danger` on job error text | operations_dashboard.html | Minor canonical substitution |
+
+### Remaining Documented Exceptions
+
+| Exception | Template | Disposition |
+|---|---|---|
+| `bg-blue-50` unread row tint | notification_list.html | Token gap — needs `--row-unread-bg` in Batch 4 |
+| `bg-red-50` overdue row tint | deadline_list.html | Token gap — needs `--row-overdue-bg` in Batch 4 |
+| Drag-and-drop keyboard column movement | legal_task_board.html | ARIA gap — deferred to Batch 4 JS work |
+
+### Batch 3 Final State
+
+- 8/8 templates archived as MIGRATED in DESIGN_ARCHETYPE_MAP.md
+- 0 inline handlers remaining
+- 0 inline styles remaining
+- 0 retired classes remaining
+- 0 undefined primitive classes remaining
+- Template parse: 8/8 OK
+- manage.py check: 0 issues
+- manage.py test contracts: 3/3 passed

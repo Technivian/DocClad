@@ -89,7 +89,7 @@
         <div class="text-sm font-medium c-primary">{{ job.job_type }}</div>
         <div class="item-meta">{{ job.created_at }}</div>
         {% if job.error_message %}
-        <p class="text-sm text-red-500 mt-1">{{ job.error_message }}</p>
+        <p class="text-sm c-danger mt-1">{{ job.error_message }}</p>
         {% endif %}
       </div>
       <span class="badge-sm badge-gray">{{ job.get_status_display }}</span>
