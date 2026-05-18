@@ -554,3 +554,32 @@ The following `bg-blue-50` / `bg-red-50` usages in templates are decorative pane
 ### Slice B Readiness
 
 ✅ **Slice B can begin** — contract_detail.html and contract_list.html are next candidates per DESIGN_ARCHETYPE_MAP.md.
+
+---
+
+## Batch 4 Step 3 — Slice A Token Cleanup (2026-05-18)
+
+**Status: ✅ Complete**
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `theme/templates/base.html` | Added `.c-warning` (`#F59E0B`) and `.c-info` (`#60A5FA`) |
+| `theme/templates/contracts/reports_dashboard.html` | 2 inline `style=` removed → `c-warning`, `c-info` |
+| `DESIGN_CONSTITUTION.md` | Semantic text color utilities section added |
+| `DESIGN_UNIFICATION_ROADMAP.md` | Step 3 log entry added |
+
+### Token Summary
+
+- `c-warning` — amber-500 (`#F59E0B`), for financial attention/warning values
+- `c-info` — blue-400 (`#60A5FA`), for informational/upcoming indicators
+
+### Inline Style Debt: reports_dashboard.html
+
+- Before: 2 inline `style="color:..."` overrides
+- After: 0 — fully resolved
+
+### Slice B Readiness
+
+✅ **Slice B can begin** — `contract_detail.html` is the next candidate.

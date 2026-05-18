@@ -45,12 +45,12 @@
     </div>
     <div class="kpi-card stat-card-amber">
         <div class="kpi-label">Outstanding A/R</div>
-        <div class="kpi-value" style="color:#F59E0B">${{ outstanding|floatformat:0 }}</div>
+        <div class="kpi-value c-warning">${{ outstanding|floatformat:0 }}</div>
     </div>
     <div class="kpi-card stat-card-red">
         <div class="kpi-label">Overdue Deadlines</div>
         <div class="kpi-value c-danger">{{ overdue_deadlines }}</div>
-        <div class="kpi-sub" style="color:#60A5FA">{{ upcoming_deadlines }} due this week</div>
+        <div class="kpi-sub c-info">{{ upcoming_deadlines }} due this week</div>
     </div>
     <div class="kpi-card stat-card-red">
         <div class="kpi-label">High-Risk Items</div>

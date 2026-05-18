@@ -101,6 +101,19 @@ Row state tints:
 - Light theme values: `#EFF6FF` (unread), `#FEF2F2` (overdue).
 - Do not use `bg-blue-50`, `bg-red-50`, or other raw color utilities for row-state tinting. Added: 2026-05-18.
 
+Semantic text color utilities:
+
+- Do not use raw `style="color:..."` inline overrides. Use canonical text color classes.
+- Canonical text color classes (all defined in `base.html`):
+  - `c-primary` — primary text (maps to `--text-primary`)
+  - `c-muted` — secondary/muted text (maps to `--text-muted`)
+  - `c-danger` — error/critical emphasis (`#F87171`, red-400)
+  - `c-warning` — warning/amber emphasis (`#F59E0B`, amber-500) — Added: 2026-05-18
+  - `c-info` — informational/blue emphasis (`#60A5FA`, blue-400) — Added: 2026-05-18
+  - `c-success-soft` — positive/green soft emphasis (`#86EFAC`, green-300)
+  - `c-primary-brand` — brand accent color (maps to `--primary`)
+- Use these classes instead of raw `text-*` Tailwind utilities for semantic meaning.
+
 Forms:
 
 - Required structure: label, control, helper text, error text.
