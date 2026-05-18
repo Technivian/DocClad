@@ -708,3 +708,35 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 ### See
 
 `BATCH4_POST_MIGRATION_AUDIT.md` for full audit report including Batch 5 recommendations.
+
+---
+
+## Batch 5 Step 1 — Primitive Debt Cleanup ✅ COMPLETE (2026-05-18)
+
+### Primitives Added
+
+| Primitive | Location |
+|---|---|
+| `panel-item` | `base.html` — sub-item within panel-inner |
+| `pre-output` | `base.html` — AI/code output pre element |
+| `status-dot` | Already existed; now documented in DESIGN_CONSTITUTION.md |
+
+### Templates Updated
+
+| File | Change |
+|---|---|
+| `contract_list.html` | `bg-yellow-400` dot → `status-dot yellow` |
+| `contract_detail.html` | `pre#ai-assistant-output` → `pre-output` + `aria-live="polite"` |
+| `search_results.html` | Preset row raw classes → `panel-item` |
+| `base.html` | `panel-item` + `pre-output` CSS defined |
+| `DESIGN_CONSTITUTION.md` | Section 12 added (all new primitives + guidance) |
+
+### Exceptions Resolved
+
+3 of 9 Batch 4 exceptions closed: `bg-yellow-400` dot, `pre` raw classes, preset row border.
+
+### Remaining Documented Exceptions
+
+6 remain: chart JS className strings, responsive `lg:grid-cols-*` patterns (contract_detail, search_results), negotiation notes vertical stack, `divide-y` structure. All documented in DESIGN_CONSTITUTION.md §12 and BATCH4_POST_MIGRATION_AUDIT.md.
+
+### Next: Batch 5 page wave (invoice_detail/list/form, retention_policy_*, organization templates)

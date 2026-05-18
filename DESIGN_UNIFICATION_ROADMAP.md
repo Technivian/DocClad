@@ -958,3 +958,61 @@ All 5 Batch 4 templates: reports_dashboard, identity_telemetry_dashboard, contra
 
 - `BATCH4_POST_MIGRATION_AUDIT.md` — created
 - `contract_list.html` — 4 sort SVGs now have `aria-hidden="true"`
+
+---
+
+## Batch 5 Step 1 — Primitive Debt Cleanup (2026-05-18)
+
+### Scope
+
+Resolve all primitive gaps discovered during Batch 4 post-migration audit.
+
+### Primitives Added to base.html
+
+| Primitive | CSS | Description |
+|---|---|---|
+| `panel-item` | `display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--card-border); border-radius:8px; padding:8px 12px` | Sub-item within panel-inner |
+| `pre-output` | `font-size:12px; background:var(--surface); border:1px solid var(--card-border); border-radius:8px; padding:12px; white-space:pre-wrap; overflow-x:auto` | AI/code output pre element |
+
+Note: `status-dot` was already defined. `dot-{color}` family was already defined. No new tokens needed.
+
+### Templates Touched
+
+| File | Change |
+|---|---|
+| `theme/templates/contracts/contract_list.html` | `bg-yellow-400 w-2 h-2 rounded-full flex-shrink-0` → `status-dot yellow aria-hidden="true"` |
+| `theme/templates/contracts/contract_detail.html` | `pre#ai-assistant-output` raw classes → `pre-output c-muted` + `aria-live="polite"` + `aria-label` |
+| `theme/templates/contracts/search_results.html` | Preset row raw `flex items-center ... border border-gray-100 px-3 py-2` → `panel-item` |
+| `theme/templates/base.html` | `panel-item` + `pre-output` CSS added to panel-inner section |
+
+### Documentation Added to DESIGN_CONSTITUTION.md
+
+- Section 12: `status-dot`, `pre-output`, `panel-item`, responsive grid guidance, chart container accessibility, `aria-live` guidance
+
+### Exceptions Resolved
+
+| Exception | Resolution |
+|---|---|
+| `bg-yellow-400` amber dot (contract_list) | ✅ Replaced with `status-dot yellow aria-hidden` |
+| `pre#ai-assistant-output` raw classes (contract_detail) | ✅ Replaced with `pre-output c-muted aria-live` |
+| Preset row inner border (search_results) | ✅ Replaced with `panel-item` |
+
+### Exceptions Remaining (Documented)
+
+| Exception | Status |
+|---|---|
+| Chart JS className raw colors | Documented — JS strings exempt from canonical rules |
+| Responsive `lg:grid-cols-*` | Documented — accepted structural exception |
+| Negotiation notes `divide-y` vertical stack | Documented — `list-row` is horizontal-only |
+| Responsive grids in contract_detail | Documented — `dash-grid` has no breakpoints |
+| Chart container ARIA (identity_telemetry) | N/A — no chart divs in that template |
+
+### Validation
+
+- Template parse: ✅ 3/3 touched templates OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 passed
+- Inline styles: ✅ 0 across touched templates
+- All exceptions resolved or documented
+
+### Status: ✅ Complete — Batch 5 page wave can begin

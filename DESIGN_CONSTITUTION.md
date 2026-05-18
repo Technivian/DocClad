@@ -224,3 +224,80 @@ A UI task is not done unless:
 3. It passes accessibility minimums.
 4. It avoids banned implementation patterns.
 5. It preserves coherence with shell and token system.
+
+---
+
+## 12) Batch 5 Primitives (added 2026-05-18)
+
+### status-dot
+
+Already defined in `base.html`. Use `<span class="status-dot {color}" aria-hidden="true"></span>` for inline colored circular indicators.
+
+Colors: `green`, `blue`, `yellow`, `red`, `gray`.
+
+- Always add `aria-hidden="true"` — color alone never conveys state; pair with visible text or `sr-only` label.
+- `status-dot.yellow` = amber/warning indicator (replaces raw `bg-yellow-400 w-2 h-2 rounded-full`).
+- Do not use raw `bg-{color}-{n} rounded-full` for status dots; use `status-dot {color}` instead.
+
+### pre-output
+
+For AI/LLM/code output areas rendered in `<pre>` elements.
+
+```html
+<pre class="pre-output c-muted" aria-live="polite" aria-label="[descriptive label]">…</pre>
+```
+
+- Uses `var(--surface)` background and `var(--card-border)` border — fully token-backed.
+- Always add `aria-live="polite"` when content is dynamically injected (screen readers will announce new content).
+- Always add `aria-label` describing what the output area contains.
+- May be combined with `hidden` class — the `aria-live` region is still registered by screen readers before content arrives.
+- Do not use raw `bg-gray-50 border border-gray-200 rounded-lg text-xs whitespace-pre-wrap`; use `pre-output` instead.
+
+### panel-item
+
+For list items rendered inside `panel-inner` — sub-cards or preset rows within a panel.
+
+```html
+<div class="panel-item">
+  <div>…content…</div>
+  <div>…actions…</div>
+</div>
+```
+
+- Horizontal flex, `space-between`, `8px 12px` padding, token-backed border and radius.
+- Use inside `panel-inner` to group an item's content and trailing action.
+- Do not use raw `flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2`; use `panel-item` instead.
+
+### Responsive Grid Guidance
+
+`dash-grid` is a fixed 3-column grid with no breakpoints. For layouts requiring responsive columns:
+
+- Accepted pattern: raw Tailwind responsive grid utilities (`grid grid-cols-1 md:grid-cols-3`, `lg:grid-cols-[2fr_1fr]`, etc.).
+- These are **documented structural exceptions** — not design token violations.
+- Do not introduce new ad-hoc breakpoint patterns without noting them as exceptions.
+- A `dash-grid--responsive` variant is deferred to a future design system release.
+
+### Chart Container Accessibility
+
+For JS-rendered chart containers (bar charts, ring charts, etc.):
+
+```html
+<div id="chart-id"
+     class="…"
+     role="img"
+     aria-label="[Descriptive label including chart type and data range]">
+</div>
+```
+
+- Add `role="img"` and `aria-label` to the chart container `<div>`.
+- The label should describe: chart type, metric shown, and time/data range if applicable.
+- Example: `aria-label="Monthly billing bar chart, last 6 months"`.
+- JavaScript className strings (e.g., `element.className = 'text-gray-500'`) are exempt from canonical class rules — CSS classes cannot be referenced in JS strings without a build pipeline.
+
+### aria-live Guidance
+
+Dynamic output regions (AI assistant, search results loaded asynchronously, status messages) must include:
+
+- `aria-live="polite"` for non-urgent updates (AI output, background loading)
+- `aria-live="assertive"` only for critical errors that interrupt workflow
+- The `aria-live` region must exist in the DOM before content is injected (not created dynamically)

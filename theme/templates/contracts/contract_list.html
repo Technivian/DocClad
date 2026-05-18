@@ -40,7 +40,7 @@
     {% if expiring_soon %}
     <div class="rounded-xl p-5 border stat-card-amber">
         <div class="flex items-center gap-2 mb-2">
-            <span class="w-2 h-2 rounded-full flex-shrink-0 bg-yellow-400"></span>
+            <span class="status-dot yellow" aria-hidden="true"></span>
             <p class="text-xs font-semibold uppercase tracking-widest c-amber-soft">Needs review</p>
         </div>
         <p class="text-3xl font-bold c-amber">{{ expiring_soon }}</p>

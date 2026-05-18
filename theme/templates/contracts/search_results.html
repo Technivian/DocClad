@@ -67,7 +67,7 @@
         {% endif %}
         <div class="space-y-2">
           {% for preset in saved_searches %}
-          <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+          <div class="panel-item">
             <div>
               <a href="{% url 'contracts:global_search' %}?preset_id={{ preset.id }}"
                  class="text-sm font-medium c-link hover:underline">{{ preset.name }}</a>
