@@ -782,3 +782,65 @@ The template was substantially pre-migrated from Batch 4 Step 2 list cleanup but
 - Retired class scan: 0
 
 ### Status: ✅ Complete
+
+---
+
+## Batch 4 Step 5 Slice B — contract_detail.html WorkspacePage Migration (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/contract_detail.html`
+
+### State Before Migration
+
+Full raw Tailwind — zero canonical primitives used. Raw `bg-white rounded-xl border border-gray-200 p-5` panels, raw `text-gray-*` colors, raw badge styles, raw button style. JS block already used `addEventListener` (no inline handlers).
+
+### Changes Made
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | none | `page-wrap` |
+| Page header | `flex items-center justify-between mb-6` div | `page-header` / `page-title` / `page-subtitle` / `page-actions` |
+| Edit button | `bg-gray-100 text-gray-700 rounded-lg` | `btn-ghost` |
+| Detail panels (×3) | `bg-white rounded-xl border border-gray-200 p-5` | `panel` + `panel-head` + `panel-inner` |
+| Panel headings | raw uppercase gray | `panel-title` |
+| Muted labels | `text-gray-500/400/600` | `c-muted` |
+| Status badge | raw conditional `bg-green-100/bg-gray-100` | `badge-sm badge-green / badge-gray` |
+| Links | `text-blue-600 hover:text-blue-800` | `c-link hover:underline` |
+| AI panel | `bg-white rounded-xl border border-gray-200 p-5` | `panel` + `panel-head` + `panel-inner` |
+| AI textarea | raw `border border-gray-300` | `input-base` (+ structural classes retained) |
+| AI submit btn | `bg-gray-900 text-white rounded-lg` | `btn-primary-grad` |
+| AI status span | `text-xs text-gray-500` | `text-xs c-muted` |
+| Content panel | `bg-white rounded-xl border border-gray-200 p-5` | `panel` + `panel-head` + `panel-inner` |
+| Document/Notes/Deadlines panels | raw card divs | `panel` + `panel-head` |
+| Document list items | raw flex hover div | `list-row` |
+| Deadline badge | raw `bg-red-100/bg-blue-100 rounded-full` | `badge-sm badge-red / badge-blue` |
+
+### Behavior Preserved
+
+- All IDs: `ai-assistant-trigger`, `ai-assistant-prompt`, `ai-assistant-submit`, `ai-assistant-status`, `ai-assistant-output`
+- All URLs: `contract_update`, `client_detail`, `matter_detail`, `document_create`, `deadline_create`, `add_negotiation_note`, `document_detail`, `contract_ai_assistant`
+- All context variables: `contract`, `related_case_matter`, `documents`, `negotiation_threads`, `deadlines`, `csrf_token`
+- All conditionals: `contract.value`, `contract.start_date/end_date/auto_renew/renewal_date/client/content`, `related_case_matter`, `deadlines`, `dl.is_overdue`
+- AI AJAX fetch logic: 100% unchanged
+- Negotiation notes: kept `divide-y divide-gray-100` vertical stack (no canonical vertical list-item primitive)
+- Grid layouts: kept responsive Tailwind `grid grid-cols-1 lg:grid-cols-3/2` (responsive breakpoints not replicated by dash-grid)
+
+### Intentional Exceptions
+
+| Item | Raw Class | Reason |
+|---|---|---|
+| `pre#ai-assistant-output` | `bg-gray-50 border border-gray-200 rounded-lg p-3` | No canonical code/pre-output primitive |
+| Negotiation notes list | `divide-y divide-gray-100 px-5 py-3` | Vertical stack layout — no canonical vertical list-item primitive; `list-row` is horizontal flex |
+| Grid wrappers | `grid grid-cols-1 lg:grid-cols-3/2 gap-6` | Responsive Tailwind grid; `dash-grid` has no `lg:` breakpoint equivalent |
+
+### Validation
+
+- Template parse: OK
+- manage.py check: 0 issues
+- Tests: 3/3 passed
+- Inline style scan: 0
+- Ad-hoc class scan: 1 intentional exception (`pre` AI output element)
+- All IDs/data attributes: unchanged
+
+### Status: ✅ Complete

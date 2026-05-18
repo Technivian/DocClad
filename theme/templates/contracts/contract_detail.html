@@ -1,112 +1,130 @@
 {% extends "base.html" %}
 {% block title %}{{ contract.title }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ contract.title }}</h1>
-        <p class="text-sm text-gray-500">Contract flow <span class="sr-only">Case Flow</span>&middot; {{ contract.get_contract_type_display }} &middot; {{ contract.get_status_display }} {% if contract.client %}&middot; {{ contract.client.name }}{% endif %}</p>
+      <h1 class="page-title">{{ contract.title }}</h1>
+      <p class="page-subtitle">Contract flow <span class="sr-only">Case Flow</span>&middot; {{ contract.get_contract_type_display }} &middot; {{ contract.get_status_display }} {% if contract.client %}&middot; {{ contract.client.name }}{% endif %}</p>
     </div>
-    <div class="flex gap-2">
-        <a href="{% url 'contracts:contract_update' contract.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
+    <div class="page-actions">
+      <a href="{% url 'contracts:contract_update' contract.pk %}"
+         class="inline-flex items-center px-3 py-2 text-sm rounded-lg btn-ghost">Edit</a>
     </div>
-</div>
+  </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Contract Details<span class="sr-only">Case Details</span></h3>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-500">Status:</span> <span class="px-2 py-0.5 rounded-full text-xs {% if contract.status == 'ACTIVE' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ contract.get_status_display }}</span></div>
-            <div><span class="text-gray-500">Counterparty:</span> {{ contract.counterparty|default:"—" }}</div>
-            {% if contract.value %}<div><span class="text-gray-500">Value:</span> ${{ contract.value|floatformat:2 }}</div>{% endif %}
-            {% if contract.start_date %}<div><span class="text-gray-500">Start:</span> {{ contract.start_date|date:"M d, Y" }}</div>{% endif %}
-            {% if contract.end_date %}<div><span class="text-gray-500">End:</span> {{ contract.end_date|date:"M d, Y" }}</div>{% endif %}
-            {% if contract.auto_renew %}<div><span class="text-gray-500">Auto Renew:</span> Yes</div>{% endif %}
-            {% if contract.renewal_date %}<div><span class="text-gray-500">Renewal Date:</span> {{ contract.renewal_date|date:"M d, Y" }}</div>{% endif %}
-        </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Contract Details<span class="sr-only">Case Details</span></h3>
+      </div>
+      <div class="panel-inner space-y-2 text-sm">
+        <div><span class="c-muted">Status:</span> <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span></div>
+        <div><span class="c-muted">Counterparty:</span> {{ contract.counterparty|default:"—" }}</div>
+        {% if contract.value %}<div><span class="c-muted">Value:</span> ${{ contract.value|floatformat:2 }}</div>{% endif %}
+        {% if contract.start_date %}<div><span class="c-muted">Start:</span> {{ contract.start_date|date:"M d, Y" }}</div>{% endif %}
+        {% if contract.end_date %}<div><span class="c-muted">End:</span> {{ contract.end_date|date:"M d, Y" }}</div>{% endif %}
+        {% if contract.auto_renew %}<div><span class="c-muted">Auto Renew:</span> Yes</div>{% endif %}
+        {% if contract.renewal_date %}<div><span class="c-muted">Renewal Date:</span> {{ contract.renewal_date|date:"M d, Y" }}</div>{% endif %}
+      </div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Related Records</h3>
-        <div class="space-y-2 text-sm">
-            {% if contract.client %}<div><span class="text-gray-500">Client:</span> <a href="{% url 'contracts:client_detail' contract.client.pk %}" class="text-blue-600">{{ contract.client.name }}</a></div>{% endif %}
-            {% if related_case_matter %}<div><span class="text-gray-500">Matter:</span> <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="text-blue-600">{{ related_case_matter.title }}</a></div>{% endif %}
-            <div><span class="text-gray-500">Created by:</span> {{ contract.created_by.get_full_name|default:"System" }}</div>
-            <div><span class="text-gray-500">Created:</span> {{ contract.created_at|date:"M d, Y" }}</div>
-        </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Related Records</h3>
+      </div>
+      <div class="panel-inner space-y-2 text-sm">
+        {% if contract.client %}<div><span class="c-muted">Client:</span> <a href="{% url 'contracts:client_detail' contract.client.pk %}" class="c-link">{{ contract.client.name }}</a></div>{% endif %}
+        {% if related_case_matter %}<div><span class="c-muted">Matter:</span> <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="c-link">{{ related_case_matter.title }}</a></div>{% endif %}
+        <div><span class="c-muted">Created by:</span> {{ contract.created_by.get_full_name|default:"System" }}</div>
+        <div><span class="c-muted">Created:</span> {{ contract.created_at|date:"M d, Y" }}</div>
+      </div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Actions<span class="sr-only">Case Actions</span></h3>
-        <div class="space-y-2">
-            <a href="{% url 'contracts:document_create' %}" class="block text-sm text-blue-600 hover:text-blue-800">Attach Document</a>
-            <a href="{% url 'contracts:deadline_create' %}" class="block text-sm text-blue-600 hover:text-blue-800">Add Deadline</a>
-            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="block text-sm text-blue-600 hover:text-blue-800">Add Negotiation Note</a>
-            <button id="ai-assistant-trigger" type="button" class="block text-sm text-left text-blue-600 hover:text-blue-800">Run internal AI review</button>
-        </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Actions<span class="sr-only">Case Actions</span></h3>
+      </div>
+      <div class="panel-inner space-y-2 text-sm">
+        <a href="{% url 'contracts:document_create' %}" class="block c-link hover:underline">Attach Document</a>
+        <a href="{% url 'contracts:deadline_create' %}" class="block c-link hover:underline">Add Deadline</a>
+        <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="block c-link hover:underline">Add Negotiation Note</a>
+        <button id="ai-assistant-trigger" type="button" class="block text-left c-link hover:underline">Run internal AI review</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Internal AI Assistant</h3>
-    <p class="text-sm text-gray-600 mb-3">Closed-server assistant. Data stays in your tenant context and is processed by internal rules.</p>
-    <div class="flex flex-col gap-3">
-        <textarea id="ai-assistant-prompt" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights for this case..."></textarea>
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h3 class="panel-title">Internal AI Assistant</h3>
+    </div>
+    <div class="panel-inner">
+      <p class="text-sm c-muted mb-3">Closed-server assistant. Data stays in your tenant context and is processed by internal rules.</p>
+      <div class="flex flex-col gap-3">
+        <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights for this case..."></textarea>
         <div class="flex items-center gap-3">
-            <button id="ai-assistant-submit" type="button" class="px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800">Analyze</button>
-            <span id="ai-assistant-status" class="text-xs text-gray-500"></span>
+          <button id="ai-assistant-submit" type="button"
+                  class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Analyze</button>
+          <span id="ai-assistant-status" class="text-xs c-muted"></span>
         </div>
-        <pre id="ai-assistant-output" class="hidden text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-700 whitespace-pre-wrap"></pre>
+        <pre id="ai-assistant-output" class="hidden text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 c-muted whitespace-pre-wrap"></pre>
+      </div>
     </div>
-</div>
+  </div>
 
-{% if contract.content %}
-<div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Content</h3>
-    <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ contract.content }}</div>
-</div>
-{% endif %}
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Documents</h2></div>
-        <div class="divide-y divide-gray-100">
-            {% for doc in documents %}
-            <a href="{% url 'contracts:document_detail' doc.pk %}" class="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
-                <div class="text-sm text-gray-900">{{ doc.title }}</div>
-                <span class="text-xs text-gray-500">v{{ doc.version }}</span>
-            </a>
-            {% empty %}
-            <div class="px-5 py-6 text-center text-gray-400 text-sm">No documents attached.</div>
-            {% endfor %}
-        </div>
+  {% if contract.content %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h3 class="panel-title">Content</h3>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Negotiation Notes</h2></div>
-        <div class="divide-y divide-gray-100">
-            {% for note in negotiation_threads %}
-            <div class="px-5 py-3">
-                <div class="text-sm font-medium text-gray-900">{{ note.title }}</div>
-                <div class="text-sm text-gray-600 mt-1">{{ note.content|truncatechars:100 }}</div>
-                <div class="text-xs text-gray-400 mt-1">{{ note.created_by.get_full_name|default:"—" }} &middot; {{ note.created_at|date:"M d" }}</div>
-            </div>
-            {% empty %}
-            <div class="px-5 py-6 text-center text-gray-400 text-sm">No negotiation notes.</div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
+    <div class="panel-inner text-sm whitespace-pre-wrap">{{ contract.content }}</div>
+  </div>
+  {% endif %}
 
-{% if deadlines %}
-<div class="bg-white rounded-xl border border-gray-200 mt-6">
-    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Deadlines</h2></div>
-    <div class="divide-y divide-gray-100">
-        {% for dl in deadlines %}
-        <div class="flex items-center justify-between px-5 py-3">
-            <div class="text-sm text-gray-900">{{ dl.title }} &middot; {{ dl.due_date|date:"M d, Y" }}</div>
-            <span class="text-xs px-2 py-1 rounded-full {% if dl.is_overdue %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Documents</h2>
+      </div>
+      {% for doc in documents %}
+      <a href="{% url 'contracts:document_detail' doc.pk %}" class="list-row">
+        <div class="text-sm">{{ doc.title }}</div>
+        <span class="text-xs c-muted">v{{ doc.version }}</span>
+      </a>
+      {% empty %}
+      <div class="panel-inner text-center c-muted text-sm">No documents attached.</div>
+      {% endfor %}
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Negotiation Notes</h2>
+      </div>
+      <div class="divide-y divide-gray-100">
+        {% for note in negotiation_threads %}
+        <div class="px-5 py-3">
+          <div class="text-sm font-medium">{{ note.title }}</div>
+          <div class="text-sm c-muted mt-1">{{ note.content|truncatechars:100 }}</div>
+          <div class="text-xs c-muted mt-1">{{ note.created_by.get_full_name|default:"—" }} &middot; {{ note.created_at|date:"M d" }}</div>
         </div>
+        {% empty %}
+        <div class="px-5 py-6 text-center c-muted text-sm">No negotiation notes.</div>
         {% endfor %}
+      </div>
     </div>
+  </div>
+
+  {% if deadlines %}
+  <div class="panel mt-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Deadlines</h2>
+    </div>
+    {% for dl in deadlines %}
+    <div class="list-row">
+      <div class="text-sm">{{ dl.title }} &middot; {{ dl.due_date|date:"M d, Y" }}</div>
+      <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
 <script>
 (() => {

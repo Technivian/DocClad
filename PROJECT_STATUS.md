@@ -603,3 +603,29 @@ The following `bg-blue-50` / `bg-red-50` usages in templates are decorative pane
 Already present from prior batch work: `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `stat-card`, `stat-card-amber`, `tabs-shell`, `tab-pill-*`, `panel`, `tbl-head`, `tbl-th`, `tbl-row`, `tbl-td`, `badge-sm`, `badge-expiring`, `btn-primary-grad`, `btn-ghost`, `btn-soft-primary`, `c-*`, `row-expiring`
 
 ### Next: contract_detail.html (Slice B continues)
+
+---
+
+## Batch 4 Step 5 — Slice B: contract_detail.html WorkspacePage Migration
+
+**Status:** ✅ Complete
+
+### Changes
+
+| File | Change |
+|---|---|
+| `theme/templates/contracts/contract_detail.html` | Full WorkspacePage migration from raw Tailwind |
+| `DESIGN_ARCHETYPE_MAP.md` | `contract_detail.html` marked MIGRATED |
+| `DESIGN_UNIFICATION_ROADMAP.md` | Step 5 log entry added |
+
+### Primitives Applied
+
+`page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `btn-ghost`, `panel`, `panel-head`, `panel-title`, `panel-inner`, `c-muted`, `c-link`, `badge-sm badge-green/badge-gray` (status), `badge-sm badge-red/badge-blue` (deadlines), `input-base`, `btn-primary-grad`, `list-row`
+
+### Intentional Exceptions (Documented)
+
+- `pre#ai-assistant-output` — raw `bg-gray-50 border border-gray-200` (no canonical code-output primitive)
+- Negotiation notes list — raw `divide-y`/`px-5 py-3` vertical stack (no canonical vertical list-item primitive)
+- Grid wrappers — Tailwind responsive `lg:grid-cols-3/2` (dash-grid has no responsive breakpoints)
+
+### Next: search_results.html (Batch 4 final page)
