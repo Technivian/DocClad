@@ -524,3 +524,33 @@ The following `bg-blue-50` / `bg-red-50` usages in templates are decorative pane
 - Tests: 3/3 passed
 
 **Batch 4 page migration wave (reports_dashboard.html, identity_telemetry_dashboard.html, contract_detail.html, contract_list.html, search_results.html) can now begin.**
+
+---
+
+## Batch 4 Step 2 Slice A — Dashboard Migration (2026-05-18)
+
+**Status: ✅ Complete**
+
+### Files Changed
+
+| File | Change |
+|---|---|
+| `theme/templates/contracts/reports_dashboard.html` | Full WorkspacePage migration |
+| `theme/templates/contracts/identity_telemetry_dashboard.html` | Full WorkspacePage migration |
+| `DESIGN_ARCHETYPE_MAP.md` | Both templates marked MIGRATED |
+| `DESIGN_UNIFICATION_ROADMAP.md` | Slice A log entry added |
+
+### Primitives Normalized
+
+**reports_dashboard.html:** `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `dash-grid dash-grid-4` (×2), `kpi-card`, `stat-card-amber`, `stat-card-red`, `panel`, `panel-head`, `panel-inner`, `panel-divider`, `dash-grid dash-grid-2`, `list-row`, `btn-ghost`, `c-muted`, `c-danger`, `c-success-soft`, `report-progress-track/fill`, chart ARIA roles
+
+**identity_telemetry_dashboard.html:** `page-wrap`, `page-header`, `page-title`, `page-subtitle`, `page-actions`, `dash-grid dash-grid-4`, `kpi-card`, `panel`, `panel-head`, `panel-inner`, `tbl-head`, `tbl-th`, `tbl-row`, `list-row`, `btn-ghost`, `c-muted`
+
+### Remaining Risks
+
+- 2 inline `style=` color overrides for amber (A/R) and blue (upcoming deadlines) — no canonical c-warning/c-info token yet; flagged for Step 3 token cleanup
+- Chart bars use Tailwind `bg-blue-500` / `bg-red-500` in JS strings — acceptable; chart internals are JS-controlled and not template structure
+
+### Slice B Readiness
+
+✅ **Slice B can begin** — contract_detail.html and contract_list.html are next candidates per DESIGN_ARCHETYPE_MAP.md.

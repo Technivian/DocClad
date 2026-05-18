@@ -1,130 +1,158 @@
 {% extends "base.html" %}
 {% block title %}Reports & Analytics - CMS Aegis{% endblock %}
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-    <p class="text-sm text-gray-500 mt-1">Contract-flow performance, workload, and financial overview.</p>
-</div>
-<div class="mb-6 flex justify-end">
-    <a href="{% url 'contracts:reports_export' %}" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Export report CSV</a>
-</div>
+<div class="page-wrap">
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Total Clients</div>
-        <div class="text-2xl font-bold text-gray-900">{{ total_clients }}</div>
-        <div class="text-xs text-green-600">{{ active_clients }} active</div>
+{# ── Page header ───────────────────────────────────────────────────────────── #}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Reports &amp; Analytics</h1>
+        <p class="page-subtitle">Contract-flow performance, workload, and financial overview.</p>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Active Case Matters</div>
-        <div class="text-2xl font-bold text-gray-900">{{ active_case_matters }}</div>
-        <div class="text-xs text-gray-500">{{ total_case_matters }} total</div>
-    </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Case Workload Hours</div>
-        <div class="text-2xl font-bold text-gray-900">{{ case_workload_hours|floatformat:0 }}h</div>
-    </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">YTD Revenue</div>
-        <div class="text-2xl font-bold text-green-600">${{ yearly_revenue|floatformat:0 }}</div>
+    <div class="page-actions">
+        <a href="{% url 'contracts:reports_export' %}" class="btn-ghost">Export report CSV</a>
     </div>
 </div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Active Contracts<span class="sr-only">Active Contracts</span></div>
-        <div class="text-2xl font-bold text-gray-900">{{ active_cases }}</div>
-        <div class="text-xs text-gray-500">${{ total_case_value|floatformat:0 }} total value</div>
+{# ── KPI row 1: Clients / Matters / Hours / Revenue ───────────────────────── #}
+<div class="dash-grid dash-grid-4 mb-6">
+    <div class="kpi-card">
+        <div class="kpi-label">Total Clients</div>
+        <div class="kpi-value">{{ total_clients }}</div>
+        <div class="kpi-sub c-success-soft">{{ active_clients }} active</div>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Outstanding A/R</div>
-        <div class="text-2xl font-bold text-orange-600">${{ outstanding|floatformat:0 }}</div>
+    <div class="kpi-card">
+        <div class="kpi-label">Active Case Matters</div>
+        <div class="kpi-value">{{ active_case_matters }}</div>
+        <div class="kpi-sub">{{ total_case_matters }} total</div>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Overdue Deadlines</div>
-        <div class="text-2xl font-bold text-red-600">{{ overdue_deadlines }}</div>
-        <div class="text-xs text-blue-600">{{ upcoming_deadlines }} due this week</div>
+    <div class="kpi-card">
+        <div class="kpi-label">Case Workload Hours</div>
+        <div class="kpi-value">{{ case_workload_hours|floatformat:0 }}h</div>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">High-Risk Items</div>
-        <div class="text-2xl font-bold text-red-600">{{ high_risks }}</div>
+    <div class="kpi-card">
+        <div class="kpi-label">YTD Revenue</div>
+        <div class="kpi-value c-success-soft">${{ yearly_revenue|floatformat:0 }}</div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900 mb-4">Monthly Billing (Last 6 Months)</h3>
-        <div id="billing-chart" class="h-48 flex items-end gap-2 justify-between"></div>
+{# ── KPI row 2: Contracts / A/R / Deadlines / Risk ────────────────────────── #}
+<div class="dash-grid dash-grid-4 mb-6">
+    <div class="kpi-card">
+        <div class="kpi-label">Active Contracts<span class="sr-only">Active Contracts</span></div>
+        <div class="kpi-value">{{ active_cases }}</div>
+        <div class="kpi-sub">${{ total_case_value|floatformat:0 }} total value</div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900 mb-4">Practice Area Distribution</h3>
-        <div class="space-y-3">
-            {% for pa in practice_areas %}
-            <div>
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-gray-700">{{ pa.practice_area }}</span>
-                    <span class="text-gray-500">{{ pa.count }} matter{{ pa.count|pluralize }}</span>
+    <div class="kpi-card stat-card-amber">
+        <div class="kpi-label">Outstanding A/R</div>
+        <div class="kpi-value" style="color:#F59E0B">${{ outstanding|floatformat:0 }}</div>
+    </div>
+    <div class="kpi-card stat-card-red">
+        <div class="kpi-label">Overdue Deadlines</div>
+        <div class="kpi-value c-danger">{{ overdue_deadlines }}</div>
+        <div class="kpi-sub" style="color:#60A5FA">{{ upcoming_deadlines }} due this week</div>
+    </div>
+    <div class="kpi-card stat-card-red">
+        <div class="kpi-label">High-Risk Items</div>
+        <div class="kpi-value c-danger">{{ high_risks }}</div>
+    </div>
+</div>
+
+{# ── Charts: Billing + Practice Area ─────────────────────────────────────── #}
+<div class="dash-grid dash-grid-2 mb-6">
+    <div class="panel">
+        <div class="panel-head"><span class="panel-title">Monthly Billing (Last 6 Months)</span></div>
+        <div class="panel-inner">
+            <div id="billing-chart"
+                 class="h-48 flex items-end gap-2 justify-between"
+                 role="img"
+                 aria-label="Monthly billing bar chart, last 6 months"></div>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-head"><span class="panel-title">Practice Area Distribution</span></div>
+        <div class="panel-inner">
+            <div class="space-y-3">
+                {% for pa in practice_areas %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>{{ pa.practice_area }}</span>
+                        <span class="c-muted">{{ pa.count }} matter{{ pa.count|pluralize }}</span>
+                    </div>
+                    <div class="report-progress-track">
+                        <div class="report-progress-fill" data-width="{% widthratio pa.count active_matters 100 %}"></div>
+                    </div>
                 </div>
-                <div class="report-progress-track">
-                    <div class="report-progress-fill" data-width="{% widthratio pa.count active_matters 100 %}"></div>
+                {% empty %}
+                <p class="text-sm c-muted">No active matters.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Analysis: Cycle Time + Risk Trend ────────────────────────────────────── #}
+<div class="dash-grid dash-grid-2 mb-6">
+    <div class="panel">
+        <div class="panel-head"><span class="panel-title">Executive Cycle Time</span></div>
+        <div class="panel-inner">
+            <p class="text-sm c-muted">Average contract cycle (last 180 days)</p>
+            <div class="text-3xl font-bold mt-1">
+                {% if executive_cycle_time_days is not None %}
+                {{ executive_cycle_time_days }} days
+                {% else %}
+                --
+                {% endif %}
+            </div>
+            <div class="panel-divider">
+                <h4 class="text-sm font-semibold mb-2">Top Bottlenecks</h4>
+                <div class="space-y-2">
+                    {% for item in executive_bottlenecks %}
+                    <div class="flex items-center justify-between text-sm">
+                        <span>{{ item.lifecycle_stage }}</span>
+                        <span class="c-muted">{{ item.count }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm c-muted">No bottleneck data yet.</p>
+                    {% endfor %}
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-head"><span class="panel-title">Risk Trend (High + Critical)</span></div>
+        <div class="panel-inner">
+            <div id="risk-trend-chart"
+                 class="h-48 flex items-end gap-2 justify-between"
+                 role="img"
+                 aria-label="Risk trend bar chart, high and critical items"></div>
+        </div>
+    </div>
+</div>
+
+{# ── Saved executive dashboards ────────────────────────────────────────────── #}
+<div class="panel">
+    <div class="panel-head"><span class="panel-title">Saved Executive Dashboards</span></div>
+    <div class="panel-inner">
+        <div class="space-y-2">
+            {% for preset in executive_saved_dashboards %}
+            <div class="list-row flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-medium">{{ preset.name }}</div>
+                    <div class="text-xs c-muted">Updated {{ preset.updated_at|date:"Y-m-d H:i" }}</div>
+                </div>
+                <div class="text-xs c-muted">#{{ preset.id }}</div>
+            </div>
             {% empty %}
-            <p class="text-sm text-gray-400">No active matters.</p>
+            <p class="text-sm c-muted">No shared dashboard presets saved yet.</p>
             {% endfor %}
         </div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900 mb-3">Executive Cycle Time</h3>
-        <div class="text-sm text-gray-500">Average contract cycle (last 180 days)</div>
-        <div class="text-3xl font-bold text-gray-900 mt-1">
-            {% if executive_cycle_time_days is not None %}
-            {{ executive_cycle_time_days }} days
-            {% else %}
-            --
-            {% endif %}
-        </div>
-        <div class="mt-4">
-            <h4 class="text-sm font-semibold text-gray-900 mb-2">Top Bottlenecks</h4>
-            <div class="space-y-2">
-                {% for item in executive_bottlenecks %}
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-700">{{ item.lifecycle_stage }}</span>
-                    <span class="text-gray-500">{{ item.count }}</span>
-                </div>
-                {% empty %}
-                <p class="text-sm text-gray-400">No bottleneck data yet.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="font-semibold text-gray-900 mb-3">Risk Trend (High + Critical)</h3>
-        <div id="risk-trend-chart" class="h-48 flex items-end gap-2 justify-between"></div>
-    </div>
-</div>
-
-<div class="bg-white rounded-xl border border-gray-200 p-5 mt-6">
-    <h3 class="font-semibold text-gray-900 mb-3">Saved Executive Dashboards</h3>
-    <div class="space-y-2">
-        {% for preset in executive_saved_dashboards %}
-        <div class="flex items-center justify-between border border-gray-100 rounded-lg px-3 py-2">
-            <div>
-                <div class="text-sm font-medium text-gray-900">{{ preset.name }}</div>
-                <div class="text-xs text-gray-500">Updated {{ preset.updated_at|date:"Y-m-d H:i" }}</div>
-            </div>
-            <div class="text-xs text-gray-500">#{{ preset.id }}</div>
-        </div>
-        {% empty %}
-        <p class="text-sm text-gray-400">No shared dashboard presets saved yet.</p>
-        {% endfor %}
-    </div>
-</div>
-
+</div>{# /page-wrap #}
 {% endblock %}
+
 {% block extra_js %}
 <script>
     const data = JSON.parse('{{ monthly_billing|safe }}');

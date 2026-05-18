@@ -649,3 +649,56 @@ Task 3. Complete migration of remaining tier-2 and tier-3 templates
 ## Milestone Outcome
 
 When Phases 1-5 are complete, CMS Aegis should present as one coherent enterprise product with predictable interaction patterns, stronger trust signals, and lower implementation entropy.
+
+---
+
+## Batch 4 Step 2 Slice A — WorkspacePage Dashboard Migration (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/reports_dashboard.html`
+- `theme/templates/contracts/identity_telemetry_dashboard.html`
+
+### Primitives Applied
+
+| Primitive | Applied To |
+|---|---|
+| `page-wrap` | Both templates |
+| `page-header` / `page-title` / `page-subtitle` | Both templates |
+| `page-actions` | Both templates |
+| `dash-grid dash-grid-4` | Both templates (KPI rows) |
+| `kpi-card` / `kpi-label` / `kpi-value` / `kpi-sub` | Both templates |
+| `stat-card-amber` / `stat-card-red` | `reports_dashboard.html` KPI variants |
+| `panel` / `panel-head` / `panel-title` / `panel-inner` | Both templates |
+| `panel-divider` | `reports_dashboard.html` cycle time panel |
+| `dash-grid dash-grid-2` | `reports_dashboard.html` chart/analysis rows |
+| `list-row` | Both templates (saved dashboards, identity event rows) |
+| `tbl-head` / `tbl-th` / `tbl-row` | `identity_telemetry_dashboard.html` |
+| `btn-ghost` | Both templates (export CSV, back to settings) |
+| `c-muted` / `c-danger` / `c-success-soft` | Both templates (text tokens) |
+| `report-progress-track` / `report-progress-fill` | `reports_dashboard.html` |
+| `role="img"` + `aria-label` | Chart regions in `reports_dashboard.html` |
+
+### Behavior Preserved
+
+- All chart JS logic (`billing-chart`, `risk-trend-chart`, `report-progress-fill`) — unchanged
+- All context variables: `total_clients`, `active_clients`, `active_case_matters`, `total_case_matters`, `case_workload_hours`, `yearly_revenue`, `active_cases`, `total_case_value`, `outstanding`, `overdue_deadlines`, `upcoming_deadlines`, `high_risks`, `practice_areas`, `active_matters`, `executive_cycle_time_days`, `executive_bottlenecks`, `executive_risk_trend`, `executive_saved_dashboards`, `monthly_billing`, `telemetry_events`, `recovery_code_counts`, `recent_logs`, `organization`
+- Export CSV link preserved (`contracts:reports_export`)
+- Back to settings link preserved (`settings_hub`)
+- `data-metric` attribute on telemetry kpi-cards preserved
+- Empty states preserved on all panels
+
+### Intentional Color Exceptions
+
+- `kpi-value` on Outstanding A/R: `style="color:#F59E0B"` — amber token not yet defined as `c-warning`; flagged for Batch 4 Step 3 token cleanup
+- `kpi-sub` on upcoming deadlines: `style="color:#60A5FA"` — informational blue token not yet defined; flagged for Batch 4 Step 3
+
+### Validation
+
+- Template parse: both OK
+- manage.py check: 0 issues
+- Tests: 3/3 passed
+- Inline handler scan: none introduced
+- Retired class scan: no action-chip, no ad-hoc wrappers
+
+### Status: ✅ Complete
