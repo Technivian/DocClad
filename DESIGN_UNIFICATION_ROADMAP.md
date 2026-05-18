@@ -844,3 +844,82 @@ Full raw Tailwind — zero canonical primitives used. Raw `bg-white rounded-xl b
 - All IDs/data attributes: unchanged
 
 ### Status: ✅ Complete
+
+---
+
+## Batch 4 Step 6 — search_results.html QueuePage Migration (2026-05-18)
+
+### Scope
+
+- `theme/templates/contracts/search_results.html`
+
+### State Before Migration
+
+Full raw Tailwind — zero canonical primitives. All panels used `bg-white rounded-xl border border-gray-200 p-5`. Result lists used `divide-y divide-gray-100` with raw `block px-5 py-3 hover:bg-gray-50` link rows. All text was raw `text-gray-*` / `text-blue-600`.
+
+### Changes Made
+
+| Area | Before | After |
+|---|---|---|
+| Outer wrapper | none | `page-wrap` |
+| Page header | raw `mb-6` + `text-2xl font-bold text-gray-900` | `page-header` / `page-title` / `page-subtitle` |
+| Search input | raw `border border-gray-300 rounded-xl` | `input-base` (+ shape classes retained) |
+| Search submit | `bg-blue-600 text-white rounded-xl` | `btn-primary-grad` |
+| Filter inputs (type, status, jurisdiction) | raw border classes | `input-base` + `aria-label` added |
+| Search mode select | raw border classes | `select-base` |
+| Semantic hint | `text-xs text-gray-500` | `text-xs c-muted` |
+| Saved Searches panel | `bg-white rounded-xl border border-gray-200 p-5` | `panel` + `panel-head` + `panel-inner` |
+| Panel headings | raw `text-sm font-semibold text-gray-900 uppercase` | `panel-title` |
+| Saving query hint | `text-xs text-gray-500` | `text-xs c-muted` |
+| Save form name input | raw `border border-gray-300 rounded-lg` | `input-base` + `aria-label` |
+| Save form submit | `bg-blue-600 text-white rounded-lg` | `btn-primary-grad` |
+| Preset links | `text-blue-600 hover:text-blue-800` | `c-link hover:underline` |
+| Preset meta | `text-xs text-gray-500` | `text-xs c-muted` |
+| Delete button | `text-xs text-red-600` | `text-xs c-danger` |
+| Empty saved searches | `text-sm text-gray-400` | `text-sm c-muted` |
+| Search Tips panel | `bg-white rounded-xl border border-gray-200 p-5` | `panel` + `panel-head` + `panel-inner` |
+| Tips text | `text-sm text-gray-600` | `text-sm c-muted` |
+| Result section panels (×7) | `bg-white rounded-xl border border-gray-200 divide-y` | `panel` + `panel-head` |
+| Result section headings | `text-lg font-semibold text-gray-900 mb-3` | `panel-title` + count as `c-muted` |
+| Result list items | `block px-5 py-3 hover:bg-gray-50` | `list-row` |
+| Result item titles | `text-sm font-medium text-blue-600` | `text-sm font-semibold c-link` |
+| Result item meta | `text-xs text-gray-500` | `text-xs c-muted` |
+| Empty state SVGs (×2) | `text-gray-300` (no aria) | `c-muted` + `aria-hidden="true"` |
+| Empty state text | `text-sm text-gray-500` | `text-sm c-muted` |
+
+### Behavior Preserved
+
+- All GET form params: `q`, `type`, `status`, `jurisdiction`, `search_mode`
+- Save search POST form: `save_search_preset` URL, all hidden fields (`q`, `type`, `status`, `jurisdiction`, `search_mode`), `name` field
+- Delete preset POST forms: `delete_search_preset` URL + `preset.id`
+- All context variables: `q`, `search_mode`, `saved_searches`, `current_search_params`, `results.cases`, `results.clients`, `results.case_matters`, `results.task_signals`, `results.documents`, `results.clauses`, `results.counterparties`, `preset.id`, `preset.name`, `preset.params`
+- All URL tags: `global_search`, `save_search_preset`, `delete_search_preset`, `contract_detail`, `client_detail`, `matter_detail`, `legal_task_kanban`, `document_detail`, `clause_template_detail`, `counterparty_detail`
+- All conditionals: per-category `if results.*`, no-results compound check
+- All `sr-only` spans preserved
+
+### Intentional Exceptions
+
+| Item | Retained Class | Reason |
+|---|---|---|
+| Form inputs | `rounded-xl px-4 py-3 border` | `input-base` sets colors only, not shape |
+| Search submit button | `rounded-xl` | `btn-primary-grad` sets gradient; shape retained |
+| Saved search preset row border | `rounded-lg border border-gray-100 px-3 py-2` | No canonical "preset chip" primitive |
+| `lg:grid-cols-[2fr_1fr]` | Tailwind custom grid | No canonical asymmetric grid primitive |
+| Filter/search grid | `grid grid-cols-1 md:grid-cols-3` | Responsive Tailwind; `dash-grid` has no responsive breakpoints |
+
+### Accessibility Improvements
+
+- `aria-label` added to: type filter, status filter, jurisdiction filter, search mode select, save-name input
+- `aria-hidden="true"` added to both empty-state SVGs
+- Search input already had `aria-label` — preserved ✅
+
+### Validation
+
+- Template parse: OK
+- manage.py check: 0 issues
+- Tests: 3/3 passed
+- Inline style scan: 0
+- Ad-hoc class scan: 0 retired classes; `rounded-xl` + `border` on `input-base`/`select-base` elements are intentional shape/structure classes, not design violations
+- All URLs/context variables/form params: unchanged
+
+### Status: ✅ Complete — Batch 4 page migration wave complete

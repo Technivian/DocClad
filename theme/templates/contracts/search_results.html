@@ -1,190 +1,230 @@
 {% extends "base.html" %}
 {% block title %}Search{% if q %}: {{ q }}{% endif %} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">Search</h1>
-    <p class="text-sm text-gray-500 mt-1">Search across contracts, matters, documents, and task signals with relevance ranking.<span class="sr-only">Search across cases, case matters, documents, and task signals</span></p>
-</div>
-<form method="get" class="mb-8">
-    <div class="grid gap-3">
-        <div class="flex gap-2">
-            <input type="text" name="q" value="{{ q }}" placeholder="Search contracts, clients, matters, documents, clauses, task signals..." autofocus
-            aria-label="Search contracts, clients, matters, documents, clauses..."
-            class="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700">Search</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <input type="text" name="type" value="{{ request.GET.type }}" placeholder="Filter type"
-                class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <input type="text" name="status" value="{{ request.GET.status }}" placeholder="Filter status"
-                class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <input type="text" name="jurisdiction" value="{{ request.GET.jurisdiction }}" placeholder="Filter jurisdiction"
-                class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <select name="search_mode"
-                class="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="hybrid" {% if search_mode == 'hybrid' %}selected{% endif %}>Search mode: Hybrid</option>
-                <option value="semantic" {% if search_mode == 'semantic' %}selected{% endif %}>Search mode: Semantic</option>
-                <option value="keyword" {% if search_mode == 'keyword' %}selected{% endif %}>Search mode: Keyword</option>
-            </select>
-            <div class="md:col-span-2 text-xs text-gray-500 flex items-center px-1">
-                Semantic mode expands clause terms (for example NDA, confidentiality, and non-disclosure).
-            </div>
-        </div>
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Search</h1>
+      <p class="page-subtitle">Search across contracts, matters, documents, and task signals with relevance ranking.<span class="sr-only">Search across cases, case matters, documents, and task signals</span></p>
     </div>
-</form>
-<div class="grid gap-6 lg:grid-cols-[2fr_1fr] mb-8">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">Saved Searches</h2>
-            {% if q %}
-            <span class="text-xs text-gray-500">Saving current query: {{ q }}</span>
-            {% endif %}
+  </div>
+
+  <form method="get" class="mb-8">
+    <div class="grid gap-3">
+      <div class="flex gap-2">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search contracts, clients, matters, documents, clauses, task signals..."
+               autofocus aria-label="Search contracts, clients, matters, documents, clauses..."
+               class="input-base flex-1 px-4 py-3 border rounded-xl text-sm">
+        <button type="submit"
+                class="inline-flex items-center px-6 py-3 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 btn-primary-grad">Search</button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <input type="text" name="type" value="{{ request.GET.type }}" placeholder="Filter type"
+               aria-label="Filter by type"
+               class="input-base px-3 py-2 border rounded-xl text-sm">
+        <input type="text" name="status" value="{{ request.GET.status }}" placeholder="Filter status"
+               aria-label="Filter by status"
+               class="input-base px-3 py-2 border rounded-xl text-sm">
+        <input type="text" name="jurisdiction" value="{{ request.GET.jurisdiction }}" placeholder="Filter jurisdiction"
+               aria-label="Filter by jurisdiction"
+               class="input-base px-3 py-2 border rounded-xl text-sm">
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <select name="search_mode" aria-label="Search mode"
+                class="select-base px-3 py-2 border rounded-xl text-sm">
+          <option value="hybrid" {% if search_mode == 'hybrid' %}selected{% endif %}>Search mode: Hybrid</option>
+          <option value="semantic" {% if search_mode == 'semantic' %}selected{% endif %}>Search mode: Semantic</option>
+          <option value="keyword" {% if search_mode == 'keyword' %}selected{% endif %}>Search mode: Keyword</option>
+        </select>
+        <div class="md:col-span-2 text-xs c-muted flex items-center px-1">
+          Semantic mode expands clause terms (for example NDA, confidentiality, and non-disclosure).
         </div>
+      </div>
+    </div>
+  </form>
+
+  <div class="grid gap-6 lg:grid-cols-[2fr_1fr] mb-8">
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Saved Searches</h2>
+        {% if q %}<span class="text-xs c-muted">Saving current query: {{ q }}</span>{% endif %}
+      </div>
+      <div class="panel-inner">
         {% if q %}
         <form method="post" action="{% url 'contracts:save_search_preset' %}" class="flex flex-col sm:flex-row gap-2 mb-4">
-            {% csrf_token %}
-            <input type="hidden" name="q" value="{{ current_search_params.q }}">
-            <input type="hidden" name="type" value="{{ current_search_params.type }}">
-            <input type="hidden" name="status" value="{{ current_search_params.status }}">
-            <input type="hidden" name="jurisdiction" value="{{ current_search_params.jurisdiction }}">
-            <input type="hidden" name="search_mode" value="{{ current_search_params.search_mode }}">
-            <input type="text" name="name" placeholder="Name this search" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Save search</button>
+          {% csrf_token %}
+          <input type="hidden" name="q" value="{{ current_search_params.q }}">
+          <input type="hidden" name="type" value="{{ current_search_params.type }}">
+          <input type="hidden" name="status" value="{{ current_search_params.status }}">
+          <input type="hidden" name="jurisdiction" value="{{ current_search_params.jurisdiction }}">
+          <input type="hidden" name="search_mode" value="{{ current_search_params.search_mode }}">
+          <input type="text" name="name" placeholder="Name this search"
+                 aria-label="Name this search"
+                 class="input-base flex-1 px-3 py-2 border rounded-lg text-sm">
+          <button type="submit"
+                  class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Save search</button>
         </form>
         {% endif %}
         <div class="space-y-2">
-            {% for preset in saved_searches %}
-            <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
-                <div>
-                    <a href="{% url 'contracts:global_search' %}?preset_id={{ preset.id }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">{{ preset.name }}</a>
-                    <p class="text-xs text-gray-500 mt-0.5">
-                        {% if preset.params.q %}{{ preset.params.q }}{% else %}Saved query{% endif %}
-                        {% if preset.params.search_mode %} · {{ preset.params.search_mode|title }}{% endif %}
-                    </p>
-                </div>
-                <form method="post" action="{% url 'contracts:delete_search_preset' preset.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="text-xs text-red-600 hover:text-red-800">Delete</button>
-                </form>
+          {% for preset in saved_searches %}
+          <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+            <div>
+              <a href="{% url 'contracts:global_search' %}?preset_id={{ preset.id }}"
+                 class="text-sm font-medium c-link hover:underline">{{ preset.name }}</a>
+              <p class="text-xs c-muted mt-0.5">
+                {% if preset.params.q %}{{ preset.params.q }}{% else %}Saved query{% endif %}
+                {% if preset.params.search_mode %} · {{ preset.params.search_mode|title }}{% endif %}
+              </p>
             </div>
-            {% empty %}
-            <p class="text-sm text-gray-400">No saved searches yet.</p>
-            {% endfor %}
+            <form method="post" action="{% url 'contracts:delete_search_preset' preset.id %}">
+              {% csrf_token %}
+              <button type="submit" class="text-xs c-danger hover:underline">Delete</button>
+            </form>
+          </div>
+          {% empty %}
+          <p class="text-sm c-muted">No saved searches yet.</p>
+          {% endfor %}
         </div>
+      </div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Search Tips</h2>
-        <ul class="space-y-2 text-sm text-gray-600">
-            <li>Use filters to narrow by contract status or jurisdiction.</li>
-            <li>Choose semantic mode for clause-heavy queries.</li>
-            <li>Save recurring searches for faster access later.</li>
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Search Tips</h2>
+      </div>
+      <div class="panel-inner">
+        <ul class="space-y-2 text-sm c-muted">
+          <li>Use filters to narrow by contract status or jurisdiction.</li>
+          <li>Choose semantic mode for clause-heavy queries.</li>
+          <li>Save recurring searches for faster access later.</li>
         </ul>
+      </div>
     </div>
-</div>
-{% if q %}
-{% if results.cases %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Contracts ({{ results.cases|length }})<span class="sr-only">Cases ({{ results.cases|length }})</span></h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for c in results.cases %}
-        <a href="{% url 'contracts:contract_detail' c.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ c.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ c.get_contract_type_display }} &middot; {{ c.get_status_display }} &middot; {{ c.counterparty|default:"" }}</p>
-        </a>
-        {% endfor %}
+  </div>
+
+  {% if q %}
+  {% if results.cases %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Contracts <span class="c-muted font-normal">({{ results.cases|length }})</span><span class="sr-only">Cases ({{ results.cases|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.clients %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Clients ({{ results.clients|length }})</h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for c in results.clients %}
-        <a href="{% url 'contracts:client_detail' c.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ c.name }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ c.get_client_type_display }} &middot; {{ c.industry|default:"" }}</p>
-        </a>
-        {% endfor %}
+    {% for c in results.cases %}
+    <a href="{% url 'contracts:contract_detail' c.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ c.title }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ c.get_contract_type_display }} &middot; {{ c.get_status_display }} &middot; {{ c.counterparty|default:"" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.clients %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Clients <span class="c-muted font-normal">({{ results.clients|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.case_matters %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Matters ({{ results.case_matters|length }})<span class="sr-only">Matters ({{ results.matters|length }})</span></h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for m in results.case_matters %}
-        <a href="{% url 'contracts:matter_detail' m.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ m.matter_number }} - {{ m.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ m.get_practice_area_display }} &middot; {{ m.get_status_display }}</p>
-        </a>
-        {% endfor %}
+    {% for c in results.clients %}
+    <a href="{% url 'contracts:client_detail' c.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ c.name }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ c.get_client_type_display }} &middot; {{ c.industry|default:"" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.case_matters %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Matters <span class="c-muted font-normal">({{ results.case_matters|length }})</span><span class="sr-only">Matters ({{ results.matters|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.task_signals %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Task Signals ({{ results.task_signals|length }})</h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for task in results.task_signals %}
-        <a href="{% url 'contracts:legal_task_kanban' %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ task.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ task.get_status_display }} &middot; {{ task.get_priority_display }}</p>
-        </a>
-        {% endfor %}
+    {% for m in results.case_matters %}
+    <a href="{% url 'contracts:matter_detail' m.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ m.matter_number }} - {{ m.title }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ m.get_practice_area_display }} &middot; {{ m.get_status_display }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.task_signals %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Task Signals <span class="c-muted font-normal">({{ results.task_signals|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.documents %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Documents ({{ results.documents|length }})</h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for d in results.documents %}
-        <a href="{% url 'contracts:document_detail' d.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ d.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ d.get_document_type_display }} &middot; {{ d.get_status_display }}</p>
-        </a>
-        {% endfor %}
+    {% for task in results.task_signals %}
+    <a href="{% url 'contracts:legal_task_kanban' %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ task.title }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ task.get_status_display }} &middot; {{ task.get_priority_display }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.documents %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Documents <span class="c-muted font-normal">({{ results.documents|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.clauses %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Clause Templates ({{ results.clauses|length }})</h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for c in results.clauses %}
-        <a href="{% url 'contracts:clause_template_detail' c.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ c.title }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ c.get_jurisdiction_scope_display }} &middot; v{{ c.version }}</p>
-        </a>
-        {% endfor %}
+    {% for d in results.documents %}
+    <a href="{% url 'contracts:document_detail' d.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ d.title }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ d.get_document_type_display }} &middot; {{ d.get_status_display }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.clauses %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Clause Templates <span class="c-muted font-normal">({{ results.clauses|length }})</span></h2>
     </div>
-</div>
-{% endif %}
-{% if results.counterparties %}
-<div class="mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Counterparties ({{ results.counterparties|length }})</h2>
-    <div class="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-        {% for cp in results.counterparties %}
-        <a href="{% url 'contracts:counterparty_detail' cp.pk %}" class="block px-5 py-3 hover:bg-gray-50">
-            <p class="text-sm font-medium text-blue-600">{{ cp.name }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ cp.get_entity_type_display }} &middot; {{ cp.jurisdiction|default:"" }}</p>
-        </a>
-        {% endfor %}
+    {% for c in results.clauses %}
+    <a href="{% url 'contracts:clause_template_detail' c.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ c.title }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ c.get_jurisdiction_scope_display }} &middot; v{{ c.version }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if results.counterparties %}
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Counterparties <span class="c-muted font-normal">({{ results.counterparties|length }})</span></h2>
     </div>
+    {% for cp in results.counterparties %}
+    <a href="{% url 'contracts:counterparty_detail' cp.pk %}" class="list-row">
+      <div>
+        <div class="text-sm font-semibold c-link">{{ cp.name }}</div>
+        <div class="text-xs c-muted mt-0.5">{{ cp.get_entity_type_display }} &middot; {{ cp.jurisdiction|default:"" }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if not results.cases and not results.clients and not results.case_matters and not results.documents and not results.clauses and not results.counterparties and not results.task_signals %}
+  <div class="text-center py-12">
+    <svg class="w-12 h-12 mx-auto c-muted mb-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <p class="text-sm c-muted">No results found for "{{ q }}"</p>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="text-center py-12">
+    <svg class="w-12 h-12 mx-auto c-muted mb-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <p class="text-sm c-muted">Enter a search term to begin</p>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
-{% if not results.cases and not results.clients and not results.case_matters and not results.documents and not results.clauses and not results.counterparties and not results.task_signals %}
-<div class="text-center py-12">
-    <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-    <p class="text-sm text-gray-500">No results found for "{{ q }}"</p>
-</div>
-{% endif %}
-{% else %}
-<div class="text-center py-12">
-    <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-    <p class="text-sm text-gray-500">Enter a search term to begin</p>
-</div>
-{% endif %}
 {% endblock %}

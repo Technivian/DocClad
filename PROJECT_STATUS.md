@@ -629,3 +629,38 @@ Already present from prior batch work: `page-wrap`, `page-header`, `page-title`,
 - Grid wrappers — Tailwind responsive `lg:grid-cols-3/2` (dash-grid has no responsive breakpoints)
 
 ### Next: search_results.html (Batch 4 final page)
+
+---
+
+## Batch 4 Step 6 — search_results.html QueuePage Migration ✅ COMPLETE
+
+**Status:** ✅ Complete — **Batch 4 page migration wave is fully complete**
+
+### Changes
+
+| File | Change |
+|---|---|
+| `theme/templates/contracts/search_results.html` | Full QueuePage migration from raw Tailwind |
+| `DESIGN_ARCHETYPE_MAP.md` | `search_results.html` marked MIGRATED |
+| `DESIGN_UNIFICATION_ROADMAP.md` | Step 6 log entry added |
+
+### Primitives Applied
+
+`page-wrap`, `page-header`, `page-title`, `page-subtitle`, `input-base` (search + filters + save-name), `select-base` (search mode), `btn-primary-grad` (search submit, save search), `panel`, `panel-head`, `panel-title`, `panel-inner`, `list-row` (7 result categories), `c-muted`, `c-link`, `c-danger` (delete button)
+
+### Accessibility Improvements
+
+`aria-label` added to: type/status/jurisdiction filter inputs, search mode select, save-name input; `aria-hidden="true"` on both empty-state SVGs
+
+### Batch 4 Summary
+
+| Step | Template | Status |
+|---|---|---|
+| Step 1 | Row-state token cleanup | ✅ |
+| Step 2 Slice A | 7 list templates + reports_dashboard + identity_telemetry_dashboard | ✅ |
+| Step 3 | c-warning / c-info token cleanup | ✅ |
+| Step 4 Slice B | contract_list.html | ✅ |
+| Step 5 Slice B | contract_detail.html | ✅ |
+| Step 6 | search_results.html | ✅ |
+
+**All Batch 4 planned templates migrated.** Remaining tier-2/tier-3 templates continue in future batches.
