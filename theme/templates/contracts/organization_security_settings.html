@@ -2,7 +2,7 @@
 {% block title %}Organization Security - CMS Aegis{% endblock %}
 
 {% block content %}
-<div class="page-container">
+<div class="page-wrap">
     <div class="mb-6">
         <h1 class="heading-xl">Organization Security</h1>
         <p class="text-subtitle">Control MFA policy and invalidate active sessions for the organization.</p>
@@ -15,7 +15,7 @@
                     <h2 class="heading-lg mb-1">MFA policy</h2>
                     <p class="text-desc-sm mb-0">Require every active member to enroll MFA before accessing protected pages.</p>
                 </div>
-                <div class="ds-badge {% if organization.require_mfa %}badge-green{% else %}badge-gray{% endif %}">
+                <div class="badge-sm {% if organization.require_mfa %}badge-green{% else %}badge-gray{% endif %}">
                     {% if organization.require_mfa %}Enabled{% else %}Disabled{% endif %}
                 </div>
             </div>
@@ -23,7 +23,7 @@
             <form method="post" class="form-grid">
                 {% csrf_token %}
                 <label class="form-checkbox">
-                    <input type="checkbox" name="require_mfa" {% if organization.require_mfa %}checked{% endif %} class="checkbox-primary mt-1">
+                    <input type="checkbox" name="require_mfa" {% if organization.require_mfa %}checked{% endif %} class="mt-1">
                     <span>
                         <span class="form-check-text">Require MFA for all members</span>
                         <span class="form-check-sub">When enabled, users without MFA are redirected until they enroll from their profile.</span>
@@ -43,7 +43,7 @@
                 </label>
 
                 <div class="btn-group">
-                    <button type="submit" class="btn-primary">Save security policy</button>
+                    <button type="submit" class="btn-primary-grad">Save security policy</button>
                 </div>
             </form>
         </div>
@@ -59,7 +59,7 @@
                     <form method="post" onsubmit="return confirm('Revoke sessions for all active organization members?');">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="revoke_sessions">
-                        <button type="submit" class="btn-secondary">Revoke all sessions</button>
+                        <button type="submit" class="btn-ghost">Revoke all sessions</button>
                     </form>
                 </div>
             </div>

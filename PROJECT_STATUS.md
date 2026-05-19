@@ -802,3 +802,68 @@ Zero raw color utilities remain. Zero documented exceptions.
 Note: `retention_policy_detail.html` does not exist — no detail route registered. Scope limited to list + form.
 
 ### Next: organization/settings templates wave
+
+---
+
+## Batch 5 Step 5 — Org/Settings Discovery ✅ COMPLETE (2026-05-18)
+
+### Templates Discovered
+
+7 organization/settings/profile templates found and classified:
+
+| Template | Archetype | Risk | Action |
+|---|---|---|---|
+| `settings_hub.html` | WorkspacePage | LOW | Slice A |
+| `organization_security_settings.html` | WorkspacePage | LOW-MEDIUM | Slice A |
+| `organization_session_audit.html` | QueuePage | LOW-MEDIUM | Slice A |
+| `organization_identity_settings.html` | WorkspacePage | MEDIUM | Slice A |
+| `organization_activity.html` | QueuePage | MEDIUM | Slice B |
+| `organization_team.html` | WorkspacePage | HIGH | Slice B — defer |
+| `profile.html` | WorkspacePage | HIGH | Defer indefinitely |
+
+### Key Finding: Undefined Class Gap
+
+3 classes used in settings templates are NOT defined in base.html:
+- `btn-primary` → `btn-primary-grad`
+- `btn-secondary` → `btn-ghost`
+- `ds-badge` → `badge-sm`
+- `checkbox-primary` → remove
+
+These will be resolved in Slice A (template-side only; no new CSS needed).
+
+### Archetype Map Corrections Applied
+
+All 7 templates reclassified in `DESIGN_ARCHETYPE_MAP.md` with corrected archetypes.
+
+### Next: Batch 5 Step 6 — Org/Settings Slice A Migration (4 templates)
+
+---
+
+## Batch 5 Step 6 — Org/Settings Slice A ✅ COMPLETE (2026-05-18)
+
+### Files Migrated
+
+| File | Archetype | Key Changes |
+|---|---|---|
+| `settings_hub.html` | WorkspacePage | `page-container` → `page-wrap` |
+| `organization_security_settings.html` | WorkspacePage | `ds-badge`→`badge-sm`, `checkbox-primary` removed, `btn-primary`→`btn-primary-grad`, `btn-secondary`→`btn-ghost` |
+| `organization_session_audit.html` | QueuePage | `page-container`→`page-wrap`, raw border div→`panel-item`, `btn-secondary`→`btn-ghost` |
+| `organization_identity_settings.html` | WorkspacePage | `btn-primary`→`btn-primary-grad`, `btn-secondary`→`btn-ghost` (×2) |
+
+### Undefined Class Gap Resolved
+
+All 4 undefined classes in settings templates eliminated:
+- `btn-primary` → `btn-primary-grad` ✅
+- `btn-secondary` → `btn-ghost` ✅
+- `ds-badge` → `badge-sm` ✅
+- `checkbox-primary` → removed ✅
+
+### Behavior Preserved
+
+All 4 `onsubmit="return confirm(...)"` destructive guards retained.
+All forms, routes, context variables, CSRF tokens untouched.
+
+### Remaining Org/Settings Scope
+
+- Slice B: `organization_activity.html` (MEDIUM), `organization_team.html` (HIGH)
+- Deferred: `profile.html` (HIGH, MFA-critical)
