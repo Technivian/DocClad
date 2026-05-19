@@ -1225,3 +1225,58 @@ All raw utilities replaced. No `text-green-600`, `text-red-600`, or `bg-*` color
 - Raw color exceptions: ✅ 0
 
 ### Status: ✅ Complete — organization/settings wave can begin
+
+---
+
+## Batch 5 Step 5 — Org/Settings Discovery ✅ COMPLETE (2026-05-18)
+
+### Scope
+
+Discovery-only pass on all organization/settings/profile templates. No template edits.
+
+### Templates Found and Classified
+
+| Template | Corrected Archetype | Risk | Raw Tailwind | Undefined Classes | Recommendation |
+|---|---|---|---|---|---|
+| `settings_hub.html` | WorkspacePage | LOW | 0 | none | Slice A |
+| `organization_security_settings.html` | WorkspacePage | LOW-MEDIUM | 0 | `btn-primary`, `btn-secondary`, `ds-badge`, `checkbox-primary` | Slice A |
+| `organization_session_audit.html` | QueuePage | LOW-MEDIUM | 1 | `btn-secondary` | Slice A |
+| `organization_identity_settings.html` | WorkspacePage | MEDIUM | 0 | `btn-primary` (×2), `btn-secondary` (×2) | Slice A |
+| `organization_activity.html` | QueuePage | MEDIUM | 28 | none | Slice B |
+| `organization_team.html` | WorkspacePage | HIGH | 48 | none | Slice B — defer |
+| `profile.html` | WorkspacePage | HIGH | 20 | none | Defer indefinitely |
+
+### Archetype Corrections
+
+Previous archetype map had several incorrect classifications:
+- `organization_activity.html`: NetworkPage → **QueuePage** (audit log list with filters/pagination)
+- `organization_identity_settings.html`: QueuePage → **WorkspacePage** (multi-panel settings form)
+- `organization_security_settings.html`: QueuePage → **WorkspacePage** (settings form workspace)
+- `organization_session_audit.html`: ExceptionPage → **QueuePage** (active sessions list with actions)
+- `organization_team.html`: NetworkPage → **WorkspacePage** (team management workspace)
+- `profile.html`: CommandPage → **WorkspacePage** (multi-panel profile/MFA workspace)
+- `settings_hub.html`: CommandPage → **WorkspacePage** (hub/nav landing)
+
+### Undefined Class Gap Discovered
+
+Four classes used in settings templates are NOT defined in `base.html`:
+- `btn-primary` → maps to `btn-primary-grad` (canonical primary button)
+- `btn-secondary` → maps to `btn-ghost` (canonical secondary button)
+- `ds-badge` → maps to `badge-sm` (canonical badge)
+- `checkbox-primary` → remove class (use browser default checkbox)
+
+These are rendering with no styles currently. Slice A will fix them.
+
+### Inline Handler Policy Confirmed
+
+- `onchange="this.form.submit()"` on filter selects — acceptable progressive enhancement; preserve
+- `onsubmit="return confirm(...)"` on destructive actions — intentional UX guard; preserve
+
+### Recommended Slice A (4 templates)
+
+1. `settings_hub.html` — swap `page-container` → `page-wrap`
+2. `organization_security_settings.html` — fix 4 undefined classes; preserve `onsubmit` confirm
+3. `organization_session_audit.html` — fix `btn-secondary` → `btn-ghost`; preserve `onsubmit` confirm
+4. `organization_identity_settings.html` — fix 4 undefined button classes; preserve 2× `onsubmit` confirms
+
+### Status: ✅ Discovery complete — Slice A ready to begin
