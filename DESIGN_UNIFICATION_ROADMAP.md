@@ -1493,3 +1493,67 @@ These are rendering with no styles currently. Slice A will fix them.
 | Inline styles | ✅ 0 |
 | Raw Tailwind utility violations | ✅ 0 (hover:bg-gray-50 documented exception) |
 | Retired classes (action-chip, stat-card) | ✅ 0 |
+
+---
+
+## Batch 6 Step 3 — NetworkPage Counterparty Wave
+
+**Templates:** `counterparty_list.html`, `counterparty_detail.html`, `counterparty_form.html`
+**Risk:** MEDIUM — full WorkspacePage migration; no destructive actions; no forms with hidden inputs
+
+### counterparty_list.html (full migration)
+- `page-wrap / page-header / page-title / page-subtitle / page-actions` replacing raw flex header
+- Add New button: `btn-primary-grad text-white` replacing `bg-blue-600 text-white`; `aria-hidden="true"` on decorative SVG
+- `panel` replacing `bg-white rounded-xl border border-gray-200 overflow-hidden`
+- `tbl-head` on `<thead>`; `tbl-th` on all `<th>` elements
+- `tbl-row border-b` per row; removed `divide-y divide-gray-100`
+- `tbl-td` on all `<td>` elements replacing `text-sm text-gray-700`
+- `badge-sm badge-green` / `badge-sm badge-gray` replacing inline `px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full`
+- `c-link` replacing `text-blue-600 hover:text-blue-800` on Edit link
+- `empty-state` replacing raw `px-5 py-8 text-center text-sm text-gray-400` empty row
+- `hover:bg-gray-50` kept as structural UX exception on table rows
+
+### counterparty_detail.html (full migration)
+- `page-wrap` outer wrapper; back link preserved above `page-header`
+- `page-header / page-title / page-actions` replacing raw flex header
+- Edit button: `btn-primary-grad text-white` replacing `bg-blue-600 text-white`
+- `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `c-muted` on detail field labels replacing `text-gray-500`
+- Removed `text-gray-900` on field values (inherits from design-system defaults)
+- `max-w-3xl` kept on panel as structural layout exception
+
+### counterparty_form.html (full migration)
+- `page-wrap / page-header / page-title` replacing raw flex header
+- Header back link removed (Cancel in form actions serves same purpose)
+- `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `form-label` replacing `block text-sm font-medium text-gray-700`
+- `c-muted` replacing `text-gray-400` on help text
+- `c-danger` replacing `text-red-500` on validation errors
+- Cancel link: `btn-ghost inline-flex items-center px-4 py-2 rounded-lg text-sm`
+- Save button: `btn-primary-grad text-white inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium`
+- `max-w-3xl` kept on form wrapper (structural exception)
+- `enctype="multipart/form-data"` preserved
+- `{{ object|yesno:"Edit,New" }}` title pattern preserved exactly
+- `{{ field.id_for_label }}` on label `for` attribute preserved exactly
+- `{{ field.errors|join:", " }}` error rendering preserved exactly
+
+### Preserved
+- `counterparties` context var in list view
+- `object` + `form` context vars in detail/form views
+- All URL names: `counterparty_list`, `counterparty_create`, `counterparty_update`
+- `item.is_active` status boolean (not get_status_display — Boolean field)
+- All form field names (rendered via `{{ field }}`)
+- No search form in template despite `q` filter in view (pre-existing gap, not in scope)
+
+### No Destructive Actions
+No delete/archive/revoke/deactivate actions exist in any of these templates. No confirm guards needed.
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 3) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Inline styles | ✅ 0 |
+| Raw Tailwind utility violations | ✅ 0 (hover:bg-gray-50 documented exception) |
+| Retired classes | ✅ 0 |

@@ -1,21 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <a href="{% url 'contracts:counterparty_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
-        </div>
-        <a href="{% url 'contracts:counterparty_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
+<div class="page-wrap">
+  <a href="{% url 'contracts:counterparty_list' %}" class="text-sm c-muted hover:underline">&larr; Back to list</a>
+  <div class="page-header mt-2">
+    <div>
+      <h1 class="page-title">{{ object }}</h1>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Entity Type</span><p class="mt-1 text-sm text-gray-900">{{ object.get_entity_type_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Jurisdiction</span><p class="mt-1 text-sm text-gray-900">{{ object.jurisdiction|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Registration #</span><p class="mt-1 text-sm text-gray-900">{{ object.registration_number|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Address</span><p class="mt-1 text-sm text-gray-900">{{ object.address|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Contact</span><p class="mt-1 text-sm text-gray-900">{{ object.contact_name }} ({{ object.contact_email }})</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Notes</span><p class="mt-1 text-sm text-gray-900">{{ object.notes|default:"-" }}</p></div>
+    <div class="page-actions">
+      <a href="{% url 'contracts:counterparty_update' object.pk %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Edit</a>
     </div>
+  </div>
+  <div class="max-w-3xl panel panel-inner">
+    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Entity Type</span><p class="mt-1 text-sm">{{ object.get_entity_type_display }}</p></div>
+    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Jurisdiction</span><p class="mt-1 text-sm">{{ object.jurisdiction|default:"-" }}</p></div>
+    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Registration #</span><p class="mt-1 text-sm">{{ object.registration_number|default:"-" }}</p></div>
+    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Address</span><p class="mt-1 text-sm">{{ object.address|default:"-" }}</p></div>
+    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Contact</span><p class="mt-1 text-sm">{{ object.contact_name }} ({{ object.contact_email }})</p></div>
+    <div class="py-3"><span class="c-muted text-xs font-medium uppercase">Notes</span><p class="mt-1 text-sm">{{ object.notes|default:"-" }}</p></div>
+  </div>
 </div>
 {% endblock %}

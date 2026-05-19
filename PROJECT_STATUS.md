@@ -1032,3 +1032,46 @@ Batch 6 Step 2: NetworkPage client wave — `client_list.html`, `client_detail.h
 - Template parse: ✅ all 3 templates OK
 - manage.py check: ✅ 0 issues
 - Tests: ✅ 3/3 pass
+
+---
+
+## Batch 6 Step 3 — NetworkPage Counterparty Wave
+
+**Status:** COMPLETE
+
+### Changes
+
+**counterparty_list.html** — full WorkspacePage migration
+- page-wrap / page-header / page-title / page-subtitle / page-actions
+- panel table with tbl-head / tbl-th / tbl-row border-b / tbl-td
+- badge-sm badge-green / badge-gray for is_active status
+- c-link on Edit action; empty-state for empty table
+- btn-primary-grad on Add New; aria-hidden on decorative SVG
+
+**counterparty_detail.html** — full WorkspacePage migration
+- page-wrap / page-header / page-title / page-actions
+- panel + panel-inner for detail field list
+- c-muted for field labels; btn-primary-grad for Edit
+- Back link preserved above page-header
+- max-w-3xl kept as structural exception
+
+**counterparty_form.html** — full WorkspacePage migration
+- page-wrap / page-header / page-title
+- panel + panel-inner wrapping form
+- form-label / c-muted / c-danger for label / help / error
+- btn-primary-grad (Save) + btn-ghost (Cancel)
+- enctype, object|yesno, field.id_for_label, field.errors|join preserved
+
+### Preserved
+- `counterparties`, `object`, `form` context vars
+- `counterparty_list`, `counterparty_create`, `counterparty_update` URL names
+- `item.is_active` boolean status field
+- `{{ field }}` widget rendering; `enctype="multipart/form-data"`
+
+### No Destructive Actions
+None present — no confirm guards required.
+
+### Validation
+- Template parse: ✅ all 3 OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 pass

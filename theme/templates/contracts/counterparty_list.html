@@ -1,44 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Counterparties - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Counterparties</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage counterparties</p>
+      <h1 class="page-title">Counterparties</h1>
+      <p class="page-subtitle c-muted">Manage counterparties</p>
     </div>
-    <a href="{% url 'contracts:counterparty_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    <div class="page-actions">
+      <a href="{% url 'contracts:counterparty_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      </a>
+    </div>
+  </div>
+  <div class="panel">
     <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Jurisdiction</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Contact</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in counterparties %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.name }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.get_entity_type_display }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.jurisdiction|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.contact_name|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.is_active %}<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>{% else %}<span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>{% endif %}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:counterparty_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">No counterparties found</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th text-left px-5 py-3">Name</th>
+          <th class="tbl-th text-left px-5 py-3">Type</th>
+          <th class="tbl-th text-left px-5 py-3">Jurisdiction</th>
+          <th class="tbl-th text-left px-5 py-3">Contact</th>
+          <th class="tbl-th text-left px-5 py-3">Status</th>
+          <th class="tbl-th text-right px-5 py-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in counterparties %}
+        <tr class="tbl-row border-b hover:bg-gray-50">
+          <td class="tbl-td px-5 py-3 text-sm">{{ item.name }}</td>
+          <td class="tbl-td px-5 py-3 text-sm">{{ item.get_entity_type_display }}</td>
+          <td class="tbl-td px-5 py-3 text-sm">{{ item.jurisdiction|default:"-" }}</td>
+          <td class="tbl-td px-5 py-3 text-sm">{{ item.contact_name|default:"-" }}</td>
+          <td class="tbl-td px-5 py-3 text-sm">
+            {% if item.is_active %}
+            <span class="badge-sm badge-green">Active</span>
+            {% else %}
+            <span class="badge-sm badge-gray">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="tbl-td px-5 py-3 text-right">
+            <a href="{% url 'contracts:counterparty_update' item.pk %}" class="text-sm c-link">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state">No counterparties found.</div></td></tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
 {% endblock %}
