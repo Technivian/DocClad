@@ -1,42 +1,49 @@
 {% extends "base.html" %}
 {% block title %}Clause Categories - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Clause Categories</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage clause categories</p>
+      <h1 class="page-title">Clause Categories</h1>
+      <p class="page-subtitle">Manage clause categories</p>
     </div>
-    <a href="{% url 'contracts:clause_category_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
+    <a href="{% url 'contracts:clause_category_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
+      <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+      Add New
     </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Order</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Clauses</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in categories %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.name }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.description|truncatewords:15|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.order }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.clauses.count }}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:clause_category_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="px-5 py-8 text-center text-sm text-gray-400">No clause categories found</td></tr>
-            {% endfor %}
-        </tbody>
+  </div>
+
+  <div class="panel">
+    <table class="w-full text-sm">
+      <thead class="tbl-head">
+        <tr>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Name</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Order</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Clauses</th>
+          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in categories %}
+        <tr class="border-b transition-colors tbl-row hover:bg-gray-50">
+          <td class="px-5 py-3.5">{{ item.name }}</td>
+          <td class="px-5 py-3.5 tbl-td">{{ item.description|truncatewords:15|default:"-" }}</td>
+          <td class="px-5 py-3.5 tbl-td">{{ item.order }}</td>
+          <td class="px-5 py-3.5 tbl-td">{{ item.clauses.count }}</td>
+          <td class="px-5 py-3.5 text-right">
+            <a href="{% url 'contracts:clause_category_update' item.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5"><div class="empty-state">No clause categories found</div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+
 </div>
 {% endblock %}
