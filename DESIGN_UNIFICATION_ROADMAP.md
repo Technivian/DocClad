@@ -2097,3 +2097,37 @@ Panel+stat-card redundancy removed:
 | C — Safe full migration remaining | ~30 | WorkspacePage details, CommandPage forms, ExceptionPage clusters |
 
 **🏁 Batch 6 CLOSED — design-system consistency sweep complete; all JS prototype debt isolated; auth surfaces untouched.**
+
+
+---
+
+## Batch 7 Step 2 — Dead Prototype Retirement (2026-05-19)
+
+**Status:** ✅ RETIRED  
+**Mode:** Safe deletion + reference cleanup  
+
+### Files Retired (Deleted)
+- `theme/templates/contracts/obligations_list.html` — CLASS D dead prototype. No URL route. No Obligation model. 100% in-memory mock data. All CRUD stubs. Never reachable by any user. Deleted.
+- `theme/templates/contracts/templates_list.html` — CLASS D dead prototype. URL name `templates_list` already resolves to `WorkflowTemplateListView` → `workflow_template_list.html` (canonical). This file was never rendered. 100% in-memory mock data. All CRUD stubs. Deleted.
+
+### Reference Sweep Result
+- No views.py, views_domains/*.py, tests, or template includes reference either file
+- `obligations_list`: zero URL route, zero model, zero nav link — fully orphaned
+- `templates_list`: URL name exists but resolves to different file (correct canonical page) — dead template, live URL name (preserved)
+
+### Docs Updated
+- DESIGN_ARCHETYPE_MAP.md — both template rows marked **RETIRED** (not MIGRATED)
+- DESIGN_ARCHETYPE_MAP.md — `templates_list` route row clarified
+- DESIGN_UNIFICATION_ROADMAP.md — this section
+- PROJECT_STATUS.md — Batch 7 Step 2 section
+
+### Validation
+| Check | Result |
+|-------|--------|
+| manage.py check | ✅ 0 issues |
+| Template parse (real active pages) | ✅ OK |
+| Deleted files not loadable | ✅ TemplateDoesNotExist confirmed |
+| Tests | ✅ 3/3 passed |
+| Reference scan for deleted filenames | ✅ 0 remaining references |
+
+**🏁 Batch 7 Step 2 RETIRED — zero real routes broken, zero backend regressions, repo prototype debt cleared.**

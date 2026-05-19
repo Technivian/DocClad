@@ -1256,3 +1256,27 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 4. Auth/security surfaces if ever in scope: registration/*, profile, saml_select
 
 **🏁 Batch 6 CLOSED.**
+
+
+---
+
+## Batch 7 Step 2 — Dead Prototype Retirement (2026-05-19)
+
+**Status:** ✅ RETIRED  
+
+### Files Deleted
+- `contracts/obligations_list.html` — dead JS prototype, no route, no model, never reachable
+- `contracts/templates_list.html` — dead JS prototype, URL name already resolves to canonical `workflow_template_list.html`
+
+### Validation
+- manage.py check: 0 issues ✅
+- Tests: 3/3 passed ✅
+- Both files confirmed TemplateDoesNotExist ✅
+- No references remaining ✅
+
+### Remaining Batch 7 Scope
+- Full structural migration: remaining WorkspacePage detail pages + CommandPage forms + ExceptionPage clusters (~30 templates)
+- `legal_task_board.html` — BoardView/Kanban (complex, documented primitive)
+- Auth/security surfaces: out of scope (CLASS E)
+
+**JS prototype debt cleared. Archetype map truthful.**
