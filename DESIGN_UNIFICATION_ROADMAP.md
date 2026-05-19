@@ -2331,3 +2331,39 @@ Panel+stat-card redundancy removed:
 - Cluster 6 large detail pages: `signature_request_detail.html`, `workflow_template_detail.html`, `workflow_detail.html`
 - `contract_form.html` (231 lines, most complex)
 - Auth/security permanently deferred
+
+---
+
+## Batch 7 Step 8 — Cluster 6 Large Detail Pages (COMPLETE)
+
+**Templates migrated:** 3
+- `signature_request_detail.html` — WorkspacePage, signer/transition/routing preservation
+- `workflow_template_detail.html` — WorkspacePage, version history/add-step/step list
+- `workflow_detail.html` — WorkspacePage, add-step form/step list/modal
+
+**Canonical patterns applied:**
+- `page-wrap` / `page-header` / `page-title` / `page-subtitle c-muted` / `page-actions`
+- `panel` / `panel-inner` / `panel-head` / `panel-title` / `panel overflow-hidden`
+- `badge-sm` with semantic color (workflow status, step status, version tags, step kind)
+- `form-label` / `c-danger` field errors / `c-muted` / `c-link` / `c-warning` / `c-success`
+- `btn-primary-grad text-white` / `btn-ghost`
+- `empty-state` on empty version history and step lists
+
+**Behavior preserved:**
+- `signature_request_detail`: all `available_transitions` POST forms with csrf_token preserved; `send_reminder` POST form preserved; amber needs_follow_up box preserved (no canonical amber button); blue routing_blockers box preserved
+- `workflow_template_detail`: all per-version `Restore` POST forms + csrf_token preserved; blue "Add a step" inline form container preserved; `workflow_template_clone_version` POST preserved
+- `workflow_detail`: `workflow_step_complete` POST form per step with csrf_token preserved; JS modal (`openStepModal`/`closeStepModal`) preserved verbatim; `current_step` bg-blue-50 row highlight preserved; step status circles (✓/•/- icons) preserved
+
+**Badge semantics established:**
+- Workflow status: ACTIVE→green, COMPLETED→blue, CANCELLED→red, else→gray
+- Step status: COMPLETED→green, IN_PROGRESS→blue, ESCALATED→red, SKIPPED→gray, PENDING/else→yellow
+- Template version: Current→blue, Derived→gray
+- Step kind (template): badge-blue; step kind (workflow): badge-purple
+
+**High-impact actions:** transition POST forms (csrf_token ✓), restore POST form (csrf_token ✓), step-complete POST (csrf_token ✓) — all CSRF-protected. No destructive actions without gating.
+
+**Validation:** 3/3 template parse OK · manage.py check 0 issues · 3/3 tests pass · 0 legacy classes
+
+**Remaining real template debt:** 1 template
+- `contract_form.html` (231 lines, most complex form — final step)
+- Auth/security permanently deferred

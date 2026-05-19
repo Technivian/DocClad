@@ -1370,3 +1370,25 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **Remaining real template debt:** ~4 templates (Cluster 6 + contract_form)
 **Auth/security:** permanently deferred
 **Next:** Cluster 6 large detail pages
+
+---
+
+## Batch 7 Step 8 — Cluster 6 Large Detail Pages (COMPLETE)
+
+**Date:** 2026-05-19
+**Templates migrated:** 3 (signature_request_detail, workflow_template_detail, workflow_detail)
+
+**Highlights:**
+- All 3 large detail pages fully normalized to canonical WorkspacePage structure
+- `signature_request_detail`: transition POST forms (with csrf_token) preserved per transition; amber/blue contextual alerts preserved
+- `workflow_template_detail`: per-version Restore POST forms preserved; blue "Add a step" inline form container preserved; shadow-sm removed
+- `workflow_detail`: JS modal (openStepModal/closeStepModal) preserved verbatim; per-step Complete POST with csrf_token preserved; current_step highlight preserved; bg-gray-200 modal cancel→btn-ghost
+- Step status circles (✓/•/- icons) preserved — no canonical substitute
+- Badge semantics: workflow ACTIVE→green, COMPLETED→blue, CANCELLED→red; step COMPLETED→green, IN_PROGRESS→blue, ESCALATED→red, SKIPPED→gray, PENDING→yellow; step kind→badge-purple
+
+**Validation:** 3/3 parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**JS Prototype Debt:** 0
+**Remaining real template debt:** 1 template (contract_form.html — final complex form)
+**Auth/security:** permanently deferred
+**Next:** contract_form.html (final)

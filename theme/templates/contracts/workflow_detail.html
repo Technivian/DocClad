@@ -1,119 +1,119 @@
 {% extends 'base.html' %}
-
 {% block title %}{{ workflow.title }}{% endblock %}
-
 {% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between gap-4">
+<div class="page-wrap">
+    <div class="page-header">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ workflow.title }}</h1>
+            <h1 class="page-title">{{ workflow.title }}</h1>
             {% if workflow.contract %}
-            <p class="text-gray-600">
-                <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="text-blue-600 hover:text-blue-800">{{ workflow.contract.title }}</a>
-                {% if workflow.contract.counterparty %}• {{ workflow.contract.counterparty }}{% endif %}
+            <p class="page-subtitle">
+                <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="c-link">{{ workflow.contract.title }}</a>
+                {% if workflow.contract.counterparty %}<span class="c-muted"> · {{ workflow.contract.counterparty }}</span>{% endif %}
             </p>
             {% endif %}
             {% if workflow.description %}
-            <p class="text-sm text-gray-500 mt-1">{{ workflow.description }}</p>
+            <p class="text-sm c-muted mt-1">{{ workflow.description }}</p>
             {% endif %}
         </div>
-        <div class="flex flex-wrap gap-3">
+        <div class="page-actions">
             {% if workflow.contract %}
-            <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50">
-                View Contract
-            </a>
+            <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="btn-ghost">View Contract</a>
             {% endif %}
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-primary-grad text-white">
-                Back to Dashboard
-            </a>
+            <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-ghost">Back to Dashboard</a>
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-lg border border-gray-200">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Workflow Summary</h3>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                {% if workflow.status == 'ACTIVE' %}bg-green-100 text-green-800
-                {% elif workflow.status == 'COMPLETED' %}bg-blue-100 text-blue-800
-                {% elif workflow.status == 'CANCELLED' %}bg-red-100 text-red-800
-                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                {{ workflow.get_status_display }}
-            </span>
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title">Workflow Summary</span>
+            {% if workflow.status == 'ACTIVE' %}
+            <span class="badge-sm badge-green">{{ workflow.get_status_display }}</span>
+            {% elif workflow.status == 'COMPLETED' %}
+            <span class="badge-sm badge-blue">{{ workflow.get_status_display }}</span>
+            {% elif workflow.status == 'CANCELLED' %}
+            <span class="badge-sm badge-red">{{ workflow.get_status_display }}</span>
+            {% else %}
+            <span class="badge-sm badge-gray">{{ workflow.get_status_display }}</span>
+            {% endif %}
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
-            <div class="bg-gray-50 rounded-lg p-4">
-                <div class="font-medium text-gray-900">Template</div>
-                <div class="mt-1">
-                    {% if workflow.template %}
-                        {{ workflow.template.name }} v{{ workflow.template.version }}
-                    {% else %}
-                        Not selected
-                    {% endif %}
+        <div class="panel-inner">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="font-medium text-gray-900">Template</div>
+                    <div class="mt-1 c-muted">
+                        {% if workflow.template %}
+                            {{ workflow.template.name }} v{{ workflow.template.version }}
+                        {% else %}
+                            Not selected
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <div class="font-medium text-gray-900">Steps</div>
-                <div class="mt-1">{{ workflow_steps|length }} defined</div>
-            </div>
-            <div class="bg-gray-50 rounded-lg p-4">
-                <div class="font-medium text-gray-900">Status</div>
-                <div class="mt-1">{{ workflow.get_status_display }}</div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="font-medium text-gray-900">Steps</div>
+                    <div class="mt-1 c-muted">{{ workflow_steps|length }} defined</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="font-medium text-gray-900">Status</div>
+                    <div class="mt-1 c-muted">{{ workflow.get_status_display }}</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Add Workflow Step</h3>
+    <div class="panel">
+        <div class="panel-head">
+            <span class="panel-title">Add Workflow Step</span>
         </div>
-        <form method="post" action="{% url 'contracts:workflow_step_add' workflow.pk %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.name.id_for_label }}">Name</label>
-                {{ add_step_form.name }}
-                {% if add_step_form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.name.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.description.id_for_label }}">Description</label>
-                {{ add_step_form.description }}
-                {% if add_step_form.description.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.description.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="space-y-3">
+        <div class="panel-inner">
+            <form method="post" action="{% url 'contracts:workflow_step_add' workflow.pk %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {% csrf_token %}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.status.id_for_label }}">Status</label>
-                    {{ add_step_form.status }}
-                    {% if add_step_form.status.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.status.errors.0 }}</p>{% endif %}
+                    <label class="form-label" for="{{ add_step_form.name.id_for_label }}">Name</label>
+                    {{ add_step_form.name }}
+                    {% if add_step_form.name.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.name.errors.0 }}</p>{% endif %}
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.order.id_for_label }}">Order</label>
-                    {{ add_step_form.order }}
-                    {% if add_step_form.order.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.order.errors.0 }}</p>{% endif %}
+                <div class="md:col-span-2">
+                    <label class="form-label" for="{{ add_step_form.description.id_for_label }}">Description</label>
+                    {{ add_step_form.description }}
+                    {% if add_step_form.description.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.description.errors.0 }}</p>{% endif %}
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.assigned_to.id_for_label }}">Assigned to</label>
-                    {{ add_step_form.assigned_to }}
-                    {% if add_step_form.assigned_to.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.assigned_to.errors.0 }}</p>{% endif %}
+                <div class="space-y-3">
+                    <div>
+                        <label class="form-label" for="{{ add_step_form.status.id_for_label }}">Status</label>
+                        {{ add_step_form.status }}
+                        {% if add_step_form.status.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.status.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ add_step_form.order.id_for_label }}">Order</label>
+                        {{ add_step_form.order }}
+                        {% if add_step_form.order.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.order.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ add_step_form.assigned_to.id_for_label }}">Assigned to</label>
+                        {{ add_step_form.assigned_to }}
+                        {% if add_step_form.assigned_to.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.assigned_to.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label" for="{{ add_step_form.due_date.id_for_label }}">Due date</label>
+                        {{ add_step_form.due_date }}
+                        {% if add_step_form.due_date.errors %}<p class="mt-1 text-xs c-danger">{{ add_step_form.due_date.errors.0 }}</p>{% endif %}
+                    </div>
+                    <button type="submit" class="btn-primary-grad text-white w-full">Add Step</button>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ add_step_form.due_date.id_for_label }}">Due date</label>
-                    {{ add_step_form.due_date }}
-                    {% if add_step_form.due_date.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.due_date.errors.0 }}</p>{% endif %}
-                </div>
-                <button type="submit" class="btn-primary-grad text-white w-full">Add Step</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
-    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold">Workflow Steps</h3>
+    <div class="panel overflow-hidden">
+        <div class="panel-head">
+            <span class="panel-title">Workflow Steps</span>
         </div>
-        <div class="divide-y divide-gray-200">
+        <div class="divide-y divide-gray-100">
             {% for step in workflow_steps %}
             <div class="p-6 {% if step == workflow.current_step %}bg-blue-50{% endif %}">
                 <div class="flex items-start justify-between gap-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 mr-4">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
                             {% if step.status == 'COMPLETED' %}
                                 <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">✓</div>
                             {% elif step.status == 'IN_PROGRESS' %}
@@ -127,68 +127,65 @@
                             {% endif %}
                         </div>
                         <div class="flex-1">
-                            <div class="flex items-center gap-3">
-                                <h4 class="text-lg font-medium text-gray-900">{{ step.name }}</h4>
-                                <span class="text-xs font-medium rounded-full px-2 py-1
-                                    {% if step.status == 'COMPLETED' %}bg-green-100 text-green-700
-                                    {% elif step.status == 'IN_PROGRESS' %}bg-blue-100 text-blue-700
-                                    {% elif step.status == 'ESCALATED' %}bg-red-100 text-red-700
-                                    {% elif step.status == 'SKIPPED' %}bg-gray-100 text-gray-700
-                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                    {{ step.get_status_display }}
-                                </span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-semibold text-gray-900">{{ step.name }}</h4>
+                                {% if step.status == 'COMPLETED' %}
+                                <span class="badge-sm badge-green">{{ step.get_status_display }}</span>
+                                {% elif step.status == 'IN_PROGRESS' %}
+                                <span class="badge-sm badge-blue">{{ step.get_status_display }}</span>
+                                {% elif step.status == 'ESCALATED' %}
+                                <span class="badge-sm badge-red">{{ step.get_status_display }}</span>
+                                {% elif step.status == 'SKIPPED' %}
+                                <span class="badge-sm badge-gray">{{ step.get_status_display }}</span>
+                                {% else %}
+                                <span class="badge-sm badge-yellow">{{ step.get_status_display }}</span>
+                                {% endif %}
                                 {% if step.template_step %}
-                                <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">
-                                    {{ step.template_step.get_step_kind_display }}
-                                </span>
+                                <span class="badge-sm badge-purple">{{ step.template_step.get_step_kind_display }}</span>
                                 {% endif %}
                             </div>
                             {% if step.template_step and step.template_step.condition_expression %}
-                                <p class="text-xs text-gray-500 mt-1">Condition: {{ step.template_step.condition_expression }}</p>
+                                <p class="text-xs c-muted mt-1">Condition: {{ step.template_step.condition_expression }}</p>
                             {% endif %}
                             {% if step.description %}
-                                <p class="text-sm text-gray-600 mt-1">{{ step.description }}</p>
+                                <p class="text-sm c-muted mt-1">{{ step.description }}</p>
                             {% endif %}
                             {% if step.assigned_to %}
-                                <p class="text-sm text-gray-600 mt-1">Assigned to: {{ step.assigned_to.get_full_name|default:step.assigned_to.username }}</p>
+                                <p class="text-sm c-muted mt-1">Assigned to: {{ step.assigned_to.get_full_name|default:step.assigned_to.username }}</p>
                             {% endif %}
                             {% if step.due_date %}
-                                <p class="text-sm text-gray-600">Due: {{ step.due_date|date:"M d, Y H:i" }}</p>
+                                <p class="text-sm c-muted">Due: {{ step.due_date|date:"M d, Y H:i" }}</p>
                             {% endif %}
                             {% if step.blocked_reason %}
-                                <p class="text-sm text-amber-700 mt-1">{{ step.blocked_reason }}</p>
+                                <p class="text-sm c-warning mt-1">{{ step.blocked_reason }}</p>
                             {% endif %}
                             {% if step.escalated_at %}
-                                <p class="text-xs text-red-600 mt-1">Escalated {{ step.escalated_at|date:"M d, Y H:i" }}</p>
+                                <p class="text-xs c-danger mt-1">Escalated {{ step.escalated_at|date:"M d, Y H:i" }}</p>
                             {% endif %}
                         </div>
                     </div>
-                    <div class="flex-shrink-0 ml-4">
+                    <div class="flex-shrink-0">
                         {% if step.status == 'PENDING' or step.status == 'IN_PROGRESS' %}
-                            <div class="flex items-center gap-3">
-                                <form method="post" action="{% url 'contracts:workflow_step_complete' step.pk %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium">
-                                        Complete
-                                    </button>
-                                </form>
-                                <button
-                                    onclick="openStepModal({{ step.pk }}, '{{ step.name|escapejs }}', '{{ step.status }}', '{{ step.description|default_if_none:''|escapejs }}')"
-                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    Update
-                                </button>
-                                <a href="{% url 'contracts:workflow_step_update' step.pk %}" class="text-sm font-medium text-gray-600 hover:text-gray-900">
-                                    Full editor
-                                </a>
-                            </div>
+                        <div class="flex items-center gap-3">
+                            <form method="post" action="{% url 'contracts:workflow_step_complete' step.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="text-sm font-medium c-success hover:underline">Complete</button>
+                            </form>
+                            <button
+                                onclick="openStepModal({{ step.pk }}, '{{ step.name|escapejs }}', '{{ step.status }}', '{{ step.description|default_if_none:''|escapejs }}')"
+                                class="text-sm font-medium c-link">
+                                Update
+                            </button>
+                            <a href="{% url 'contracts:workflow_step_update' step.pk %}" class="text-sm font-medium c-muted hover:underline">
+                                Full editor
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="p-6 text-center text-gray-500">
-                No workflow steps yet.
-            </div>
+            <div class="empty-state">No workflow steps yet.</div>
             {% endfor %}
         </div>
     </div>
@@ -202,7 +199,7 @@
                 {% csrf_token %}
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="step-status">Status</label>
+                        <label class="form-label" for="step-status">Status</label>
                         <select name="status" id="step-status" class="w-full px-3 py-2 border border-gray-300 rounded-md">
                             <option value="PENDING">Pending</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -211,17 +208,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="step-description">Description</label>
+                        <label class="form-label" for="step-description">Description</label>
                         <textarea name="description" id="step-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeStepModal()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn-primary-grad text-white">
-                        Update Step
-                    </button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeStepModal()" class="btn-ghost">Cancel</button>
+                    <button type="submit" class="btn-primary-grad text-white">Update Step</button>
                 </div>
             </form>
         </div>
