@@ -1880,3 +1880,57 @@ Permission gating is view-level (login_required, queryset filtering). No admin-o
 | stat-card usage | ✅ 0 |
 | c-red usage | ✅ 0 |
 | btn-outline usage | ✅ 0 |
+
+---
+
+## Batch 6 Step 8 — QueuePage Wave 3: Clause Cluster
+
+**Status:** ✅ COMPLETE
+**Templates:** `clause_category_list.html`, `clause_category_form.html`, `clause_template_list.html`, `clause_template_detail.html`, `clause_template_form.html`, `clause_library.html`
+**Risk Level:** MEDIUM-HIGH+ declared → MEDIUM actual
+
+### Migrations Applied
+
+**clause_category_list.html** — full QueuePage migration: page-wrap/page-header/page-title/page-subtitle; panel/tbl-head/tbl-th/tbl-row/tbl-td; btn-primary-grad text-white; btn-ghost row edit; aria-hidden SVG; empty-state.
+
+**clause_category_form.html** — full CommandPage migration: page-wrap/page-header/page-title; max-w-3xl (structural exception); panel+panel-inner; form-label/c-muted/c-danger; btn-primary-grad text-white/btn-ghost; `{% for field in form %}` loop preserved; enctype preserved.
+
+**clause_template_list.html** — full QueuePage migration: page-wrap/page-header/page-title/page-subtitle; panel/tbl-head/tbl-th/tbl-row/tbl-td; badge-sm badge-green/badge-yellow for `is_approved`; c-danger/c-muted for `is_mandatory`; c-link for title; empty-state.
+
+**clause_template_detail.html** — full WorkspacePage migration (most complex): page-wrap/page-header; max-w-3xl inner wrapper (structural exception — legal text readability); space-y-6; panel+panel-inner for all 8 panels; panel-title section headings; form-label/c-muted/c-danger; btn-primary-grad text-white; c-link; 2 inline POST forms (clause_variant_create, clause_playbook_create) preserved with csrf_token/action URLs/field names unchanged; non_field_errors added to both forms; `<pre>` blocks preserved exactly for clause text and fallback content; version history blue highlight (border-blue-200 bg-blue-50) kept as structural exception; amber policy_issues panel (bg-amber-50) kept as structural exception.
+
+**clause_template_form.html** — full CommandPage migration (same as category_form pattern): page-wrap/page-header; max-w-3xl; panel+panel-inner; form-label/c-muted/c-danger; btn-primary-grad text-white/btn-ghost; enctype preserved.
+
+**clause_library.html** — shell-only migration (JS prototype page with no backend integration): page-wrap/page-header/page-title; c-muted subtitle; btn-primary-grad text-white; panel panel-inner for search bar; panel for list; empty-state class on empty state div; modal form-label/btn-primary-grad text-white; ALL JS logic preserved 100% intact including renderClauses() template literal strings.
+
+### Preserved
+- All `<pre>` blocks for clause text and fallback content rendering
+- `{% csrf_token %}`, `method="post"`, action URLs, field names — both inline forms in clause_template_detail.html
+- `enctype="multipart/form-data"` on both form templates
+- `resolved_variant.*`, `variants`, `playbooks`, `policy_issues`, `template_versions`, `fallback_summary` context vars
+- `is_approved`, `is_mandatory`, `clauses`, `categories` context vars
+- All clause/category/template relationships
+- All JS functionality in clause_library.html
+
+### Structural Exceptions
+- `max-w-3xl` on form/detail inner wrappers — legal content readability
+- `border-blue-200 bg-blue-50` on current version in version history — no canonical active-item token
+- `bg-amber-50 border border-amber-200` on policy_issues — no canonical amber warning panel
+- `hover:text-gray-600` on modal close button — functional UI interactive state
+- `text-primary-*`, `bg-primary-*` inside JS template literals in clause_library.html — excluded per migration rules
+
+### High-Impact Action Assessment
+No destructive category/template delete actions in any of the 6 templates. Create variant/playbook actions are additive (not destructive). No confirm guards needed. Permission logic in view layer, not templates.
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 6) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Legacy btn-primary / btn-outline | ✅ 0 (static HTML; JS strings excluded) |
+| action-chip | ✅ 0 |
+| stat-card | ✅ 0 |
+| c-red | ✅ 0 |
+
+**Next:** QueuePage wave 4 or remaining unmigrated templates

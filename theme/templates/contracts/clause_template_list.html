@@ -1,46 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Clause Library - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Clause Library</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage clause library</p>
+      <h1 class="page-title">Clause Library</h1>
+      <p class="page-subtitle">Manage clause library</p>
     </div>
-    <a href="{% url 'contracts:clause_template_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
+    <a href="{% url 'contracts:clause_template_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
+      <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+      Add New
     </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Scope</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Version</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Mandatory</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in clauses %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700"><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ item.title }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.category|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.get_jurisdiction_scope_display }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">v{{ item.version }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.is_approved %}<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Approved</span>{% else %}<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">Draft</span>{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.is_mandatory %}<span class="text-red-600 font-medium">Yes</span>{% else %}No{% endif %}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:clause_template_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">No clause library found</td></tr>
-            {% endfor %}
-        </tbody>
+  </div>
+
+  <div class="panel">
+    <table class="w-full text-sm">
+      <thead class="tbl-head">
+        <tr>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Scope</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Version</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Mandatory</th>
+          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in clauses %}
+        <tr class="border-b transition-colors tbl-row hover:bg-gray-50">
+          <td class="px-5 py-3.5"><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
+          <td class="px-5 py-3.5 tbl-td">{{ item.category|default:"-" }}</td>
+          <td class="px-5 py-3.5 tbl-td">{{ item.get_jurisdiction_scope_display }}</td>
+          <td class="px-5 py-3.5 tbl-td">v{{ item.version }}</td>
+          <td class="px-5 py-3.5">
+            {% if item.is_approved %}
+            <span class="badge-sm badge-green">Approved</span>
+            {% else %}
+            <span class="badge-sm badge-yellow">Draft</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5">
+            {% if item.is_mandatory %}
+            <span class="c-danger font-medium">Yes</span>
+            {% else %}
+            <span class="c-muted">No</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3.5 text-right">
+            <a href="{% url 'contracts:clause_template_update' item.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7"><div class="empty-state">No clause library found</div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+
 </div>
 {% endblock %}

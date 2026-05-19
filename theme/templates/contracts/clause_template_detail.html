@@ -1,219 +1,239 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <a href="{% url 'contracts:clause_template_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Editing this clause creates a new immutable version.</p>
-        </div>
-        <a href="{% url 'contracts:clause_template_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Category</span><p class="mt-1 text-sm text-gray-900">{{ object.category|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Jurisdiction</span><p class="mt-1 text-sm text-gray-900">{{ object.get_jurisdiction_scope_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Version</span><p class="mt-1 text-sm text-gray-900">v{{ object.version }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Mandatory</span><p class="mt-1 text-sm text-gray-900">{{ object.is_mandatory|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Approved</span><p class="mt-1 text-sm text-gray-900">{{ object.is_approved|yesno:"Yes,No" }}{% if object.approved_by %} by {{ object.approved_by }}{% endif %}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Applicable Types</span><p class="mt-1 text-sm text-gray-900">{{ object.applicable_contract_types|default:"All" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Standard Clause Text</span><p class="mt-1 text-sm text-gray-900"><pre class="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mt-1">{{ object.content }}</pre></p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Fallback Position</span><p class="mt-1 text-sm text-gray-900"><pre class="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mt-1">{{ object.fallback_content|default:"None" }}</pre></p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Fallback Coverage</span><p class="mt-1 text-sm text-gray-900">{% if fallback_summary.has_fallback %}Available{% else %}Not provided{% endif %}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Negotiation Playbook</span><p class="mt-1 text-sm text-gray-900">{{ object.playbook_notes|default:"No playbook notes" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Tags</span><p class="mt-1 text-sm text-gray-900">{{ object.tags|default:"-" }}</p></div>
+<div class="page-wrap">
+  <div class="max-w-3xl">
+
+    <div class="page-header">
+      <div>
+        <a href="{% url 'contracts:clause_template_list' %}" class="c-muted text-sm">&larr; Back to list</a>
+        <h1 class="page-title mt-1">{{ object }}</h1>
+        <p class="page-subtitle">Editing this clause creates a new immutable version.</p>
+      </div>
+      <a href="{% url 'contracts:clause_template_update' object.pk %}" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Edit</a>
     </div>
 
-    {% if template_versions %}
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+    <div class="space-y-6">
+
+      <div class="panel panel-inner">
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Category</span><p class="mt-1 text-sm">{{ object.category|default:"-" }}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Jurisdiction</span><p class="mt-1 text-sm">{{ object.get_jurisdiction_scope_display }}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Version</span><p class="mt-1 text-sm">v{{ object.version }}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Mandatory</span><p class="mt-1 text-sm">{{ object.is_mandatory|yesno:"Yes,No" }}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Approved</span><p class="mt-1 text-sm">{{ object.is_approved|yesno:"Yes,No" }}{% if object.approved_by %} by {{ object.approved_by }}{% endif %}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Applicable Types</span><p class="mt-1 text-sm">{{ object.applicable_contract_types|default:"All" }}</p></div>
+        <div class="py-3 border-b border-gray-100">
+          <span class="text-xs font-semibold uppercase tracking-wide c-muted">Standard Clause Text</span>
+          <pre class="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mt-1">{{ object.content }}</pre>
+        </div>
+        <div class="py-3 border-b border-gray-100">
+          <span class="text-xs font-semibold uppercase tracking-wide c-muted">Fallback Position</span>
+          <pre class="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg mt-1">{{ object.fallback_content|default:"None" }}</pre>
+        </div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Fallback Coverage</span><p class="mt-1 text-sm">{% if fallback_summary.has_fallback %}Available{% else %}Not provided{% endif %}</p></div>
+        <div class="py-3 border-b border-gray-100"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Negotiation Playbook</span><p class="mt-1 text-sm">{{ object.playbook_notes|default:"No playbook notes" }}</p></div>
+        <div class="py-3"><span class="text-xs font-semibold uppercase tracking-wide c-muted">Tags</span><p class="mt-1 text-sm">{{ object.tags|default:"-" }}</p></div>
+      </div>
+
+      {% if template_versions %}
+      <div class="panel panel-inner">
         <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-                <h2 class="font-semibold text-gray-900">Version history</h2>
-                <p class="text-sm text-gray-500 mt-1">Browse the full clause lineage and compare revisions.</p>
-            </div>
+          <div>
+            <h2 class="panel-title">Version history</h2>
+            <p class="c-muted text-sm mt-1">Browse the full clause lineage and compare revisions.</p>
+          </div>
         </div>
         <div class="space-y-3">
-            {% for version in template_versions %}
-            <div class="rounded-lg border {% if version.pk == object.pk %}border-blue-200 bg-blue-50{% else %}border-gray-200 bg-gray-50{% endif %} p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <a href="{% url 'contracts:clause_template_detail' version.pk %}" class="font-medium text-gray-900 hover:text-blue-700">{{ version.title }}</a>
-                        <p class="text-xs text-gray-500 mt-1">v{{ version.version }} · {{ version.get_jurisdiction_scope_display }} · {% if version.is_approved %}Approved{% else %}Draft{% endif %}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        {% if version.pk != object.pk %}
-                        <a href="{% url 'contracts:clause_template_compare' object.pk version.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Compare</a>
-                        {% endif %}
-                    </div>
-                </div>
+          {% for version in template_versions %}
+          <div class="rounded-lg border {% if version.pk == object.pk %}border-blue-200 bg-blue-50{% else %}border-gray-200 bg-gray-50{% endif %} p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <a href="{% url 'contracts:clause_template_detail' version.pk %}" class="font-medium c-link">{{ version.title }}</a>
+                <p class="c-muted text-xs mt-1">v{{ version.version }} · {{ version.get_jurisdiction_scope_display }} · {% if version.is_approved %}Approved{% else %}Draft{% endif %}</p>
+              </div>
+              <div class="flex items-center gap-3">
+                {% if version.pk != object.pk %}
+                <a href="{% url 'contracts:clause_template_compare' object.pk version.pk %}" class="c-link text-sm">Compare</a>
+                {% endif %}
+              </div>
             </div>
-            {% endfor %}
+          </div>
+          {% endfor %}
         </div>
-    </div>
-    {% endif %}
+      </div>
+      {% endif %}
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+      <div class="panel panel-inner">
         <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-                <h2 class="font-semibold text-gray-900">Create variant</h2>
-                <p class="text-sm text-gray-500 mt-1">Add a playbook-specific fallback or negotiation position.</p>
-            </div>
+          <div>
+            <h2 class="panel-title">Create variant</h2>
+            <p class="c-muted text-sm mt-1">Add a playbook-specific fallback or negotiation position.</p>
+          </div>
         </div>
         <form method="post" action="{% url 'contracts:clause_variant_create' object.pk %}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.playbook.id_for_label }}">Playbook</label>
-                {{ variant_form.playbook }}
-                {% if variant_form.playbook.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.playbook.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.jurisdiction_scope.id_for_label }}">Jurisdiction scope</label>
-                {{ variant_form.jurisdiction_scope }}
-                {% if variant_form.jurisdiction_scope.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.jurisdiction_scope.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.contract_type.id_for_label }}">Contract type</label>
-                {{ variant_form.contract_type }}
-                {% if variant_form.contract_type.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.contract_type.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.risk_level.id_for_label }}">Risk level</label>
-                {{ variant_form.risk_level }}
-                {% if variant_form.risk_level.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.risk_level.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.fallback_content.id_for_label }}">Fallback content</label>
-                {{ variant_form.fallback_content }}
-                {% if variant_form.fallback_content.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.fallback_content.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.playbook_notes.id_for_label }}">Playbook notes</label>
-                {{ variant_form.playbook_notes }}
-                {% if variant_form.playbook_notes.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.playbook_notes.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ variant_form.priority.id_for_label }}">Priority</label>
-                {{ variant_form.priority }}
-                {% if variant_form.priority.errors %}<p class="mt-1 text-xs text-red-600">{{ variant_form.priority.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="flex items-center gap-2 pt-7">
-                {{ variant_form.is_active }}
-                <label class="text-sm font-medium text-gray-700" for="{{ variant_form.is_active.id_for_label }}">Active</label>
-            </div>
-            <div class="md:col-span-2 flex justify-end">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Add variant</button>
-            </div>
+          {% csrf_token %}
+          {% if variant_form.non_field_errors %}
+          <div class="md:col-span-2"><p class="c-danger text-sm">{{ variant_form.non_field_errors|join:", " }}</p></div>
+          {% endif %}
+          <div>
+            <label class="form-label block mb-1" for="{{ variant_form.playbook.id_for_label }}">Playbook</label>
+            {{ variant_form.playbook }}
+            {% if variant_form.playbook.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.playbook.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ variant_form.jurisdiction_scope.id_for_label }}">Jurisdiction scope</label>
+            {{ variant_form.jurisdiction_scope }}
+            {% if variant_form.jurisdiction_scope.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.jurisdiction_scope.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ variant_form.contract_type.id_for_label }}">Contract type</label>
+            {{ variant_form.contract_type }}
+            {% if variant_form.contract_type.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.contract_type.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ variant_form.risk_level.id_for_label }}">Risk level</label>
+            {{ variant_form.risk_level }}
+            {% if variant_form.risk_level.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.risk_level.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="form-label block mb-1" for="{{ variant_form.fallback_content.id_for_label }}">Fallback content</label>
+            {{ variant_form.fallback_content }}
+            {% if variant_form.fallback_content.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.fallback_content.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="form-label block mb-1" for="{{ variant_form.playbook_notes.id_for_label }}">Playbook notes</label>
+            {{ variant_form.playbook_notes }}
+            {% if variant_form.playbook_notes.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.playbook_notes.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ variant_form.priority.id_for_label }}">Priority</label>
+            {{ variant_form.priority }}
+            {% if variant_form.priority.errors %}<p class="c-danger text-xs mt-1">{{ variant_form.priority.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="flex items-center gap-2 pt-7">
+            {{ variant_form.is_active }}
+            <label class="form-label" for="{{ variant_form.is_active.id_for_label }}">Active</label>
+          </div>
+          <div class="md:col-span-2 flex justify-end">
+            <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add variant</button>
+          </div>
         </form>
-    </div>
+      </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+      <div class="panel panel-inner">
         <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-                <h2 class="font-semibold text-gray-900">Create playbook</h2>
-                <p class="text-sm text-gray-500 mt-1">Add the guidance that variants can reference.</p>
-            </div>
+          <div>
+            <h2 class="panel-title">Create playbook</h2>
+            <p class="c-muted text-sm mt-1">Add the guidance that variants can reference.</p>
+          </div>
         </div>
         <form method="post" action="{% url 'contracts:clause_playbook_create' object.pk %}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ playbook_form.name.id_for_label }}">Name</label>
-                {{ playbook_form.name }}
-                {% if playbook_form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ playbook_form.name.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ playbook_form.jurisdiction_scope.id_for_label }}">Jurisdiction scope</label>
-                {{ playbook_form.jurisdiction_scope }}
-                {% if playbook_form.jurisdiction_scope.errors %}<p class="mt-1 text-xs text-red-600">{{ playbook_form.jurisdiction_scope.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ playbook_form.description.id_for_label }}">Description</label>
-                {{ playbook_form.description }}
-                {% if playbook_form.description.errors %}<p class="mt-1 text-xs text-red-600">{{ playbook_form.description.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ playbook_form.fallback_position.id_for_label }}">Fallback position</label>
-                {{ playbook_form.fallback_position }}
-                {% if playbook_form.fallback_position.errors %}<p class="mt-1 text-xs text-red-600">{{ playbook_form.fallback_position.errors.0 }}</p>{% endif %}
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ playbook_form.risk_level.id_for_label }}">Risk level</label>
-                {{ playbook_form.risk_level }}
-                {% if playbook_form.risk_level.errors %}<p class="mt-1 text-xs text-red-600">{{ playbook_form.risk_level.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="flex items-center gap-2 pt-7">
-                {{ playbook_form.is_active }}
-                <label class="text-sm font-medium text-gray-700" for="{{ playbook_form.is_active.id_for_label }}">Active</label>
-            </div>
-            <div class="md:col-span-2 flex justify-end">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Add playbook</button>
-            </div>
+          {% csrf_token %}
+          {% if playbook_form.non_field_errors %}
+          <div class="md:col-span-2"><p class="c-danger text-sm">{{ playbook_form.non_field_errors|join:", " }}</p></div>
+          {% endif %}
+          <div>
+            <label class="form-label block mb-1" for="{{ playbook_form.name.id_for_label }}">Name</label>
+            {{ playbook_form.name }}
+            {% if playbook_form.name.errors %}<p class="c-danger text-xs mt-1">{{ playbook_form.name.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ playbook_form.jurisdiction_scope.id_for_label }}">Jurisdiction scope</label>
+            {{ playbook_form.jurisdiction_scope }}
+            {% if playbook_form.jurisdiction_scope.errors %}<p class="c-danger text-xs mt-1">{{ playbook_form.jurisdiction_scope.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="form-label block mb-1" for="{{ playbook_form.description.id_for_label }}">Description</label>
+            {{ playbook_form.description }}
+            {% if playbook_form.description.errors %}<p class="c-danger text-xs mt-1">{{ playbook_form.description.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="form-label block mb-1" for="{{ playbook_form.fallback_position.id_for_label }}">Fallback position</label>
+            {{ playbook_form.fallback_position }}
+            {% if playbook_form.fallback_position.errors %}<p class="c-danger text-xs mt-1">{{ playbook_form.fallback_position.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="form-label block mb-1" for="{{ playbook_form.risk_level.id_for_label }}">Risk level</label>
+            {{ playbook_form.risk_level }}
+            {% if playbook_form.risk_level.errors %}<p class="c-danger text-xs mt-1">{{ playbook_form.risk_level.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="flex items-center gap-2 pt-7">
+            {{ playbook_form.is_active }}
+            <label class="form-label" for="{{ playbook_form.is_active.id_for_label }}">Active</label>
+          </div>
+          <div class="md:col-span-2 flex justify-end">
+            <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add playbook</button>
+          </div>
         </form>
-    </div>
+      </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
-        <h2 class="font-semibold text-gray-900 mb-3">Resolved playbook</h2>
-        <p class="text-sm text-gray-600 mb-2">Best-fit variant score: {{ resolved_variant.score }}</p>
+      <div class="panel panel-inner">
+        <h2 class="panel-title mb-3">Resolved playbook</h2>
+        <p class="c-muted text-sm mb-3">Best-fit variant score: {{ resolved_variant.score }}</p>
         <div class="space-y-3">
-            <div class="py-3 border-b border-gray-100">
-                <span class="text-xs font-medium text-gray-500 uppercase">Matched variant</span>
-                <p class="mt-1 text-sm text-gray-900">{% if resolved_variant.variant %}Priority {{ resolved_variant.variant.priority }}{% else %}Default template fallback{% endif %}</p>
-            </div>
-            <div class="py-3 border-b border-gray-100">
-                <span class="text-xs font-medium text-gray-500 uppercase">Playbook</span>
-                <p class="mt-1 text-sm text-gray-900">{{ resolved_variant.playbook_name|default:"No playbook selected" }}</p>
-            </div>
-            <div class="py-3 border-b border-gray-100">
-                <span class="text-xs font-medium text-gray-500 uppercase">Fallback position</span>
-                <pre class="mt-1 whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg">{{ resolved_variant.fallback_content|default:"None" }}</pre>
-            </div>
-            <div class="py-3">
-                <span class="text-xs font-medium text-gray-500 uppercase">Playbook notes</span>
-                <p class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ resolved_variant.playbook_notes|default:"No playbook notes" }}</p>
-            </div>
+          <div class="py-3 border-b border-gray-100">
+            <span class="text-xs font-semibold uppercase tracking-wide c-muted">Matched variant</span>
+            <p class="mt-1 text-sm">{% if resolved_variant.variant %}Priority {{ resolved_variant.variant.priority }}{% else %}Default template fallback{% endif %}</p>
+          </div>
+          <div class="py-3 border-b border-gray-100">
+            <span class="text-xs font-semibold uppercase tracking-wide c-muted">Playbook</span>
+            <p class="mt-1 text-sm">{{ resolved_variant.playbook_name|default:"No playbook selected" }}</p>
+          </div>
+          <div class="py-3 border-b border-gray-100">
+            <span class="text-xs font-semibold uppercase tracking-wide c-muted">Fallback position</span>
+            <pre class="mt-1 whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg">{{ resolved_variant.fallback_content|default:"None" }}</pre>
+          </div>
+          <div class="py-3">
+            <span class="text-xs font-semibold uppercase tracking-wide c-muted">Playbook notes</span>
+            <p class="mt-1 text-sm whitespace-pre-wrap">{{ resolved_variant.playbook_notes|default:"No playbook notes" }}</p>
+          </div>
         </div>
-    </div>
+      </div>
 
-    {% if variants %}
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
-        <h2 class="font-semibold text-gray-900 mb-3">Active variants</h2>
+      {% if variants %}
+      <div class="panel panel-inner">
+        <h2 class="panel-title mb-3">Active variants</h2>
         <div class="space-y-3">
-            {% for variant in variants %}
-            <div class="rounded-lg border border-gray-100 p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <p class="font-medium text-gray-900">Priority {{ variant.priority }}{% if variant.playbook %} · {{ variant.playbook.name }}{% endif %}</p>
-                    <span class="text-xs text-gray-500">{{ variant.get_jurisdiction_scope_display }}</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-2">{{ variant.playbook_notes|default:"No playbook notes" }}</p>
+          {% for variant in variants %}
+          <div class="rounded-lg border border-gray-100 p-4">
+            <div class="flex items-center justify-between gap-3">
+              <p class="font-medium">Priority {{ variant.priority }}{% if variant.playbook %} · {{ variant.playbook.name }}{% endif %}</p>
+              <span class="c-muted text-xs">{{ variant.get_jurisdiction_scope_display }}</span>
             </div>
-            {% endfor %}
+            <p class="c-muted text-sm mt-2">{{ variant.playbook_notes|default:"No playbook notes" }}</p>
+          </div>
+          {% endfor %}
         </div>
-    </div>
-    {% endif %}
+      </div>
+      {% endif %}
 
-    {% if playbooks %}
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
-        <h2 class="font-semibold text-gray-900 mb-3">Active playbooks</h2>
+      {% if playbooks %}
+      <div class="panel panel-inner">
+        <h2 class="panel-title mb-3">Active playbooks</h2>
         <div class="space-y-3">
-            {% for playbook in playbooks %}
-            <div class="rounded-lg border border-gray-100 p-4">
-                <p class="font-medium text-gray-900">{{ playbook.name }}</p>
-                <p class="text-sm text-gray-600 mt-2">{{ playbook.description|default:"No description" }}</p>
-                <p class="text-xs text-gray-500 mt-2">{{ playbook.get_jurisdiction_scope_display }}{% if playbook.risk_level %} · {{ playbook.risk_level }}{% endif %}</p>
-            </div>
-            {% endfor %}
+          {% for playbook in playbooks %}
+          <div class="rounded-lg border border-gray-100 p-4">
+            <p class="font-medium">{{ playbook.name }}</p>
+            <p class="c-muted text-sm mt-2">{{ playbook.description|default:"No description" }}</p>
+            <p class="c-muted text-xs mt-2">{{ playbook.get_jurisdiction_scope_display }}{% if playbook.risk_level %} · {{ playbook.risk_level }}{% endif %}</p>
+          </div>
+          {% endfor %}
         </div>
-    </div>
-    {% endif %}
+      </div>
+      {% endif %}
 
-    {% if policy_issues %}
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mt-6">
+      {% if policy_issues %}
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
         <h2 class="font-semibold text-amber-900 mb-2">Policy Notes</h2>
         <ul class="list-disc pl-5 text-sm text-amber-800 space-y-1">
-            {% for issue in policy_issues %}
-            <li>{{ issue }}</li>
-            {% endfor %}
+          {% for issue in policy_issues %}
+          <li>{{ issue }}</li>
+          {% endfor %}
         </ul>
+      </div>
+      {% endif %}
+
     </div>
-    {% endif %}
+  </div>
 </div>
 {% endblock %}

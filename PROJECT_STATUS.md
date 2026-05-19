@@ -1153,3 +1153,30 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **No high-impact template actions** — no approve/close/archive in templates.
 **Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
 **Next:** QueuePage wave 3 — Clause cluster (clause_category + clause_template + clause_library)
+
+---
+
+## Batch 6 Step 8 — QueuePage Wave 3: Clause Cluster
+
+**Status:** ✅ COMPLETE — GO
+**Templates migrated:** 6
+**Risk declared:** MEDIUM-HIGH+ | **Risk actual:** MEDIUM
+
+| Template | Archetype | Result |
+|---|---|---|
+| clause_category_list.html | QueuePage | ✅ Full migration |
+| clause_category_form.html | CommandPage | ✅ Full migration |
+| clause_template_list.html | QueuePage | ✅ Full migration |
+| clause_template_detail.html | WorkspacePage | ✅ Full migration (most complex — 8 panels, 2 inline forms) |
+| clause_template_form.html | CommandPage | ✅ Full migration |
+| clause_library.html | QueuePage | ✅ Shell migration (JS prototype preserved) |
+
+**Clause text safety:** `<pre>` blocks preserved exactly — no truncation, no transformation, no HTML escaping drift.
+**Legal content preserved:** `is_approved`, `is_mandatory`, `resolved_variant`, `variants`, `playbooks`, `policy_issues`, `template_versions`, `fallback_summary` all preserved.
+**Category-template relationships:** category links, template counts, clause category context vars all preserved.
+**Library behavior:** clause_library.html JS prototype fully preserved — search, filter, select, insert, delete, modal — all client-side JS logic untouched.
+**Inline forms:** clause_variant_create and clause_playbook_create forms both have csrf_token + action URLs + field names + enctype (none needed) all preserved. non_field_errors display added (improvement).
+**No high-impact destructive actions** in any of the 6 templates.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅ | **Template parse:** 6/6 ✅
+
+**Structural exceptions added:** `<pre>` clause text blocks; version history blue active highlight; amber policy_issues panel; max-w-3xl inner wrappers; JS template literal strings in clause_library.html.
