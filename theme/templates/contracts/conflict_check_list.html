@@ -1,40 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Conflict Checks - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div><h1 class="text-2xl font-bold text-gray-900">Conflict of Interest Checks</h1></div>
-    <a href="{% url 'contracts:conflict_check_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">New Check</a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+<div class="page-wrap">
+
+  <div class="page-header mb-6">
+    <div>
+      <h1 class="page-title">Conflict of Interest Checks</h1>
+    </div>
+    <div class="page-actions">
+      <a href="{% url 'contracts:conflict_check_create' %}" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center gap-2">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New Check
+      </a>
+    </div>
+  </div>
+
+  <div class="panel">
     <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Checked Party</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Client</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Checked By</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for check in conflict_checks %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm font-medium text-gray-900">{{ check.checked_party }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ check.checked_party_type|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ check.client.name|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ check.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3"><span class="text-xs px-2 py-1 rounded-full {% if check.status == 'CLEAR' %}bg-green-100 text-green-800{% elif check.status == 'CONFLICT' %}bg-red-100 text-red-800{% elif check.status == 'WAIVED' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ check.get_status_display }}</span></td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ check.checked_by.get_full_name|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-500">{{ check.created_at|date:"M d, Y" }}</td>
-                <td class="px-5 py-3 text-right"><a href="{% url 'contracts:conflict_check_update' check.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="px-5 py-12 text-center text-gray-400">No conflict checks performed.</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th px-5 py-3">Checked Party</th>
+          <th class="tbl-th px-5 py-3">Type</th>
+          <th class="tbl-th px-5 py-3">Client</th>
+          <th class="tbl-th px-5 py-3">Matter</th>
+          <th class="tbl-th px-5 py-3">Status</th>
+          <th class="tbl-th px-5 py-3">Checked By</th>
+          <th class="tbl-th px-5 py-3">Date</th>
+          <th class="tbl-th px-5 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for check in conflict_checks %}
+        <tr class="tbl-row hover:bg-gray-50">
+          <td class="tbl-td px-5 py-3 font-medium">{{ check.checked_party }}</td>
+          <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_party_type|default:"—" }}</td>
+          <td class="tbl-td px-5 py-3 c-muted">{{ check.client.name|default:"—" }}</td>
+          <td class="tbl-td px-5 py-3 c-muted">{{ check.matter.matter_number|default:"—" }}</td>
+          <td class="tbl-td px-5 py-3">
+            <span class="badge-sm {% if check.status == 'CLEAR' %}badge-green{% elif check.status == 'CONFLICT' %}badge-red{% elif check.status == 'WAIVED' %}badge-yellow{% else %}badge-gray{% endif %}">{{ check.get_status_display }}</span>
+          </td>
+          <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_by.get_full_name|default:"—" }}</td>
+          <td class="tbl-td px-5 py-3 c-muted">{{ check.created_at|date:"M d, Y" }}</td>
+          <td class="tbl-td px-5 py-3 text-right">
+            <a href="{% url 'contracts:conflict_check_update' check.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state">No conflict checks performed.</div></td></tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+
 </div>
 {% endblock %}

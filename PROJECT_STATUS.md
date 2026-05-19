@@ -1180,3 +1180,22 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅ | **Template parse:** 6/6 ✅
 
 **Structural exceptions added:** `<pre>` clause text blocks; version history blue active highlight; amber policy_issues panel; max-w-3xl inner wrappers; JS template literal strings in clause_library.html.
+
+---
+
+## Batch 6 Step 9 — QueuePage Wave 4: Conflict Check Cluster
+
+**Status:** ✅ COMPLETE — GO
+**Templates migrated:** 2
+**Risk declared:** MEDIUM-HIGH | **Risk actual:** LOW
+
+| Template | Archetype | Result |
+|---|---|---|
+| conflict_check_list.html | QueuePage | ✅ Full migration |
+| conflict_check_form.html | CommandPage | ✅ Full migration |
+
+**Conflict status semantics preserved:** CLEAR→badge-green, CONFLICT→badge-red, WAIVED→badge-yellow, else→badge-gray; `get_status_display` unchanged.
+**All context vars preserved:** `conflict_checks`, `check.checked_party`, `checked_party_type`, `client.name`, `matter.matter_number`, `checked_by.get_full_name`, `created_at`.
+**Form field layout preserved:** `notes` and `conflicts_found` fields use `md:col-span-2` exactly as before.
+**No high-impact destructive actions** in either template.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅ | **Template parse:** 2/2 ✅

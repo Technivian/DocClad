@@ -1934,3 +1934,37 @@ No destructive category/template delete actions in any of the 6 templates. Creat
 | c-red | ✅ 0 |
 
 **Next:** QueuePage wave 4 or remaining unmigrated templates
+
+---
+
+## Batch 6 Step 9 — QueuePage Wave 4: Conflict Check Cluster
+
+**Status:** ✅ COMPLETE
+**Templates:** `conflict_check_list.html`, `conflict_check_form.html`
+**Risk Level:** MEDIUM-HIGH declared → LOW actual (no template-level review/approval actions)
+
+### Migrations Applied
+
+**conflict_check_list.html** — full QueuePage migration: page-wrap/page-header/page-title/page-actions; panel; tbl-head/tbl-th/tbl-row/tbl-td; badge-sm badge-green (CLEAR) / badge-red (CONFLICT) / badge-yellow (WAIVED) / badge-gray (else) for `check.get_status_display`; c-muted on type/client/matter/checked_by/date columns; btn-primary-grad text-white New Check CTA with aria-hidden SVG; btn-ghost row Edit link; empty-state.
+
+**conflict_check_form.html** — full CommandPage migration: page-wrap/page-header/page-title; max-w-2xl (structural exception); panel+panel-inner; form-label/c-muted/c-danger; `{% for field in form %}` loop preserved with md:col-span-2 on notes/conflicts_found; non_field_errors display added; btn-primary-grad text-white Submit/Update; btn-ghost Cancel; Back link; csrf_token preserved; no enctype (no file uploads — correct).
+
+### Risk Semantics Preserved
+- `check.status` values: CLEAR / CONFLICT / WAIVED — semantics preserved, badge colors map correctly
+- `check.get_status_display` — display value unchanged
+- `checked_party`, `checked_party_type`, `client.name`, `matter.matter_number`, `checked_by.get_full_name`, `created_at` — all preserved verbatim
+- `field.name == 'notes' or field.name == 'conflicts_found'` condition — preserved exactly for md:col-span-2 grid layout
+
+### High-Impact Action Assessment
+No destructive or review/approval actions in either template. No confirm guards needed. All workflow is view-layer.
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (both) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Legacy classes (bg-blue-/btn-primary/text-red-500) | ✅ 0 |
+| Inline handlers | ✅ 0 |
+
+**Next:** QueuePage wave 5 or remaining unmigrated templates
