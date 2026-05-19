@@ -1376,3 +1376,29 @@ These are rendering with no styles currently. Slice A will fix them.
 - Undocumented primitives: ✅ 0
 
 **Status: ✅ Complete — Batch 5 Step 7 done. Batch 5 should pause for a post-migration audit before high-risk settings pages (organization_team.html, profile.html).**
+
+---
+
+### 2026-05-19 — Batch 5 Post-Migration Audit
+
+**Scope:** All 10 Batch 5 templates (Steps 1–7)
+
+**Verdict:** ✅ PASS — All templates consistent with DESIGN_CONSTITUTION.md v1.1. Zero regressions. Zero security risks.
+
+**Validation:** 10/10 template parse ✅ · manage.py check 0 issues ✅ · 3/3 tests ✅ · 0 inline styles · 0 retired classes · 0 undocumented primitives
+
+**Exceptions confirmed and documented:**
+- `page-max-w` in organization_identity_settings.html — KEEP DOCUMENTED
+- `input-base w-180 px-3 py-2 rounded-lg border` in organization_security_settings.html — KEEP DOCUMENTED
+- `onsubmit="return confirm(...)"` × 4 — KEEP AS ACCEPTABLE
+- `onchange="this.form.submit()"` × 2 — KEEP AS ACCEPTABLE
+- `grid grid-cols-1 md:grid-cols-2` in invoice_form.html — KEEP DOCUMENTED
+- Settings heading classes — KEEP DOCUMENTED
+
+**Deferred templates:**
+- `organization_team.html` — Batch 6 Step 1 (HIGH risk, careful review required)
+- `profile.html` — DEFER INDEFINITELY (MFA-critical)
+
+**Artifact produced:** `BATCH5_POST_MIGRATION_AUDIT.md`
+
+**Recommended Batch 6 scope:** organization_team.html (Step 1), then NetworkPage client wave (client_list, client_detail, client_form)
