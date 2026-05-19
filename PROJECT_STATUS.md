@@ -1230,3 +1230,29 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 
 **🏁 QueuePage domain substantially complete across Batch 6 Steps 6–10.**
 
+
+---
+
+## Batch 6 Step 11 — Final Archetype Audit + Batch 6 Closure
+
+**Status:** ✅ CLOSED  
+**Mode:** Audit-first + targeted safe fixes  
+
+### Summary
+- Repo-wide template audit completed: 123 templates inventoried
+- 66 fully migrated (prior batches), 2 deferred (JS prototypes), 15 targeted fixes applied
+- Critical finding: `btn-primary/btn-secondary/btn-outline` undefined in base.html CSS → zero-styling regression across 13 templates → **fixed**
+- `panel+stat-card` redundancy fixed in contract_list.html and risk_log_list.html
+- No broad migrations; button canonicalization only
+- All auth/security surfaces untouched
+- JS prototype debt (obligations_list, templates_list) isolated for Batch 7
+
+**Tests:** 3/3 ✅ | **manage.py check:** 0 ✅ | **Legacy class scan:** clean (0 btn-primary/secondary/outline, 0 action-chip, 0 panel+stat-card)
+
+### Recommended Batch 7 Scope
+1. JS prototype refactor: obligations_list.html, templates_list.html
+2. Full structural migration: remaining WorkspacePage detail pages + CommandPage forms + ExceptionPage clusters
+3. legal_task_board.html (BoardView/Kanban primitive — documented, complex)
+4. Auth/security surfaces if ever in scope: registration/*, profile, saml_select
+
+**🏁 Batch 6 CLOSED.**

@@ -2027,3 +2027,73 @@ No destructive, delete, approve, reject, revoke actions across any Step 10 templ
 
 **🏁 QueuePage domain substantially complete — 11 templates migrated in Step 10, 2 deferred as JS prototype debt.**
 
+
+---
+
+## Batch 6 Step 11 — Final Archetype Audit + Batch 6 Closure Sweep
+
+**Mode:** Audit-first + targeted safe fixes + honest closure  
+**Risk:** LOW-MEDIUM  
+**Scope:** Repo-wide template audit; targeted button canonicalization only
+
+### Phase 1 — Full Archetype Audit
+- 123 total templates in filesystem
+- Archetype map cross-referenced
+- 66 templates fully MIGRATED (prior batches + Steps 1–10)
+- 2 DEFERRED (CLASS D: JS prototype debt — obligations_list, templates_list)
+- 15 templates received TARGETED FIX (button canonicalization, panel cleanup)
+- Remaining unmigrated templates classified as safe deferred (full migration in future batches)
+
+### Phase 2 — Consistency Scan
+**Finding:** `btn-primary`, `btn-secondary`, `btn-outline` are NOT defined in base.html CSS. 13 contracts templates using these classes rendered with zero styling (real regression).  
+**action-chip:** 0 remaining ✅  
+**panel+stat-card redundancy:** 2 remaining found and fixed (contract_list, risk_log_list)
+
+### Phase 3 — Targeted Safe Fixes Applied
+Button canonicalization (btn-primary → btn-primary-grad text-white; btn-secondary/btn-outline → btn-ghost):
+- `workflow_dashboard.html` (already migrated — button residual)
+- `workflow_template_detail.html`
+- `workflow_detail.html`
+- `compliance_checklist_form.html`
+- `compliance_checklist_list.html`
+- `compliance_checklist_detail.html`
+- `trademark_request_detail.html`
+- `trademark_request_form.html`
+- `negotiation_note_form.html`
+- `workflow_step_form.html`
+- `workflow_form.html`
+- `legal_task_form.html`
+- `risk_log_form.html`
+
+Panel+stat-card redundancy removed:
+- `contract_list.html` (already migrated — panel residual)
+- `risk_log_list.html`
+
+### Validation Evidence
+| Check | Result |
+|-------|--------|
+| Template parse (15 touched files) | ✅ 13/13 OK (button-fix files); 2/2 OK (panel-fix files) |
+| manage.py check | ✅ 0 issues |
+| Tests | ✅ 3/3 passed |
+| btn-primary/secondary/outline in contracts | ✅ 0 (excluding CLASS D prototypes) |
+| action-chip | ✅ 0 |
+| panel+stat-card redundancy | ✅ 0 |
+
+### Deferred (Batch 7)
+- `obligations_list.html` — CLASS D: JS prototype
+- `templates_list.html` — CLASS D: JS prototype
+- All remaining unmigrated WorkspacePage/CommandPage/ExceptionPage templates (full structural migration needed, not button-only; safe to defer)
+- `saml_select.html`, `registration/*.html`, `profile.html` — CLASS E: auth/security critical
+- `base_fullscreen.html`, `base_redesign.html`, `components_demo.html`, `styleguide.html`, `layout_toggle.html` — F: design system tooling / not app pages
+
+### Classification Summary
+| Class | Count | Description |
+|-------|-------|-------------|
+| A — Fully migrated | 66 | All prior batches + Steps 1–10 |
+| B — Targeted fix applied | 15 | Button canonicalization only (Step 11) |
+| D — JS prototype debt | 2 | obligations_list, templates_list |
+| E — Auth/security deferred | 4 | registration/*, saml_select, profile |
+| F — Not app pages | 6 | base/tooling/design-system templates |
+| C — Safe full migration remaining | ~30 | WorkspacePage details, CommandPage forms, ExceptionPage clusters |
+
+**🏁 Batch 6 CLOSED — design-system consistency sweep complete; all JS prototype debt isolated; auth surfaces untouched.**

@@ -15,12 +15,12 @@
                 <p class="text-gray-600 mt-1">{{ workflow_template.description }}</p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="{% url 'contracts:workflow_template_list' %}" class="btn-secondary">
+                <a href="{% url 'contracts:workflow_template_list' %}" class="btn-ghost">
                     Back to Templates
                 </a>
                 <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="btn-primary-grad text-white">
                         Create New Version
                     </button>
                 </form>
@@ -133,7 +133,7 @@
                                 <p class="mt-1 text-xs text-red-600">{{ step_form.order.errors.0 }}</p>
                                 {% endif %}
                             </div>
-                            <button type="submit" class="btn-primary h-10 px-4">
+                            <button type="submit" class="btn-primary-grad text-white h-10 px-4">
                                 Add
                             </button>
                         </div>

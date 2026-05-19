@@ -10,7 +10,7 @@
             <h1 class="text-2xl font-bold text-gray-900">{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}</h1>
             <p class="c-muted">Create a new workflow to manage your contract process</p>
         </div>
-        <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-outline">
+        <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-ghost">
             Back to Dashboard
         </a>
     </div>
@@ -92,7 +92,7 @@
                 <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-ghost">
                     Cancel
                 </a>
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-primary-grad text-white">
                     {% if object %}Update{% else %}Start{% endif %} Workflow
                 </button>
             </div>

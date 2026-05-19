@@ -23,7 +23,7 @@
                 View Contract
             </a>
             {% endif %}
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-primary">
+            <a href="{% url 'contracts:workflow_dashboard' %}" class="btn-primary-grad text-white">
                 Back to Dashboard
             </a>
         </div>
@@ -99,7 +99,7 @@
                     {{ add_step_form.due_date }}
                     {% if add_step_form.due_date.errors %}<p class="mt-1 text-xs text-red-600">{{ add_step_form.due_date.errors.0 }}</p>{% endif %}
                 </div>
-                <button type="submit" class="btn-primary w-full">Add Step</button>
+                <button type="submit" class="btn-primary-grad text-white w-full">Add Step</button>
             </div>
         </form>
     </div>
@@ -219,7 +219,7 @@
                     <button type="button" onclick="closeStepModal()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">
                         Cancel
                     </button>
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="btn-primary-grad text-white">
                         Update Step
                     </button>
                 </div>
