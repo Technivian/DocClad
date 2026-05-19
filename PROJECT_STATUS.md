@@ -1349,3 +1349,24 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **JS Prototype Debt:** 0
 **Remaining real template debt:** ~8 templates
 **Next:** Cluster 5 Medium complexity pages
+
+---
+
+## Batch 7 Step 7 — Cluster 5 Medium Pages (COMPLETE)
+
+**Templates migrated:** 4 (due_diligence_detail, due_diligence_form, document_detail, workflow_form)
+
+**Highlights:**
+- All 4 medium-complexity templates fully normalized to canonical structure
+- `document_detail`: file `download` attribute preserved on 3 links; OCR `<pre>` block preserved
+- `due_diligence_detail`: toggle link preserved as GET/c-link (pre-existing issue, not changed)
+- `workflow_form`: JS script block + suggested_template/comparison blocks preserved verbatim
+- Risk badge semantics: CRITICAL→red, HIGH→yellow, MEDIUM→blue, LOW→green (no badge-orange exists)
+- Task badge semantics: COMPLETED→green, IN_PROGRESS→blue, else→gray
+
+**Validation:** 4/4 parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**JS Prototype Debt:** 0
+**Remaining real template debt:** ~4 templates (Cluster 6 + contract_form)
+**Auth/security:** permanently deferred
+**Next:** Cluster 6 large detail pages

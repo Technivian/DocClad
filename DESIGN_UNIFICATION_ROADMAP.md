@@ -2294,3 +2294,40 @@ Panel+stat-card redundancy removed:
 **Validation:** 3/3 template parse OK · manage.py check 0 issues · 3/3 tests pass
 
 **Remaining real template debt:** ~8 templates (Clusters 5, 6, contract_form)
+
+---
+
+## Batch 7 Step 7 — Cluster 5 Medium Pages (COMPLETE)
+
+**Templates migrated:** 4
+- `due_diligence_detail.html` — WorkspacePage, KPI/task/risk panel migration
+- `due_diligence_form.html` — CommandPage, 8-field form with all primitives
+- `document_detail.html` — WorkspacePage, file/version/OCR preservation
+- `workflow_form.html` — CommandPage, suggested_template/comparison blocks preserved
+
+**Canonical patterns applied:**
+- `page-wrap` / `page-header` / `page-title` / `page-subtitle c-muted` / `page-actions`
+- `panel` / `panel-inner` / `panel-head` / `panel-title`
+- `badge-sm` with semantic color (task/risk/document status)
+- `form-label` / `c-danger` field errors / `c-muted` help text
+- `btn-primary-grad text-white` / `btn-ghost`
+- `empty-state` on all empty list sections
+
+**Behavior preserved:**
+- `due_diligence_detail`: toggle task GET link preserved as `c-link` (pre-existing GET mutation)
+- `document_detail`: `download` attribute preserved on 3 file download links; `<pre>` OCR block preserved; `file_hash` code block preserved
+- `workflow_form`: `<script>` block preserved verbatim; `suggested_template` blue info block preserved; `template_comparison` field_diffs/step_diffs loops preserved; `{{ form.X.label_tag }}` auto-labels kept
+- All context variable names unchanged across all 4 templates
+- All CSRF tokens preserved on both form templates
+
+**Badge semantics established:**
+- Task: COMPLETED→green, IN_PROGRESS→blue, else→gray
+- Risk: CRITICAL→red, HIGH→yellow, MEDIUM→blue, LOW→green
+- Document privilege: is_privileged→badge-yellow, is_confidential→badge-red
+
+**Validation:** 4/4 template parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**Remaining real template debt:** ~4 templates
+- Cluster 6 large detail pages: `signature_request_detail.html`, `workflow_template_detail.html`, `workflow_detail.html`
+- `contract_form.html` (231 lines, most complex)
+- Auth/security permanently deferred

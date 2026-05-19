@@ -1,51 +1,59 @@
 {% extends "base.html" %}
 {% block title %}{{ document.title }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-3xl">
-    <div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+    <div class="page-header">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ document.title }}</h1>
-            <p class="text-sm text-gray-500">Version {{ document.version }} &middot; {{ document.get_document_type_display }} &middot; {{ document.get_status_display }}</p>
+            <h1 class="page-title">{{ document.title }}</h1>
+            <p class="page-subtitle c-muted">Version {{ document.version }} &middot; {{ document.get_document_type_display }} &middot; {{ document.get_status_display }}</p>
         </div>
-        <div class="flex gap-2">
-            {% if document.file %}<a href="{{ document.file.url }}" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700" download>Download</a>{% endif %}
-            <a href="{% url 'contracts:document_update' document.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
+        <div class="page-actions">
+            {% if document.file %}<a href="{{ document.file.url }}" class="btn-primary-grad text-white" download>Download</a>{% endif %}
+            <a href="{% url 'contracts:document_update' document.pk %}" class="btn-ghost">Edit</a>
         </div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-        <div class="grid grid-cols-2 gap-4 text-sm">
-            {% if document.matter %}<div><span class="text-gray-500">Matter:</span> {{ document.matter }}</div>{% endif %}
-            {% if document.client %}<div><span class="text-gray-500">Client:</span> {{ document.client }}</div>{% endif %}
-            {% if document.contract %}<div><span class="text-gray-500">Contract:</span> {{ document.contract }}</div>{% endif %}
-            <div><span class="text-gray-500">Uploaded by:</span> {{ document.uploaded_by.get_full_name|default:"—" }}</div>
-            <div><span class="text-gray-500">Created:</span> {{ document.created_at|date:"M d, Y H:i" }}</div>
-            {% if document.file_size %}<div><span class="text-gray-500">Size:</span> {{ document.file_size|filesizeformat }}</div>{% endif %}
-            {% if document.file_hash %}<div class="md:col-span-2"><span class="text-gray-500">File hash:</span> <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{ document.file_hash }}</code></div>{% endif %}
-            {% if document.tags %}<div><span class="text-gray-500">Tags:</span> {{ document.tags }}</div>{% endif %}
+
+    <!-- Metadata -->
+    <div class="panel mb-6">
+        <div class="panel-inner">
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                {% if document.matter %}<div><span class="c-muted">Matter:</span> {{ document.matter }}</div>{% endif %}
+                {% if document.client %}<div><span class="c-muted">Client:</span> {{ document.client }}</div>{% endif %}
+                {% if document.contract %}<div><span class="c-muted">Contract:</span> {{ document.contract }}</div>{% endif %}
+                <div><span class="c-muted">Uploaded by:</span> {{ document.uploaded_by.get_full_name|default:"—" }}</div>
+                <div><span class="c-muted">Created:</span> {{ document.created_at|date:"M d, Y H:i" }}</div>
+                {% if document.file_size %}<div><span class="c-muted">Size:</span> {{ document.file_size|filesizeformat }}</div>{% endif %}
+                {% if document.file_hash %}<div class="col-span-2"><span class="c-muted">File hash:</span> <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{ document.file_hash }}</code></div>{% endif %}
+                {% if document.tags %}<div><span class="c-muted">Tags:</span> {{ document.tags }}</div>{% endif %}
+            </div>
+            {% if document.is_privileged or document.is_confidential %}
+            <div class="mt-4 flex gap-2">
+                {% if document.is_privileged %}<span class="badge-sm badge-yellow">Attorney-Client Privilege</span>{% endif %}
+                {% if document.is_confidential %}<span class="badge-sm badge-red">Confidential</span>{% endif %}
+            </div>
+            {% endif %}
         </div>
-        {% if document.is_privileged or document.is_confidential %}
-        <div class="mt-3 flex gap-2">
-            {% if document.is_privileged %}<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Attorney-Client Privilege</span>{% endif %}
-            {% if document.is_confidential %}<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Confidential</span>{% endif %}
-        </div>
-        {% endif %}
     </div>
+
     {% if document.description %}
-    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Description</h3>
-        <p class="text-sm text-gray-700">{{ document.description }}</p>
+    <div class="panel mb-6">
+        <div class="panel-inner">
+            <h3 class="text-xs font-semibold c-muted uppercase tracking-wide mb-2">Description</h3>
+            <p class="text-sm">{{ document.description }}</p>
+        </div>
     </div>
     {% endif %}
+
     {% if versions %}
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Version History</h2></div>
+    <div class="panel mb-6">
+        <div class="panel-head"><h2 class="panel-title">Version History</h2></div>
         <div class="divide-y divide-gray-100">
             {% for v in versions %}
             <div class="px-5 py-3 flex items-center justify-between">
-                <div class="text-sm">v{{ v.version }} - {{ v.created_at|date:"M d, Y" }}</div>
-                <div class="flex items-center gap-3">
-                    <a href="{% url 'contracts:document_compare' document.pk v.pk %}" class="text-xs text-gray-700 hover:text-blue-700">Compare</a>
-                    {% if v.file %}<a href="{{ v.file.url }}" class="text-xs text-blue-600" download>Download</a>{% endif %}
+                <div class="text-sm">v{{ v.version }} – {{ v.created_at|date:"M d, Y" }}</div>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'contracts:document_compare' document.pk v.pk %}" class="text-xs c-link">Compare</a>
+                    {% if v.file %}<a href="{{ v.file.url }}" class="text-xs c-link" download>Download</a>{% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -54,13 +62,13 @@
     {% endif %}
 
     {% if version_chain %}
-    <div class="bg-white rounded-xl border border-gray-200 mt-6">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Version Lineage</h2></div>
+    <div class="panel mb-6">
+        <div class="panel-head"><h2 class="panel-title">Version Lineage</h2></div>
         <div class="divide-y divide-gray-100">
             {% for version in version_chain %}
             <div class="px-5 py-3 flex items-center justify-between">
-                <div class="text-sm">v{{ version.version }} - {{ version.created_at|date:"M d, Y" }}</div>
-                {% if version.file %}<a href="{{ version.file.url }}" class="text-xs text-blue-600" download>Download</a>{% endif %}
+                <div class="text-sm">v{{ version.version }} – {{ version.created_at|date:"M d, Y" }}</div>
+                {% if version.file %}<a href="{{ version.file.url }}" class="text-xs c-link" download>Download</a>{% endif %}
             </div>
             {% endfor %}
         </div>
@@ -68,20 +76,20 @@
     {% endif %}
 
     {% if document.ocr_review %}
-    <div class="bg-white rounded-xl border border-gray-200 mt-6 p-5">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold text-gray-900">OCR Review</h2>
-            <a href="{% url 'contracts:document_ocr_review' document.ocr_review.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Review queue item</a>
+    <div class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">OCR Review</h2>
+            <a href="{% url 'contracts:document_ocr_review' document.ocr_review.pk %}" class="text-sm c-link">Review queue item</a>
         </div>
-        <div class="text-sm text-gray-600 space-y-2">
-            <div>Status: <span class="font-medium text-gray-900">{{ document.ocr_review.get_status_display }}</span></div>
-            <div>Source: <span class="font-medium text-gray-900">{{ document.ocr_review.source|default:"—" }}</span></div>
+        <div class="panel-inner text-sm space-y-2">
+            <div><span class="c-muted">Status:</span> <span class="font-medium">{{ document.ocr_review.get_status_display }}</span></div>
+            <div><span class="c-muted">Source:</span> <span class="font-medium">{{ document.ocr_review.source|default:"—" }}</span></div>
             {% if document.ocr_review.confidence_score is not None %}
-            <div>Confidence: <span class="font-medium text-gray-900">{{ document.ocr_review.confidence_score }}</span></div>
+            <div><span class="c-muted">Confidence:</span> <span class="font-medium">{{ document.ocr_review.confidence_score }}</span></div>
             {% endif %}
             {% if document.ocr_review.extracted_text %}
             <div>
-                <div class="font-medium text-gray-900 mb-1">Extracted text</div>
+                <div class="font-medium mb-1">Extracted text</div>
                 <pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs overflow-auto whitespace-pre-wrap">{{ document.ocr_review.extracted_text }}</pre>
             </div>
             {% endif %}
