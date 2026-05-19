@@ -1310,3 +1310,22 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **JS Prototype Debt Remaining:** 0
 
 **Remaining real template debt:** ~15 templates (Clusters 2, 3, 5, 6, 7)
+
+---
+
+## Batch 7 Step 5 — QueuePage List Sweep (COMPLETE)
+
+**Date:** 2026-05-18
+**Templates migrated:** 4 (audit_log_list, dsar_list, legal_hold_list, document_ocr_queue)
+
+**Highlights:**
+- All 4 list pages now on canonical QueuePage structure
+- Badge semantics: audit action colors, DSAR overdue-first, legal hold ACTIVE=alert red, OCR status as plain text
+- Filter onchange behavior and pagination preserved verbatim
+- Backend contracts, context variables, routes all untouched
+
+**Validation:** 4/4 parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**JS Prototype Debt:** 0
+**Remaining real template debt:** ~11 templates
+**Next:** Cluster 3 Compliance cluster (compliance_checklist_form, compliance_checklist_detail, compliance_checklist_list)

@@ -2214,3 +2214,41 @@ Panel+stat-card redundancy removed:
 - Cluster 7: contract_form.html (complex, 231 lines)
 - Auth/security surfaces: permanently deferred
 - _task_card.html: component-level, separate decision
+
+---
+
+## Batch 7 Step 5 — QueuePage List Sweep (COMPLETE)
+
+**Date:** 2026-05-18
+**Templates migrated:** 4
+
+| Template | Status | Notes |
+|----------|--------|-------|
+| audit_log_list.html | MIGRATED | page-wrap + panel overflow-hidden + tbl-* + badges; filter onchange preserved; read-only (no create) |
+| dsar_list.html | MIGRATED | page-wrap + page-actions create + table; overdue-priority badge logic preserved |
+| legal_hold_list.html | MIGRATED | page-wrap + page-actions create + table; ACTIVE→red intentional alert semantic |
+| document_ocr_queue.html | MIGRATED | page-wrap + btn-ghost back + table; OCR status left as plain text (semantics unknown) |
+
+**What was standardized:**
+- page-wrap, page-header, page-title, page-subtitle on all 4
+- panel overflow-hidden wrapping all tables
+- tbl-head, tbl-th, tbl-row, tbl-td throughout
+- badge-sm semantic normalization (audit: action color-coding; dsar: overdue-first logic; legal_hold: alert red for active)
+- btn-primary-grad text-white create buttons (dsar, legal_hold)
+- btn-ghost back link (document_ocr_queue)
+- c-link for all detail/action links
+- c-muted for sub-lines and subtitles
+- empty-state for all empty table bodies
+- aria-hidden on all decorative SVGs
+
+**Behavior preserved:**
+- audit filter onchange="this.form.submit()" preserved verbatim
+- audit pagination ?page=N preserved (pre-existing querystring propagation gap not fixed — backend concern)
+- DSAR is_overdue badge priority preserved
+- legal_hold ACTIVE→red intentional (alert semantic documented in code comment)
+- OCR status as plain text (no badge color assignment without knowing semantics)
+- All context variable accessors unchanged
+
+**Validation:** 4/4 template parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**Remaining real template debt:** ~11 templates (Clusters 3, 5, 6, 7)

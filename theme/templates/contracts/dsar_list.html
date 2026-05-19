@@ -1,46 +1,55 @@
 {% extends "base.html" %}
 {% block title %}DSAR Requests - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">DSAR Requests</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage dsar requests</p>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">DSAR Requests</h1>
+            <p class="page-subtitle c-muted">Manage data subject access requests</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'contracts:dsar_create' %}" class="btn-primary-grad text-white">
+                <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Add New
+            </a>
+        </div>
     </div>
-    <a href="{% url 'contracts:dsar_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Reference</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Requester</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Assigned To</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in requests %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700"><a href="{% url 'contracts:dsar_detail' item.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ item.reference_number }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.get_request_type_display }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.requester_name }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700"><span class="px-2 py-1 text-xs rounded-full {% if item.status == 'COMPLETED' %}bg-green-100 text-green-700{% elif item.status == 'IN_PROGRESS' %}bg-blue-100 text-blue-700{% elif item.is_overdue %}bg-red-100 text-red-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">{{ item.get_status_display }}{% if item.is_overdue %} (Overdue){% endif %}</span></td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.due_date }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.assigned_to|default:"-" }}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:dsar_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">No dsar requests found</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Reference</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Requester</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for item in requests %}
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3"><a href="{% url 'contracts:dsar_detail' item.pk %}" class="c-link font-medium">{{ item.reference_number }}</a></td>
+                    <td class="px-5 py-3 tbl-td">{{ item.get_request_type_display }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ item.requester_name }}</td>
+                    <td class="px-5 py-3">
+                        <span class="badge-sm {% if item.status == 'COMPLETED' %}badge-green{% elif item.status == 'IN_PROGRESS' %}badge-blue{% elif item.is_overdue %}badge-red{% else %}badge-yellow{% endif %}">{{ item.get_status_display }}{% if item.is_overdue %} (Overdue){% endif %}</span>
+                    </td>
+                    <td class="px-5 py-3 tbl-td">{{ item.due_date }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ item.assigned_to|default:"—" }}</td>
+                    <td class="px-5 py-3 text-right">
+                        <a href="{% url 'contracts:dsar_update' item.pk %}" class="text-sm c-link">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="empty-state">No DSAR requests found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
