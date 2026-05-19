@@ -1,23 +1,32 @@
 {% extends "base.html" %}
 {% block title %}New Trust Account - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-2xl">
-    <div class="mb-6"><h1 class="text-2xl font-bold text-gray-900">New Trust Account</h1></div>
-    <form method="post" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        {% csrf_token %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for field in form %}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}<p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
-            </div>
-            {% endfor %}
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">New Trust Account</h1>
         </div>
-        <div class="flex gap-3 pt-4">
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Create Account</button>
-            <a href="{% url 'contracts:trust_account_list' %}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Cancel</a>
+    </div>
+    <div class="panel">
+        <div class="panel-inner">
+            <form method="post">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for field in form %}
+                    <div>
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+                        {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <a href="{% url 'contracts:trust_account_list' %}" class="btn-ghost">Cancel</a>
+                    <button type="submit" class="btn-primary-grad text-white">Create Account</button>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 {% endblock %}

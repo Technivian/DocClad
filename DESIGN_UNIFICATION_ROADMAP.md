@@ -2131,3 +2131,86 @@ Panel+stat-card redundancy removed:
 | Reference scan for deleted filenames | ✅ 0 remaining references |
 
 **🏁 Batch 7 Step 2 RETIRED — zero real routes broken, zero backend regressions, repo prototype debt cleared.**
+
+---
+
+## Batch 7 Step 4 — CommandPage Micro-Form Sweep
+
+**Date:** 2025-05-18
+**Status:** COMPLETE
+
+### Scope
+20 CommandPage form templates across two clusters:
+- Cluster 1 (15): Raw Tailwind micro-form stubs → full canonical CommandPage migration
+- Cluster 4 (5): btn-fix forms → structural wrapper normalization (buttons already fixed in Batch 6 Step 11)
+
+### Templates Migrated
+
+**Cluster 1 — Simple stubs (no cancel):**
+- checklist_item_form.html
+- dd_risk_form.html
+- dd_task_form.html
+- expense_form.html
+- trust_transaction_form.html
+
+**Cluster 1 — Grid + cancel:**
+- deadline_form.html
+- document_form.html
+- time_entry_form.html
+- trust_account_form.html
+
+**Cluster 1 — Rich stubs (id_for_label, help_text, enctype, back link):**
+- dsar_form.html
+- legal_hold_form.html
+- signature_request_form.html
+- data_inventory_form.html
+- ethical_wall_form.html
+
+**Cluster 1 — Explicit fields:**
+- workflow_template_form.html
+
+**Cluster 4 — Btn-fix + structural wrap:**
+- legal_task_form.html
+- negotiation_note_form.html
+- risk_log_form.html
+- trademark_request_form.html
+- workflow_step_form.html
+
+### Standardization Applied
+- `page-wrap` + `page-header` + `page-title` applied to all 20
+- `page-subtitle c-muted` added where subtitle context existed (workflow_step_form)
+- `page-actions` + `btn-ghost` back link added to 5 rich stubs
+- `panel` + `panel-inner` wrapping all form panels
+- `form-label` replacing raw `block text-sm font-medium text-gray-700`
+- `c-muted` for help_text, `c-danger` for field errors
+- `btn-primary-grad text-white` replacing all raw button variants (bg-blue-600, bg-teal-600)
+- `btn-ghost` replacing all cancel/back link variants (bg-gray-100, bg-gray-200)
+- `enctype="multipart/form-data"` preserved where present
+- `{% if form.instance.pk %}` create/edit conditionals preserved
+- `field.id_for_label` added throughout generic loops
+- `field.help_text` added where missing in generic loops
+- Removed legacy `{% block page_title %}` blocks from Cluster 4 forms (superseded by page-wrap header)
+
+### Behavior Preserved
+- All form method/action/CSRF behavior unchanged
+- All field names, field widgets, select/multiselect unchanged
+- All cancel URLs preserved exactly (legal_task→kanban, negotiation_note→contract_detail pk=view.kwargs.pk, etc.)
+- All create/edit mode conditionals preserved
+- All file upload enctype attributes preserved
+- object.workflow.title subtitle preserved in workflow_step_form
+
+### Validation
+- Template parse: 20/20 OK
+- manage.py check: 0 issues
+- Tests: 3/3 passed
+- Legacy button scan: 0 remaining in migrated templates
+- page-wrap: 20/20 confirmed
+
+### Remaining Debt (post Step 4)
+- Cluster 2: QueuePage lists (4 templates: audit_log_list, dsar_list, legal_hold_list, document_ocr_queue)
+- Cluster 3: Compliance cluster (3 templates)
+- Cluster 5: Medium complexity pages (4 templates)
+- Cluster 6: Large detail pages (3 templates)
+- Cluster 7: contract_form.html (complex, 231 lines)
+- Auth/security surfaces: permanently deferred
+- _task_card.html: component-level, separate decision

@@ -1280,3 +1280,33 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 - Auth/security surfaces: out of scope (CLASS E)
 
 **JS prototype debt cleared. Archetype map truthful.**
+
+---
+
+## Batch 7 Step 4 — CommandPage Micro-Form Sweep
+
+**Date:** 2025-05-18
+**Status:** COMPLETE
+
+**20 CommandPage form templates migrated:**
+
+| Cluster | Count | Templates |
+|---------|-------|-----------|
+| Cluster 1 Simple | 5 | checklist_item_form, dd_risk_form, dd_task_form, expense_form, trust_transaction_form |
+| Cluster 1 Grid+Cancel | 4 | deadline_form, document_form, time_entry_form, trust_account_form |
+| Cluster 1 Rich | 5 | dsar_form, legal_hold_form, signature_request_form, data_inventory_form, ethical_wall_form |
+| Cluster 1 Explicit | 1 | workflow_template_form |
+| Cluster 4 Btn-fix | 5 | legal_task_form, negotiation_note_form, risk_log_form, trademark_request_form, workflow_step_form |
+
+**What was standardized:**
+- page-wrap, page-header, page-title, panel, panel-inner on all 20
+- form-label, c-muted (help_text), c-danger (errors) throughout
+- btn-primary-grad text-white replacing all raw button variants
+- btn-ghost replacing all cancel/back link variants
+- enctype, CSRF, field names, cancel URLs, create/edit conditionals all preserved
+
+**Validation:** 20/20 template parse OK · manage.py check 0 issues · 3/3 tests pass
+
+**JS Prototype Debt Remaining:** 0
+
+**Remaining real template debt:** ~15 templates (Clusters 2, 3, 5, 6, 7)
