@@ -1622,3 +1622,98 @@ All confirmed in base.html:
 | Inline styles | ✅ 0 |
 | Raw Tailwind utility violations | ✅ 0 |
 | Retired classes | ✅ 0 |
+
+---
+
+## Batch 6 Step 5 — NetworkPage Privacy Cluster (Subprocessor + Transfer Record)
+
+**Cluster selected:** Privacy NetworkPage — subprocessor triad + transfer record pair
+**Why:** Remaining unmigrated NetworkPage templates; same domain (GDPR/privacy); all fully raw Tailwind; no lifecycle/auth coupling; clean list/detail/form patterns; completing NetworkPage domain before QueuePage.
+
+**Templates:**
+- `subprocessor_list.html`
+- `subprocessor_detail.html`
+- `subprocessor_form.html`
+- `transfer_record_list.html`
+- `transfer_record_form.html`
+
+### subprocessor_list.html (full migration)
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `aria-hidden="true"` on decorative SVG in Add New button
+- `btn-primary-grad text-white` replacing `bg-blue-600 text-white`
+- `panel` replacing `bg-white rounded-xl border border-gray-200 overflow-hidden`
+- `tbl-head / tbl-th / tbl-row / tbl-td` replacing raw `bg-gray-50` thead + `px-5 py-3` cells
+- `c-link font-medium` on name link replacing `text-blue-600 hover:text-blue-800`
+- `c-success` / `c-danger` on ✓ / ✗ DPA/SCC indicators replacing `text-green-600` / `text-red-600`
+- `badge-sm badge-red` (HIGH) / `badge-sm badge-yellow` (MEDIUM) / `badge-sm badge-green` (LOW) for risk level
+- `btn-ghost px-3 py-1` on Edit row link
+- `empty-state` replacing `px-5 py-8 text-center text-sm text-gray-400` empty colspan
+
+### subprocessor_detail.html (full migration)
+- `page-wrap` + back breadcrumb (inline, before page-header)
+- `page-header / page-title / page-actions`
+- `btn-primary-grad text-white` for Edit button
+- `max-w-3xl` kept as structural layout exception
+- `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `c-muted` on all field labels (uppercase) replacing `text-gray-500 uppercase`
+- Removed `mx-auto` (layout handled by page-wrap)
+
+### subprocessor_form.html (full migration)
+- `page-wrap / page-header / page-title`
+- `max-w-3xl` wrapper kept as structural layout exception
+- `panel panel-inner space-y-4` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `form-label block mb-1` replacing `block text-sm font-medium text-gray-700 mb-1`
+- `c-muted text-xs mt-1` on help text replacing `text-xs text-gray-400`
+- `c-danger text-xs mt-1` replacing `text-xs text-red-500`
+- `btn-primary-grad text-white` / `btn-ghost` replacing hardcoded blue/gray buttons
+- `enctype="multipart/form-data"` preserved; `field.id_for_label` preserved; `field.errors|join:", "` preserved
+
+### transfer_record_list.html (full migration)
+- Same pattern as subprocessor_list
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `aria-hidden="true"` on decorative SVG
+- `btn-primary-grad text-white` for Add New
+- `panel` + `tbl-head / tbl-th / tbl-row / tbl-td`
+- TIA: `c-success` ✓ / `badge-sm badge-yellow` Pending
+- Active: `badge-sm badge-green` Yes / `c-muted` No
+- `btn-ghost px-3 py-1` on Edit
+- `empty-state` for empty
+
+### transfer_record_form.html (full migration)
+- Same pattern as subprocessor_form
+- `page-wrap / page-header / page-title`
+- `panel panel-inner space-y-4`; `form-label`; `c-muted`/`c-danger`; `btn-primary-grad text-white` / `btn-ghost`
+- `enctype="multipart/form-data"` preserved; `field.id_for_label` + `field.errors|join:", "` preserved
+
+### Preserved
+- Context vars: `subprocessors`, `object`, `form`; `transfers`, `object`, `form`
+- URL names: `subprocessor_list`, `subprocessor_create`, `subprocessor_detail`, `subprocessor_update`, `transfer_record_list`, `transfer_record_create`, `transfer_record_update`
+- `object|yesno:"Edit,New"` create/edit mode detection
+- `object.is_eu_based|yesno`, `object.dpa_in_place|yesno`, `object.scc_in_place|yesno`, `object.dpf_certified|yesno` — boolean display filters
+- `item.get_transfer_mechanism_display` — choice field display
+- `field.help_text`, `field.errors|join:", "`, `field.id_for_label` — form rendering preserved
+- `{% csrf_token %}` in both forms preserved
+
+### No Destructive Actions
+No delete/archive/revoke actions in any of the 5 templates.
+
+### Structural Exceptions Kept
+- `max-w-3xl` on detail + form wrappers — content-width constraint
+- `hover:bg-gray-50` on table rows — interactive row affordance (no canonical hover primitive)
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 5) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+
+### NetworkPage Domain Status
+All NetworkPage templates now migrated:
+- organization_team.html ✅ Batch 6 Step 1
+- client_list/detail/form ✅ Batch 6 Step 2
+- counterparty_list/detail/form ✅ Batch 6 Step 3
+- matter_list/detail/form ✅ Batch 6 Step 4
+- subprocessor_list/detail/form + transfer_record_list/form ✅ Batch 6 Step 5
+
+**NetworkPage domain: COMPLETE ✅**

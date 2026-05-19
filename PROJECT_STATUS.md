@@ -1092,3 +1092,27 @@ None present — no confirm guards required.
 **Relationships preserved:** responsible_attorney, originating_attorney, client.name linked rendering; `contracts/documents/tasks/risks` in context (not rendered) preserved
 **No destructive actions** in any of the 3 templates.
 **Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
+
+---
+
+## Batch 6 Step 5 — Privacy NetworkPage Cluster (Subprocessor + Transfer Record)
+
+**Status:** ✅ COMPLETE
+**Cluster:** Privacy NetworkPage — 5 templates completing the NetworkPage domain
+**Templates:** `subprocessor_list.html`, `subprocessor_detail.html`, `subprocessor_form.html`, `transfer_record_list.html`, `transfer_record_form.html`
+**Risk Level:** LOW-MEDIUM — no lifecycle complexity, no destructive actions, simple list/detail/form patterns
+
+All 5 templates were fully raw Tailwind. Full WorkspacePage migration applied to each:
+- `page-wrap / page-header / page-title / page-subtitle / page-actions`
+- `panel` + `tbl-head/tbl-th/tbl-row/tbl-td` for list tables
+- `panel panel-inner` for detail/form content
+- `badge-sm` (red/yellow/green) for subprocessor risk level; `badge-sm badge-yellow` for pending TIA; `badge-sm badge-green` for active transfer
+- `c-success/c-danger` for boolean ✓/✗ indicators (DPA, SCC, TIA)
+- `c-link`, `c-muted`, `btn-primary-grad text-white`, `btn-ghost`, `form-label`, `empty-state`
+- `enctype`, `field.id_for_label`, `field.errors|join`, `field.help_text`, `object|yesno` all preserved
+
+**No destructive actions** in any template.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅
+
+**🏁 NetworkPage domain now COMPLETE — all templates migrated across Batch 6 Steps 1–5.**
+**Next wave:** QueuePage cluster (approval_request_list, clause_library, budget_list, etc.)

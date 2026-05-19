@@ -1,46 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Subprocessor Registry - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Subprocessor Registry</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage subprocessor registry</p>
+      <h1 class="page-title">Subprocessor Registry</h1>
+      <p class="page-subtitle">Manage subprocessor registry</p>
     </div>
-    <a href="{% url 'contracts:subprocessor_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    <div class="page-actions">
+      <a href="{% url 'contracts:subprocessor_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      </a>
+    </div>
+  </div>
+  <div class="panel">
     <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Service</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Country</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">DPA</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">SCC</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Risk</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in subprocessors %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700"><a href="{% url 'contracts:subprocessor_detail' item.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ item.name }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.service_type }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.country }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.dpa_in_place %}<span class="text-green-600">✓</span>{% else %}<span class="text-red-600">✗</span>{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.scc_in_place %}<span class="text-green-600">✓</span>{% else %}<span class="text-red-600">✗</span>{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700"><span class="px-2 py-1 text-xs rounded-full {% if item.risk_level == 'HIGH' %}bg-red-100 text-red-700{% elif item.risk_level == 'MEDIUM' %}bg-yellow-100 text-yellow-700{% else %}bg-green-100 text-green-700{% endif %}">{{ item.risk_level }}</span></td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:subprocessor_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">No subprocessor registry found</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th">Name</th>
+          <th class="tbl-th">Service</th>
+          <th class="tbl-th">Country</th>
+          <th class="tbl-th">DPA</th>
+          <th class="tbl-th">SCC</th>
+          <th class="tbl-th">Risk</th>
+          <th class="tbl-th text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in subprocessors %}
+        <tr class="tbl-row hover:bg-gray-50">
+          <td class="tbl-td"><a href="{% url 'contracts:subprocessor_detail' item.pk %}" class="c-link font-medium">{{ item.name }}</a></td>
+          <td class="tbl-td">{{ item.service_type }}</td>
+          <td class="tbl-td">{{ item.country }}</td>
+          <td class="tbl-td">{% if item.dpa_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
+          <td class="tbl-td">{% if item.scc_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
+          <td class="tbl-td"><span class="badge-sm {% if item.risk_level == 'HIGH' %}badge-red{% elif item.risk_level == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %}">{{ item.risk_level }}</span></td>
+          <td class="tbl-td text-right"><a href="{% url 'contracts:subprocessor_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state">No subprocessor registry found</div></td></tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
 {% endblock %}

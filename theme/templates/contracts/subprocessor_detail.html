@@ -1,24 +1,26 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <a href="{% url 'contracts:subprocessor_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
-        </div>
-        <a href="{% url 'contracts:subprocessor_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
+<div class="page-wrap">
+  <a href="{% url 'contracts:subprocessor_list' %}" class="text-sm c-muted hover:underline mb-2 inline-block">&larr; Back to list</a>
+  <div class="page-header">
+    <h1 class="page-title">{{ object }}</h1>
+    <div class="page-actions">
+      <a href="{% url 'contracts:subprocessor_update' object.pk %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Edit</a>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Service Type</span><p class="mt-1 text-sm text-gray-900">{{ object.service_type }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Country</span><p class="mt-1 text-sm text-gray-900">{{ object.country }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">EU Based</span><p class="mt-1 text-sm text-gray-900">{{ object.is_eu_based|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">DPA in Place</span><p class="mt-1 text-sm text-gray-900">{{ object.dpa_in_place|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">SCC in Place</span><p class="mt-1 text-sm text-gray-900">{{ object.scc_in_place|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">DPF Certified</span><p class="mt-1 text-sm text-gray-900">{{ object.dpf_certified|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Data Categories</span><p class="mt-1 text-sm text-gray-900">{{ object.data_categories|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Last Audit</span><p class="mt-1 text-sm text-gray-900">{{ object.last_audit_date|default:"Never" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Notes</span><p class="mt-1 text-sm text-gray-900">{{ object.notes|default:"-" }}</p></div>
+  </div>
+  <div class="max-w-3xl">
+    <div class="panel panel-inner space-y-0">
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Service Type</span><p class="mt-1 text-sm">{{ object.service_type }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Country</span><p class="mt-1 text-sm">{{ object.country }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">EU Based</span><p class="mt-1 text-sm">{{ object.is_eu_based|yesno:"Yes,No" }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">DPA in Place</span><p class="mt-1 text-sm">{{ object.dpa_in_place|yesno:"Yes,No" }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">SCC in Place</span><p class="mt-1 text-sm">{{ object.scc_in_place|yesno:"Yes,No" }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">DPF Certified</span><p class="mt-1 text-sm">{{ object.dpf_certified|yesno:"Yes,No" }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Data Categories</span><p class="mt-1 text-sm">{{ object.data_categories|default:"-" }}</p></div>
+      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Last Audit</span><p class="mt-1 text-sm">{{ object.last_audit_date|default:"Never" }}</p></div>
+      <div class="py-3"><span class="text-xs font-medium c-muted uppercase">Notes</span><p class="mt-1 text-sm">{{ object.notes|default:"-" }}</p></div>
     </div>
+  </div>
 </div>
 {% endblock %}

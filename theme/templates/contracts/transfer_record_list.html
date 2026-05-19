@@ -1,46 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Data Transfer Records - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Data Transfer Records</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage data transfer records</p>
+      <h1 class="page-title">Data Transfer Records</h1>
+      <p class="page-subtitle">Manage data transfer records</p>
     </div>
-    <a href="{% url 'contracts:transfer_record_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    <div class="page-actions">
+      <a href="{% url 'contracts:transfer_record_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      </a>
+    </div>
+  </div>
+  <div class="panel">
     <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">From</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">To</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Mechanism</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">TIA</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Active</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in transfers %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.title }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.source_country }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.destination_country }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.get_transfer_mechanism_display }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.tia_completed %}<span class="text-green-600">✓</span>{% else %}<span class="text-yellow-600">Pending</span>{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.is_active %}<span class="text-green-600">Yes</span>{% else %}No{% endif %}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:transfer_record_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-gray-400">No data transfer records found</td></tr>
-            {% endfor %}
-        </tbody>
+      <thead class="tbl-head">
+        <tr>
+          <th class="tbl-th">Title</th>
+          <th class="tbl-th">From</th>
+          <th class="tbl-th">To</th>
+          <th class="tbl-th">Mechanism</th>
+          <th class="tbl-th">TIA</th>
+          <th class="tbl-th">Active</th>
+          <th class="tbl-th text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in transfers %}
+        <tr class="tbl-row hover:bg-gray-50">
+          <td class="tbl-td">{{ item.title }}</td>
+          <td class="tbl-td">{{ item.source_country }}</td>
+          <td class="tbl-td">{{ item.destination_country }}</td>
+          <td class="tbl-td">{{ item.get_transfer_mechanism_display }}</td>
+          <td class="tbl-td">{% if item.tia_completed %}<span class="c-success">✓</span>{% else %}<span class="badge-sm badge-yellow">Pending</span>{% endif %}</td>
+          <td class="tbl-td">{% if item.is_active %}<span class="badge-sm badge-green">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
+          <td class="tbl-td text-right"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state">No data transfer records found</div></td></tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
 </div>
 {% endblock %}
