@@ -1,23 +1,39 @@
 {% extends "base.html" %}
 {% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Conflict Check - CMS Aegis{% endblock %}
 {% block content %}
-<div class="max-w-2xl">
-    <div class="mb-6"><h1 class="text-2xl font-bold text-gray-900">{% if form.instance.pk %}Edit Conflict Check{% else %}New Conflict Check{% endif %}</h1></div>
-    <form method="post" class="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+<div class="page-wrap">
+
+  <div class="max-w-2xl mx-auto">
+    <div class="page-header mb-6">
+      <div>
+        <h1 class="page-title">{% if form.instance.pk %}Edit Conflict Check{% else %}New Conflict Check{% endif %}</h1>
+      </div>
+      <a href="{% url 'contracts:conflict_check_list' %}" class="c-muted text-sm">&larr; Back</a>
+    </div>
+
+    <div class="panel panel-inner">
+      <form method="post">
         {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="c-danger text-sm mb-4">{{ form.non_field_errors }}</div>
+        {% endif %}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for field in form %}
-            <div class="{% if field.name == 'notes' or field.name == 'conflicts_found' %}md:col-span-2{% endif %}">
-                <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}<p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
-            </div>
-            {% endfor %}
+          {% for field in form %}
+          <div class="{% if field.name == 'notes' or field.name == 'conflicts_found' %}md:col-span-2{% endif %}">
+            <label for="{{ field.id_for_label }}" class="form-label block mb-1">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
+          </div>
+          {% endfor %}
         </div>
-        <div class="flex gap-3 pt-4">
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">{% if form.instance.pk %}Update{% else %}Submit{% endif %}</button>
-            <a href="{% url 'contracts:conflict_check_list' %}" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Cancel</a>
+        <div class="flex justify-end gap-3 mt-6">
+          <a href="{% url 'contracts:conflict_check_list' %}" class="btn-ghost px-4 py-2 text-sm font-medium rounded-lg">Cancel</a>
+          <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">{% if form.instance.pk %}Update{% else %}Submit{% endif %}</button>
         </div>
-    </form>
+      </form>
+    </div>
+  </div>
+
 </div>
 {% endblock %}
