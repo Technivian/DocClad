@@ -1,37 +1,41 @@
 {% extends "base.html" %}
 {% block title %}Trust Accounts - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Trust Accounts (IOLTA)</h1>
-        <p class="text-sm text-gray-500">Total Balance: ${{ total_balance|floatformat:2 }}</p>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Trust Accounts (IOLTA)</h1>
+            <p class="page-subtitle">Total Balance: ${{ total_balance|floatformat:2 }}</p>
+        </div>
+        <a href="{% url 'contracts:trust_account_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+            New Account
+        </a>
     </div>
-    <a href="{% url 'contracts:trust_account_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">New Account</a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Account Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Client</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Balance</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for acct in accounts %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="text-sm font-medium text-blue-600 hover:text-blue-800">{{ acct.account_name }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ acct.client.name }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ acct.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-right font-medium {% if acct.balance > 0 %}text-green-600{% else %}text-gray-600{% endif %}">${{ acct.balance|floatformat:2 }}</td>
-                <td class="px-5 py-3 text-right"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="text-xs text-gray-500 hover:text-blue-600">View</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="px-5 py-12 text-center text-gray-400">No trust accounts.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Account Name</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Client</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Balance</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acct in accounts %}
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="font-medium c-link">{{ acct.account_name }}</a></td>
+                    <td class="px-5 py-3 tbl-td">{{ acct.client.name }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ acct.matter.matter_number|default:"—" }}</td>
+                    <td class="px-5 py-3 text-right font-medium tabular-nums {% if acct.balance > 0 %}c-success{% else %}c-muted{% endif %}">${{ acct.balance|floatformat:2 }}</td>
+                    <td class="px-5 py-3 text-right"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="text-xs c-link">View</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-5 py-12 text-center c-muted">No trust accounts.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -1968,3 +1968,62 @@ No destructive or review/approval actions in either template. No confirm guards 
 | Inline handlers | ✅ 0 |
 
 **Next:** QueuePage wave 5 or remaining unmigrated templates
+
+## Batch 6 Step 10 — QueuePage Wave 5: Final QueuePage Sweep
+
+**Status:** ✅ COMPLETE
+**Templates discovered:** 15 remaining QueuePage surfaces
+**Templates migrated:** 11 code changes + 1 docs-only + 2 deferred (CLASS D)
+
+### Discovery & Classification
+
+| Template | Class | Action |
+|---|---|---|
+| ethical_wall_list.html | A — safe cluster | ✅ Full migration |
+| trust_account_list.html | A — safe cluster | ✅ Full migration |
+| data_inventory_list.html | A — safe cluster | ✅ Full migration |
+| time_entry_list.html | A — safe cluster | ✅ Full migration |
+| signature_request_list.html | A — safe cluster | ✅ Full migration |
+| workflow_template_list.html | A — safe cluster | ✅ Full migration |
+| clause_template_compare.html | B — isolated, safe | ✅ Full migration |
+| document_compare.html | B — isolated, safe | ✅ Full migration |
+| workflow_template_compare.html | B — isolated, safe (btn-secondary→btn-ghost critical fix) | ✅ Full migration |
+| document_ocr_review.html | B — isolated, safe | ✅ Full migration |
+| due_diligence_list.html | C — targeted fix | ✅ stat-card removed from panel |
+| document_list.html | C — targeted fix | ✅ stat-card removed from panel |
+| trademark_request_list.html | C — already canonical | ✅ docs-only (no code changes) |
+| obligations_list.html | D — JS prototype | ⏸ DEFERRED |
+| templates_list.html | D — JS prototype | ⏸ DEFERRED |
+
+### Structural Exceptions Preserved
+- `workflow_template_compare.html`: preset tabs with `bg-blue-600` active state (no canonical active-tab primitive)
+- `workflow_template_list.html`: card grid with `hover:shadow-md transition-shadow` (no canonical card-grid primitive)
+- `clause_template_compare.html`, `document_compare.html`, `document_ocr_review.html`: `<pre>` blocks for legal/document text content
+
+### Business Flows Preserved
+- Trust account balance logic: `{% if acct.balance > 0 %}c-success{% else %}c-muted{% endif %}` replaces `text-green-600`/`text-gray-600`
+- Signature request GET filter: form method, select options, status values unchanged
+- Time entry KPI grid: today_hours/week_hours/month_hours context vars unchanged
+- OCR review form: all fields (status, confidence_score, extracted_text, review_notes) preserved; csrf_token preserved
+- Workflow template compare: preset_key routing, `comparison.preset` check, `comparison_presets.items` loop — all preserved
+- Document compare field diffs: `field_name, left_value, right_value` tuple unpacking preserved
+
+### High-Impact Action Assessment
+No destructive, delete, approve, reject, revoke actions across any Step 10 templates. No confirm guards needed.
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (12 templates) | ✅ all OK |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Legacy class scan (touched files) | ✅ 0 (structural exception bg-blue-600 in workflow_template_compare.html preset tabs — documented) |
+| btn-secondary removed | ✅ replaced with btn-ghost |
+| stat-card removed from panel wrappers | ✅ |
+
+### Deferred Blockers
+- `obligations_list.html` — CLASS D: JS prototype. Content fully JS-driven; no Django template vars in list/grid. Migration requires JS refactor first.
+- `templates_list.html` — CLASS D: JS prototype. Same pattern. Defer until JS refactor.
+
+**🏁 QueuePage domain substantially complete — 11 templates migrated in Step 10, 2 deferred as JS prototype debt.**
+

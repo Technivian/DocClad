@@ -1,44 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Ethical Walls - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Ethical Walls</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage ethical walls</p>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Ethical Walls</h1>
+            <p class="page-subtitle">Manage ethical walls and access restrictions.</p>
+        </div>
+        <a href="{% url 'contracts:ethical_wall_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Add New
+        </a>
     </div>
-    <a href="{% url 'contracts:ethical_wall_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Client</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Restricted Users</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in walls %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.name }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.matter|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.client|default:"-" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.is_active %}<span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">Active</span>{% else %}<span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span>{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.restricted_users.count }}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:ethical_wall_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">No ethical walls found</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Name</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Client</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Restricted Users</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in walls %}
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3">{{ item.name }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ item.matter|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ item.client|default:"—" }}</td>
+                    <td class="px-5 py-3">
+                        {% if item.is_active %}<span class="badge-sm badge-red">Active</span>{% else %}<span class="badge-sm badge-gray">Inactive</span>{% endif %}
+                    </td>
+                    <td class="px-5 py-3 tbl-td">{{ item.restricted_users.count }}</td>
+                    <td class="px-5 py-3 text-right">
+                        <a href="{% url 'contracts:ethical_wall_update' item.pk %}" class="text-sm c-link">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-5 py-12 text-center c-muted">No ethical walls found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

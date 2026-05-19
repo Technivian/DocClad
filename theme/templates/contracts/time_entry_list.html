@@ -1,59 +1,63 @@
 {% extends "base.html" %}
 {% block title %}Time Tracking - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div><h1 class="text-2xl font-bold text-gray-900">Time Tracking</h1></div>
-    <a href="{% url 'contracts:time_entry_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Log Time
-    </a>
-</div>
-<div class="grid grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Today</div>
-        <div class="text-2xl font-bold text-gray-900">{{ today_hours|floatformat:1 }}h</div>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Time Tracking</h1>
+        </div>
+        <a href="{% url 'contracts:time_entry_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Log Time
+        </a>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">This Week</div>
-        <div class="text-2xl font-bold text-gray-900">{{ week_hours|floatformat:1 }}h</div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="panel panel-inner">
+            <div class="text-xs c-muted mb-1">Today</div>
+            <div class="text-2xl font-bold tabular-nums">{{ today_hours|floatformat:1 }}h</div>
+        </div>
+        <div class="panel panel-inner">
+            <div class="text-xs c-muted mb-1">This Week</div>
+            <div class="text-2xl font-bold tabular-nums">{{ week_hours|floatformat:1 }}h</div>
+        </div>
+        <div class="panel panel-inner">
+            <div class="text-xs c-muted mb-1">This Month</div>
+            <div class="text-2xl font-bold tabular-nums">{{ month_hours|floatformat:1 }}h</div>
+        </div>
     </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">This Month</div>
-        <div class="text-2xl font-bold text-gray-900">{{ month_hours|floatformat:1 }}h</div>
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Activity</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Hours</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Amount</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Billable</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in time_entries %}
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3 tbl-td">{{ entry.date|date:"M d" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ entry.matter.matter_number|default:"—" }}</td>
+                    <td class="px-5 py-3">{{ entry.description|truncatechars:50 }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ entry.get_activity_type_display }}</td>
+                    <td class="px-5 py-3 text-right font-medium tabular-nums">{{ entry.hours|floatformat:2 }}</td>
+                    <td class="px-5 py-3 text-right tabular-nums">${{ entry.total_amount|floatformat:2 }}</td>
+                    <td class="px-5 py-3 text-center">
+                        {% if entry.is_billable %}<span class="c-success">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}
+                    </td>
+                    <td class="px-5 py-3 text-right"><a href="{% url 'contracts:time_entry_update' entry.pk %}" class="text-xs c-link">Edit</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="px-5 py-12 text-center c-muted">No time entries.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Activity</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Hours</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th class="text-center px-5 py-3 text-xs font-medium text-gray-500 uppercase">Billable</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for entry in time_entries %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-600">{{ entry.date|date:"M d" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ entry.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3 text-sm text-gray-900">{{ entry.description|truncatechars:50 }}</td>
-                <td class="px-5 py-3 text-sm text-gray-600">{{ entry.get_activity_type_display }}</td>
-                <td class="px-5 py-3 text-sm text-right font-medium">{{ entry.hours|floatformat:2 }}</td>
-                <td class="px-5 py-3 text-sm text-right">${{ entry.total_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3 text-center">
-                    {% if entry.is_billable %}<span class="text-green-600">Yes</span>{% else %}<span class="text-gray-400">No</span>{% endif %}
-                </td>
-                <td class="px-5 py-3 text-right"><a href="{% url 'contracts:time_entry_update' entry.pk %}" class="text-xs text-gray-500 hover:text-blue-600">Edit</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="px-5 py-12 text-center text-gray-400">No time entries.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </div>
 {% endblock %}

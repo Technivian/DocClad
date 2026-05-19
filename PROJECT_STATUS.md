@@ -1199,3 +1199,34 @@ All 4 templates were fully raw Tailwind. Full WorkspacePage migration applied:
 **Form field layout preserved:** `notes` and `conflicts_found` fields use `md:col-span-2` exactly as before.
 **No high-impact destructive actions** in either template.
 **Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅ | **Template parse:** 2/2 ✅
+
+## Batch 6 Step 10 — QueuePage Wave 5: Final QueuePage Sweep
+
+**Status:** ✅ COMPLETE — GO
+**Templates discovered:** 15 remaining QueuePage surfaces
+**Templates migrated (code):** 11 | **Docs-only:** 1 | **Deferred (CLASS D):** 2
+
+| Template | Archetype | Result |
+|---|---|---|
+| ethical_wall_list.html | QueuePage | ✅ Full migration |
+| trust_account_list.html | QueuePage | ✅ Full migration |
+| data_inventory_list.html | QueuePage | ✅ Full migration |
+| time_entry_list.html | QueuePage | ✅ Full migration |
+| signature_request_list.html | QueuePage | ✅ Full migration (GET filter preserved) |
+| workflow_template_list.html | QueuePage | ✅ Full migration (card grid structural exception) |
+| clause_template_compare.html | QueuePage | ✅ Full migration (`<pre>` blocks preserved) |
+| document_compare.html | QueuePage | ✅ Full migration (`<pre>` blocks preserved) |
+| workflow_template_compare.html | QueuePage | ✅ Full migration (btn-secondary→btn-ghost; preset tabs structural exception) |
+| document_ocr_review.html | QueuePage | ✅ Full migration (form+`<pre>` preserved) |
+| due_diligence_list.html | QueuePage | ✅ Targeted fix (stat-card removed from panel) |
+| document_list.html | QueuePage | ✅ Targeted fix (stat-card removed from panel) |
+| trademark_request_list.html | QueuePage | ✅ Docs-only (already canonical, no code changes) |
+| obligations_list.html | QueuePage | ⏸ DEFERRED — CLASS D: JS prototype |
+| templates_list.html | QueuePage | ⏸ DEFERRED — CLASS D: JS prototype |
+
+**All context vars/routes/forms preserved.** No high-impact destructive actions in any template.
+**Tests:** 3/3 ✅ | **manage.py check:** 0 issues ✅ | **Template parse:** 12/12 ✅
+**Deferred blockers:** obligations_list.html + templates_list.html (JS prototype debt; require JS refactor before template migration)
+
+**🏁 QueuePage domain substantially complete across Batch 6 Steps 6–10.**
+

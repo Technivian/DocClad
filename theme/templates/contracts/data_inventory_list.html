@@ -1,44 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Data Inventory (RoPA) - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Data Inventory (RoPA)</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage data inventory (ropa)</p>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Data Inventory (RoPA)</h1>
+            <p class="page-subtitle">Manage records of processing activities.</p>
+        </div>
+        <a href="{% url 'contracts:data_inventory_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            Add New
+        </a>
     </div>
-    <a href="{% url 'contracts:data_inventory_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        Add New
-    </a>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-    <table class="w-full">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Lawful Basis</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">Retention</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">3rd Country</th>
-                <th class="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">DPIA</th>
-                <th class="text-right px-5 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-            {% for item in records %}
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 text-sm text-gray-700"><a href="{% url 'contracts:data_inventory_detail' item.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">{{ item.title }}</a></td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.get_lawful_basis_display }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{{ item.retention_period }}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.third_country_transfers %}<span class="text-red-600">Yes</span>{% else %}No{% endif %}</td>
-                <td class="px-5 py-3 text-sm text-gray-700">{% if item.dpia_required %}{% if item.dpia_completed %}<span class="text-green-600">Completed</span>{% else %}<span class="text-yellow-600">Required</span>{% endif %}{% else %}-{% endif %}</td>
-                <td class="px-5 py-3 text-right">
-                    <a href="{% url 'contracts:data_inventory_update' item.pk %}" class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="px-5 py-8 text-center text-sm text-gray-400">No data inventory (ropa) found</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="panel overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="tbl-head">
+                <tr>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Lawful Basis</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Retention</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">3rd Country</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">DPIA</th>
+                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in records %}
+                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                    <td class="px-5 py-3"><a href="{% url 'contracts:data_inventory_detail' item.pk %}" class="font-medium c-link">{{ item.title }}</a></td>
+                    <td class="px-5 py-3 tbl-td">{{ item.get_lawful_basis_display }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ item.retention_period }}</td>
+                    <td class="px-5 py-3">{% if item.third_country_transfers %}<span class="c-danger">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
+                    <td class="px-5 py-3">{% if item.dpia_required %}{% if item.dpia_completed %}<span class="c-success">Completed</span>{% else %}<span class="c-warning">Required</span>{% endif %}{% else %}<span class="c-muted">—</span>{% endif %}</td>
+                    <td class="px-5 py-3 text-right">
+                        <a href="{% url 'contracts:data_inventory_update' item.pk %}" class="text-sm c-link">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-5 py-12 text-center c-muted">No data inventory records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
