@@ -1,64 +1,78 @@
 {% extends "base.html" %}
 {% block title %}{{ process.title }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ process.title }}</h1>
-        <p class="text-sm text-gray-500">{{ process.get_transaction_type_display }} &middot; {{ process.target_company }}</p>
+<div class="page-wrap">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">{{ process.title }}</h1>
+            <p class="page-subtitle c-muted">{{ process.get_transaction_type_display }} &middot; {{ process.target_company }}</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'contracts:add_dd_item' process.pk %}" class="btn-primary-grad text-white">Add Task</a>
+            <a href="{% url 'contracts:add_dd_risk' process.pk %}" class="btn-ghost">Add Risk</a>
+            <a href="{% url 'contracts:due_diligence_update' process.pk %}" class="btn-ghost">Edit</a>
+        </div>
     </div>
-    <div class="flex gap-2">
-        <a href="{% url 'contracts:add_dd_item' process.pk %}" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">Add Task</a>
-        <a href="{% url 'contracts:add_dd_risk' process.pk %}" class="px-3 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">Add Risk</a>
-        <a href="{% url 'contracts:due_diligence_update' process.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
-    </div>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Deal Value</div>
-        <div class="text-2xl font-bold text-gray-900">${{ process.deal_value|floatformat:0|default:"TBD" }}</div>
-    </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Lead Attorney</div>
-        <div class="text-lg font-medium text-gray-900">{{ process.lead_attorney.get_full_name|default:"Unassigned" }}</div>
-    </div>
-    <div class="bg-white rounded-xl p-4 border border-gray-200">
-        <div class="text-sm text-gray-500">Timeline</div>
-        <div class="text-sm text-gray-900">{{ process.start_date|date:"M d" }} - {{ process.target_completion_date|date:"M d, Y" }}</div>
-    </div>
-</div>
-<div class="bg-white rounded-xl border border-gray-200 mb-6">
-    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Tasks</h2></div>
-    <div class="divide-y divide-gray-100">
-        {% for task in process.tasks.all %}
-        <div class="flex items-center justify-between px-5 py-3">
-            <div>
-                <div class="text-sm font-medium text-gray-900">{{ task.title }}</div>
-                <div class="text-xs text-gray-500">{{ task.get_category_display }} &middot; {{ task.assigned_to.get_full_name|default:"Unassigned" }} &middot; Due {{ task.due_date|date:"M d" }}</div>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="text-xs px-2 py-1 rounded-full {% if task.status == 'COMPLETED' %}bg-green-100 text-green-800{% elif task.status == 'IN_PROGRESS' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ task.get_status_display }}</span>
-                <a href="{% url 'contracts:toggle_dd_item' task.pk %}" class="text-xs text-blue-600">Toggle</a>
+
+    <!-- KPI summary -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="panel">
+            <div class="panel-inner">
+                <p class="text-xs font-semibold c-muted uppercase tracking-wide">Deal Value</p>
+                <p class="text-2xl font-bold mt-1">${{ process.deal_value|floatformat:0|default:"TBD" }}</p>
             </div>
         </div>
-        {% empty %}
-        <div class="px-5 py-6 text-center text-gray-400 text-sm">No tasks yet.</div>
-        {% endfor %}
-    </div>
-</div>
-<div class="bg-white rounded-xl border border-gray-200">
-    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Risks</h2></div>
-    <div class="divide-y divide-gray-100">
-        {% for risk in process.risks.all %}
-        <div class="px-5 py-3">
-            <div class="flex items-center justify-between">
-                <div class="text-sm font-medium text-gray-900">{{ risk.title }}</div>
-                <span class="text-xs px-2 py-1 rounded-full {% if risk.risk_level == 'CRITICAL' %}bg-red-100 text-red-800{% elif risk.risk_level == 'HIGH' %}bg-orange-100 text-orange-800{% elif risk.risk_level == 'MEDIUM' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">{{ risk.get_risk_level_display }}</span>
+        <div class="panel">
+            <div class="panel-inner">
+                <p class="text-xs font-semibold c-muted uppercase tracking-wide">Lead Attorney</p>
+                <p class="text-lg font-medium mt-1">{{ process.lead_attorney.get_full_name|default:"Unassigned" }}</p>
             </div>
-            <div class="text-sm text-gray-600 mt-1">{{ risk.description|truncatechars:100 }}</div>
         </div>
-        {% empty %}
-        <div class="px-5 py-6 text-center text-gray-400 text-sm">No risks identified.</div>
-        {% endfor %}
+        <div class="panel">
+            <div class="panel-inner">
+                <p class="text-xs font-semibold c-muted uppercase tracking-wide">Timeline</p>
+                <p class="text-sm mt-1">{{ process.start_date|date:"M d" }} – {{ process.target_completion_date|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="panel mb-6">
+        <div class="panel-head"><h2 class="panel-title">Tasks</h2></div>
+        <div class="divide-y divide-gray-100">
+            {% for task in process.tasks.all %}
+            <div class="flex items-center justify-between px-5 py-3">
+                <div>
+                    <div class="text-sm font-medium">{{ task.title }}</div>
+                    <div class="text-xs c-muted mt-0.5">{{ task.get_category_display }} &middot; {{ task.assigned_to.get_full_name|default:"Unassigned" }} &middot; Due {{ task.due_date|date:"M d" }}</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="badge-sm {% if task.status == 'COMPLETED' %}badge-green{% elif task.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ task.get_status_display }}</span>
+                    <a href="{% url 'contracts:toggle_dd_item' task.pk %}" class="text-xs c-link">Toggle</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">No tasks yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Risks -->
+    <div class="panel">
+        <div class="panel-head"><h2 class="panel-title">Risks</h2></div>
+        <div class="divide-y divide-gray-100">
+            {% for risk in process.risks.all %}
+            <div class="px-5 py-3">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-medium">{{ risk.title }}</div>
+                    <span class="badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
+                </div>
+                <div class="text-sm c-muted mt-1">{{ risk.description|truncatechars:100 }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state">No risks identified.</div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}
