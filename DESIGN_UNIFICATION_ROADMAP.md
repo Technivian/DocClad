@@ -1438,3 +1438,58 @@ These are rendering with no styles currently. Slice A will fix them.
 - `grid grid-cols-1 lg:grid-cols-3 gap-6` structural layout (Section 12 exception)
 
 **Validation:** template parse ✅ · manage.py check 0 issues ✅ · 3/3 tests ✅ · 0 inline styles · 0 retired classes · 0 raw Tailwind utility violations · 3 confirm guards confirmed
+
+---
+
+## Batch 6 Step 2 — NetworkPage Client Wave
+
+**Templates:** `client_list.html`, `client_detail.html`, `client_form.html`
+**Risk:** MEDIUM-HIGH — full WorkspacePage migration; no destructive actions in these templates
+
+### client_list.html (minimal changes)
+- Added `aria-hidden="true"` to decorative SVG in New Client button
+- Removed redundant `overflow-hidden stat-card` from `panel` wrapper div (`.panel` already includes `overflow:hidden`)
+- All form-input / form-select / onchange filter / pagination preserved as-is
+
+### client_detail.html (full migration)
+- Added `page-wrap` outer wrapper
+- `page-header` / `page-title` / `page-subtitle` / `page-actions` replacing raw flex header
+- New Matter button: `btn-primary-grad text-white` replacing `bg-green-600 text-white`
+- Edit button: `btn-ghost` replacing `bg-gray-100 text-gray-700`
+- 3 info panels (`bg-white rounded-xl border border-gray-200 p-5`) → `panel panel-inner`
+- `panel-head` + `panel-title` for Matters section header
+- `c-muted` replacing `text-gray-500`; `c-link` replacing `text-blue-600`
+- `badge-sm badge-green` / `badge-sm badge-gray` replacing raw inline `bg-green-100 text-green-800` badges
+- `empty-state` for matters empty state
+- `hover:bg-gray-50 transition-colors` kept on matter link rows (structural UX exception — no canonical link-row hover primitive exists)
+
+### client_form.html (full migration)
+- Added `page-wrap` outer wrapper
+- `page-header` / `page-title` replacing raw header div
+- Form wrapper: `panel panel-inner` replacing `bg-white rounded-xl border border-gray-200 p-6`
+- `form-label` replacing `block text-sm font-medium text-gray-700`
+- `c-danger` replacing `text-red-500` for validation errors
+- Submit button: `btn-primary-grad text-white` replacing `bg-blue-600 text-white`
+- Cancel link: `btn-ghost` replacing `bg-gray-100 text-gray-700`
+- `max-w-3xl` and `grid grid-cols-1 md:grid-cols-2 gap-4` preserved as structural exceptions
+- `md:col-span-2` on address/notes fields preserved
+
+### Preserved
+- All backend field names (ClientForm renders via `{{ field }}`)
+- CSRF token on client_form.html
+- `search_query`, `status`, `q` filter params in client_list.html
+- `clients`, `total_clients`, `active_clients`, `is_paginated`, `page_obj` context vars
+- `client`, `matters` context vars in client_detail.html
+- `form.instance.pk` create/edit mode detection in client_form.html
+- `onchange="this.form.submit()"` filter selects (acceptable pattern)
+- Pagination structure (querystring preservation pre-existing — not in scope)
+
+### Validation
+| Check | Result |
+|---|---|
+| Template parse (all 3) | ✅ |
+| manage.py check | ✅ 0 issues |
+| Tests (3/3) | ✅ |
+| Inline styles | ✅ 0 |
+| Raw Tailwind utility violations | ✅ 0 (hover:bg-gray-50 documented exception) |
+| Retired classes (action-chip, stat-card) | ✅ 0 |

@@ -1,66 +1,80 @@
 {% extends "base.html" %}
 {% block title %}{{ client.name }} - CMS Aegis{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-6">
+<div class="page-wrap">
+  <div class="page-header">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ client.name }}</h1>
-        <p class="text-sm text-gray-500">{{ client.get_client_type_display }} &middot; {{ client.get_status_display }} {% if client.industry %}&middot; {{ client.industry }}{% endif %}</p>
+      <h1 class="page-title">{{ client.name }}</h1>
+      <p class="page-subtitle c-muted">{{ client.get_client_type_display }} &middot; {{ client.get_status_display }}{% if client.industry %} &middot; {{ client.industry }}{% endif %}</p>
     </div>
-    <div class="flex gap-2">
-        <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">New Matter</a>
-        <a href="{% url 'contracts:client_update' client.pk %}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200">Edit</a>
+    <div class="page-actions">
+      <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">New Matter</a>
+      <a href="{% url 'contracts:client_update' client.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border btn-ghost">Edit</a>
     </div>
-</div>
+  </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Contact Info</h3>
-        <div class="space-y-2 text-sm">
-            {% if client.email %}<div><span class="text-gray-500">Email:</span> <a href="mailto:{{ client.email }}" class="text-blue-600">{{ client.email }}</a></div>{% endif %}
-            {% if client.phone %}<div><span class="text-gray-500">Phone:</span> {{ client.phone }}</div>{% endif %}
-            {% if client.address %}<div><span class="text-gray-500">Address:</span> {{ client.address }}, {{ client.city }} {{ client.state }} {{ client.zip_code }}</div>{% endif %}
-            {% if client.website %}<div><span class="text-gray-500">Website:</span> <a href="{{ client.website }}" target="_blank" class="text-blue-600">{{ client.website }}</a></div>{% endif %}
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Primary Contact</h3>
-        <div class="space-y-2 text-sm">
-            <div>{{ client.primary_contact|default:"Not set" }}</div>
-            {% if client.primary_contact_email %}<div class="text-gray-500">{{ client.primary_contact_email }}</div>{% endif %}
-            {% if client.primary_contact_phone %}<div class="text-gray-500">{{ client.primary_contact_phone }}</div>{% endif %}
-        </div>
-    </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Financial</h3>
-        <div class="space-y-2 text-sm">
-            <div><span class="text-gray-500">Active Matters:</span> {{ client.active_matters_count }}</div>
-            <div><span class="text-gray-500">Total Billed:</span> ${{ client.total_billed|floatformat:2 }}</div>
-            <div><span class="text-gray-500">Outstanding:</span> ${{ client.outstanding_balance|floatformat:2 }}</div>
-        </div>
-    </div>
-</div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
-<div class="bg-white rounded-xl border border-gray-200 mb-6">
-    <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Matters</h2></div>
-    <div class="divide-y divide-gray-100">
-        {% for matter in matters %}
-        <a href="{% url 'contracts:matter_detail' matter.pk %}" class="flex items-center justify-between px-5 py-3 hover:bg-gray-50">
-            <div>
-                <div class="text-sm font-medium text-gray-900">{{ matter.matter_number }} - {{ matter.title }}</div>
-                <div class="text-xs text-gray-500">{{ matter.get_practice_area_display }}</div>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-full {% if matter.status == 'ACTIVE' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">{{ matter.get_status_display }}</span>
-        </a>
-        {% empty %}
-        <div class="px-5 py-8 text-center text-gray-400 text-sm">No matters for this client.</div>
-        {% endfor %}
+    <!-- Contact Info -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Contact Info</h3>
+      <div class="space-y-2 text-sm">
+        {% if client.email %}<div><span class="c-muted">Email:</span> <a href="mailto:{{ client.email }}" class="c-link">{{ client.email }}</a></div>{% endif %}
+        {% if client.phone %}<div><span class="c-muted">Phone:</span> {{ client.phone }}</div>{% endif %}
+        {% if client.address %}<div><span class="c-muted">Address:</span> {{ client.address }}, {{ client.city }} {{ client.state }} {{ client.zip_code }}</div>{% endif %}
+        {% if client.website %}<div><span class="c-muted">Website:</span> <a href="{{ client.website }}" target="_blank" class="c-link">{{ client.website }}</a></div>{% endif %}
+      </div>
     </div>
-</div>
 
-{% if client.notes %}
-<div class="bg-white rounded-xl border border-gray-200 p-5">
-    <h3 class="text-sm font-semibold text-gray-500 uppercase mb-3">Notes</h3>
-    <p class="text-sm text-gray-700">{{ client.notes }}</p>
+    <!-- Primary Contact -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Primary Contact</h3>
+      <div class="space-y-2 text-sm">
+        <div>{{ client.primary_contact|default:"Not set" }}</div>
+        {% if client.primary_contact_email %}<div class="c-muted">{{ client.primary_contact_email }}</div>{% endif %}
+        {% if client.primary_contact_phone %}<div class="c-muted">{{ client.primary_contact_phone }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Financial -->
+    <div class="panel panel-inner">
+      <h3 class="panel-title mb-3">Financial</h3>
+      <div class="space-y-2 text-sm">
+        <div><span class="c-muted">Active Matters:</span> {{ client.active_matters_count }}</div>
+        <div><span class="c-muted">Total Billed:</span> ${{ client.total_billed|floatformat:2 }}</div>
+        <div><span class="c-muted">Outstanding:</span> ${{ client.outstanding_balance|floatformat:2 }}</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Matters -->
+  <div class="panel mb-6">
+    <div class="panel-head">
+      <h2 class="panel-title">Matters</h2>
+    </div>
+    <div>
+      {% for matter in matters %}
+      <a href="{% url 'contracts:matter_detail' matter.pk %}" class="flex items-center justify-between px-5 py-3 border-b hover:bg-gray-50 transition-colors">
+        <div>
+          <div class="text-sm font-medium">{{ matter.matter_number }} - {{ matter.title }}</div>
+          <div class="text-xs c-muted">{{ matter.get_practice_area_display }}</div>
+        </div>
+        <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
+      </a>
+      {% empty %}
+      <div class="empty-state">No matters for this client.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Notes -->
+  {% if client.notes %}
+  <div class="panel panel-inner">
+    <h3 class="panel-title mb-3">Notes</h3>
+    <p class="text-sm">{{ client.notes }}</p>
+  </div>
+  {% endif %}
+
 </div>
-{% endif %}
 {% endblock %}

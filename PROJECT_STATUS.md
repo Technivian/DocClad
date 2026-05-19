@@ -992,3 +992,43 @@ All 6 documented exceptions reviewed and kept as-is (see BATCH5_POST_MIGRATION_A
 ### Next
 
 Batch 6 Step 2: NetworkPage client wave — `client_list.html`, `client_detail.html`, `client_form.html`
+
+---
+
+## Batch 6 Step 2 — NetworkPage Client Wave
+
+**Status:** COMPLETE
+
+### Changes
+
+**client_list.html** — minimal hardening
+- `aria-hidden="true"` on decorative SVG in New Client button
+- Removed redundant `overflow-hidden stat-card` from `panel` wrapper
+
+**client_detail.html** — full WorkspacePage migration
+- page-wrap / page-header / page-title / page-subtitle / page-actions
+- panel + panel-inner for 3 info cards (Contact Info, Primary Contact, Financial)
+- panel + panel-head + panel-title for Matters section
+- badge-sm badge-green / badge-gray for matter status
+- c-muted / c-link semantic color tokens
+- btn-primary-grad (New Matter) + btn-ghost (Edit)
+- empty-state for matters empty state
+- hover:bg-gray-50 preserved on matter link rows (structural UX exception)
+
+**client_form.html** — full WorkspacePage migration
+- page-wrap / page-header / page-title
+- panel + panel-inner wrapping form
+- form-label for all labels; c-danger for validation errors
+- btn-primary-grad (submit) + btn-ghost (cancel)
+- max-w-3xl + grid structural exceptions preserved
+
+### Preserved
+- All backend field names and CSRF tokens
+- Context variables: clients, client, matters, form, search_query, page_obj
+- onchange filter selects (acceptable pattern)
+- Pagination structure
+
+### Validation
+- Template parse: ✅ all 3 templates OK
+- manage.py check: ✅ 0 issues
+- Tests: ✅ 3/3 pass
