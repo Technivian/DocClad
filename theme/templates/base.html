@@ -236,8 +236,8 @@
         [data-theme="light"] .badge-purple { background: #F1EDFD; color: #6E47B8; }
         [data-theme="light"] .badge-gray   { background: #E9EFF5; color: #5F7289; }
 
-        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 12px 20px 6px; margin-top: 4px; }
-        .nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 20px; font-size: 13px; color: var(--text-secondary); border-radius: 0; margin: 0; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding: 14px 20px 8px; margin-top: 6px; }
+        .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: var(--text-secondary); border-radius: 0; margin: 0; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
         .nav-link:hover { background: var(--sidebar-hover); color: var(--text-primary); border-left-color: var(--text-dim); }
         .nav-link.active { background: var(--sidebar-active-bg); color: var(--sidebar-active-text); font-weight: 600; border-left-color: var(--sidebar-active-border); }
         .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
@@ -247,7 +247,7 @@
         body { margin: 0; overflow: hidden; }
 
         .sidebar-container {
-            width: 240px;
+            width: 252px;
             height: calc(100vh - 56px);
             border-right: 1px solid var(--border);
             background: var(--sidebar-bg);
@@ -256,7 +256,15 @@
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
             flex-shrink: 0;
+            transition: width 0.2s ease;
         }
+        body.nav-collapsed .sidebar-container { width: 72px; }
+        body.nav-collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; border-left-width: 0; border-bottom: 2px solid transparent; }
+        body.nav-collapsed .nav-link.active { border-bottom-color: var(--sidebar-active-border); }
+        body.nav-collapsed .nav-link > svg { margin-right: 0; }
+        body.nav-collapsed .nav-link { font-size: 0; }
+        body.nav-collapsed .nav-link .nav-badge { font-size: 10px; }
+        body.nav-collapsed .nav-section { font-size: 0; padding-top: 8px; padding-bottom: 6px; }
         .main-layout {
             display: flex;
             height: calc(100vh - 56px);
@@ -272,7 +280,7 @@
             -webkit-overflow-scrolling: touch;
             background: var(--content-bg);
         }
-        .top-bar { background: var(--topbar-bg); border-bottom: 1px solid var(--topbar-border); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+        .top-bar { background: var(--topbar-bg); border-bottom: 1px solid var(--topbar-border); padding: 0 18px; height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .messages-container { padding: 16px 24px; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .messages-container .msg { padding: 14px 16px; margin: 8px 0; border-radius: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-weight: 500; }
@@ -412,20 +420,20 @@
         .kpi-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 22px 24px;
+            border-radius: 12px;
+            padding: 16px 18px;
             position: relative;
             overflow: hidden;
             transition: all 0.25s ease;
         }
-        .kpi-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .kpi-card:hover { border-color: var(--primary-bg); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
         .kpi-card .kpi-icon {
             width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
             margin-bottom: 16px; position: relative; z-index: 1;
         }
         .kpi-card .kpi-icon svg { width: 20px; height: 20px; }
-        .kpi-card .kpi-value { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--text-primary); }
-        .kpi-card .kpi-label { font-size: 13px; color: var(--text-secondary); margin-top: 6px; font-weight: 500; }
+        .kpi-card .kpi-value { font-size: 24px; font-weight: 750; letter-spacing: -0.02em; line-height: 1; color: var(--text-primary); }
+        .kpi-card .kpi-label { font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-weight: 550; }
         .kpi-card .kpi-sub { font-size: 11px; margin-top: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; }
         .kpi-card .kpi-glow {
             position: absolute; top: -30px; right: -30px; width: 100px; height: 100px;
@@ -437,7 +445,7 @@
         .panel {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
         }
         .panel-head {
@@ -456,7 +464,7 @@
         /* List rows inside panels */
         .list-row {
             display: flex; align-items: center; justify-content: space-between; gap: 12px;
-            padding: 14px 22px; border-bottom: 1px solid var(--card-border);
+            padding: 12px 18px; border-bottom: 1px solid var(--card-border);
             transition: background 0.15s; text-decoration: none; color: inherit;
         }
         .list-row:last-child { border-bottom: none; }
@@ -662,13 +670,14 @@
 
             /* ── Panel inner structure ────────────────────────────────────────────── */
             .panel-head-inner { display: flex; align-items: center; gap: 8px; }
-            .panel-inner      { padding: 22px; }
+            .panel-inner      { padding: 20px; }
             .panel-divider    { border-top: 1px solid var(--card-border); margin-top: 20px; padding-top: 18px; }
             .panel-2col       { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
             .panel-item       { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 12px; }
             .stk-col          { display: flex; flex-direction: column; gap: 20px; }
             .no-data-msg      { text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 13px; }
             .pre-output       { font-size: 12px; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; padding: 12px; white-space: pre-wrap; overflow-x: auto; }
+            .surface-subtle   { background: var(--surface); border: 1px solid var(--border); }
 
             /* ── Dashboard list item components ──────────────────────────────────── */
             .item-row   { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
@@ -796,6 +805,23 @@
             /* ── List/table page utilities ─────────────────────────────────── */
             .stat-card-lg  { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 0.75rem; padding: 1.25rem; }
             .table-card    { background: var(--card-bg); border: 1px solid var(--card-border); }
+            .workspace-split { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; align-items: start; }
+            .views-rail { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; position: sticky; top: 16px; }
+            .views-rail-head { padding: 12px 12px 8px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+            .views-rail-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+            .views-rail-list { padding: 8px; display: grid; gap: 4px; }
+            .views-rail-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; border: 1px solid transparent; }
+            .views-rail-link:hover { background: var(--sidebar-hover); color: var(--text-primary); }
+            .views-rail-link.active { background: var(--sidebar-active-bg); color: var(--sidebar-active-text); border-color: var(--sidebar-active-border); }
+            .views-rail-count { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+            .workspace-main { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
+            .workspace-main-head { padding: 14px 16px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+            .workspace-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+            .workspace-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+            .workspace-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+            .workspace-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: color-mix(in srgb, var(--surface) 90%, transparent); }
+            .table-compact td { padding-top: 8px; padding-bottom: 8px; }
+            .table-sticky .tbl-head th { position: sticky; top: 0; z-index: 4; background: var(--surface); }
             .tab-pill      { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.25rem; }
             .tab-pill-item { padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 0.5; border-radius: 0.375rem; transition: all 0.15s; white-space: nowrap; }
             .tab-pill-active-state { background: var(--card-bg); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
@@ -808,6 +834,13 @@
             .topbar-flex   { display: flex; align-items: center; }
             .topbar-gap-lg { gap: 16px; }
             .topbar-gap-sm { gap: 8px; }
+            .rail-toggle-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; }
+            .rail-toggle-btn:hover { color: var(--text-primary); border-color: var(--primary); }
+            .global-search-form { display: inline-flex; align-items: center; gap: 8px; min-width: 280px; max-width: 460px; width: 42vw; }
+            .global-search-wrap { position: relative; width: 100%; }
+            .global-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted); pointer-events: none; }
+            .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 10px; padding: 8px 10px 8px 32px; font-size: 12px; }
+            .global-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
             .logo-link     { display: flex; align-items: center; gap: 12px; text-decoration: none; }
             .logo-box      { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--btn-gradient); }
             .logo-icon     { width: 18px; height: 18px; color: white; }
@@ -832,11 +865,21 @@
             .btn-primary-sm svg { width: 14px; height: 14px; }
             .sidebar-padding { padding: 12px 0; }
             .main-content-pad { padding: 24px; }
+
+            @media (max-width: 1100px) {
+                .workspace-split { grid-template-columns: 1fr; }
+                .global-search-form { min-width: 180px; width: 34vw; }
+            }
         </style>
 </head>
 <body class="c-primary-text">
     <div class="top-bar">
         <div class="topbar-flex topbar-gap-lg">
+            {% if user.is_authenticated %}
+            <button type="button" id="rail-toggle" class="rail-toggle-btn" aria-label="Toggle workspace rail" title="Toggle workspace rail">
+                <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link">
                 <div class="logo-box">
                     <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -846,6 +889,14 @@
                     <span class="logo-badge">CLM</span>
                 </div>
             </a>
+            {% if user.is_authenticated %}
+            <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
+                <div class="global-search-wrap">
+                    <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties" value="{{ request.GET.q|default:'' }}">
+                </div>
+            </form>
+            {% endif %}
         </div>
         <div class="topbar-flex topbar-gap-sm">
             {% if user.is_authenticated %}
@@ -917,38 +968,56 @@
                     Dashboard
                 </a>
 
-                <div class="nav-section">PORTFOLIO</div>
+                <div class="nav-section">EXECUTION</div>
                 <a href="{% url 'contracts:contract_create' %}" class="nav-link {% if request.resolver_match.url_name == 'contract_create' %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     New Contract
                 </a>
                 <a href="{% url 'contracts:contract_list' %}" class="nav-link {% if request.resolver_match.url_name == 'contract_list' or request.resolver_match.url_name == 'contract_detail' or request.resolver_match.url_name == 'contract_update' %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Contracts
+                    Contract Workspace
                 </a>
-                <a href="{% url 'contracts:contract_list' %}" class="nav-link {% if request.resolver_match.url_name == 'contract_list' or request.resolver_match.url_name == 'contract_detail' or request.resolver_match.url_name == 'contract_create' or request.resolver_match.url_name == 'contract_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3"></path></svg>
-                    Reviews
-                </a>
-                <a href="{% url 'contracts:legal_task_kanban' %}" class="nav-link {% if 'deadline' in request.resolver_match.url_name or request.resolver_match.url_name == 'legal_task_kanban' or request.resolver_match.url_name == 'legal_task_create' or request.resolver_match.url_name == 'legal_task_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                    Tasks
+                <a href="{% url 'contracts:repository' %}" class="nav-link {% if request.resolver_match.url_name == 'repository' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    Repository
                 </a>
                 <a href="{% url 'contracts:workflow_dashboard' %}" class="nav-link {% if 'workflow' in request.resolver_match.url_name or request.resolver_match.url_name == 'workflow_dashboard' %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Workflows
                 </a>
-                <a href="{% url 'contracts:due_diligence_list' %}" class="nav-link {% if request.resolver_match.url_name == 'due_diligence_list' or request.resolver_match.url_name == 'due_diligence_create' or request.resolver_match.url_name == 'due_diligence_detail' or request.resolver_match.url_name == 'due_diligence_update' %}active{% endif %}">
+                <a href="{% url 'contracts:approval_request_list' %}" class="nav-link {% if 'approval_request' in request.resolver_match.url_name %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 5h8m-8 5h5M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"></path></svg>
-                    Intake
-                </a>
-                <a href="{% url 'contracts:due_diligence_list' %}" class="nav-link {% if request.resolver_match.url_name == 'due_diligence_list' or request.resolver_match.url_name == 'due_diligence_create' or request.resolver_match.url_name == 'due_diligence_detail' or request.resolver_match.url_name == 'due_diligence_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12l4 4L19 7"></path></svg>
                     Approvals
                 </a>
+                <a href="{% url 'contracts:signature_request_list' %}" class="nav-link {% if 'signature_request' in request.resolver_match.url_name %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M7 19a8 8 0 1110 0l-5 2-5-2z"></path></svg>
+                    Signature Requests
+                </a>
 
-                <div class="nav-section">COUNTERPARTIES</div>
-                <a href="{% url 'contracts:client_list' %}" class="nav-link {% if 'client' in request.resolver_match.url_name %}active{% endif %}">
+                <div class="nav-section">RISK &amp; COMPLIANCE</div>
+                <a href="{% url 'contracts:risk_log_list' %}" class="nav-link {% if 'risk' in request.resolver_match.url_name or request.resolver_match.url_name == 'risk_log_list' or request.resolver_match.url_name == 'risk_log_create' or request.resolver_match.url_name == 'risk_log_update' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Risk Register
+                </a>
+                <a href="{% url 'contracts:compliance_checklist_list' %}" class="nav-link {% if 'compliance' in request.resolver_match.url_name or 'checklist' in request.resolver_match.url_name %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    Compliance
+                </a>
+                <a href="{% url 'contracts:privacy_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'privacy_dashboard' %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    Privacy
+                </a>
+                <a href="{% url 'contracts:audit_log_list' %}" class="nav-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    Audit Trail
+                </a>
+
+                <div class="nav-section">REFERENCE</div>
+                <a href="{% url 'contracts:document_list' %}" class="nav-link {% if 'document' in request.resolver_match.url_name %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    Documents
+                </a>
+                <a href="{% url 'contracts:counterparty_list' %}" class="nav-link {% if 'counterparty' in request.resolver_match.url_name %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     Counterparties
                 </a>
@@ -956,47 +1025,20 @@
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     Clients
                 </a>
-                <a href="{% url 'contracts:counterparty_list' %}" class="nav-link {% if 'counterparty' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                    Jurisdictions
+                <a href="{% url 'contracts:reports_dashboard' %}" class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Reports
                 </a>
 
-                <div class="nav-section">GOVERNANCE</div>
+                <div class="nav-section">ADMIN</div>
                 <a href="{% url 'contracts:budget_list' %}" class="nav-link {% if 'budget' in request.resolver_match.url_name %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Budget &amp; capacity
+                    Budget &amp; Capacity
                 </a>
                 <a href="{% url 'contracts:trust_account_list' %}" class="nav-link {% if 'trust' in request.resolver_match.url_name %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                     Escrow
                 </a>
-                <a href="{% url 'contracts:reports_dashboard' %}" class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Reports &amp; analytics
-                </a>
-                <a href="{% url 'contracts:risk_log_list' %}" class="nav-link {% if 'risk' in request.resolver_match.url_name or request.resolver_match.url_name == 'risk_log_list' or request.resolver_match.url_name == 'risk_log_create' or request.resolver_match.url_name == 'risk_log_update' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    Risks
-                </a>
-
-                <div class="nav-section">OPERATIONS</div>
-                <a href="{% url 'contracts:document_list' %}" class="nav-link {% if 'document' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    Documents
-                </a>
-                <a href="{% url 'contracts:repository' %}" class="nav-link {% if request.resolver_match.url_name == 'repository' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                    Repository
-                </a>
-                <a href="{% url 'contracts:privacy_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'privacy_dashboard' %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    Privacy &amp; compliance
-                </a>
-                <a href="{% url 'contracts:audit_log_list' %}" class="nav-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    Audit log
-                </a>
-
                 <a href="{% url 'settings_hub' %}" class="nav-link {% if request.resolver_match.url_name == 'settings_hub' %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
                     Settings
@@ -1025,6 +1067,23 @@
         {% block content_public %}{% endblock content_public %}
     </main>
     {% endif %}
+
+    <script>
+    (function () {
+        var railToggle = document.getElementById('rail-toggle');
+        if (!railToggle) {
+            return;
+        }
+        var STORAGE_KEY = 'cms-aegis-rail-collapsed';
+        if (localStorage.getItem(STORAGE_KEY) === '1') {
+            document.body.classList.add('nav-collapsed');
+        }
+        railToggle.addEventListener('click', function () {
+            document.body.classList.toggle('nav-collapsed');
+            localStorage.setItem(STORAGE_KEY, document.body.classList.contains('nav-collapsed') ? '1' : '0');
+        });
+    })();
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

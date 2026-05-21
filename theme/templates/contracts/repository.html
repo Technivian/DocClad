@@ -5,112 +5,139 @@
 
 {% block content %}
 <div class="page-wrap">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Repository</h1>
-            <p class="page-subtitle">Browse contracts with live search, sorting, and quick-preview drawer.</p>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                Upload Document
-            </a>
-        </div>
-    </div>
-
-    <!-- KPI row -->
-    <div class="dash-grid dash-grid-4 mb-6">
-        <div class="kpi-card">
-            <div class="kpi-label">Total Contracts</div>
-            <div class="kpi-value c-primary">{{ total_documents }}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Active</div>
-            <div class="kpi-value c-accent">{{ active_documents }}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Draft</div>
-            <div class="kpi-value c-primary-brand">{{ draft_documents }}</div>
-        </div>
-        <div class="kpi-card stat-card-amber">
-            <div class="kpi-label c-amber-soft">Expiring 30d</div>
-            <div class="kpi-value c-amber">{{ expiring_documents }}</div>
-        </div>
-    </div>
-
-    <!-- Saved views -->
-    <div class="panel mb-4">
-        <div class="panel-inner">
-            <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-widest c-muted">Saved views</p>
-                    <p class="text-sm mt-1 c-muted">Capture the current repository filter state for quick reuse.</p>
-                </div>
-                <button type="button" data-action="save-view" class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg border select-base">Save current view</button>
+    <div class="workspace-split">
+        <aside class="views-rail">
+            <div class="views-rail-head">
+                <p class="views-rail-title">Repository views</p>
+                <button type="button" data-action="save-view" class="btn-ghost text-xs px-2 py-1">Save view</button>
             </div>
-            <div id="saved-views"></div>
-        </div>
+            <div class="views-rail-list">
+                <a href="#" class="views-rail-link active"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></a>
+                <a href="#" class="views-rail-link"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></a>
+                <a href="#" class="views-rail-link"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></a>
+                <a href="#" class="views-rail-link"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></a>
+            </div>
+            <div class="panel mt-4">
+                <div class="panel-head">
+                    <span class="panel-title">Saved views</span>
+                </div>
+                <div class="panel-inner">
+                    <div id="saved-views"></div>
+                </div>
+            </div>
+            <div class="panel mt-4">
+                <div class="panel-head">
+                    <span class="panel-title">Status filters</span>
+                </div>
+                <div class="panel-inner flex flex-wrap gap-2">
+                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="">All</button>
+                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="ACTIVE">Active</button>
+                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="DRAFT">Draft</button>
+                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="PENDING">Pending</button>
+                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="EXPIRED">Expired</button>
+                </div>
+            </div>
+        </aside>
+
+        <section class="workspace-main">
+            <div class="workspace-main-head">
+                <div>
+                    <h1 class="workspace-title">Repository Control Center</h1>
+                    <p class="workspace-subtitle">Operational scan view for active paper, incoming versions, and exception-ready documents.</p>
+                </div>
+                <div class="workspace-tools">
+                    <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        Upload Document
+                    </a>
+                </div>
+            </div>
+
+            <div class="workspace-toolbar">
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflow Board</a>
+                <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals Queue</a>
+                <a href="{% url 'contracts:signature_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Signature Queue</a>
+                <a href="{% url 'contracts:risk_log_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Risk Register</a>
+                <a href="{% url 'contracts:audit_log_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Audit Trail</a>
+            </div>
+
+            <div class="panel-inner">
+                <div class="dash-grid dash-grid-4 mb-6">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Total Contracts</div>
+                        <div class="kpi-value c-primary">{{ total_documents }}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Active</div>
+                        <div class="kpi-value c-accent">{{ active_documents }}</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">Draft</div>
+                        <div class="kpi-value c-primary-brand">{{ draft_documents }}</div>
+                    </div>
+                    <div class="kpi-card stat-card-amber">
+                        <div class="kpi-label c-amber-soft">Expiring 30d</div>
+                        <div class="kpi-value c-amber">{{ expiring_documents }}</div>
+                    </div>
+                </div>
+
+                <div class="rounded-xl border p-4 mb-4" style="background: var(--surface); border-color: var(--border);">
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
+                        <div class="xl:col-span-7 relative min-w-0">
+                            <svg aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                            <input type="search" id="search-input" placeholder="Search repository documents" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
+                        </div>
+                        <div class="xl:col-span-3">
+                            <select id="sort-select" class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none select-base">
+                                <option value="updated_desc">Recently Updated</option>
+                                <option value="updated_asc">Oldest First</option>
+                                <option value="title">Title A-Z</option>
+                                <option value="status">Status</option>
+                            </select>
+                        </div>
+                        <div class="xl:col-span-2">
+                            <a href="{% url 'contracts:workflow_template_list' %}" class="w-full justify-center px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-2 btn-ghost-secondary">
+                                Templates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="filter-chips" class="mb-4"></div>
+
+                <div id="bulk-action-bar" class="repo-bulk-bar">
+                    <div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="repo-bulk-status" class="repo-mini-btn">Change Status</button>
+                        <button id="repo-bulk-assign" class="repo-mini-btn">Assign to Me</button>
+                        <button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button>
+                        <button data-action="clear-selection" class="repo-mini-btn">Clear</button>
+                    </div>
+                </div>
+
+                <div class="panel overflow-hidden table-sticky">
+                    <table id="contracts-table" class="w-full text-sm">
+                        <thead class="tbl-head">
+                            <tr>
+                                <th class="tbl-th px-5 py-3 text-left"><input type="checkbox" id="select-all" aria-label="Select all"></th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Document</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Status</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Value</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Owner</th>
+                                <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contracts-tbody">
+                            <tr><td colspan="6" class="px-5 py-20 text-center c-muted">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagination-container" class="mt-4"></div>
+            </div>
+        </section>
     </div>
 
-    <!-- Search + sort toolbar -->
-    <div class="flex items-center gap-3 mb-4 flex-wrap">
-        <div class="relative flex-1 min-w-0">
-            <svg aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
-            <input type="search" id="search-input" placeholder="Search repository documents" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
-        </div>
-        <select id="sort-select" class="px-3 py-2 text-sm rounded-lg border focus:outline-none select-base">
-            <option value="updated_desc">Recently Updated</option>
-            <option value="updated_asc">Oldest First</option>
-            <option value="title">Title A-Z</option>
-            <option value="status">Status</option>
-        </select>
-        <a href="{% url 'contracts:workflow_template_list' %}" class="px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-2 btn-ghost-secondary">
-            Templates
-        </a>
-    </div>
-
-    <!-- Status filter pills -->
-    <div class="flex items-center gap-2 mb-4 flex-wrap">
-        <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="">All</button>
-        <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="ACTIVE">Active</button>
-        <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="DRAFT">Draft</button>
-        <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="PENDING">Pending</button>
-        <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="EXPIRED">Expired</button>
-    </div>
-
-    <div id="filter-chips" class="mb-4"></div>
-
-    <div id="bulk-action-bar" class="repo-bulk-bar">
-        <div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div>
-        <div class="flex items-center gap-2 flex-wrap">
-            <button id="repo-bulk-status" class="repo-mini-btn">Change Status</button>
-            <button id="repo-bulk-assign" class="repo-mini-btn">Assign to Me</button>
-            <button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button>
-            <button data-action="clear-selection" class="repo-mini-btn">Clear</button>
-        </div>
-    </div>
-
-    <!-- Contracts table -->
-    <div class="panel overflow-hidden">
-        <table id="contracts-table" class="w-full text-sm">
-            <thead class="tbl-head">
-                <tr>
-                    <th class="tbl-th px-5 py-3 text-left"><input type="checkbox" id="select-all" aria-label="Select all"></th>
-                    <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Document</th>
-                    <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Status</th>
-                    <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Value</th>
-                    <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Owner</th>
-                    <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Updated</th>
-                </tr>
-            </thead>
-            <tbody id="contracts-tbody">
-                <tr><td colspan="6" class="px-5 py-20 text-center c-muted">Loading...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div id="pagination-container" class="mt-4"></div>
     <div id="details-drawer" class="repo-drawer"></div>
 </div>
 

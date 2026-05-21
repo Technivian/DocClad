@@ -16,6 +16,22 @@
         </div>
     </div>
 
+    <div class="panel mb-6">
+        <div class="panel-inner">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="badge-sm {% if object.status == 'PENDING' %}badge-yellow{% else %}badge-gray{% endif %}">Queued</span>
+                <span class="c-muted">→</span>
+                <span class="badge-sm {% if object.status == 'SENT' or object.sent_at %}badge-blue{% else %}badge-gray{% endif %}">Sent</span>
+                <span class="c-muted">→</span>
+                <span class="badge-sm {% if object.status == 'VIEWED' or object.viewed_at %}badge-purple{% else %}badge-gray{% endif %}">Viewed</span>
+                <span class="c-muted">→</span>
+                <span class="badge-sm {% if object.status == 'SIGNED' or object.signed_at %}badge-green{% else %}badge-gray{% endif %}">Signed</span>
+                <span class="c-muted">→</span>
+                <span class="badge-sm {% if object.status == 'DECLINED' or object.declined_at %}badge-red{% else %}badge-gray{% endif %}">Declined</span>
+            </div>
+        </div>
+    </div>
+
     {% if needs_follow_up %}
     <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         Follow-up recommended. This request has been waiting longer than {{ follow_up_threshold_days }} days since it was sent.
@@ -37,55 +53,61 @@
     </div>
     {% endif %}
 
-    <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div class="panel">
-            <div class="panel-inner">
-                <div class="grid gap-4 sm:grid-cols-2 mb-6">
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Contract</span>
-                        <p class="mt-1 text-sm text-gray-900">{{ object.contract }}</p>
-                    </div>
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Signer</span>
-                        <p class="mt-1 text-sm text-gray-900">{{ object.signer_name }}</p>
-                        <p class="text-xs c-muted">{{ object.signer_email }}</p>
-                    </div>
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Role</span>
-                        <p class="mt-1 text-sm text-gray-900">{{ object.signer_role|default:"-" }}</p>
-                    </div>
-                    <div class="rounded-lg bg-gray-50 p-4">
-                        <span class="block text-xs font-semibold c-muted uppercase tracking-wide">External ID</span>
-                        <p class="mt-1 text-sm text-gray-900">{{ object.external_id|default:"-" }}</p>
+    <div class="grid gap-6 xl:grid-cols-[2.2fr_1fr]">
+        <div class="space-y-6">
+            <div class="panel">
+                <div class="panel-inner">
+                    <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 text-sm">
+                        <div>
+                            <div class="metric-label">Contract</div>
+                            <div class="c-primary">{{ object.contract }}</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Signer</div>
+                            <div class="c-primary">{{ object.signer_name }}</div>
+                            <div class="item-meta">{{ object.signer_email }}</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">Role</div>
+                            <div class="c-primary">{{ object.signer_role|default:"-" }}</div>
+                        </div>
+                        <div>
+                            <div class="metric-label">External ID</div>
+                            <div class="c-primary">{{ object.external_id|default:"-" }}</div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <h2 class="panel-title mb-3">Lifecycle Timeline</h2>
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Status</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.get_status_display }}</p>
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Lifecycle Timeline</span>
+                </div>
+                <div class="panel-inner">
+                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 text-sm">
+                        <div>
+                            <div class="metric-label">Status</div>
+                            <div class="c-primary">{{ object.get_status_display }}</div>
                         </div>
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Order</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.order }}</p>
+                        <div>
+                            <div class="metric-label">Order</div>
+                            <div class="c-primary">{{ object.order }}</div>
                         </div>
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Sent At</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.sent_at|default:"Not sent" }}</p>
+                        <div>
+                            <div class="metric-label">Sent At</div>
+                            <div class="c-primary">{{ object.sent_at|default:"Not sent" }}</div>
                         </div>
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Viewed At</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.viewed_at|default:"Not viewed" }}</p>
+                        <div>
+                            <div class="metric-label">Viewed At</div>
+                            <div class="c-primary">{{ object.viewed_at|default:"Not viewed" }}</div>
                         </div>
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Signed At</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.signed_at|default:"Not signed" }}</p>
+                        <div>
+                            <div class="metric-label">Signed At</div>
+                            <div class="c-primary">{{ object.signed_at|default:"Not signed" }}</div>
                         </div>
-                        <div class="rounded-lg border border-gray-100 bg-white p-4">
-                            <span class="block text-xs font-semibold c-muted uppercase tracking-wide">Declined At</span>
-                            <p class="mt-1 text-sm text-gray-900">{{ object.declined_at|default:"Not declined" }}</p>
+                        <div>
+                            <div class="metric-label">Declined At</div>
+                            <div class="c-primary">{{ object.declined_at|default:"Not declined" }}</div>
                         </div>
                     </div>
                 </div>
@@ -95,7 +117,7 @@
         <div class="space-y-4">
             <div class="panel">
                 <div class="panel-head">
-                    <span class="panel-title">Quick Actions</span>
+                    <span class="panel-title">Approval / Signature Actions</span>
                 </div>
                 <div class="panel-inner">
                     {% if available_transitions %}

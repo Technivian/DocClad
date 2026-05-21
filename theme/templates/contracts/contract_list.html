@@ -22,87 +22,87 @@
     </div>
 </div>
 
-{# ── Summary stat cards ────────────────────────────────────────────────────── #}
-<div class="dash-grid dash-grid-3 mb-6">
-    <div class="rounded-xl p-5 border stat-card">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Totaal</p>
-        <p class="text-3xl font-bold c-primary">{{ total_contracts }}</p>
-        <p class="text-xs mt-1 c-muted">contracts</p>
-    </div>
-    <div class="rounded-xl p-5 border stat-card">
-        <div class="flex items-center gap-2 mb-2">
-            <span class="w-2 h-2 rounded-full flex-shrink-0 bg-accent-dot"></span>
-            <p class="text-xs font-semibold uppercase tracking-widest c-muted">Openstaand</p>
+<div class="workspace-split">
+    <aside class="views-rail">
+        <div class="views-rail-head">
+            <p class="views-rail-title">My views</p>
+            <a href="{% url 'contracts:contract_create' %}" class="btn-primary-sm">New</a>
         </div>
-        <p class="text-3xl font-bold c-accent">{{ active_contracts }}</p>
-        <p class="text-xs mt-1 c-muted">in doorstroom</p>
-    </div>
-    {% if expiring_soon %}
-    <div class="rounded-xl p-5 border stat-card-amber">
-        <div class="flex items-center gap-2 mb-2">
-            <span class="status-dot yellow" aria-hidden="true"></span>
-            <p class="text-xs font-semibold uppercase tracking-widest c-amber-soft">Needs review</p>
+        <div class="views-rail-list">
+            <a href="{% url 'contracts:contract_list' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}" class="views-rail-link {% if not current_phase %}active{% endif %}">
+                <span>All contracts</span>
+                <span class="views-rail-count">{{ total_contracts }}</span>
+            </a>
+            <a href="?phase=actief{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}" class="views-rail-link {% if current_phase == 'actief' %}active{% endif %}">
+                <span>In progress</span>
+                <span class="views-rail-count">{{ active_contracts }}</span>
+            </a>
+            <a href="?phase=beoordeling{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}" class="views-rail-link {% if current_phase == 'beoordeling' %}active{% endif %}">
+                <span>Needs review</span>
+                <span class="views-rail-count">{{ expiring_soon|default:0 }}</span>
+            </a>
+            <a href="?phase=plaatsing{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}" class="views-rail-link {% if current_phase == 'plaatsing' %}active{% endif %}">
+                <span>Draft / intake</span>
+                <span class="views-rail-count">-</span>
+            </a>
+            <a href="?phase=afgerond{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}" class="views-rail-link {% if current_phase == 'afgerond' %}active{% endif %}">
+                <span>Completed</span>
+                <span class="views-rail-count">-</span>
+            </a>
         </div>
-        <p class="text-3xl font-bold c-amber">{{ expiring_soon }}</p>
-        <p class="text-xs mt-1 c-muted">within 30 days</p>
-    </div>
-    {% else %}
-    <div class="rounded-xl p-5 border stat-card">
-        <p class="text-xs font-semibold uppercase tracking-widest mb-2 c-muted">Needs review</p>
-        <p class="text-3xl font-bold c-dim">0</p>
-        <p class="text-xs mt-1 c-muted">binnen 30 dagen</p>
-    </div>
-    {% endif %}
-</div>
+    </aside>
 
-{# ── Filters toolbar ───────────────────────────────────────────────────────── #}
-<div class="flex items-center gap-3 mb-4 flex-wrap">
-
-    {# Quick-filter tab strip #}
-    <span class="text-xs font-semibold uppercase tracking-wide c-muted">All statuses</span>
-    {% with cur=current_phase %}
-    <div class="flex items-center rounded-lg p-1 border flex-shrink-0 tabs-shell">
-        {% for tab_label, tab_phase in phase_tabs %}
-          <a href="?{% if tab_phase %}phase={{ tab_phase }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}"
-              class="px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap {% if cur == tab_phase or not cur and not tab_phase %}tab-pill-active{% else %}tab-pill-idle{% endif %}">
-            {{ tab_label }}
-        </a>
-        {% endfor %}
-    </div>
-    {% endwith %}
-
-    {# Search bar #}
-    <form method="get" class="flex items-center gap-2 flex-1 min-w-0">
-        <div class="relative flex-1 min-w-0">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-            </svg>
-            <input type="text" name="q" value="{{ search_query }}"
-                   placeholder="Search contracts..."
-                   aria-label="Search contracts... Search cases..."
-                   class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none form-input">
+    <section class="workspace-main">
+        <div class="workspace-main-head">
+            <div>
+                <h2 class="workspace-title">Contracts Workspace</h2>
+                <p class="workspace-subtitle">{{ total_contracts }} contract{{ total_contracts|pluralize }} across your portfolio</p>
+            </div>
+            <div class="workspace-tools">
+                <span class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Sort: {{ sort|default:'-created_at' }}</span>
+                {% if current_phase %}<span class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Filter: {{ current_phase }}</span>{% endif %}
+            </div>
         </div>
-        <input type="hidden" name="sort" value="{{ sort }}">
-        {% if current_phase %}<input type="hidden" name="phase" value="{{ current_phase }}">{% endif %}
-        <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">
-            Search
-        </button>
-        {% if search_query or current_phase %}
-        <a href="{% url 'contracts:contract_list' %}"
-           class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 btn-ghost">
-            <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            Clear
-        </a>
-        {% endif %}
-    </form>
 
-</div>
+        <div class="workspace-toolbar">
+            {% with cur=current_phase %}
+            <div class="flex items-center rounded-lg p-1 border flex-shrink-0 tabs-shell">
+                {% for tab_label, tab_phase in phase_tabs %}
+                <a href="?{% if tab_phase %}phase={{ tab_phase }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort and sort != '-created_at' %}&sort={{ sort|urlencode }}{% endif %}"
+                   class="px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap {% if cur == tab_phase or not cur and not tab_phase %}tab-pill-active{% else %}tab-pill-idle{% endif %}">
+                    {{ tab_label }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endwith %}
 
-{# ── Contracts table ───────────────────────────────────────────────────────── #}
-<div class="panel overflow-hidden">
-    <table class="w-full text-sm">
+            <form method="get" class="flex items-center gap-2 flex-1 min-w-0">
+                <div class="relative flex-1 min-w-0">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+                    </svg>
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="Search contracts..." aria-label="Search contracts" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none form-input">
+                </div>
+                <input type="hidden" name="sort" value="{{ sort }}">
+                {% if current_phase %}<input type="hidden" name="phase" value="{{ current_phase }}">{% endif %}
+                <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Search</button>
+                {% if search_query or current_phase %}
+                <a href="{% url 'contracts:contract_list' %}" class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 btn-ghost">
+                    <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    Clear
+                </a>
+                {% endif %}
+            </form>
+
+            <div class="flex items-center gap-2">
+                <a href="{% url 'contracts:repository' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Repository</a>
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflows</a>
+                <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals</a>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto table-sticky">
+            <table class="w-full text-sm table-compact">
         <thead class="tbl-head">
             <tr>
                 {% with qs=search_query ph=request.GET.phase %}
@@ -246,7 +246,9 @@
             </tr>
             {% endfor %}
         </tbody>
-    </table>
+            </table>
+        </div>
+    </section>
 </div>
 
 {# ── Pagination ────────────────────────────────────────────────────────────── #}

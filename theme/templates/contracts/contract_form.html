@@ -2,96 +2,212 @@
 {% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Contract - CMS Aegis{% endblock %}
 {% block content %}
 <div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %}</h1>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:contract_list' %}" class="btn-ghost">Back to Contracts</a>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-inner">
-            <form method="post" action="{{ form_action|default:request.path }}" class="space-y-4">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for field in form %}
-                    <div class="{% if field.name == 'content' or field.name == 'title' or field.name == 'clause_templates' %}md:col-span-2{% endif %}">
-                        <label class="form-label">{{ field.label }}</label>
-                        {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
-                        {{ field }}
-                        {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% if preview_mode and draft_sections %}
-                <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-4">
-                    <div>
-                        <h2 class="text-sm font-semibold text-blue-900">Draft sections</h2>
-                        <p class="text-xs text-blue-700">Reorder, remove, or edit generated sections before saving. Generated from {{ draft_preview_selected_clause_count }} selected clause template{{ draft_preview_selected_clause_count|pluralize }}.</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" id="add-draft-section" class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700">Add section</button>
-                        <span class="text-xs text-blue-700">Drag the handle to reorder.</span>
-                    </div>
-                    <input type="hidden" name="draft_section_count" value="{{ draft_sections|length }}">
-                    <div id="draft-section-list" class="space-y-4" data-draft-section-list>
-                        {% for section in draft_sections %}
-                        <div class="rounded-xl border border-blue-100 bg-white p-4 space-y-3 shadow-sm" data-draft-section-card draggable="true">
-                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                <div class="flex items-center gap-3">
-                                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 text-blue-700 bg-blue-50 cursor-grab" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
-                                    <label class="inline-flex items-center gap-2 text-xs font-medium text-blue-900">
-                                        <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-draft-field="include">
-                                        Include section
-                                    </label>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-2 text-xs text-blue-700">
-                                    <span>Order</span>
-                                    <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="w-20 rounded-lg border border-blue-200 px-2 py-1 text-sm" data-draft-field="order" data-draft-section-order>
-                                    <button type="button" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 text-xs font-medium" data-draft-insert-below>Insert below</button>
-                                    <button type="button" class="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-700 hover:bg-red-50 text-xs font-medium" data-draft-remove-section>Remove</button>
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section title</label>
-                                <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="title">
-                            </div>
-                            {% if section.badges %}
-                            <div class="flex flex-wrap gap-2">
-                                {% for badge in section.badges %}
-                                <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold {% if badge.tone == 'indigo' %}bg-indigo-100 text-indigo-800{% elif badge.tone == 'blue' %}bg-blue-100 text-blue-800{% elif badge.tone == 'red' %}bg-red-100 text-red-800{% elif badge.tone == 'amber' %}bg-amber-100 text-amber-800{% elif badge.tone == 'emerald' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-800{% endif %}" title="{{ badge.label }}">
-                                    {{ badge.label }}
-                                </span>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <div class="flex flex-wrap items-center gap-2 text-xs">
-                                {% if section.template_url %}
-                                <a href="{{ section.template_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open source clause</a>
-                                {% endif %}
-                                {% if section.playbook_url %}
-                                <a href="{{ section.playbook_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open playbook context</a>
-                                {% endif %}
-                            </div>
-                            <div class="space-y-2">
-                                <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section content</label>
-                                <textarea name="draft_section_{{ section.index }}_content" rows="8" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="content">{{ section.content }}</textarea>
-                            </div>
-                            <p class="text-xs text-blue-700">Source: {{ section.source_label }}</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+    <div class="workspace-split">
+        <aside class="views-rail">
+            <div class="views-rail-head">
+                <p class="views-rail-title">Intake cockpit</p>
+                <a href="{% url 'contracts:contract_list' %}" class="btn-ghost text-xs px-2 py-1">Open queue</a>
+            </div>
+            <div class="views-rail-list">
+                <a href="{% url 'contracts:contract_create' %}" class="views-rail-link {% if not form.instance.pk %}active{% endif %}">
+                    <span>Request intake</span>
+                    <span class="views-rail-count">Live</span>
+                </a>
+                <a href="{% url 'contracts:contract_list' %}" class="views-rail-link">
+                    <span>Portfolio queue</span>
+                    <span class="views-rail-count">Table</span>
+                </a>
+                {% if form.instance.pk %}
+                <a href="{% url 'contracts:contract_detail' form.instance.pk %}" class="views-rail-link active">
+                    <span>Current record</span>
+                    <span class="views-rail-count">#{{ form.instance.pk }}</span>
+                </a>
                 {% endif %}
-                <div class="flex gap-3 pt-4 border-t border-gray-100">
-                    <button type="submit" name="preview_draft" value="1" class="btn-ghost">Preview draft</button>
-                    <button type="submit" class="btn-primary-grad text-white">{% if form.instance.pk %}Update{% else %}Create{% endif %} Contract</button>
-                    <a href="{% url 'contracts:contract_list' %}" class="btn-ghost">Cancel</a>
+            </div>
+            <div class="panel mt-4">
+                <div class="panel-head"><span class="panel-title">Submission guidance</span></div>
+                <div class="panel-inner space-y-2 text-sm">
+                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
+                        <summary class="cursor-pointer list-none font-medium c-primary">Recommended path</summary>
+                        <div class="mt-2 text-xs c-muted">Business terms first, legal constraints second, fallback text last.</div>
+                    </details>
+                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
+                        <summary class="cursor-pointer list-none font-medium c-primary">Review triggers</summary>
+                        <div class="mt-2 text-xs c-muted">High value, unusual jurisdiction, missing counterparty, or non-standard paper.</div>
+                    </details>
+                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
+                        <summary class="cursor-pointer list-none font-medium c-primary">Next step after save</summary>
+                        <div class="mt-2 text-xs c-muted">Route to review, launch approval, or generate draft sections.</div>
+                    </details>
                 </div>
-            </form>
-        </div>
+            </div>
+        </aside>
+
+        <section class="workspace-main">
+            <div class="workspace-main-head">
+                <div>
+                    <h1 class="workspace-title">{% if form.instance.pk %}Edit Contract Intake{% else %}New Contract Intake{% endif %}</h1>
+                    <p class="workspace-subtitle">Open a new legal request with commercial facts, governing terms, and drafting context in a single intake pass.</p>
+                </div>
+                <div class="workspace-tools">
+                    <a href="{% url 'contracts:contract_list' %}" class="btn-ghost text-sm px-3 py-1.5">Back to Contracts</a>
+                </div>
+            </div>
+
+            <div class="workspace-toolbar justify-between">
+                <div class="flex items-center gap-2 overflow-x-auto pr-2">
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Intake</span>
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Risk Signal</span>
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Draft</span>
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Review</span>
+                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Approval</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflow Board</a>
+                    <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals</a>
+                </div>
+            </div>
+
+            <div class="panel mb-4">
+                <div class="panel-inner">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                        <div class="rounded-lg border p-3 surface-subtle">
+                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Primary objective</div>
+                            <div class="font-medium c-primary">Capture a clean request package for legal review.</div>
+                        </div>
+                        <div class="rounded-lg border p-3 surface-subtle">
+                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Owner</div>
+                            <div class="font-medium c-primary">{{ user.first_name|default:user.username }}</div>
+                        </div>
+                        <div class="rounded-lg border p-3 surface-subtle">
+                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Status on submit</div>
+                            <div class="font-medium c-primary">Draft until routed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+            <div class="panel-inner">
+                <form method="post" action="{{ form_action|default:request.path }}" class="space-y-4">
+                    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <div class="text-xs uppercase tracking-[0.18em] c-muted mb-2">Request package</div>
+                        <div class="h-px" style="background: var(--border);"></div>
+                    </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                        <div class="xl:col-span-3 space-y-4">
+                            <div class="rounded-xl border p-4 surface-subtle">
+                                <div class="text-xs uppercase tracking-[0.18em] c-muted mb-3">Metadata lane</div>
+                                <div class="space-y-4">
+                                    {% for field in form.visible_fields %}
+                                    {% if field.name != 'title' and field.name != 'content' and field.name != 'clause_templates' %}
+                                    <div>
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                                        {{ field }}
+                                        {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="xl:col-span-9 space-y-4">
+                            <div class="rounded-xl border p-4 surface-subtle" style="min-height: 620px;">
+                                <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+                                    <div>
+                                        <div class="text-xs uppercase tracking-[0.18em] c-muted mb-1">Drafting canvas</div>
+                                        <div class="text-sm c-secondary">Capture the request title, source paper, and drafting basis before routing.</div>
+                                    </div>
+                                    <span class="badge-sm badge-blue">Live intake</span>
+                                </div>
+                                <div class="space-y-4">
+                                    {% for field in form.visible_fields %}
+                                    {% if field.name == 'title' or field.name == 'content' or field.name == 'clause_templates' %}
+                                    <div>
+                                        <label class="form-label">{{ field.label }}</label>
+                                        {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+                                        {{ field }}
+                                        {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if preview_mode and draft_sections %}
+                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-4">
+                        <div>
+                            <h2 class="text-sm font-semibold text-blue-900">Draft sections</h2>
+                            <p class="text-xs text-blue-700">Reorder, remove, or edit generated sections before saving. Generated from {{ draft_preview_selected_clause_count }} selected clause template{{ draft_preview_selected_clause_count|pluralize }}.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="add-draft-section" class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700">Add section</button>
+                            <span class="text-xs text-blue-700">Drag the handle to reorder.</span>
+                        </div>
+                        <input type="hidden" name="draft_section_count" value="{{ draft_sections|length }}">
+                        <div id="draft-section-list" class="space-y-4" data-draft-section-list>
+                            {% for section in draft_sections %}
+                            <div class="rounded-xl border border-blue-100 bg-white p-4 space-y-3 shadow-sm" data-draft-section-card draggable="true">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 text-blue-700 bg-blue-50 cursor-grab" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
+                                        <label class="inline-flex items-center gap-2 text-xs font-medium text-blue-900">
+                                            <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-draft-field="include">
+                                            Include section
+                                        </label>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2 text-xs text-blue-700">
+                                        <span>Order</span>
+                                        <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="w-20 rounded-lg border border-blue-200 px-2 py-1 text-sm" data-draft-field="order" data-draft-section-order>
+                                        <button type="button" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 text-xs font-medium" data-draft-insert-below>Insert below</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-700 hover:bg-red-50 text-xs font-medium" data-draft-remove-section>Remove</button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section title</label>
+                                    <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="title">
+                                </div>
+                                {% if section.badges %}
+                                <div class="flex flex-wrap gap-2">
+                                    {% for badge in section.badges %}
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold {% if badge.tone == 'indigo' %}bg-indigo-100 text-indigo-800{% elif badge.tone == 'blue' %}bg-blue-100 text-blue-800{% elif badge.tone == 'red' %}bg-red-100 text-red-800{% elif badge.tone == 'amber' %}bg-amber-100 text-amber-800{% elif badge.tone == 'emerald' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-800{% endif %}" title="{{ badge.label }}">
+                                        {{ badge.label }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    {% if section.template_url %}
+                                    <a href="{{ section.template_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open source clause</a>
+                                    {% endif %}
+                                    {% if section.playbook_url %}
+                                    <a href="{{ section.playbook_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open playbook context</a>
+                                    {% endif %}
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section content</label>
+                                    <textarea name="draft_section_{{ section.index }}_content" rows="8" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="content">{{ section.content }}</textarea>
+                                </div>
+                                <p class="text-xs text-blue-700">Source: {{ section.source_label }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="flex gap-3 pt-4 border-t border-gray-100">
+                        <button type="submit" name="preview_draft" value="1" class="btn-ghost">Preview draft</button>
+                        <button type="submit" class="btn-primary-grad text-white">{% if form.instance.pk %}Update{% else %}Create{% endif %} Contract</button>
+                        <a href="{% url 'contracts:contract_list' %}" class="btn-ghost">Cancel</a>
+                    </div>
+                </form>
+            </div>
+            </div>
+        </section>
     </div>
 </div>
 
