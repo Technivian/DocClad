@@ -1,6 +1,6 @@
 # Active Todo
 
-Last updated: 2026-04-18
+Last updated: 2026-05-31
 
 Canonical remaining worklist:
 - [`docs/COMPLETE_REMAINING_WORKLIST.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/COMPLETE_REMAINING_WORKLIST.md)
@@ -53,6 +53,7 @@ Canonical remaining worklist:
 - Retention scheduled execution workflow + evidence artifact export (`retention-jobs-scheduler.yml`)
 - Contract lifecycle scheduled execution workflow + evidence artifact export (`contract-lifecycle-jobs-scheduler.yml`)
 - Tamper-evident compliance evidence bundle export/verify commands
+- Tenant-scoped positive-path evidence run with non-zero retention + lifecycle outcomes (`run 26708926283`)
 - Executive analytics and saved dashboard preset APIs
 - Reports dashboard executive analytics panel integration
 - Multi-org executive analytics evidence snapshot command
@@ -74,8 +75,9 @@ Canonical remaining worklist:
 3. Run target-environment Postgres cutover evidence workflow with `cutover_ready=true` (`SPR3-003`)
 4. Run NetSuite and e-sign live provider evidence in staging/prod-like env (`SPR3-004`, `SPR3-005`)
 5. Attach first scheduled retention evidence artifact from target environment (`SPR3-006`)
-6. Attach staging-produced executive analytics evidence artifact (`SPR3-008`)
-7. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
+6. Capture production-window scheduler artifacts (retention + lifecycle) on live tenant data
+7. Attach production executive analytics evidence artifact (`SPR3-008`)
+8. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
 
 ## Source Of Truth
 
