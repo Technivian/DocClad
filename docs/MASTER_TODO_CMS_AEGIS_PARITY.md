@@ -348,7 +348,7 @@ Legend:
 37. Tamper-evident compliance/audit evidence exports
 - Status: `PARTIAL`
 - Evidence: audit log exists plus privacy evidence CSV export in `contracts/views_domains/privacy_approvals.py`.
-- Next: add signed export bundles with integrity hashes and verification receipts.
+- Next: add signed export bundles with integrity hashes and verification receipts. Final archive hash verification is now in place for the AI governance audit pack.
 
 ---
 

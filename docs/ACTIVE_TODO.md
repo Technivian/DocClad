@@ -53,6 +53,7 @@ Canonical remaining worklist:
 - Retention scheduled execution workflow + evidence artifact export (`retention-jobs-scheduler.yml`)
 - Contract lifecycle scheduled execution workflow + evidence artifact export (`contract-lifecycle-jobs-scheduler.yml`)
 - Tamper-evident compliance evidence bundle export/verify commands
+- AI governance final archive generation and SHA256 verification
 - Tenant-scoped positive-path evidence run with non-zero retention + lifecycle outcomes (`run 26708926283`)
 - Executive analytics and saved dashboard preset APIs
 - Reports dashboard executive analytics panel integration
