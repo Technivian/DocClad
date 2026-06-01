@@ -944,6 +944,34 @@ class DocumentOCRReview(models.Model):
         self.reviewed_at = timezone.now()
 
 
+class AIExtractionSpan(models.Model):
+    """A text-span citation produced by the AI extraction rules engine."""
+
+    document = models.ForeignKey(
+        Document, on_delete=models.CASCADE, related_name='ai_extraction_spans'
+    )
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='ai_extraction_spans'
+    )
+    label = models.CharField(max_length=100)
+    span_text = models.TextField()
+    start_char = models.PositiveIntegerField()
+    end_char = models.PositiveIntegerField()
+    confidence = models.DecimalField(max_digits=5, decimal_places=4)
+    extraction_model = models.CharField(max_length=100, default='rules-engine-v1')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['start_char']
+        indexes = [
+            models.Index(fields=['document', 'label']),
+            models.Index(fields=['organization', 'label']),
+        ]
+
+    def __str__(self):
+        return f'{self.label} span [{self.start_char}:{self.end_char}] on {self.document_id}'
+
+
 class TimeEntry(models.Model):
     class ActivityType(models.TextChoices):
         RESEARCH = 'RESEARCH', 'Legal Research'

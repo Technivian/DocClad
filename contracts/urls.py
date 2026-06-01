@@ -33,6 +33,8 @@ urlpatterns = [
     path('api/analytics/executive/', api_views.executive_analytics_api, name='executive_analytics_api'),
     path('api/analytics/executive/presets/', api_views.executive_dashboard_presets_api, name='executive_dashboard_presets_api'),
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),
+    path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
+    path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),

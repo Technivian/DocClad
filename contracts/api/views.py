@@ -48,6 +48,7 @@ from contracts.tenancy import get_user_organization
 from contracts.tenancy import scope_queryset_for_organization
 from contracts.models import (
     Contract,
+    Document,
     OrganizationAPIToken,
     OrganizationContractFieldMap,
     Organization,
@@ -1686,3 +1687,159 @@ def esign_webhook_api(request):
             summary['errors'].append({'index': index, 'error': f'Unknown reconciliation result: {result_key}'})
 
     return JsonResponse({'summary': summary})
+
+
+# ── Document upload ingestion ─────────────────────────────────────────────────
+
+_ALLOWED_UPLOAD_EXTENSIONS = {
+    '.pdf', '.docx', '.txt', '.md', '.csv', '.html', '.xml', '.json',
+}
+_MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
+
+@login_required
+@require_http_methods(['POST'])
+def document_upload_api(request):
+    """Ingest a contract document file: upload → hash → OCR queue → AI extraction.
+
+    Multipart POST:
+      file        — required, the document file
+      contract_id — optional, associate with an existing contract
+      document_type — optional, one of Document.DocType choices (default OTHER)
+      title       — optional, defaults to the original filename
+    """
+    organization = get_user_organization(request.user)
+    if organization is None:
+        return _error_response(request, 'No organization found for this user.', 400)
+
+    uploaded_file = request.FILES.get('file')
+    if uploaded_file is None:
+        return _error_response(request, 'No file provided.', 400)
+
+    if uploaded_file.size > _MAX_UPLOAD_BYTES:
+        return _error_response(request, f'File exceeds maximum size of {_MAX_UPLOAD_BYTES // (1024*1024)} MB.', 413)
+
+    import os
+    ext = os.path.splitext(uploaded_file.name)[1].lower()
+    if ext not in _ALLOWED_UPLOAD_EXTENSIONS:
+        return _error_response(
+            request,
+            f'File type {ext!r} is not supported. Allowed: {", ".join(sorted(_ALLOWED_UPLOAD_EXTENSIONS))}',
+            415,
+        )
+
+    contract_id = request.POST.get('contract_id')
+    contract = None
+    if contract_id:
+        contract = Contract.objects.filter(
+            id=contract_id,
+            organization=organization,
+        ).first()
+        if contract is None:
+            return _error_response(request, 'Contract not found or access denied.', 404)
+
+    doc_type = request.POST.get('document_type', Document.DocType.OTHER)
+    if doc_type not in {c[0] for c in Document.DocType.choices}:
+        doc_type = Document.DocType.OTHER
+
+    title = (request.POST.get('title') or '').strip() or uploaded_file.name
+
+    document = Document(
+        organization=organization,
+        title=title,
+        document_type=doc_type,
+        status=Document.Status.DRAFT,
+        contract=contract,
+        uploaded_by=request.user,
+    )
+    document.file = uploaded_file
+    document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+
+    ocr_status = 'unknown'
+    confidence = None
+    ocr_source = None
+    try:
+        ocr_review = document.ocr_review
+        ocr_status = ocr_review.status
+        confidence = float(ocr_review.confidence_score) if ocr_review.confidence_score is not None else None
+        ocr_source = ocr_review.source
+    except Exception:
+        pass
+
+    return JsonResponse(
+        {
+            'ok': True,
+            'document_id': document.id,
+            'title': document.title,
+            'file_hash': document.file_hash,
+            'file_size': document.file_size,
+            'mime_type': document.mime_type,
+            'document_type': document.document_type,
+            'ocr': {
+                'status': ocr_status,
+                'confidence': confidence,
+                'source': ocr_source,
+            },
+        },
+        status=201,
+    )
+
+
+# ── AI clause-span extraction ─────────────────────────────────────────────────
+
+@login_required
+@require_http_methods(['GET'])
+def contract_ai_extract_api(request, contract_id):
+    """Return AI text-span citations for all documents attached to a contract.
+
+    For each document that has an OCR review with extracted text the rules
+    engine is run (or cached results are returned). The response includes
+    labelled spans with character offsets, excerpt text, and confidence score.
+    """
+    from contracts.services.ai_extraction import extract_clause_spans, get_spans_summary
+    from contracts.models import DocumentOCRReview
+
+    organization = get_user_organization(request.user)
+    contract = Contract.objects.filter(
+        id=contract_id,
+        organization=organization,
+    ).first()
+    if contract is None:
+        return _error_response(request, 'Contract not found or access denied.', 404)
+
+    force_reextract = request.GET.get('reextract') == '1'
+
+    results = []
+    for document in contract.documents.select_related('organization').order_by('created_at'):
+        try:
+            ocr_review = document.ocr_review
+        except DocumentOCRReview.DoesNotExist:
+            results.append({
+                'document_id': document.id,
+                'title': document.title,
+                'status': 'no-ocr-review',
+                'spans': None,
+            })
+            continue
+
+        extracted_text = ocr_review.extracted_text or ''
+
+        if force_reextract and extracted_text:
+            extract_clause_spans(extracted_text, organization, document, replace_existing=True)
+        elif extracted_text and not document.ai_extraction_spans.exists():
+            extract_clause_spans(extracted_text, organization, document, replace_existing=False)
+
+        results.append({
+            'document_id': document.id,
+            'title': document.title,
+            'ocr_status': ocr_review.status,
+            'ocr_confidence': float(ocr_review.confidence_score) if ocr_review.confidence_score else None,
+            'status': 'ok',
+            'spans': get_spans_summary(document),
+        })
+
+    return JsonResponse({
+        'contract_id': contract_id,
+        'document_count': len(results),
+        'results': results,
+    })
