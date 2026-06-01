@@ -52,6 +52,12 @@ def process_background_job(job: BackgroundJob):
                 dry_run=bool((job.payload or {}).get('dry_run', False)),
             )
             job.result = {'processed': True}
+        elif job.job_type == 'export_dsar_evidence':
+            request_id = int((job.payload or {}).get('request_id', 0))
+            if not request_id:
+                raise RuntimeError('export_dsar_evidence requires request_id in payload')
+            call_command('export_dsar_evidence', request_id=request_id)
+            job.result = {'processed': True}
         else:
             job.result = {'processed': False, 'reason': 'unknown_job_type'}
         job.status = BackgroundJob.Status.COMPLETED

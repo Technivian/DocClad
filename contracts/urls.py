@@ -36,8 +36,12 @@ urlpatterns = [
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
     path('api/contracts/<str:contract_id>/obligations/', api_views.contract_obligations_api, name='contract_obligations_api'),
-    path('api/obligations/<int:obligation_id>/', api_views.obligation_detail_api, name='obligation_detail_api'),
     path('api/obligations/reminders/', api_views.obligation_reminders_api, name='obligation_reminders_api'),
+    path('api/obligations/<int:obligation_id>/', api_views.obligation_detail_api, name='obligation_detail_api'),
+    # DSAR SLA
+    path('api/dsar/', api_views.dsar_list_api, name='dsar_list_api'),
+    path('api/dsar/<int:dsar_id>/evidence/', api_views.dsar_evidence_api, name='dsar_evidence_api'),
+    path('api/dsar/<int:dsar_id>/', api_views.dsar_detail_api, name='dsar_detail_api'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),

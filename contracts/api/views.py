@@ -1977,3 +1977,107 @@ def obligation_reminders_api(request):
         'count': len(reminders),
         'reminders': [_obligation_to_dict(o) for o in reminders],
     })
+
+
+# ---------------------------------------------------------------------------
+# DSAR SLA API
+# ---------------------------------------------------------------------------
+from contracts.services.dsar import get_dsar_service
+
+
+def _dsar_dto_to_dict(dto) -> dict:
+    return {
+        'id': dto.id,
+        'reference_number': dto.reference_number,
+        'request_type': dto.request_type,
+        'status': dto.status,
+        'sla_label': dto.sla_label,
+        'days_remaining': dto.days_remaining,
+        'is_overdue': dto.is_overdue,
+        'is_extended': dto.is_extended,
+        'received_date': dto.received_date,
+        'due_date': dto.due_date,
+        'completed_date': dto.completed_date,
+        'requester_name': dto.requester_name,
+        'requester_email': dto.requester_email,
+        'assigned_to': dto.assigned_to,
+    }
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def dsar_list_api(request):
+    """GET /api/dsar/ — list | POST — create."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+
+    if request.method == 'GET':
+        status_filter = request.GET.get('status')
+        overdue_only = request.GET.get('overdue_only') in ('1', 'true', 'True')
+        result = svc.list_requests(organization, status_filter=status_filter, overdue_only=overdue_only)
+        return JsonResponse({
+            'total': result.total,
+            'overdue_count': result.overdue_count,
+            'at_risk_count': result.at_risk_count,
+            'requests': [_dsar_dto_to_dict(r) for r in result.requests],
+        })
+
+    # POST — create
+    import json as _json
+    try:
+        body = _json.loads(request.body or '{}')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    required = ('request_type', 'requester_name', 'requester_email', 'description')
+    missing = [f for f in required if not body.get(f)]
+    if missing:
+        return JsonResponse({'error': f'Missing fields: {missing}'}, status=400)
+
+    dto = svc.create_request(
+        organization=organization,
+        request_type=body['request_type'],
+        requester_name=body['requester_name'],
+        requester_email=body['requester_email'],
+        description=body['description'],
+        created_by=request.user,
+    )
+    return JsonResponse({'ok': True, 'dsar': _dsar_dto_to_dict(dto)}, status=201)
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH'])
+def dsar_detail_api(request, dsar_id: int):
+    """GET /api/dsar/<id>/ | PATCH — update."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+
+    if request.method == 'GET':
+        dto = svc.get_request(dsar_id, organization)
+        if dto is None:
+            return JsonResponse({'error': 'Not found'}, status=404)
+        return JsonResponse({'dsar': _dsar_dto_to_dict(dto)})
+
+    # PATCH
+    import json as _json
+    try:
+        body = _json.loads(request.body or '{}')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    dto = svc.update_request(dsar_id, organization, **body)
+    if dto is None:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'ok': True, 'dsar': _dsar_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def dsar_evidence_api(request, dsar_id: int):
+    """GET /api/dsar/<id>/evidence/ — export evidence bundle as JSON."""
+    organization = get_user_organization(request.user)
+    svc = get_dsar_service()
+    bundle = svc.generate_evidence_bundle(dsar_id, organization)
+    if bundle is None:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse(bundle)
