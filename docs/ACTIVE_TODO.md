@@ -1,6 +1,6 @@
 # Active Todo
 
-Last updated: 2026-05-31
+Last updated: 2026-06-01
 
 Canonical remaining worklist:
 - [`docs/COMPLETE_REMAINING_WORKLIST.md`](/Users/haroonwahed/Documents/Projects/CMS-Aegis/docs/COMPLETE_REMAINING_WORKLIST.md)
@@ -9,9 +9,7 @@ Canonical remaining worklist:
 
 ## In Progress
 
-- `SPR3-001` Release candidate gate execution (staging to production)
-- `SPR3-002` Salesforce + webhook production e2e validation
-- `SPR3-003` Postgres cutover evidence automation adoption
+- `SPR3-003` Postgres cutover evidence automation adoption (requires target Postgres env)
 
 ## Completed
 
@@ -58,6 +56,8 @@ Canonical remaining worklist:
 - Executive analytics and saved dashboard preset APIs
 - Reports dashboard executive analytics panel integration
 - Multi-org executive analytics evidence snapshot command
+- `SPR3-001` Release gate evidence run (2026-06-01): release-gate-report GO, sprint3-integration-report GO, esign-integration-report GO, release-bundle GO — artifacts in `evidence/spr3-cutover-20260601/`
+- `SPR3-002` Salesforce + webhook E2E evidence run (2026-06-01): Salesforce sync SUCCESS created_count=1, webhook SENT confirmed — `evidence/spr3-cutover-20260601/sprint3-integration-report.json` status=GO
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
@@ -71,14 +71,12 @@ Canonical remaining worklist:
 
 ## Next Up
 
-1. Complete Sprint 3 release gate checklist for staging/prod cutover (`SPR3-001`)
-2. Execute live Salesforce + webhook E2E evidence run in staging/prod-like env (`SPR3-002`)
-3. Run target-environment Postgres cutover evidence workflow with `cutover_ready=true` (`SPR3-003`)
-4. Run NetSuite and e-sign live provider evidence in staging/prod-like env (`SPR3-004`, `SPR3-005`)
-5. Attach first scheduled retention evidence artifact from target environment (`SPR3-006`)
-6. Capture production-window scheduler artifacts (retention + lifecycle) on live tenant data
-7. Attach production executive analytics evidence artifact (`SPR3-008`)
-8. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
+1. Run target-environment Postgres cutover evidence workflow with `cutover_ready=true` (`SPR3-003`)
+2. Run NetSuite and e-sign live provider evidence in staging/prod-like env (`SPR3-004`, `SPR3-005`)
+3. Attach first scheduled retention evidence artifact from target environment (`SPR3-006`)
+4. Capture production-window scheduler artifacts (retention + lifecycle) on live tenant data
+5. Attach production executive analytics evidence artifact (`SPR3-008`)
+6. Expand AI extraction provenance to include clause text-span citations and confidence calibration thresholds
 
 ## Source Of Truth
 

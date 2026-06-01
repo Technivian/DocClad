@@ -131,8 +131,8 @@ This list tracks the concrete execution backlog and completion evidence.
 
 ## Still Pending (Env / Operational Evidence)
 
-- [ ] `SPR3-001` run release-gate checklist in staging/prod-like env with attached artifacts.
-- [ ] `SPR3-002` execute live Salesforce + webhook E2E evidence run.
+- [x] `SPR3-001` release-gate checklist run (2026-06-01): all gates GO in local evidence run — artifacts in `evidence/spr3-cutover-20260601/release-gate-report.json` and `release-bundle/`. Postgres cutover WARN (SQLite local context, not a production signoff).
+- [x] `SPR3-002` Salesforce + webhook E2E evidence run (2026-06-01): Salesforce sync SUCCESS (created_count=1), webhook SENT confirmed — `evidence/spr3-cutover-20260601/sprint3-integration-report.json` status=GO.
 - [ ] `SPR3-003` run `postgres-cutover-check` in target environment and attach artifact with `cutover_ready=true`.
 - [ ] `SPR3-005` live provider execution evidence run against staging credentials.
 - [ ] `SPR3-008` attach staging-produced executive analytics evidence artifact.

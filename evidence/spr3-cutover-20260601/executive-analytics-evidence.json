@@ -1,0 +1,50 @@
+{
+  "captured_at": "2026-06-01T07:25:34.119776+00:00",
+  "organization_count": 1,
+  "snapshots": [
+    {
+      "bottlenecks": [
+        {
+          "count": 3,
+          "stage": "EXECUTED"
+        }
+      ],
+      "cycle_time": {
+        "average_days": null,
+        "sample_size": 0,
+        "window_days": 180
+      },
+      "organization": {
+        "id": 1,
+        "slug": "demo-firm"
+      },
+      "risk_trend": [
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-01-01"
+        },
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-02-01"
+        },
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-03-01"
+        },
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-04-01"
+        },
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-05-01"
+        },
+        {
+          "high_or_critical_count": 0,
+          "month": "2026-06-01"
+        }
+      ],
+      "saved_dashboards": []
+    }
+  ]
+}

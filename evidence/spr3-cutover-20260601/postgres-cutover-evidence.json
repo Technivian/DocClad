@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-06-01T07:25:30.873454+00:00",
+  "cutover_ready": false,
+  "database": {
+    "connectivity_latency_ms": 0.97,
+    "engine": "django.db.backends.sqlite3",
+    "name": "/Users/haroonwahed/Documents/Projects/CMS-Aegis.worktrees/agents-final-archive-hash-verifier-implementation/db.sqlite3",
+    "user": "n/a",
+    "version": "SQLite 3.50.4"
+  },
+  "environment": "unknown",
+  "migrations": {
+    "status": "clean",
+    "unapplied_count": 0
+  }
+}

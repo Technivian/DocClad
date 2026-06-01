@@ -1,0 +1,28 @@
+{
+  "captured_at": "2026-06-01T07:25:35.755341+00:00",
+  "observed": {
+    "salesforce_sync_run": {
+      "completed_at": "2026-06-01T07:25:22.345166+00:00",
+      "created_count": 1,
+      "id": 1,
+      "organization_id": 1,
+      "status": "SUCCESS",
+      "updated_count": 0
+    },
+    "webhook_dead_letter_delivery": null,
+    "webhook_sent_delivery": {
+      "event_type": "salesforce.sync.completed",
+      "id": 1,
+      "organization_id": 1,
+      "sent_at": "2026-06-01T07:25:22.345166+00:00",
+      "status": "SENT"
+    }
+  },
+  "requirements": {
+    "salesforce_sync_created_or_updated_gt_zero": true,
+    "webhook_dead_letter_present": false,
+    "webhook_sent_event_present": true
+  },
+  "status": "GO",
+  "window_days": 14
+}

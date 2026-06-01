@@ -1,0 +1,134 @@
+{
+  "artifacts": {
+    "esign_integration_report": "/Users/haroonwahed/Documents/Projects/CMS-Aegis.worktrees/agents-final-archive-hash-verifier-implementation/evidence/spr3-cutover-20260601/release-bundle/esign-integration-report.json",
+    "release_gate_report": "/Users/haroonwahed/Documents/Projects/CMS-Aegis.worktrees/agents-final-archive-hash-verifier-implementation/evidence/spr3-cutover-20260601/release-bundle/release-gate-report.json",
+    "sprint3_integration_report": "/Users/haroonwahed/Documents/Projects/CMS-Aegis.worktrees/agents-final-archive-hash-verifier-implementation/evidence/spr3-cutover-20260601/release-bundle/sprint3-integration-report.json"
+  },
+  "captured_at": "2026-06-01T07:25:35.761664+00:00",
+  "go_no_go": "GO",
+  "organization_name": "Demo Firm",
+  "organization_slug": "demo-firm",
+  "output_dir": "/Users/haroonwahed/Documents/Projects/CMS-Aegis.worktrees/agents-final-archive-hash-verifier-implementation/evidence/spr3-cutover-20260601/release-bundle",
+  "reports": {
+    "esign_integration": {
+      "captured_at": "2026-06-01T07:25:35.760426+00:00",
+      "observed": {
+        "applied_event_count": 1,
+        "duplicate_or_stale_event_count": 0,
+        "latest_applied_event": {
+          "event_id": "synth-esign-event-001",
+          "id": 1,
+          "signature_request_id": 1,
+          "timestamp": "2026-06-01T07:25:22.425474+00:00",
+          "to_status": "SIGNED"
+        },
+        "terminal_signature_count": 1
+      },
+      "organization_slug": "demo-firm",
+      "requirements": {
+        "applied_esign_event_present": true,
+        "terminal_signature_state_present": true
+      },
+      "status": "GO",
+      "window_days": 14
+    },
+    "release_gate": {
+      "captured_at": "2026-06-01T07:25:34.642993+00:00",
+      "gates": {
+        "database": {
+          "status": "pass",
+          "unapplied_migrations": 0
+        },
+        "integrations": {
+          "latest_successful_salesforce_sync_at": "2026-06-01T07:25:22.345166+00:00",
+          "reason": null,
+          "status": "pass",
+          "webhook_dead_letter_count": 0
+        },
+        "security": {
+          "npm_client_audit": {
+            "command": "npm --prefix client audit --audit-level=high",
+            "exit_code": 0,
+            "policy_threshold": "moderate",
+            "policy_violation": false,
+            "severity_summary": {
+              "counts": {
+                "critical": 0,
+                "high": 0,
+                "low": 0,
+                "moderate": 0
+              },
+              "has_moderate_or_higher": false
+            },
+            "status": "pass",
+            "stderr": "",
+            "stdout": "found 0 vulnerabilities\n"
+          },
+          "npm_theme_audit": {
+            "command": "npm --prefix theme/static_src audit --audit-level=high",
+            "exit_code": 0,
+            "policy_threshold": "moderate",
+            "policy_violation": false,
+            "severity_summary": {
+              "counts": {
+                "critical": 0,
+                "high": 0,
+                "low": 0,
+                "moderate": 0
+              },
+              "has_moderate_or_higher": false
+            },
+            "status": "pass",
+            "stderr": "",
+            "stdout": "found 0 vulnerabilities\n"
+          },
+          "pip_audit": {
+            "command": "/Users/haroonwahed/Documents/Projects/CMS-Aegis/.venv/bin/python3.12 -m pip_audit --disable-pip --no-deps -r requirements/runtime.txt",
+            "exit_code": 0,
+            "status": "pass",
+            "stderr": "WARNING:pip_audit._cli:--no-deps is supported, but users are encouraged to fully hash their pinned dependencies\nWARNING:pip_audit._cli:Consider using a tool like `pip-compile`: https://pip-tools.readthedocs.io/en/latest/#using-hashes\nNo known vulnerabilities found\n",
+            "stdout": ""
+          }
+        }
+      },
+      "go_no_go": "GO",
+      "security_threshold": {
+        "npm_audit_level": "high",
+        "npm_fail_threshold": "moderate",
+        "pip_audit_mode": "known-vuln-db"
+      },
+      "security_warnings": {
+        "npm_moderate_or_higher_present": false
+      },
+      "sprint_stage": "SPR3-001"
+    },
+    "sprint3_integration": {
+      "captured_at": "2026-06-01T07:25:35.755341+00:00",
+      "observed": {
+        "salesforce_sync_run": {
+          "completed_at": "2026-06-01T07:25:22.345166+00:00",
+          "created_count": 1,
+          "id": 1,
+          "organization_id": 1,
+          "status": "SUCCESS",
+          "updated_count": 0
+        },
+        "webhook_dead_letter_delivery": null,
+        "webhook_sent_delivery": {
+          "event_type": "salesforce.sync.completed",
+          "id": 1,
+          "organization_id": 1,
+          "sent_at": "2026-06-01T07:25:22.345166+00:00",
+          "status": "SENT"
+        }
+      },
+      "requirements": {
+        "salesforce_sync_created_or_updated_gt_zero": true,
+        "webhook_dead_letter_present": false,
+        "webhook_sent_event_present": true
+      },
+      "status": "GO",
+      "window_days": 14
+    }
+  }
+}
