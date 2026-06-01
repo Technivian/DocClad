@@ -60,6 +60,8 @@ Canonical remaining worklist:
 - `SPR3-005` e-sign rehearsal evidence run (2026-06-01): full PENDING→SIGNED lifecycle + dedup; report in `evidence/spr3-005-esign-rehearsal/esign-integration-report.json` status=GO
 - AI clause-span citations + confidence thresholds + PDF/DOCX upload pipeline (`AIExtractionSpan` model, `/api/documents/upload/`, `/api/contracts/<id>/ai-extract/`, commit `ee655e1`)
 - Obligation tracker: RENEWAL/PAYMENT/NDA_EXPIRY/SLA types, renewal playbook, reminder cadence, obligation CRUD API, management commands (`generate_renewal_tasks`, `run_obligation_reminders`, commit `31378da`)
+- DSAR SLA countdown + evidence bundle export: `DSARService`, `export_dsar_evidence` command, DSAR CRUD + evidence API, commit `75166a5`
+- Async job system: `run_worker` daemon, `review_dead_letter_jobs`, `queue_background_jobs` extended, job status API, GitHub Actions cron scheduler (every 15 min), commit `a945238`
 - Postgres cutover verification command + scheduled CI workflow
 - Optional observability HTTP sink transport
 - NetSuite ingestion adapter/command baseline
@@ -73,11 +75,9 @@ Canonical remaining worklist:
 
 ## Next Up
 
-1. **DSAR SLA countdown + evidence bundle export** — privacy ops gap; SLA timer on data subject requests + downloadable evidence pack
-2. **Async job system** — reminders, OCR, integrations (Celery or Django-Q baseline)
-3. **Document versioning + immutable history** — version compare, diff view, audit trail
-4. **AI-assisted drafting and clause recommendations** — next AI governance gap
-5. **Enterprise admin console** — org settings, policy controls, integrations UI
+1. **Document versioning + immutable history** — version compare, diff view, audit trail
+2. **AI-assisted drafting and clause recommendations** — next AI governance gap
+3. **Enterprise admin console** — org settings, policy controls, integrations UI
 
 ## Source Of Truth
 

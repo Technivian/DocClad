@@ -54,7 +54,7 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Privacy And Compliance Ops
 
 - Data inventory cross-references to processing systems and subprocessors
-- DSAR SLA countdown and evidence bundle export
+- ~~DSAR SLA countdown and evidence bundle export~~ ✅ (`DSARService`, `export_dsar_evidence` command, DSAR API, commit `75166a5`)
 - Subprocessor and transfer auto-alerts for expired agreements and risk flags
 - Retention execution jobs and immutable action logs
 - Tamper-evident compliance/audit evidence exports
@@ -78,7 +78,7 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Reliability And Operations
 
 - Postgres production cutover completion
-- Async job system for reminders, OCR, and integrations
+- ~~Async job system for reminders, OCR, and integrations~~ ✅ (`run_worker`, `review_dead_letter_jobs`, job status API, cron workflow, commit `a945238`)
 - Sink-specific observability transport
 - Clear high CVEs and enforce scanner gates
 - Recurring restore drills with RTO/RPO evidence
