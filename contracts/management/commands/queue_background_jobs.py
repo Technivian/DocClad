@@ -53,4 +53,19 @@ class Command(BaseCommand):
                         scheduled_at=timezone.now(),
                     )
                     queued += 1
+            # Obligation reminders
+            reminder_exists = BackgroundJob.objects.filter(
+                organization=organization,
+                job_type='run_obligation_reminders',
+                status=BackgroundJob.Status.PENDING,
+                scheduled_at__gte=timezone.now() - timedelta(hours=12),
+            ).exists()
+            if not reminder_exists:
+                BackgroundJob.objects.create(
+                    organization=organization,
+                    job_type='run_obligation_reminders',
+                    payload={},
+                    scheduled_at=timezone.now(),
+                )
+                queued += 1
         self.stdout.write(self.style.SUCCESS(f'Queued {queued} background job(s).'))

@@ -1,0 +1,73 @@
+name: Background Job Worker (Scheduled)
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      max_cycles:
+        description: 'Max poll cycles (0 = run until queue is empty once)'
+        default: '1'
+        required: false
+      batch_size:
+        description: 'Jobs per batch'
+        default: '20'
+        required: false
+      job_types:
+        description: 'Comma-separated job types to process (empty = all)'
+        default: ''
+        required: false
+
+jobs:
+  run-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      DJANGO_ENV: production
+      DJANGO_SECRET_KEY: this-is-only-for-ci-not-production-change-me-1234567890
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: http://localhost
+      DEFAULT_FROM_EMAIL: noreply@example.com
+      ALLOW_SQLITE_IN_PRODUCTION: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/runtime.txt
+
+      - name: Apply migrations
+        run: python manage.py migrate --run-syncdb
+
+      - name: Queue pending jobs
+        run: python manage.py queue_background_jobs
+
+      - name: Run worker (single pass)
+        run: |
+          python manage.py run_worker \
+            --max-cycles="${{ github.event.inputs.max_cycles || '1' }}" \
+            --batch-size="${{ github.event.inputs.batch_size || '20' }}" \
+            --poll-interval=1 \
+            ${{ github.event.inputs.job_types && format('--job-types={0}', github.event.inputs.job_types) || '' }}
+
+      - name: Review dead-letter queue
+        run: |
+          python manage.py review_dead_letter_jobs list \
+            --output evidence/dead-letter-review-$(date +%Y%m%dT%H%M%SZ).json || true
+
+      - name: Upload dead-letter report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dead-letter-review-${{ github.run_id }}
+          path: evidence/dead-letter-review-*.json
+          if-no-files-found: ignore

@@ -42,6 +42,10 @@ urlpatterns = [
     path('api/dsar/', api_views.dsar_list_api, name='dsar_list_api'),
     path('api/dsar/<int:dsar_id>/evidence/', api_views.dsar_evidence_api, name='dsar_evidence_api'),
     path('api/dsar/<int:dsar_id>/', api_views.dsar_detail_api, name='dsar_detail_api'),
+    # Background job status
+    path('api/jobs/', api_views.job_list_api, name='job_list_api'),
+    path('api/jobs/<int:job_id>/retry/', api_views.job_retry_api, name='job_retry_api'),
+    path('api/jobs/<int:job_id>/', api_views.job_detail_api, name='job_detail_api'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),

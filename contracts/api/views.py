@@ -64,6 +64,7 @@ from contracts.models import (
     UserProfile,
     AuditLog,
     SignatureRequest,
+    BackgroundJob,
 )
 
 logger = logging.getLogger(__name__)
@@ -2081,3 +2082,91 @@ def dsar_evidence_api(request, dsar_id: int):
     if bundle is None:
         return JsonResponse({'error': 'Not found'}, status=404)
     return JsonResponse(bundle)
+
+
+# ---------------------------------------------------------------------------
+# Background Job Status API
+# ---------------------------------------------------------------------------
+
+def _job_to_dict(job) -> dict:
+    return {
+        'id': job.id,
+        'job_type': job.job_type,
+        'status': job.status,
+        'attempt_count': job.attempt_count,
+        'max_attempts': job.max_attempts,
+        'error_message': job.error_message or '',
+        'result': job.result or {},
+        'payload': job.payload or {},
+        'scheduled_at': job.scheduled_at.isoformat() if job.scheduled_at else None,
+        'started_at': job.started_at.isoformat() if job.started_at else None,
+        'completed_at': job.completed_at.isoformat() if job.completed_at else None,
+        'dead_lettered_at': job.dead_lettered_at.isoformat() if job.dead_lettered_at else None,
+        'created_at': job.created_at.isoformat() if job.created_at else None,
+        'organization_id': job.organization_id,
+    }
+
+
+@login_required
+@require_http_methods(['GET'])
+def job_list_api(request):
+    """GET /api/jobs/ — list recent background jobs for the user's org."""
+    organization = get_user_organization(request.user)
+    status_filter = request.GET.get('status')
+    job_type_filter = request.GET.get('job_type')
+    limit = min(int(request.GET.get('limit', 50)), 200)
+
+    qs = BackgroundJob.objects.filter(organization=organization).order_by('-created_at')
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if job_type_filter:
+        qs = qs.filter(job_type=job_type_filter)
+
+    jobs = list(qs[:limit])
+    counts = {s: 0 for s in ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')}
+    for j in jobs:
+        if j.status in counts:
+            counts[j.status] += 1
+
+    return JsonResponse({
+        'total': len(jobs),
+        'status_counts': counts,
+        'jobs': [_job_to_dict(j) for j in jobs],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def job_detail_api(request, job_id: int):
+    """GET /api/jobs/<id>/ — single job detail."""
+    organization = get_user_organization(request.user)
+    try:
+        job = BackgroundJob.objects.get(id=job_id, organization=organization)
+    except BackgroundJob.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'job': _job_to_dict(job)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def job_retry_api(request, job_id: int):
+    """POST /api/jobs/<id>/retry/ — re-queue a failed job."""
+    from django.utils import timezone as _tz
+    organization = get_user_organization(request.user)
+    try:
+        job = BackgroundJob.objects.get(id=job_id, organization=organization)
+    except BackgroundJob.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+
+    if job.status != BackgroundJob.Status.FAILED:
+        return JsonResponse({'error': f'Job is {job.status}, not FAILED'}, status=400)
+
+    job.status = BackgroundJob.Status.PENDING
+    job.attempt_count = 0
+    job.error_message = ''
+    job.dead_lettered_at = None
+    job.scheduled_at = _tz.now()
+    job.save(update_fields=[
+        'status', 'attempt_count', 'error_message', 'dead_lettered_at', 'scheduled_at',
+    ])
+    return JsonResponse({'ok': True, 'job': _job_to_dict(job)})

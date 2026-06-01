@@ -52,6 +52,15 @@ def process_background_job(job: BackgroundJob):
                 dry_run=bool((job.payload or {}).get('dry_run', False)),
             )
             job.result = {'processed': True}
+        elif job.job_type == 'run_obligation_reminders':
+            if not job.organization:
+                raise RuntimeError('run_obligation_reminders requires organization context')
+            call_command(
+                'run_obligation_reminders',
+                organization_slug=job.organization.slug,
+                dry_run=bool((job.payload or {}).get('dry_run', False)),
+            )
+            job.result = {'processed': True}
         elif job.job_type == 'export_dsar_evidence':
             request_id = int((job.payload or {}).get('request_id', 0))
             if not request_id:
