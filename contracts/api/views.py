@@ -69,6 +69,7 @@ from contracts.models import (
     BillingPlan,
     OrgBillingSubscription,
     UsageRecord,
+    ApprovalRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -2591,3 +2592,134 @@ def compliance_export_api(request):
     svc = get_compliance_portal_service()
     bundle = svc.export_compliance_bundle(org)
     return JsonResponse(bundle)
+
+
+# ---------------------------------------------------------------------------
+# Feature 8: Approval Workflow API
+# ---------------------------------------------------------------------------
+
+from contracts.services.approval_workflow import get_approval_workflow_service
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_initiate_api(request, contract_id):
+    contract = get_object_or_404(Contract, pk=contract_id)
+    svc = get_approval_workflow_service()
+    requests_created = svc.initiate_approval_workflow(contract)
+    return JsonResponse({
+        'ok': True,
+        'created': len(requests_created),
+        'requests': [_approval_dto_to_dict(r) for r in requests_created],
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_contract_list_api(request, contract_id):
+    contract = get_object_or_404(Contract, pk=contract_id)
+    svc = get_approval_workflow_service()
+    summary = svc.get_contract_approvals(contract)
+    return JsonResponse({
+        'contract_id': summary.contract_id,
+        'all_approved': summary.all_approved,
+        'any_rejected': summary.any_rejected,
+        'any_pending': summary.any_pending,
+        'requests': [_approval_dto_to_dict(r) for r in summary.requests],
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_approve_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.approve(approval_id, request.user, comments=data.get('comments', ''))
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_reject_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.reject(approval_id, request.user, comments=data.get('comments', ''))
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_delegate_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    to_user_id = data.get('to_user_id')
+    if not to_user_id:
+        return JsonResponse({'error': 'to_user_id is required'}, status=400)
+    User = get_user_model()
+    try:
+        to_user = User.objects.get(pk=to_user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Delegate user not found'}, status=404)
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.delegate(approval_id, to_user, request.user)
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_overdue_api(request):
+    org = get_user_organization(request.user)
+    svc = get_approval_workflow_service()
+    overdue = svc.get_overdue_approvals(org)
+    return JsonResponse({'overdue': [_approval_dto_to_dict(r) for r in overdue]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_escalate_overdue_api(request):
+    org = get_user_organization(request.user)
+    svc = get_approval_workflow_service()
+    count = svc.escalate_overdue_for_org(org)
+    return JsonResponse({'ok': True, 'escalated': count})
+
+
+@login_required
+@require_http_methods(['GET'])
+def approval_list_api(request):
+    org = get_user_organization(request.user)
+    status_filter = request.GET.get('status')
+    svc = get_approval_workflow_service()
+    requests_list = svc.list_approvals(org, status=status_filter)
+    return JsonResponse({'requests': [_approval_dto_to_dict(r) for r in requests_list]})
+
+
+def _approval_dto_to_dict(dto) -> dict:
+    return {
+        'id': dto.id,
+        'contract_id': dto.contract_id,
+        'contract_title': dto.contract_title,
+        'approval_step': dto.approval_step,
+        'status': dto.status,
+        'assigned_to_id': dto.assigned_to_id,
+        'assigned_to_username': dto.assigned_to_username,
+        'delegated_to_id': dto.delegated_to_id,
+        'due_date': dto.due_date,
+        'sla_hours': dto.sla_hours,
+        'is_overdue': dto.is_overdue,
+        'comments': dto.comments,
+        'created_at': dto.created_at,
+    }

@@ -79,6 +79,16 @@ urlpatterns = [
     path('api/compliance/trust-report/', api_views.compliance_trust_report_api, name='compliance_trust_report_api'),
     path('api/compliance/export/', api_views.compliance_export_api, name='compliance_export_api'),
 
+    # Approval workflow API
+    path('api/approvals/', api_views.approval_list_api, name='approval_list_api'),
+    path('api/approvals/overdue/', api_views.approval_overdue_api, name='approval_overdue_api'),
+    path('api/approvals/escalate-overdue/', api_views.approval_escalate_overdue_api, name='approval_escalate_overdue_api'),
+    path('api/approvals/<int:approval_id>/approve/', api_views.approval_approve_api, name='approval_approve_api'),
+    path('api/approvals/<int:approval_id>/reject/', api_views.approval_reject_api, name='approval_reject_api'),
+    path('api/approvals/<int:approval_id>/delegate/', api_views.approval_delegate_api, name='approval_delegate_api'),
+    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
+    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
+
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),
     path('clients/new/', views.ClientCreateView.as_view(), name='client_create'),
