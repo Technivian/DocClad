@@ -86,10 +86,10 @@ This list contains every task that is still open, partial, or queued for follow-
 ## Product And Commercial Readiness
 
 - ~~Enterprise admin console for org settings, policy controls, and integrations~~ ✅ (`OrgPolicy` model, `AdminConsoleService`, admin API, commit `518194b`)
-- Permission transparency UI for record-level access
-- Self-serve onboarding and guided setup
-- Billing, subscription, and usage controls
-- Customer-facing trust/compliance portal artifacts
+- ~~Permission transparency UI for record-level access~~ ✅ (`PermissionTransparencyService`, permission matrix/user/contract-access API, commit `df7c7a2`)
+- ~~Self-serve onboarding and guided setup~~ ✅ (`OnboardingProgress` model, `OnboardingService`, onboarding API, commit `df7c7a2`)
+- ~~Billing, subscription, and usage controls~~ ✅ (`BillingPlan`/`UsageRecord` models, `BillingService`, billing usage/plan API, commit `df7c7a2`)
+- ~~Customer-facing trust/compliance portal artifacts~~ ✅ (`CompliancePortalService`, trust-report + export-bundle API, commit `df7c7a2`)
 
 ## Execution Order
 

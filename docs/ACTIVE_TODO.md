@@ -28,6 +28,13 @@ Canonical remaining worklist:
 - Clause policy edge cases and fallback playbook reconciliation
 - `TKT-003` Manual smoke checklist for two-org validation
 - `TKT-004` Centralize scoped form/query helpers
+- Document versioning + immutable history (`ContractVersion`, `ContractVersionService`, diff API)
+- AI clause drafting with citations (`ClauseRecommendation`, `AIClauseDraftingService`)
+- Enterprise admin console (`OrgPolicy`, `AdminConsoleService`, settings/policy/integrations/audit API)
+- Permission transparency (`PermissionTransparencyService`, matrix + access APIs)
+- Self-serve onboarding (`OnboardingProgress`, `OnboardingService`, advance/complete API)
+- Billing + subscription controls (`BillingPlan`, `UsageRecord`, `BillingService`, usage/plan API)
+- Compliance portal (`CompliancePortalService`, trust-report + export-bundle API)
 - `TKT-005` Structured request logging and correlation IDs
 - `TKT-006` Overdue work and deadline health reporting
 - `TKT-007` Formalize production env contract
