@@ -46,6 +46,20 @@ urlpatterns = [
     path('api/jobs/', api_views.job_list_api, name='job_list_api'),
     path('api/jobs/<int:job_id>/retry/', api_views.job_retry_api, name='job_retry_api'),
     path('api/jobs/<int:job_id>/', api_views.job_detail_api, name='job_detail_api'),
+    # Contract versioning
+    path('api/contracts/<int:contract_id>/versions/diff/', api_views.contract_version_diff_api, name='contract_version_diff_api'),
+    path('api/contracts/<int:contract_id>/versions/<int:version_number>/', api_views.contract_version_detail_api, name='contract_version_detail_api'),
+    path('api/contracts/<int:contract_id>/versions/', api_views.contract_versions_api, name='contract_versions_api'),
+    # AI drafting + clause recommendations
+    path('api/contracts/<int:contract_id>/ai-suggest/', api_views.ai_suggest_clauses_api, name='ai_suggest_clauses_api'),
+    path('api/contracts/<int:contract_id>/ai-draft/', api_views.ai_draft_section_api, name='ai_draft_section_api'),
+    path('api/contracts/<int:contract_id>/ai-clauses/<int:recommendation_id>/accept/', api_views.ai_accept_clause_api, name='ai_accept_clause_api'),
+    path('api/contracts/<int:contract_id>/ai-clauses/', api_views.ai_clause_recommendations_api, name='ai_clause_recommendations_api'),
+    # Enterprise admin console
+    path('api/admin/settings/', api_views.admin_settings_api, name='admin_settings_api'),
+    path('api/admin/policy/', api_views.admin_policy_api, name='admin_policy_api'),
+    path('api/admin/integrations/', api_views.admin_integrations_api, name='admin_integrations_api'),
+    path('api/admin/audit/', api_views.admin_audit_api, name='admin_audit_api'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),

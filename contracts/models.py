@@ -2541,6 +2541,102 @@ class BackgroundJob(models.Model):
         return f'{self.job_type} ({self.get_status_display()})'
 
 
+class ContractVersion(models.Model):
+    """Immutable snapshot of a contract at a point in time."""
+
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='versions')
+    version_number = models.PositiveIntegerField()
+    title_snapshot = models.CharField(max_length=200)
+    status_snapshot = models.CharField(max_length=20)
+    content_snapshot = models.TextField(blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, help_text='SHA-256 of content_snapshot')
+    change_summary = models.CharField(max_length=500, blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='contract_versions')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('contract', 'version_number')
+        ordering = ['-version_number']
+        indexes = [
+            models.Index(fields=['contract', '-version_number'], name='cv_contract_ver_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.contract.title} v{self.version_number}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError('ContractVersion records are immutable and cannot be updated.')
+        import hashlib
+        if self.content_snapshot and not self.content_hash:
+            self.content_hash = hashlib.sha256(self.content_snapshot.encode()).hexdigest()
+        super().save(*args, **kwargs)
+
+
+class ClauseRecommendation(models.Model):
+    """AI-suggested clause for a contract, optionally accepted by a user."""
+
+    class ClauseType(models.TextChoices):
+        LIMITATION_OF_LIABILITY = 'LIMITATION_OF_LIABILITY', 'Limitation of Liability'
+        INDEMNIFICATION = 'INDEMNIFICATION', 'Indemnification'
+        CONFIDENTIALITY = 'CONFIDENTIALITY', 'Confidentiality'
+        TERMINATION = 'TERMINATION', 'Termination'
+        GOVERNING_LAW = 'GOVERNING_LAW', 'Governing Law'
+        DISPUTE_RESOLUTION = 'DISPUTE_RESOLUTION', 'Dispute Resolution'
+        DATA_PROTECTION = 'DATA_PROTECTION', 'Data Protection'
+        FORCE_MAJEURE = 'FORCE_MAJEURE', 'Force Majeure'
+        PAYMENT_TERMS = 'PAYMENT_TERMS', 'Payment Terms'
+        IP_OWNERSHIP = 'IP_OWNERSHIP', 'IP Ownership'
+        WARRANTY = 'WARRANTY', 'Warranty'
+        OTHER = 'OTHER', 'Other'
+
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='clause_recommendations')
+    clause_type = models.CharField(max_length=40, choices=ClauseType.choices)
+    recommendation_text = models.TextField()
+    confidence = models.FloatField(default=0.8, help_text='0.0–1.0 confidence score')
+    rationale = models.TextField(blank=True, help_text='Why this clause is recommended')
+    accepted = models.BooleanField(default=False)
+    accepted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_clause_recommendations')
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-confidence', 'clause_type']
+        indexes = [
+            models.Index(fields=['contract', 'accepted'], name='cr_contract_accepted_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_clause_type_display()} for {self.contract.title}'
+
+
+class OrgPolicy(models.Model):
+    """Configurable policy controls for an organization."""
+
+    organization = models.OneToOneField(Organization, on_delete=models.CASCADE, related_name='policy')
+    mfa_required = models.BooleanField(default=False)
+    require_approval_above_value = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        help_text='Contracts above this value require approval',
+    )
+    data_transfer_review_required = models.BooleanField(default=True)
+    retention_period_days = models.PositiveIntegerField(
+        default=2555, help_text='Document retention period (default 7 years)',
+    )
+    max_api_tokens_per_user = models.PositiveIntegerField(default=5)
+    allow_public_sharing = models.BooleanField(default=False)
+    ai_features_enabled = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='updated_org_policies')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Organisation Policy'
+        verbose_name_plural = 'Organisation Policies'
+
+    def __str__(self):
+        return f'Policy for {self.organization}'
+
+
 # Alias-first structural migration layer.
 # These symbols let care-native code paths move toward case-oriented names
 # without changing database tables, migration history, or legacy imports yet.

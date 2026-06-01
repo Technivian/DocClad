@@ -2170,3 +2170,213 @@ def job_retry_api(request, job_id: int):
         'status', 'attempt_count', 'error_message', 'dead_lettered_at', 'scheduled_at',
     ])
     return JsonResponse({'ok': True, 'job': _job_to_dict(job)})
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: Document Versioning + Immutable History
+# ---------------------------------------------------------------------------
+
+from contracts.services.contract_versions import get_version_service
+from contracts.models import ContractVersion
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def contract_versions_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    if request.method == 'POST':
+        data = json.loads(request.body or '{}')
+        try:
+            contract = Contract.objects.get(pk=contract_id, organization=org)
+        except Contract.DoesNotExist:
+            return JsonResponse({'error': 'Not found'}, status=404)
+        ver = svc.create_version(contract, changed_by=request.user, change_summary=data.get('change_summary', ''))
+        return JsonResponse({'ok': True, 'version': _version_to_dict(ver)}, status=201)
+    try:
+        versions = svc.list_versions(contract_id, org)
+    except Exception:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'versions': [_version_to_dict(v) for v in versions]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_version_detail_api(request, contract_id, version_number):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    try:
+        ver = svc.get_version(contract_id, version_number, org)
+    except ContractVersion.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'version': _version_to_dict(ver)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def contract_version_diff_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_version_service()
+    try:
+        v1 = int(request.GET.get('v1', 0))
+        v2 = int(request.GET.get('v2', 0))
+        if not v1 or not v2:
+            return JsonResponse({'error': 'v1 and v2 query params required'}, status=400)
+        diff = svc.diff_versions(contract_id, v1, v2, org)
+    except ContractVersion.DoesNotExist:
+        return JsonResponse({'error': 'Version not found'}, status=404)
+    except Exception as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({
+        'contract_id': diff.contract_id,
+        'v1': diff.v1,
+        'v2': diff.v2,
+        'added_lines': diff.added_lines,
+        'removed_lines': diff.removed_lines,
+        'unified_diff': diff.unified_diff,
+    })
+
+
+def _version_to_dict(ver: ContractVersion) -> dict:
+    return {
+        'id': ver.pk,
+        'version_number': ver.version_number,
+        'title_snapshot': ver.title_snapshot,
+        'status_snapshot': ver.status_snapshot,
+        'content_hash': ver.content_hash,
+        'change_summary': ver.change_summary,
+        'changed_by': ver.changed_by.username if ver.changed_by else None,
+        'created_at': ver.created_at.isoformat() if ver.created_at else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: AI-Assisted Drafting + Clause Recommendations
+# ---------------------------------------------------------------------------
+
+from contracts.services.ai_drafting import get_ai_drafting_service
+from contracts.models import ClauseRecommendation
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_suggest_clauses_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    try:
+        recs = svc.suggest_clauses(contract_id, org)
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'created': len(recs), 'recommendations': [_rec_to_dict(r) for r in recs]}, status=201)
+
+
+@login_required
+@require_http_methods(['GET'])
+def ai_clause_recommendations_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    accepted_only = request.GET.get('accepted') == 'true'
+    recs = svc.list_recommendations(contract_id, org, accepted_only=accepted_only)
+    return JsonResponse({'recommendations': [_rec_to_dict(r) for r in recs]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_accept_clause_api(request, contract_id, recommendation_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    try:
+        rec = svc.accept_clause(contract_id, recommendation_id, request.user, org)
+    except ClauseRecommendation.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse({'ok': True, 'recommendation': _rec_to_dict(rec)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def ai_draft_section_api(request, contract_id):
+    org = get_user_organization(request.user)
+    svc = get_ai_drafting_service()
+    data = json.loads(request.body or '{}')
+    section = data.get('section', 'recitals')
+    try:
+        result = svc.generate_draft_section(contract_id, section, org)
+    except Contract.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    return JsonResponse(result)
+
+
+def _rec_to_dict(rec: ClauseRecommendation) -> dict:
+    return {
+        'id': rec.pk,
+        'clause_type': rec.clause_type,
+        'recommendation_text': rec.recommendation_text,
+        'confidence': rec.confidence,
+        'rationale': rec.rationale,
+        'accepted': rec.accepted,
+        'accepted_by': rec.accepted_by.username if rec.accepted_by else None,
+        'accepted_at': rec.accepted_at.isoformat() if rec.accepted_at else None,
+        'created_at': rec.created_at.isoformat() if rec.created_at else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: Enterprise Admin Console
+# ---------------------------------------------------------------------------
+
+from contracts.services.admin_console import get_admin_console_service
+from contracts.models import OrgPolicy
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_settings_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    settings = svc.get_settings(org)
+    return JsonResponse({
+        'org_id': settings.org_id,
+        'name': settings.name,
+        'slug': settings.slug,
+        'member_count': settings.member_count,
+        'token_count': settings.token_count,
+        'policy': settings.policy,
+    })
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH'])
+def admin_policy_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    if request.method == 'PATCH':
+        data = json.loads(request.body or '{}')
+        policy = svc.update_policy(org, request.user, **data)
+        from contracts.services.admin_console import _policy_to_dict
+        return JsonResponse({'ok': True, 'policy': _policy_to_dict(policy)})
+    settings = svc.get_settings(org)
+    return JsonResponse({'policy': settings.policy})
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_integrations_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    integrations = svc.list_integrations(org)
+    return JsonResponse({
+        'integrations': [
+            {'name': i.name, 'enabled': i.enabled, 'details': i.details}
+            for i in integrations
+        ]
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def admin_audit_api(request):
+    org = get_user_organization(request.user)
+    svc = get_admin_console_service()
+    limit = min(int(request.GET.get('limit', 50)), 200)
+    logs = svc.get_audit_summary(org, limit=limit)
+    return JsonResponse({'logs': logs})
