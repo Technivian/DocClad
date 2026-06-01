@@ -312,6 +312,41 @@ urlpatterns = [
     path('approvals/new/', views.ApprovalRequestCreateView.as_view(), name='approval_request_create'),
     path('approvals/<int:pk>/edit/', views.ApprovalRequestUpdateView.as_view(), name='approval_request_update'),
 
+    # Area 1: Search & Analytics API
+    path('api/search/contracts/', api_views.api_contract_search, name='api_contract_search'),
+    path('api/search/clauses/', api_views.api_clause_search, name='api_clause_search'),
+    path('api/search/facets/', api_views.api_search_facets, name='api_search_facets'),
+    path('api/search/telemetry/', api_views.api_search_telemetry, name='api_search_telemetry'),
+
+    # Area 2: Privacy Ops
+    path('api/privacy/subprocessor-alerts/', api_views.api_subprocessor_alerts, name='api_subprocessor_alerts'),
+    path('api/privacy/transfer-risk/', api_views.api_transfer_risk_flags, name='api_transfer_risk_flags'),
+    path('api/privacy/retention/overdue/', api_views.api_retention_overdue, name='api_retention_overdue'),
+    path('api/privacy/retention/log-action/', api_views.api_retention_log_action, name='api_retention_log_action'),
+    path('api/privacy/retention/log/', api_views.api_retention_log, name='api_retention_log'),
+
+    # Area 3: Integrations
+    path('api/integrations/webhooks/failed/', api_views.api_webhook_failed, name='api_webhook_failed'),
+    path('api/integrations/webhooks/<int:delivery_id>/retry/', api_views.api_webhook_retry, name='api_webhook_retry'),
+    path('api/integrations/webhooks/dlq/', api_views.api_webhook_dlq, name='api_webhook_dlq'),
+    path('api/integrations/webhooks/diagnostics/', api_views.api_webhook_diagnostics, name='api_webhook_diagnostics'),
+    path('api/integrations/webhooks/<int:delivery_id>/requeue/', api_views.api_webhook_requeue, name='api_webhook_requeue'),
+    path('api/integrations/import/csv/', api_views.api_import_contracts_csv, name='api_import_contracts_csv'),
+    path('api/integrations/import/json/', api_views.api_import_contracts_json, name='api_import_contracts_json'),
+    path('api/integrations/crm/status/', api_views.api_crm_sync_status, name='api_crm_sync_status'),
+    path('api/integrations/crm/list/', api_views.api_crm_list_integrations, name='api_crm_list_integrations'),
+    path('api/integrations/crm/sync/', api_views.api_crm_trigger_sync, name='api_crm_trigger_sync'),
+
+    # Area 4: Ops Hardening
+    path('api/ops/db-health/', api_views.api_db_health, name='api_db_health'),
+    path('api/ops/migrations/', api_views.api_migration_status, name='api_migration_status'),
+    path('api/ops/cve-gate/', api_views.api_cve_gate_status, name='api_cve_gate_status'),
+    path('api/ops/cve-scan/', api_views.api_cve_scan_requirements, name='api_cve_scan_requirements'),
+    path('api/ops/restore-drills/', api_views.api_restore_drill_list, name='api_restore_drill_list'),
+    path('api/ops/restore-drills/schedule/', api_views.api_restore_drill_schedule, name='api_restore_drill_schedule'),
+    path('api/ops/restore-drills/<int:drill_id>/result/', api_views.api_restore_drill_record, name='api_restore_drill_record'),
+    path('api/ops/restore-drills/summary/', api_views.api_restore_drill_summary, name='api_restore_drill_summary'),
+
     # Search
     path('search/', views.global_search, name='global_search'),
 

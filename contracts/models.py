@@ -2745,6 +2745,70 @@ class UsageRecord(models.Model):
         return f'{self.organization.name} usage {self.period_start}'
 
 
+class SearchTelemetryEvent(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='search_events')
+    query = models.CharField(max_length=500)
+    result_count = models.PositiveIntegerField(default=0)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='search_events')
+    search_type = models.CharField(max_length=20, default='contract')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Search "{self.query}" by {self.performed_by} ({self.search_type})'
+
+
+class RetentionActionLog(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='retention_action_logs')
+    contract = models.ForeignKey('Contract', on_delete=models.SET_NULL, null=True, blank=True, related_name='retention_logs')
+    action = models.CharField(max_length=50)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='retention_actions')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.action} on contract {self.contract_id} by {self.performed_by}'
+
+
+class CVEScanRecord(models.Model):
+    packages_checked = models.PositiveIntegerField(default=0)
+    issues_found = models.PositiveIntegerField(default=0)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cve_scans')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'CVE scan {self.created_at} ({self.packages_checked} packages)'
+
+
+class RestoreDrill(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='restore_drills')
+    drill_date = models.DateField()
+    rto_target_hours = models.FloatField(default=4.0)
+    rpo_target_hours = models.FloatField(default=1.0)
+    actual_rto_minutes = models.PositiveIntegerField(null=True, blank=True)
+    actual_rpo_minutes = models.PositiveIntegerField(null=True, blank=True)
+    passed = models.BooleanField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='restore_drills')
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-drill_date']
+
+    def __str__(self):
+        return f'Restore drill {self.drill_date} ({self.organization})'
+
+
 # Alias-first structural migration layer.
 # These symbols let care-native code paths move toward case-oriented names
 # without changing database tables, migration history, or legacy imports yet.

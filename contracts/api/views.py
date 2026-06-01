@@ -2929,3 +2929,422 @@ def playbook_for_contract(request, contract_id):
         }
         for p in playbooks
     ]})
+
+
+# ---------------------------------------------------------------------------
+# Area 1: Search & Analytics API
+# ---------------------------------------------------------------------------
+from contracts.services.search_api import (
+    get_contract_search_service,
+    get_clause_search_service,
+)
+from contracts.models import SearchTelemetryEvent
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_contract_search(request):
+    org = get_user_organization(request.user)
+    svc = get_contract_search_service()
+    q = request.GET.get('q', '')
+    filters = {
+        'status': request.GET.get('status', ''),
+        'contract_type': request.GET.get('contract_type', ''),
+        'jurisdiction': request.GET.get('jurisdiction', ''),
+        'date_from': request.GET.get('date_from', ''),
+        'date_to': request.GET.get('date_to', ''),
+    }
+    filters = {k: v for k, v in filters.items() if v}
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (ValueError, TypeError):
+        page = 1
+    result = svc.search_contracts(org, q=q, filters=filters, page=page)
+    svc.record_search_event(org, q, result.total, request.user)
+    return JsonResponse({
+        'results': result.results,
+        'total': result.total,
+        'page': result.page,
+        'page_size': result.page_size,
+        'total_pages': result.total_pages,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_clause_search(request):
+    org = get_user_organization(request.user)
+    svc = get_clause_search_service()
+    q = request.GET.get('q', '')
+    filters = {
+        'category_id': request.GET.get('category_id'),
+        'jurisdiction': request.GET.get('jurisdiction', ''),
+        'is_mandatory': request.GET.get('is_mandatory'),
+    }
+    filters = {k: v for k, v in filters.items() if v is not None and v != ''}
+    if 'is_mandatory' in filters:
+        filters['is_mandatory'] = filters['is_mandatory'].lower() in ('true', '1', 'yes')
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (ValueError, TypeError):
+        page = 1
+    result = svc.search_clauses(org, q=q, filters=filters, page=page)
+    svc.record_search_event(org, q, result.total, request.user)
+    return JsonResponse({
+        'results': result.results,
+        'total': result.total,
+        'page': result.page,
+        'page_size': result.page_size,
+        'total_pages': result.total_pages,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_search_facets(request):
+    org = get_user_organization(request.user)
+    svc = get_contract_search_service()
+    facets = svc.get_contract_facets(org)
+    return JsonResponse(facets)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_search_telemetry(request):
+    org = get_user_organization(request.user)
+    events = SearchTelemetryEvent.objects.filter(organization=org)[:50]
+    return JsonResponse({'events': [
+        {
+            'id': e.id,
+            'query': e.query,
+            'result_count': e.result_count,
+            'search_type': e.search_type,
+            'created_at': e.created_at.isoformat(),
+        }
+        for e in events
+    ]})
+
+
+# ---------------------------------------------------------------------------
+# Area 2: Privacy Ops
+# ---------------------------------------------------------------------------
+from contracts.services.subprocessor_alerts import get_subprocessor_alert_service
+from contracts.services.retention_jobs import get_retention_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_subprocessor_alerts(request):
+    org = get_user_organization(request.user)
+    svc = get_subprocessor_alert_service()
+    alerts = svc.get_alerts(org)
+    return JsonResponse({'alerts': [
+        {
+            'subprocessor_id': a.subprocessor_id,
+            'subprocessor_name': a.subprocessor_name,
+            'country': a.country,
+            'alert_type': a.alert_type,
+            'severity': a.severity,
+            'description': a.description,
+        }
+        for a in alerts
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_transfer_risk_flags(request):
+    org = get_user_organization(request.user)
+    svc = get_subprocessor_alert_service()
+    flags = svc.get_transfer_risk_flags(org)
+    return JsonResponse({'flags': [
+        {
+            'transfer_id': f.transfer_id,
+            'title': f.title,
+            'flag_type': f.flag_type,
+            'description': f.description,
+        }
+        for f in flags
+    ]})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_retention_overdue(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    items = svc.get_overdue_contracts(org)
+    return JsonResponse({'items': [
+        {
+            'contract_id': item.contract_id,
+            'contract_title': item.contract_title,
+            'created_at': item.created_at.isoformat(),
+            'days_overdue': item.days_overdue,
+            'policy_id': item.policy_id,
+            'policy_title': item.policy_title,
+            'auto_delete': item.auto_delete,
+        }
+        for item in items
+    ]})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_retention_log_action(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    contract_id = data.get('contract_id')
+    action = data.get('action', '')
+    notes = data.get('notes', '')
+    if not contract_id or not action:
+        return JsonResponse({'error': 'contract_id and action required'}, status=400)
+    log = svc.log_retention_action(org, contract_id, action, request.user, notes=notes)
+    return JsonResponse({'id': log.id, 'action': log.action, 'created_at': log.created_at.isoformat()})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_retention_log(request):
+    org = get_user_organization(request.user)
+    svc = get_retention_service()
+    logs = svc.get_retention_log(org)
+    return JsonResponse({'logs': logs})
+
+
+# ---------------------------------------------------------------------------
+# Area 3: Integrations
+# ---------------------------------------------------------------------------
+from contracts.services.webhook_management import get_webhook_management_service
+from contracts.services.inbound_import import get_inbound_import_service
+from contracts.services.crm_sync import get_crm_sync_service
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_failed(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse({'deliveries': svc.get_failed_deliveries(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_webhook_retry(request, delivery_id):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    try:
+        result = svc.retry_delivery(delivery_id, org)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_dlq(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse({'deliveries': svc.get_dead_letter_queue(org)})
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_webhook_diagnostics(request):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    return JsonResponse(svc.get_diagnostics(org))
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_webhook_requeue(request, delivery_id):
+    org = get_user_organization(request.user)
+    svc = get_webhook_management_service()
+    try:
+        result = svc.requeue_dead_letter(delivery_id, org)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_import_contracts_csv(request):
+    org = get_user_organization(request.user)
+    svc = get_inbound_import_service()
+    csv_text = request.body.decode('utf-8', errors='replace')
+    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
+    result = svc.import_contracts_from_csv(org, csv_text, request.user, dry_run=dry_run)
+    return JsonResponse({
+        'imported_count': result.imported_count,
+        'skipped_count': result.skipped_count,
+        'errors': result.errors,
+        'dry_run': result.dry_run,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_import_contracts_json(request):
+    org = get_user_organization(request.user)
+    svc = get_inbound_import_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    if not isinstance(data, list):
+        return JsonResponse({'error': 'Expected a JSON array'}, status=400)
+    dry_run = request.GET.get('dry_run', '').lower() in ('true', '1', 'yes')
+    result = svc.import_contracts_from_json(org, data, request.user, dry_run=dry_run)
+    return JsonResponse({
+        'imported_count': result.imported_count,
+        'skipped_count': result.skipped_count,
+        'errors': result.errors,
+        'dry_run': result.dry_run,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_crm_sync_status(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    return JsonResponse(svc.get_sync_status(org))
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_crm_list_integrations(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    return JsonResponse({'integrations': svc.list_available_integrations(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_crm_trigger_sync(request):
+    org = get_user_organization(request.user)
+    svc = get_crm_sync_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    provider = data.get('provider', 'salesforce')
+    try:
+        result = svc.trigger_sync(org, provider, request.user)
+        return JsonResponse(result)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ---------------------------------------------------------------------------
+# Area 4: Ops Hardening
+# ---------------------------------------------------------------------------
+from contracts.services.postgres_health import get_postgres_health_service
+from contracts.services.cve_gate import get_cve_gate_service
+from contracts.services.restore_drill import get_restore_drill_service
+from contracts.models import RestoreDrill as _RestoreDrillModel
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_db_health(request):
+    svc = get_postgres_health_service()
+    return JsonResponse(svc.check_connection())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_migration_status(request):
+    svc = get_postgres_health_service()
+    return JsonResponse(svc.get_migration_status())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_cve_gate_status(request):
+    svc = get_cve_gate_service()
+    return JsonResponse(svc.get_gate_status())
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_cve_scan_requirements(request):
+    svc = get_cve_gate_service()
+    result = svc.scan_requirements()
+    svc.record_scan_result(
+        packages_checked=len(result.packages),
+        issues_found=0,
+        performed_by=request.user,
+    )
+    return JsonResponse({
+        'packages': result.packages,
+        'scan_timestamp': result.scan_timestamp,
+        'note': result.note,
+    })
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_restore_drill_list(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    return JsonResponse({'drills': svc.list_drills(org)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_restore_drill_schedule(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    try:
+        from datetime import date
+        drill_date = date.fromisoformat(data.get('drill_date', ''))
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'drill_date must be YYYY-MM-DD'}, status=400)
+    drill = svc.schedule_drill(
+        org=org,
+        drill_date=drill_date,
+        rto_hours=float(data.get('rto_hours', 4.0)),
+        rpo_hours=float(data.get('rpo_hours', 1.0)),
+        performed_by=request.user,
+    )
+    return JsonResponse({'id': drill.id, 'drill_date': drill.drill_date.isoformat()}, status=201)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_restore_drill_record(request, drill_id):
+    svc = get_restore_drill_service()
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    try:
+        drill = svc.record_result(
+            drill_id=drill_id,
+            actual_rto_minutes=int(data.get('actual_rto_minutes', 0)),
+            actual_rpo_minutes=int(data.get('actual_rpo_minutes', 0)),
+            passed=bool(data.get('passed', False)),
+            notes=data.get('notes', ''),
+            performed_by=request.user,
+        )
+        return JsonResponse({'id': drill.id, 'passed': drill.passed})
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(['GET'])
+def api_restore_drill_summary(request):
+    org = get_user_organization(request.user)
+    svc = get_restore_drill_service()
+    return JsonResponse(svc.get_drill_summary(org))
