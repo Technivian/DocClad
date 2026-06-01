@@ -23,6 +23,9 @@ class Obligation:
     status: str = "pending"
     reminder_days: int = 7
     created_at: str = ""
+    deadline_type: str = "OTHER"
+    auto_generated: bool = False
+    days_remaining: Optional[int] = None
 
 
 class ObligationService:
@@ -69,6 +72,9 @@ class ObligationService:
             status=ObligationService._status_from_deadline(deadline),
             reminder_days=deadline.reminder_days,
             created_at=deadline.created_at.isoformat() if deadline.created_at else "",
+            deadline_type=deadline.deadline_type or "OTHER",
+            auto_generated=bool(deadline.auto_generated),
+            days_remaining=deadline.days_remaining,
         )
 
     def list_obligations(
@@ -76,6 +82,7 @@ class ObligationService:
         contract_id: Optional[str] = None,
         assigned_to: Optional[str] = None,
         status: Optional[str] = None,
+        deadline_type: Optional[str] = None,
     ) -> List[Obligation]:
         qs = self._base_queryset().order_by("due_date")
 
@@ -84,6 +91,9 @@ class ObligationService:
 
         if assigned_to:
             qs = qs.filter(assigned_to__username=assigned_to)
+
+        if deadline_type:
+            qs = qs.filter(deadline_type=deadline_type.upper())
 
         obligations = [self._to_dto(item) for item in qs]
         if status:
@@ -100,6 +110,41 @@ class ObligationService:
         qs = self._base_queryset().filter(is_completed=False, due_date__lt=date.today()).order_by("due_date")
         return [self._to_dto(item) for item in qs]
 
+    def get_reminders_due(self) -> List[Obligation]:
+        """Return obligations where reminder window is active (due within reminder_days, not completed)."""
+        today = date.today()
+        # Fetch all pending, not-overdue deadlines and filter on needs_reminder property
+        qs = self._base_queryset().filter(
+            is_completed=False,
+            due_date__gte=today,
+        ).order_by("due_date")
+        return [self._to_dto(d) for d in qs if d.needs_reminder]
+
+    def dispatch_reminders(self, dry_run: bool = False) -> dict:
+        """Log (and optionally dispatch) reminders for obligations in their reminder window.
+
+        Returns a summary dict with counts. Actual email/notification delivery is
+        pluggable — override _send_reminder() in a subclass or connect a signal.
+        """
+        due = self.get_reminders_due()
+        dispatched = 0
+        for obligation in due:
+            if not dry_run:
+                self._send_reminder(obligation)
+            dispatched += 1
+        return {
+            "dispatched": dispatched,
+            "dry_run": dry_run,
+            "generated_at": timezone.now().isoformat(),
+        }
+
+    def _send_reminder(self, obligation: Obligation) -> None:
+        """Hook for reminder delivery. Default: no-op (log only).
+
+        Subclasses or signal receivers can override this to send email/Slack/etc.
+        """
+        pass  # Intentional no-op — delivery is pluggable
+
     def create_obligation(
         self,
         title: str,
@@ -108,6 +153,8 @@ class ObligationService:
         contract_id: str,
         assigned_to: str = "",
         priority: str = "medium",
+        deadline_type: str = "CONTRACT",
+        reminder_days: int = 7,
     ) -> Obligation:
         contract = Contract.objects.get(pk=contract_id)
         assigned_user = None
@@ -115,13 +162,18 @@ class ObligationService:
             user_model = get_user_model()
             assigned_user = user_model.objects.filter(username=assigned_to).first()
 
+        dtype = (deadline_type or "CONTRACT").upper()
+        valid_types = {c[0] for c in Deadline.DeadlineType.choices}
+        if dtype not in valid_types:
+            dtype = "CONTRACT"
+
         deadline = Deadline.objects.create(
             title=title,
             description=description,
-            deadline_type=Deadline.DeadlineType.CONTRACT,
+            deadline_type=dtype,
             priority=self._priority_to_model(priority),
             due_date=date.fromisoformat(due_date),
-            reminder_days=7,
+            reminder_days=reminder_days,
             contract=contract,
             assigned_to=assigned_user,
             created_by=contract.created_by,
@@ -146,6 +198,14 @@ class ObligationService:
         if "priority" in kwargs:
             deadline.priority = self._priority_to_model(kwargs["priority"])
             update_fields.append("priority")
+        if "reminder_days" in kwargs:
+            deadline.reminder_days = int(kwargs["reminder_days"])
+            update_fields.append("reminder_days")
+        if "assigned_to" in kwargs:
+            user_model = get_user_model()
+            user = user_model.objects.filter(username=kwargs["assigned_to"]).first()
+            deadline.assigned_to = user
+            update_fields.append("assigned_to")
         if "status" in kwargs:
             status = str(kwargs["status"]).lower()
             if status == "completed":
@@ -159,6 +219,10 @@ class ObligationService:
         if update_fields:
             deadline.save(update_fields=sorted(set(update_fields)))
         return self._to_dto(deadline)
+
+    def delete_obligation(self, obligation_id: str) -> bool:
+        deleted, _ = self._base_queryset().filter(pk=obligation_id).delete()
+        return deleted > 0
 
     def get_dashboard_timeline(self, days_ahead: int = 60) -> List[Obligation]:
         return self.get_upcoming_obligations(days_ahead)

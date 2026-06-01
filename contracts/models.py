@@ -1159,6 +1159,10 @@ class Deadline(models.Model):
         REGULATORY = 'REGULATORY', 'Regulatory Deadline'
         INTERNAL = 'INTERNAL', 'Internal Deadline'
         CLIENT = 'CLIENT', 'Client Deadline'
+        RENEWAL = 'RENEWAL', 'Renewal / Termination'
+        PAYMENT = 'PAYMENT', 'Payment Obligation'
+        NDA_EXPIRY = 'NDA_EXPIRY', 'NDA Expiry'
+        SLA = 'SLA', 'SLA Obligation'
         OTHER = 'OTHER', 'Other'
 
     title = models.CharField(max_length=300)

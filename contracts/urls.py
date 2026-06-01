@@ -35,6 +35,9 @@ urlpatterns = [
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
+    path('api/contracts/<str:contract_id>/obligations/', api_views.contract_obligations_api, name='contract_obligations_api'),
+    path('api/obligations/<int:obligation_id>/', api_views.obligation_detail_api, name='obligation_detail_api'),
+    path('api/obligations/reminders/', api_views.obligation_reminders_api, name='obligation_reminders_api'),
 
     # Clients
     path('clients/', views.ClientListView.as_view(), name='client_list'),

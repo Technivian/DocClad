@@ -34,6 +34,7 @@ from contracts.services.salesforce import (
 from contracts.services.webhooks import queue_webhook_event
 from contracts.services.esign import ESignReconciliationError, apply_esign_event
 from contracts.services.executive_analytics import build_executive_analytics_snapshot
+from contracts.services.obligations import get_obligation_service
 from contracts.services.netsuite import (
     NetSuiteSyncError,
     fetch_netsuite_records,
@@ -1842,4 +1843,137 @@ def contract_ai_extract_api(request, contract_id):
         'contract_id': contract_id,
         'document_count': len(results),
         'results': results,
+    })
+
+
+
+# ── Obligation (Deadline) CRUD API ────────────────────────────────────────────
+
+def _obligation_to_dict(obl) -> dict:
+    return {
+        'id': obl.id,
+        'title': obl.title,
+        'description': obl.description,
+        'due_date': obl.due_date,
+        'contract_id': obl.contract_id,
+        'assigned_to': obl.assigned_to,
+        'priority': obl.priority,
+        'status': obl.status,
+        'reminder_days': obl.reminder_days,
+        'created_at': obl.created_at,
+        'deadline_type': obl.deadline_type,
+        'auto_generated': obl.auto_generated,
+        'days_remaining': obl.days_remaining,
+    }
+
+
+@login_required
+@require_http_methods(['GET', 'POST'])
+def contract_obligations_api(request, contract_id):
+    """List or create obligations for a contract.
+
+    GET  — returns all deadlines attached to the contract.
+    POST — creates a new obligation. Body (JSON):
+        title, description, due_date (YYYY-MM-DD), priority (optional),
+        deadline_type (optional), reminder_days (optional), assigned_to (optional).
+    """
+
+    organization = get_user_organization(request.user)
+    contract = Contract.objects.filter(id=contract_id, organization=organization).first()
+    if contract is None:
+        return _error_response(request, 'Contract not found or access denied.', 404)
+
+    svc = get_obligation_service(organization)
+
+    if request.method == 'GET':
+        status_filter = request.GET.get('status')
+        type_filter = request.GET.get('deadline_type')
+        obligations = svc.list_obligations(
+            contract_id=str(contract_id),
+            status=status_filter,
+            deadline_type=type_filter,
+        )
+        return JsonResponse({
+            'contract_id': contract_id,
+            'count': len(obligations),
+            'obligations': [_obligation_to_dict(o) for o in obligations],
+        })
+
+    # POST — create
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, Exception):
+        return _error_response(request, 'Invalid JSON body.', 400)
+
+    title = (body.get('title') or '').strip()
+    due_date = (body.get('due_date') or '').strip()
+    if not title:
+        return _error_response(request, 'title is required.', 400)
+    if not due_date:
+        return _error_response(request, 'due_date is required (YYYY-MM-DD).', 400)
+
+    try:
+        obligation = svc.create_obligation(
+            title=title,
+            description=body.get('description', ''),
+            due_date=due_date,
+            contract_id=str(contract_id),
+            assigned_to=body.get('assigned_to', ''),
+            priority=body.get('priority', 'medium'),
+            deadline_type=body.get('deadline_type', 'CONTRACT'),
+            reminder_days=int(body.get('reminder_days', 7)),
+        )
+    except Exception as exc:
+        return _error_response(request, str(exc), 400)
+
+    return JsonResponse({'ok': True, 'obligation': _obligation_to_dict(obligation)}, status=201)
+
+
+@login_required
+@require_http_methods(['GET', 'PATCH', 'DELETE'])
+def obligation_detail_api(request, obligation_id):
+    """Retrieve, update, or delete a single obligation.
+
+    PATCH body (JSON, all fields optional):
+        title, description, due_date, priority, status, reminder_days, assigned_to.
+    """
+
+    organization = get_user_organization(request.user)
+    svc = get_obligation_service(organization)
+
+    if request.method == 'GET':
+        obligations = svc.list_obligations()
+        match = next((o for o in obligations if o.id == str(obligation_id)), None)
+        if match is None:
+            return _error_response(request, 'Obligation not found.', 404)
+        return JsonResponse({'obligation': _obligation_to_dict(match)})
+
+    if request.method == 'PATCH':
+        try:
+            body = json.loads(request.body)
+        except Exception:
+            return _error_response(request, 'Invalid JSON body.', 400)
+        updated = svc.update_obligation(str(obligation_id), **body)
+        if updated is None:
+            return _error_response(request, 'Obligation not found.', 404)
+        return JsonResponse({'ok': True, 'obligation': _obligation_to_dict(updated)})
+
+    # DELETE
+    deleted = svc.delete_obligation(str(obligation_id))
+    if not deleted:
+        return _error_response(request, 'Obligation not found.', 404)
+    return JsonResponse({'ok': True, 'deleted_id': obligation_id})
+
+
+@login_required
+@require_http_methods(['GET'])
+def obligation_reminders_api(request):
+    """Return all obligations currently within their reminder window."""
+
+    organization = get_user_organization(request.user)
+    svc = get_obligation_service(organization)
+    reminders = svc.get_reminders_due()
+    return JsonResponse({
+        'count': len(reminders),
+        'reminders': [_obligation_to_dict(o) for o in reminders],
     })
