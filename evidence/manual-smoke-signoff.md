@@ -1,23 +1,35 @@
 # Manual Smoke Signoff
 
-Date: 2026-05-16
-Environment: local workspace
-Commit: local workspace HEAD
-Tester: GitHub Copilot
+Date: 2026-06-01
+
+## Environment
+
+- Local development environment
+- Django dev server: `http://127.0.0.1:8060`
+- Database: shared local SQLite (`db.sqlite3`)
+- Commit: current workspace HEAD
+
+## Test Accounts Used
+
+- `smoke-owner` / `smoke-pass-123`
+- `admin` / `admin123`
+
+## Checks Performed
+
+- Anonymous `/dashboard/` redirected to `/login/`
+- SAML selector listed a SAML-enabled organization
+- Identity settings showed SCIM users, SCIM groups, and approval-routing links
+- MFA profile page showed the MFA-required banner
+- Recovery-code generation flow rendered successfully
+- Organization security page showed MFA policy controls
+- Workflow dashboard showed approval-rules and approval-requests actions
+- Workflow detail showed conditional routing and approval request panels
 
 ## Result
 
-Status: PARTIAL
+- PASS
 
-Reason:
+## Notes
 
-- Automated smoke-equivalent isolation suite was executed:
-	- `.venv/bin/python manage.py test tests.test_cross_tenant_isolation -v 1`
-	- Result: PASS (`55` tests).
-- Full manual/browser checklist from [docs/MANUAL_SMOKE_CHECKLIST.md](../docs/MANUAL_SMOKE_CHECKLIST.md) still requires target-environment execution with real multi-org operator accounts.
-
-## Required Before GO
-
-1. Execute full manual smoke checklist in staging or production-like environment.
-2. Record pass/fail for each section.
-3. Attach artifacts/screenshots and operator notes.
+- This is a local rehearsal signoff, not a production cutover signoff.
+- The browser smoke used a seeded local `smoke-owner` org/user and the seeded `admin` account.

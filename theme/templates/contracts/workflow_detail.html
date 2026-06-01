@@ -189,6 +189,49 @@
             </div>
 
             <div class="panel">
+                <div class="panel-head flex items-center justify-between gap-3">
+                    <span class="panel-title">Conditional Routing</span>
+                    <a href="{{ approval_rules_url }}" class="text-xs font-medium c-link">Manage rules</a>
+                </div>
+                <div class="panel-inner space-y-3 text-sm">
+                    {% for rule in approval_rules|slice:":5" %}
+                    <div class="rounded-lg border border-gray-100 p-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="font-medium c-primary">{{ rule.name }}</div>
+                            <span class="badge-sm {% if rule.is_active %}badge-green{% else %}badge-gray{% endif %}">{{ rule.get_trigger_type_display }}</span>
+                        </div>
+                        <div class="mt-1 c-muted">{{ rule.get_approval_step_display }} · {{ rule.trigger_value }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">No approval rules configured for this organization.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head flex items-center justify-between gap-3">
+                    <span class="panel-title">Approval Requests</span>
+                    <a href="{{ approval_requests_url }}" class="text-xs font-medium c-link">Open list</a>
+                </div>
+                <div class="panel-inner space-y-3 text-sm">
+                    {% for request_item in approval_requests|slice:":5" %}
+                    <div class="rounded-lg border border-gray-100 p-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="font-medium c-primary">{{ request_item.approval_step }}</div>
+                            <span class="badge-sm {% if request_item.status == 'APPROVED' %}badge-green{% elif request_item.status == 'REJECTED' %}badge-red{% elif request_item.status == 'ESCALATED' %}badge-blue{% else %}badge-yellow{% endif %}">{{ request_item.get_status_display }}</span>
+                        </div>
+                        <div class="mt-1 c-muted">
+                            {{ request_item.contract.title }}
+                            {% if request_item.assigned_to %} · {{ request_item.assigned_to.get_full_name|default:request_item.assigned_to.username }}{% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">No approval requests generated for this workflow yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel">
                 <div class="panel-head">
                     <span class="panel-title">Add Workflow Step</span>
                 </div>

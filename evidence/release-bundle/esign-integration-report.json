@@ -1,13 +1,13 @@
 {
-  "captured_at": "2026-05-16T13:02:37.794778+00:00",
+  "captured_at": "2026-06-01T11:15:39.161565+00:00",
   "observed": {
     "applied_event_count": 1,
     "duplicate_or_stale_event_count": 0,
     "latest_applied_event": {
       "event_id": "synth-esign-event-001",
-      "id": 1,
-      "signature_request_id": 1,
-      "timestamp": "2026-05-16T13:02:27.290585+00:00",
+      "id": 27,
+      "signature_request_id": 3,
+      "timestamp": "2026-06-01T11:14:20.143396+00:00",
       "to_status": "SIGNED"
     },
     "terminal_signature_count": 1

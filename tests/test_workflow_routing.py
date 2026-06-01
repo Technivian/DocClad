@@ -178,3 +178,43 @@ class WorkflowRoutingTests(TestCase):
 
         self.assertEqual({item['rule'].id for item in plan}, {threshold_rule.id})
         self.assertEqual(plan[0]['assigned_to'].id, self.user.id)
+
+    def test_workflow_dashboard_and_detail_surface_routing_endpoints(self):
+        self.client.login(username='workflow-user', password='testpass123')
+        contract = Contract.objects.create(
+            organization=self.organization,
+            title='Route Visibility Contract',
+            contract_type=Contract.ContractType.LICENSE,
+            status=Contract.Status.ACTIVE,
+            counterparty='Acme',
+            governing_law='Delaware',
+            jurisdiction='New York',
+            value=300000,
+            created_by=self.user,
+        )
+        workflow = Workflow.objects.create(
+            organization=self.organization,
+            title='Route Visibility Workflow',
+            description='Shows routing controls in the UI',
+            contract=contract,
+            template=self.contract_review_template,
+            created_by=self.user,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.organization,
+            contract=contract,
+            rule=self.approval_rule,
+            approval_step='LEGAL',
+            assigned_to=self.user,
+        )
+
+        dashboard = self.client.get(reverse('contracts:workflow_dashboard'))
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertContains(dashboard, reverse('contracts:approval_rule_list'))
+        self.assertContains(dashboard, reverse('contracts:approval_request_list'))
+
+        detail = self.client.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, 'Conditional Routing', html=False)
+        self.assertContains(detail, 'Approval Requests', html=False)
+        self.assertContains(detail, 'License review', html=False)

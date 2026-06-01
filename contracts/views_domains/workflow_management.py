@@ -10,7 +10,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import WorkflowForm, WorkflowStepForm, WorkflowTemplateForm, WorkflowTemplateStepForm
-from contracts.models import Contract, Workflow, WorkflowStep, WorkflowTemplate, WorkflowTemplateStep
+from contracts.models import ApprovalRequest, ApprovalRule, Contract, Workflow, WorkflowStep, WorkflowTemplate, WorkflowTemplateStep
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.services.workflow_routing import build_approval_request_plan_for_contract, suggest_workflow_template_for_contract
@@ -249,8 +249,17 @@ class AddWorkflowTemplateStepView(LoginRequiredMixin, View):
 
 @login_required
 def workflow_dashboard(request):
+    organization = get_user_organization(request.user)
     workflows = get_scoped_queryset_for_request(request, Workflow).select_related('contract').order_by('-created_at')
-    context = {'workflows': workflows}
+    approval_requests = ApprovalRequest.objects.filter(organization=organization).select_related('contract', 'assigned_to', 'rule').order_by('-created_at')[:10] if organization else ApprovalRequest.objects.none()
+    approval_rule_count = ApprovalRule.objects.filter(organization=organization, is_active=True).count() if organization else 0
+    context = {
+        'workflows': workflows,
+        'approval_requests': approval_requests,
+        'approval_rule_count': approval_rule_count,
+        'approval_rules_url': reverse_lazy('contracts:approval_rule_list'),
+        'approval_requests_url': reverse_lazy('contracts:approval_request_list'),
+    }
     return render(request, 'contracts/workflow_dashboard.html', context)
 
 
@@ -397,6 +406,8 @@ def workflow_template_compare(request, pk, other_pk):
 def _workflow_detail_context(workflow, add_step_form=None):
     organization = workflow.organization
     steps = WorkflowStep.objects.filter(workflow=workflow).order_by('order')
+    approval_requests = ApprovalRequest.objects.filter(organization=organization, contract=workflow.contract).select_related('assigned_to', 'delegated_to', 'rule').order_by('-created_at') if workflow.contract_id else ApprovalRequest.objects.none()
+    approval_rules = ApprovalRule.objects.filter(organization=organization, is_active=True).order_by('order', 'sla_hours', 'id')
     max_order = steps.aggregate(max_order=Max('order'))['max_order'] or 0
     form = add_step_form or WorkflowStepForm(initial={'order': max_order + 1})
     form = apply_form_queryset_scopes(form, organization, {'assigned_to': organization_user_queryset})
@@ -404,6 +415,10 @@ def _workflow_detail_context(workflow, add_step_form=None):
         'workflow': workflow,
         'workflow_steps': steps,
         'add_step_form': form,
+        'approval_requests': approval_requests,
+        'approval_rules': approval_rules,
+        'approval_rules_url': reverse_lazy('contracts:approval_rule_list'),
+        'approval_requests_url': reverse_lazy('contracts:approval_request_list'),
     }
 
 

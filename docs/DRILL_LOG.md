@@ -274,3 +274,32 @@ DATABASE_URL=postgresql://lessonry:lessonry@127.0.0.1:5432/cms_aegis_cutover_res
 
 - PostgreSQL backup/restore rollback mechanics are validated in local rehearsal.
 - Remaining requirement for final launch signoff: execute the same backup/restore drill in target staging/production-like environment and attach artifacts.
+
+## 2026-06-01: Sprint 3 Evidence Pack Refresh and Local Handoff Verification
+
+- Environment: local development workspace (`db.sqlite3`) plus local browser smoke on `127.0.0.1:8060`
+- Operator: Codex
+- Purpose: refresh the local Sprint 3 evidence pack after release-gate/runtime pinning changes and verify the current handoff artifacts.
+
+### Evidence and Validation
+
+- `generate_release_gate_report`: PASS (`GO`)
+- `generate_sprint3_integration_report`: PASS (`GO`)
+- `generate_esign_integration_report`: PASS (`GO`)
+- `generate_release_evidence_bundle`: PASS (`GO`)
+- `sync_netsuite_contracts` against a local authenticated mock service: PASS (`created=1`, `updated=0`, `fetched_records=1`)
+- `verify_postgres_cutover --simulation`: PASS as rehearsal artifact (`cutover_ready=false` because local DB is SQLite)
+- Manual smoke signoff recorded in `evidence/manual-smoke-signoff.md`: PASS
+
+### Rollback Context
+
+- The validated rollback/restore rehearsal remains the 2026-05-16 entry above.
+- No new destructive rollback drill was executed in this local refresh pass.
+- The previous rehearsal still stands as the rollback proof reference for local handoff.
+
+### Outcome
+
+- Local Sprint 3 evidence pack refreshed successfully.
+- Remaining blockers for target-environment signoff are unchanged:
+  - real PostgreSQL cutover evidence with `cutover_ready=true`
+  - real NetSuite sandbox credentials for provider-side live sync evidence

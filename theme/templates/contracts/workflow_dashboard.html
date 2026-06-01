@@ -47,10 +47,29 @@
                     </svg>
                     Start workflow
                 </a>
+                <a href="{{ approval_rules_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                    Approval rules
+                </a>
+                <a href="{{ approval_requests_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+                    Approval requests
+                </a>
                 <a href="{% url 'contracts:workflow_template_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
                     Templates
                 </a>
             </div>
+        </div>
+    </div>
+
+    <div class="summary-grid mb-6">
+        <div class="summary-card">
+            <div class="summary-label">Active routing rules</div>
+            <div class="summary-value">{{ approval_rule_count }}</div>
+            <div class="summary-meta">Approval rules that can auto-create routing requests</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Recent approval requests</div>
+            <div class="summary-value">{{ approval_requests|length }}</div>
+            <div class="summary-meta">Current routing output across workflows</div>
         </div>
     </div>
 

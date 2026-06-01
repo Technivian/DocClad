@@ -1,20 +1,20 @@
 {
-  "captured_at": "2026-05-16T13:02:28.515124+00:00",
+  "captured_at": "2026-06-01T11:16:33.056229+00:00",
   "observed": {
     "salesforce_sync_run": {
-      "completed_at": "2026-05-16T13:02:26.573344+00:00",
+      "completed_at": "2026-06-01T11:14:20.128849+00:00",
       "created_count": 1,
-      "id": 1,
-      "organization_id": 1,
+      "id": 5,
+      "organization_id": 16,
       "status": "SUCCESS",
       "updated_count": 0
     },
     "webhook_dead_letter_delivery": null,
     "webhook_sent_delivery": {
       "event_type": "salesforce.sync.completed",
-      "id": 1,
-      "organization_id": 1,
-      "sent_at": "2026-05-16T13:02:26.573344+00:00",
+      "id": 5,
+      "organization_id": 16,
+      "sent_at": "2026-06-01T11:14:20.128849+00:00",
       "status": "SENT"
     }
   },

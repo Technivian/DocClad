@@ -67,6 +67,19 @@ class IdentitySettingsAndScimTests(TestCase):
         self.assertTrue(self.organization.scim_token_hash)
         self.assertTrue(self.organization.scim_token_last4)
 
+    def test_identity_settings_page_exposes_scim_and_routing_endpoints(self):
+        self.client.login(username='owner', password='testpass123')
+
+        response = self.client.get(reverse('organization_identity_settings'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'SCIM Users', html=False)
+        self.assertContains(response, 'SCIM Groups', html=False)
+        self.assertContains(response, reverse('contracts:scim_users_api'))
+        self.assertContains(response, reverse('contracts:scim_groups_api'))
+        self.assertContains(response, reverse('contracts:approval_rule_list'))
+        self.assertContains(response, reverse('contracts:approval_request_list'))
+
     def test_scim_users_api_requires_valid_token(self):
         response = self.client.get(reverse('contracts:scim_users_api'))
         self.assertEqual(response.status_code, 401)

@@ -93,9 +93,21 @@
                     <button type="submit" class="btn-ghost">Rotate SCIM token</button>
                 </form>
             </div>
-                <div class="mt-3">
-                    <a href="{% url 'contracts:identity_telemetry_dashboard' %}" class="btn-ghost">View identity telemetry</a>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <div class="code-label">SCIM Users</div>
+                    <code class="code-block">{{ scim_users_url }}</code>
                 </div>
+                <div>
+                    <div class="code-label">SCIM Groups</div>
+                    <code class="code-block">{{ scim_groups_url }}</code>
+                </div>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-3">
+                <a href="{% url 'contracts:identity_telemetry_dashboard' %}" class="btn-ghost">View identity telemetry</a>
+                <a href="{{ approval_rules_url }}" class="btn-ghost">Manage approval rules</a>
+                <a href="{{ approval_requests_url }}" class="btn-ghost">View approval requests</a>
+            </div>
 
             {% if scim_token_preview %}
             <div class="info-box">

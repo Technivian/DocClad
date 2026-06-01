@@ -571,6 +571,10 @@ def organization_identity_settings(request):
         'saml_metadata_url': request.build_absolute_uri(
             reverse('saml_metadata', kwargs={'organization_slug': organization.slug})
         ),
+        'scim_users_url': request.build_absolute_uri(reverse('contracts:scim_users_api')),
+        'scim_groups_url': request.build_absolute_uri(reverse('contracts:scim_groups_api')),
+        'approval_rules_url': request.build_absolute_uri(reverse('contracts:approval_rule_list')),
+        'approval_requests_url': request.build_absolute_uri(reverse('contracts:approval_request_list')),
         'api_v1_contracts_url': request.build_absolute_uri(reverse('contracts:contracts_api_v1')),
     })
 
