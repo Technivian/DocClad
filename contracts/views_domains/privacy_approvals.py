@@ -44,6 +44,13 @@ from contracts.models import (
 from contracts.middleware import log_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
 from contracts.services.esign import ESignTransitionError, transition_signature_request
+from contracts.services.signature_audit import (
+    log_signature_packet_cancel,
+    log_signature_packet_created,
+    log_signature_packet_resend,
+    log_signature_packet_retry,
+)
+from contracts.services.signature_workspace import build_signature_packet, build_signature_workspace
 from contracts.view_support import (
     TenantAssignCreateMixin,
     TenantScopedFormMixin,
@@ -67,6 +74,19 @@ class SignatureRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Li
             qs = qs.filter(status=status)
         return qs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        workspace = build_signature_workspace(self.get_organization())
+        status = self.request.GET.get('status')
+        packet_rows = workspace['queue_rows']
+        if status:
+            packet_rows = [row for row in packet_rows if row.status == status]
+        context['signature_workspace'] = workspace
+        context['packet_rows'] = packet_rows
+        context['failed_packets'] = workspace['failed_packets']
+        context['signature_kpis'] = workspace['kpis']
+        return context
+
 
 class SignatureRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = SignatureRequest
@@ -77,7 +97,17 @@ class SignatureRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin,
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        contract = form.instance.contract
+        if contract and contract.signature_requests.filter(organization=form.instance.organization).count() == 1:
+            log_signature_packet_created(
+                user=self.request.user,
+                contract=contract,
+                organization=form.instance.organization,
+                request_count=1,
+                request=self.request,
+            )
+        return response
 
 
 class SignatureRequestDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
@@ -95,6 +125,8 @@ class SignatureRequestDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
             self.object.created_by_id == self.request.user.id
             or can_manage_organization(self.request.user, self.object.organization)
         )
+        context['packet_detail_url'] = reverse('contracts:signature_packet_detail', kwargs={'contract_pk': self.object.contract_id})
+        context['packet_summary'] = build_signature_packet(self.object.organization, self.object.contract)
         return context
 
 
@@ -208,6 +240,153 @@ def signature_request_transition(request, pk, new_status):
     )
     messages.success(request, f'Signature request marked as {signature_request.get_status_display().lower()}.')
     return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
+
+
+class SignaturePacketDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailView):
+    model = Contract
+    template_name = 'contracts/signature_packet_detail.html'
+    context_object_name = 'contract'
+    pk_url_kwarg = 'contract_pk'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        packet = build_signature_packet(self.get_organization(), self.object)
+        context['packet'] = packet
+        context.update(packet)
+        return context
+
+
+def _packet_queryset(request, contract_pk):
+    org = get_user_organization(request.user)
+    contract_queryset = scope_queryset_for_organization(Contract.objects.select_related('organization').all(), org)
+    contract = get_object_or_404(contract_queryset, pk=contract_pk)
+    signatures = list(
+        scope_queryset_for_organization(
+            SignatureRequest.objects.select_related('contract', 'created_by').all(),
+            org,
+        ).filter(contract=contract).order_by('order', 'created_at', 'pk')
+    )
+    return org, contract, signatures
+
+
+def _packet_action_allowed(request, contract):
+    return (
+        contract.created_by_id == getattr(request.user, 'id', None)
+        or can_manage_organization(request.user, contract.organization)
+    )
+
+
+@login_required
+@require_POST
+def signature_packet_resend(request, contract_pk):
+    org, contract, signatures = _packet_queryset(request, contract_pk)
+    if not _packet_action_allowed(request, contract):
+        return HttpResponseForbidden('You are not authorized to resend this signature packet.')
+
+    active_signatures = [item for item in signatures if item.status in {SignatureRequest.Status.PENDING, SignatureRequest.Status.SENT, SignatureRequest.Status.VIEWED}]
+    if not active_signatures:
+        messages.info(request, 'This packet has no active requests to resend.')
+        return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
+
+    now = timezone.now()
+    changed_ids = []
+    for signature in active_signatures:
+        if signature.status == SignatureRequest.Status.PENDING:
+            signature.status = SignatureRequest.Status.SENT
+        signature.sent_at = now
+        signature.save(update_fields=['status', 'sent_at'])
+        changed_ids.append(signature.id)
+
+    log_signature_packet_resend(
+        user=request.user,
+        contract=contract,
+        organization=org,
+        request_ids=changed_ids,
+        request_count=len(changed_ids),
+        request=request,
+    )
+    messages.success(request, f'Resent signature packet to {len(changed_ids)} request(s).')
+    return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
+
+
+@login_required
+@require_POST
+def signature_packet_cancel(request, contract_pk):
+    org, contract, signatures = _packet_queryset(request, contract_pk)
+    if not _packet_action_allowed(request, contract):
+        return HttpResponseForbidden('You are not authorized to cancel this signature packet.')
+
+    active_signatures = [item for item in signatures if item.status not in {SignatureRequest.Status.SIGNED, SignatureRequest.Status.DECLINED, SignatureRequest.Status.EXPIRED, SignatureRequest.Status.CANCELLED}]
+    if not active_signatures:
+        messages.info(request, 'This packet is already closed.')
+        return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
+
+    changed_ids = []
+    for signature in active_signatures:
+        signature.status = SignatureRequest.Status.CANCELLED
+        signature.save(update_fields=['status'])
+        changed_ids.append(signature.id)
+
+    log_signature_packet_cancel(
+        user=request.user,
+        contract=contract,
+        organization=org,
+        request_ids=changed_ids,
+        request_count=len(changed_ids),
+        request=request,
+    )
+    messages.success(request, f'Cancelled {len(changed_ids)} signature request(s).')
+    return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
+
+
+@login_required
+@require_POST
+def signature_packet_retry(request, contract_pk):
+    org, contract, signatures = _packet_queryset(request, contract_pk)
+    if not _packet_action_allowed(request, contract):
+        return HttpResponseForbidden('You are not authorized to retry this signature packet.')
+
+    failed_signatures = [item for item in signatures if item.status in {SignatureRequest.Status.DECLINED, SignatureRequest.Status.EXPIRED, SignatureRequest.Status.CANCELLED}]
+    if not failed_signatures:
+        messages.info(request, 'This packet does not have any failed requests to retry.')
+        return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
+
+    changed_ids = []
+    for signature in failed_signatures:
+        signature.status = SignatureRequest.Status.PENDING
+        signature.sent_at = None
+        signature.viewed_at = None
+        signature.signed_at = None
+        signature.declined_at = None
+        signature.decline_reason = ''
+        signature.ip_address = None
+        signature.execution_certificate_url = ''
+        signature.external_id = ''
+        signature.save(
+            update_fields=[
+                'status',
+                'sent_at',
+                'viewed_at',
+                'signed_at',
+                'declined_at',
+                'decline_reason',
+                'ip_address',
+                'execution_certificate_url',
+                'external_id',
+            ]
+        )
+        changed_ids.append(signature.id)
+
+    log_signature_packet_retry(
+        user=request.user,
+        contract=contract,
+        organization=org,
+        request_ids=changed_ids,
+        request_count=len(changed_ids),
+        request=request,
+    )
+    messages.success(request, f'Retried {len(changed_ids)} failed signature request(s).')
+    return redirect(reverse('contracts:signature_packet_detail', kwargs={'contract_pk': contract.pk}))
 
 
 class DataInventoryListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):

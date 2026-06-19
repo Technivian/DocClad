@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from contracts.models import AuditLog, SignatureRequest
+from contracts.services.signature_audit import log_signature_packet_completed, log_signature_packet_sent
 
 
 class ESignReconciliationError(RuntimeError):
@@ -121,6 +122,34 @@ def transition_signature_request(
     elif new_status == SignatureRequest.Status.DECLINED:
         signature_request.declined_at = transition_at or signature_request.declined_at or timezone.now()
     signature_request.save()
+
+    packet_request_ids = list(
+        SignatureRequest.objects.filter(
+            contract_id=signature_request.contract_id,
+            organization_id=signature_request.organization_id,
+        ).values_list('id', flat=True)
+    )
+    if new_status == SignatureRequest.Status.SENT:
+        log_signature_packet_sent(
+            user=actor,
+            contract=signature_request.contract,
+            organization=signature_request.organization,
+            request_ids=packet_request_ids,
+            request_count=len(packet_request_ids),
+        )
+    elif new_status == SignatureRequest.Status.SIGNED:
+        all_signed = not SignatureRequest.objects.filter(
+            contract_id=signature_request.contract_id,
+            organization_id=signature_request.organization_id,
+        ).exclude(status=SignatureRequest.Status.SIGNED).exists()
+        if all_signed:
+            log_signature_packet_completed(
+                user=actor,
+                contract=signature_request.contract,
+                organization=signature_request.organization,
+                request_ids=packet_request_ids,
+                request_count=len(packet_request_ids),
+            )
     return {
         'from_status': from_status,
         'to_status': new_status,

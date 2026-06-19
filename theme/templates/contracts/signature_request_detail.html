@@ -12,6 +12,7 @@
         </div>
         <div class="page-actions">
             <a href="{% url 'contracts:signature_request_list' %}" class="btn-ghost">Back to List</a>
+            <a href="{{ packet_detail_url }}" class="btn-ghost">Packet Workspace</a>
             <a href="{% url 'contracts:signature_request_update' object.pk %}" class="btn-primary-grad text-white">Edit</a>
         </div>
     </div>
@@ -163,6 +164,18 @@
                             <dd class="text-gray-900 mt-1">{{ object.created_at }}</dd>
                         </div>
                     </dl>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Packet Snapshot</span>
+                </div>
+                <div class="panel-inner detail-stack text-sm">
+                    <div class="detail-row"><span class="detail-label">Packet status</span><span class="badge-sm {% if packet_summary.packet_status == 'SIGNED' %}badge-green{% elif packet_summary.packet_status == 'DECLINED' or packet_summary.packet_status == 'EXPIRED' or packet_summary.packet_status == 'CANCELLED' %}badge-red{% elif packet_summary.packet_status == 'VIEWED' %}badge-purple{% elif packet_summary.packet_status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ packet_summary.packet_status_display }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Completion</span><span class="detail-value">{{ packet_summary.completion_percent }}%</span></div>
+                    <div class="detail-row"><span class="detail-label">Current signer</span><span class="detail-value">{{ packet_summary.current_signer_name|default:"—" }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Provider</span><span class="detail-value">{{ packet_summary.provider_label }}</span></div>
                 </div>
             </div>
         </div>

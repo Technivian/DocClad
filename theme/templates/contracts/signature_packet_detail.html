@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}{{ contract.title }} Packet - CMS Aegis{% endblock %}
+{% block content %}
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">{{ contract.title }} Packet</h1>
+                <p class="workspace-subtitle">Provider: {{ provider_label }} · Status: {{ packet_status_display }} · {{ signer_count }} signer(s)</p>
+                <div class="workspace-kicker-row">
+                    <span class="workspace-kicker"><strong>{{ completion_percent }}%</strong> complete</span>
+                    <span class="workspace-kicker"><strong>{{ current_signer_name|default:"—" }}</strong> current signer</span>
+                    <span class="workspace-kicker"><strong>{{ failed_count }}</strong> failed request(s)</span>
+                </div>
+            </div>
+            <div class="workspace-tools flex flex-wrap gap-2">
+                <a href="{% url 'contracts:signature_request_list' %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Back to Workspace</a>
+                {% if can_resend %}
+                <form method="post" action="{{ resend_url }}">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Resend</button>
+                </form>
+                {% endif %}
+                {% if can_cancel %}
+                <form method="post" action="{{ cancel_url }}">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Cancel</button>
+                </form>
+                {% endif %}
+                {% if can_retry %}
+                <form method="post" action="{{ retry_url }}">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Retry</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Signer count</div>
+                    <div class="summary-value">{{ signer_count }}</div>
+                    <div class="summary-meta">Requests in this packet</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Active</div>
+                    <div class="summary-value">{{ active_count }}</div>
+                    <div class="summary-meta">Still moving through the route</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Signed</div>
+                    <div class="summary-value">{{ signed_count }}</div>
+                    <div class="summary-meta">Completed signer requests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Failed</div>
+                    <div class="summary-value">{{ failed_count }}</div>
+                    <div class="summary-meta">Declined, expired, or cancelled</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Sent</div>
+                    <div class="summary-value">{{ sent_at|default:"—" }}</div>
+                    <div class="summary-meta">Packet dispatch timestamp</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Due</div>
+                    <div class="summary-value">{{ due_at|default:"—" }}</div>
+                    <div class="summary-meta">Follow-up target timestamp</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+        <div class="space-y-6">
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Packet Progress</span>
+                    <span class="panel-link">{{ completion_percent }}% complete</span>
+                </div>
+                <div class="panel-inner">
+                    <div class="space-y-4">
+                        {% for signer in signer_rows %}
+                        <div class="rounded-xl border px-4 py-4 {% if signer.is_current %}border-blue-300 bg-blue-50{% elif signer.request.status == 'SIGNED' %}border-green-200 bg-green-50{% elif signer.request.status == 'DECLINED' or signer.request.status == 'EXPIRED' or signer.request.status == 'CANCELLED' %}border-red-200 bg-red-50{% else %}border-gray-200 bg-white{% endif %}">
+                            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="badge-sm {% if signer.request.status == 'SIGNED' %}badge-green{% elif signer.request.status == 'VIEWED' %}badge-purple{% elif signer.request.status == 'SENT' %}badge-blue{% elif signer.request.status == 'PENDING' %}badge-yellow{% else %}badge-red{% endif %}">Signer {{ signer.position }}</span>
+                                        <span class="text-sm font-semibold c-primary">{{ signer.request.signer_name }}</span>
+                                        {% if signer.is_current %}<span class="badge-sm badge-blue">Current position</span>{% endif %}
+                                    </div>
+                                    <div class="text-xs c-muted mt-1">{{ signer.request.signer_email }}{% if signer.request.signer_role %} · {{ signer.request.signer_role }}{% endif %}</div>
+                                </div>
+                                <div class="text-sm c-muted lg:text-right">
+                                    <div>{{ signer.request.get_status_display }}</div>
+                                    <div>Progress {{ signer.progress_percent }}%</div>
+                                </div>
+                            </div>
+                            <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 text-xs">
+                                <div><span class="c-muted">Sent</span><div class="c-primary mt-1">{{ signer.sent_at|default:"—" }}</div></div>
+                                <div><span class="c-muted">Viewed</span><div class="c-primary mt-1">{{ signer.viewed_at|default:"—" }}</div></div>
+                                <div><span class="c-muted">Signed</span><div class="c-primary mt-1">{{ signer.signed_at|default:"—" }}</div></div>
+                                <div><span class="c-muted">Due</span><div class="c-primary mt-1">{{ signer.due_at|default:"—" }}</div></div>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <div class="flex justify-center">
+                            <span class="text-xs font-semibold c-muted">↓</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Timeline</span>
+                    <span class="panel-link">Created, sent, viewed, signed, completed, failed, resent</span>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    {% for event in timeline %}
+                    <div class="px-5 py-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="badge-sm {% if event.action == 'created' %}badge-gray{% elif event.action == 'sent' %}badge-blue{% elif event.action == 'viewed' %}badge-purple{% elif event.action == 'signed' %}badge-green{% elif event.action == 'failed' %}badge-red{% elif event.action == 'resent' %}badge-yellow{% else %}badge-gray{% endif %}">{{ event.action|title }}</span>
+                                    <span class="text-sm font-medium c-primary">{{ event.summary }}</span>
+                                </div>
+                                <div class="text-xs c-muted">{{ event.timestamp|default:"—" }} · {{ event.actor }}</div>
+                            </div>
+                            {% if event.status %}
+                            <div class="text-xs c-muted lg:text-right">{{ event.status }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">No packet activity recorded yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Packet Summary</span>
+                </div>
+                <div class="panel-inner detail-stack">
+                    <div class="detail-row"><span class="detail-label">Contract</span><span class="detail-value">{{ contract.title }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Provider</span><span class="detail-value">{{ provider_label }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="badge-sm {% if packet_status == 'SIGNED' %}badge-green{% elif packet_status == 'DECLINED' or packet_status == 'EXPIRED' or packet_status == 'CANCELLED' %}badge-red{% elif packet_status == 'VIEWED' %}badge-purple{% elif packet_status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ packet_status_display }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Current signer</span><span class="detail-value">{{ current_signer_name|default:"—" }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Current position</span><span class="detail-value">{{ current_position|default:"—" }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Signed</span><span class="detail-value">{{ signed_count }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Failed</span><span class="detail-value">{{ failed_count }}</span></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Failure Handling</span>
+                </div>
+                <div class="panel-inner space-y-3 text-sm">
+                    {% if failed_count %}
+                    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-red-900">
+                        This packet has failed request(s). Use retry to reset those requests and clear provider error state.
+                    </div>
+                    <div class="text-xs c-muted">Provider errors and terminal statuses are surfaced in the packet timeline above.</div>
+                    {% else %}
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 c-muted">
+                        No failure state is currently open for this packet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <span class="panel-title">Raw Requests</span>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    {% for request in requests %}
+                    <div class="px-5 py-4 text-sm">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="font-medium c-primary">{{ request.signer_name }}</div>
+                                <div class="text-xs c-muted">{{ request.signer_email }}</div>
+                            </div>
+                            <span class="badge-sm {% if request.status == 'SIGNED' %}badge-green{% elif request.status == 'DECLINED' or request.status == 'EXPIRED' or request.status == 'CANCELLED' %}badge-red{% elif request.status == 'VIEWED' %}badge-purple{% elif request.status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ request.get_status_display }}</span>
+                        </div>
+                        <div class="mt-2 text-xs c-muted">Order {{ request.order }} · Provider ref {{ request.external_id|default:"—" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-state">No signer requests exist for this packet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

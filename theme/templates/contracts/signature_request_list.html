@@ -1,65 +1,146 @@
 {% extends "base.html" %}
-{% block title %}E-Signature Requests - CMS Aegis{% endblock %}
+{% block title %}Signature Workspace - CMS Aegis{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">E-Signature Requests</h1>
-            <p class="page-subtitle">Manage e-signature requests across contracts.</p>
+<div class="page-wrap reveal-stagger">
+    <div class="workspace-main hero-shell mb-6">
+        <div class="workspace-main-head">
+            <div>
+                <h1 class="workspace-title">Signature Workspace</h1>
+                <p class="workspace-subtitle">Packet command center for contract signatures, failures, retries, and completion tracking.</p>
+            </div>
+            <div class="workspace-tools">
+                <a href="{% url 'contracts:signature_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                    <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    Add Request
+                </a>
+            </div>
         </div>
-        <a href="{% url 'contracts:signature_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-            Add New
-        </a>
+        <div class="workspace-toolbar">
+            <div class="summary-grid w-full">
+                <div class="summary-card">
+                    <div class="summary-label">Waiting</div>
+                    <div class="summary-value">{{ signature_kpis.waiting }}</div>
+                    <div class="summary-meta">Queued but not sent</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Sent</div>
+                    <div class="summary-value">{{ signature_kpis.sent }}</div>
+                    <div class="summary-meta">Delivered to signers</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Viewed</div>
+                    <div class="summary-value">{{ signature_kpis.viewed }}</div>
+                    <div class="summary-meta">Opened by signers</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Signed</div>
+                    <div class="summary-value">{{ signature_kpis.signed }}</div>
+                    <div class="summary-meta">Completed request steps</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Completed</div>
+                    <div class="summary-value">{{ signature_kpis.completed }}</div>
+                    <div class="summary-meta">Fully signed packets</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Failed</div>
+                    <div class="summary-value">{{ signature_kpis.failed }}</div>
+                    <div class="summary-meta">Declined, expired, or cancelled</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <form method="get" class="mb-4 flex items-end gap-3">
-        <div>
-            <label class="form-label">Status</label>
-            <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">All statuses</option>
-                <option value="PENDING" {% if request.GET.status == "PENDING" %}selected{% endif %}>Pending</option>
-                <option value="SENT" {% if request.GET.status == "SENT" %}selected{% endif %}>Sent</option>
-                <option value="VIEWED" {% if request.GET.status == "VIEWED" %}selected{% endif %}>Viewed</option>
-                <option value="SIGNED" {% if request.GET.status == "SIGNED" %}selected{% endif %}>Signed</option>
-                <option value="DECLINED" {% if request.GET.status == "DECLINED" %}selected{% endif %}>Declined</option>
-                <option value="EXPIRED" {% if request.GET.status == "EXPIRED" %}selected{% endif %}>Expired</option>
-                <option value="CANCELLED" {% if request.GET.status == "CANCELLED" %}selected{% endif %}>Cancelled</option>
-            </select>
+
+    {% if failed_packets %}
+    <div class="panel mb-6">
+        <div class="panel-head">
+            <span class="panel-title">Failed Packets</span>
+            <span class="panel-link">Requires retry or manual intervention</span>
         </div>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Filter</button>
-    </form>
+        <div class="divide-y divide-gray-100">
+            {% for packet in failed_packets %}
+            <div class="px-5 py-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a href="{{ packet.detail_url }}" class="text-sm font-semibold c-link">{{ packet.contract_title }}</a>
+                        <span class="badge-sm badge-red">{{ packet.status_display }}</span>
+                    </div>
+                    <div class="text-xs c-muted mt-1">{{ packet.packet_label }} · {{ packet.failed_count }} failed request(s) · {{ packet.provider_label }}</div>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="{{ packet.detail_url }}" class="btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
+                    <form method="post" action="{{ packet.retry_url }}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="panel overflow-hidden">
+        <div class="panel-head">
+            <span class="panel-title">Packet Queue</span>
+            <span class="panel-link">Contract, provider, lifecycle, and retry controls</span>
+        </div>
         <table class="w-full text-sm">
             <thead class="tbl-head">
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Order</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contract</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signer</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Email</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Role</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Packet</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Provider</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Sent</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Sent date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signers</th>
                     <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for item in signatures %}
+                {% for packet in packet_rows %}
                 <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
-                    <td class="px-5 py-3 tbl-td">{{ item.order }}</td>
-                    <td class="px-5 py-3"><a href="{% url 'contracts:signature_request_detail' item.pk %}" class="c-link">{{ item.contract.title }}</a></td>
-                    <td class="px-5 py-3 tbl-td">{{ item.signer_name }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ item.signer_email }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ item.signer_role|default:"—" }}</td>
                     <td class="px-5 py-3">
-                        <span class="badge-sm {% if item.status == 'SIGNED' %}badge-green{% elif item.status == 'PENDING' %}badge-yellow{% elif item.status == 'DECLINED' %}badge-red{% else %}badge-gray{% endif %}">{{ item.get_status_display }}</span>
+                        <a href="{{ packet.detail_url }}" class="c-link">{{ packet.contract_title }}</a>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ item.sent_at|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.packet_label }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.provider_label }}</td>
+                    <td class="px-5 py-3">
+                            <span class="badge-sm {% if packet.status == 'SIGNED' %}badge-green{% elif packet.status == 'DECLINED' or packet.status == 'EXPIRED' or packet.status == 'CANCELLED' %}badge-red{% elif packet.status == 'VIEWED' %}badge-purple{% elif packet.status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">
+                            {{ packet.status_display }}
+                        </span>
+                        <div class="text-[11px] c-muted mt-1">{{ packet.completion_percent }}% complete</div>
+                    </td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.sent_at|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.due_at|default:"—" }}</td>
+                    <td class="px-5 py-3 tbl-td">{{ packet.signer_count }} total · {{ packet.completed_count }} signed</td>
                     <td class="px-5 py-3 text-right">
-                        <a href="{% url 'contracts:signature_request_update' item.pk %}" class="text-sm c-link">Edit</a>
+                        <div class="flex items-center justify-end gap-2 flex-wrap">
+                            <a href="{{ packet.detail_url }}" class="btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
+                            {% if packet.status == 'PENDING' or packet.status == 'SENT' or packet.status == 'VIEWED' %}
+                            <form method="post" action="{{ packet.resend_url }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-ghost px-3 py-2 text-sm rounded-lg">Resend</button>
+                            </form>
+                            <form method="post" action="{{ packet.cancel_url }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-ghost px-3 py-2 text-sm rounded-lg">Cancel</button>
+                            </form>
+                            {% endif %}
+                            {% if packet.failed_count %}
+                            <form method="post" action="{{ packet.retry_url }}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="8" class="px-5 py-12 text-center c-muted">No e-signature requests found.</td></tr>
+                <tr>
+                    <td colspan="8" class="px-5 py-12 text-center c-muted">No signature packets found.</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
