@@ -66,6 +66,38 @@ def get_user_organization(user: Optional[User]) -> Optional[Organization]:
     return base_org
 
 
+# Models that carry no direct ``organization`` field are scoped through a
+# tenant-linking relation instead. Explicit paths are authoritative; any model
+# not listed falls back to auto-discovery and finally to deny-by-default, so a
+# new organization-less model can never silently leak across tenants.
+_TENANT_FK_PATHS = {
+    'TrustAccount': 'client__organization',
+    'ComplianceChecklist': 'contract__organization',
+    'ChecklistItem': 'checklist__contract__organization',
+    'WorkflowStep': 'workflow__organization',
+}
+
+# Single-hop relations probed (in order) when a model has no explicit path and
+# no direct ``organization`` field.
+_TENANT_FK_CANDIDATES = ('contract', 'client', 'matter', 'workflow', 'process', 'budget')
+
+
+def _resolve_tenant_path(model_cls: type[Model], field_names: set[str]) -> Optional[str]:
+    explicit = _TENANT_FK_PATHS.get(model_cls.__name__)
+    if explicit:
+        return explicit
+    for candidate in _TENANT_FK_CANDIDATES:
+        if candidate not in field_names:
+            continue
+        try:
+            related = model_cls._meta.get_field(candidate).related_model
+        except Exception:
+            continue
+        if related and 'organization' in {f.name for f in related._meta.get_fields()}:
+            return f'{candidate}__organization'
+    return None
+
+
 def scope_queryset_for_organization(queryset: QuerySet, organization: Optional[Organization]) -> QuerySet:
     if organization is None:
         return queryset.none()
@@ -74,7 +106,14 @@ def scope_queryset_for_organization(queryset: QuerySet, organization: Optional[O
     field_names = {f.name for f in model_cls._meta.get_fields()}
     if 'organization' in field_names:
         return queryset.filter(organization=organization)
-    return queryset
+
+    tenant_path = _resolve_tenant_path(model_cls, field_names)
+    if tenant_path:
+        return queryset.filter(**{tenant_path: organization})
+
+    # No tenant linkage could be resolved: deny by default rather than leak
+    # every tenant's rows through the unscoped queryset.
+    return queryset.none()
 
 
 def set_organization_on_instance(instance: Model, organization: Optional[Organization]) -> None:

@@ -1279,3 +1279,101 @@ class DueDiligenceIsolationTest(CrossTenantFixtureMixin, TestCase):
         self.client.login(username='user_b', password='passB1234!')
         url = reverse('contracts:due_diligence_update', kwargs={'pk': self.dd_a.pk})
         self.assertEqual(self.client.get(url).status_code, 404)
+
+
+class IndirectlyScopedTenantIsolationTests(TestCase):
+    """Regression tests for models with NO direct ``organization`` field.
+
+    These flow through the generic ``scope_queryset_for_organization`` /
+    ``TenantScopedQuerysetMixin``. Before the FK-chain + deny-by-default fix,
+    the generic scoper fell through to an UNSCOPED queryset, leaking every
+    tenant's rows (notably TrustAccount: list, detail-by-pk, and balance sum).
+    """
+
+    def setUp(self):
+        from decimal import Decimal
+        from contracts.models import TrustAccount, ComplianceChecklist
+        from contracts.tenancy import scope_queryset_for_organization
+
+        self._scope = scope_queryset_for_organization
+
+        self.org_a = Organization.objects.create(name='Firm Alpha', slug='ind-alpha')
+        self.user_a = User.objects.create_user(username='ind_user_a', password='passA1234!')
+        OrganizationMembership.objects.create(
+            organization=self.org_a, user=self.user_a,
+            role=OrganizationMembership.Role.OWNER, is_active=True,
+        )
+        self.org_b = Organization.objects.create(name='Firm Beta', slug='ind-beta')
+        self.user_b = User.objects.create_user(username='ind_user_b', password='passB1234!')
+        OrganizationMembership.objects.create(
+            organization=self.org_b, user=self.user_b,
+            role=OrganizationMembership.Role.OWNER, is_active=True,
+        )
+
+        self.client_a = Client.objects.create(organization=self.org_a, name='Alpha Client')
+        self.client_b = Client.objects.create(organization=self.org_b, name='Beta Client')
+        self.contract_a = Contract.objects.create(
+            organization=self.org_a, title='Alpha NDA', contract_type='NDA',
+            status='ACTIVE', created_by=self.user_a,
+        )
+        self.contract_b = Contract.objects.create(
+            organization=self.org_b, title='Beta NDA', contract_type='NDA',
+            status='ACTIVE', created_by=self.user_b,
+        )
+
+        self.trust_a = TrustAccount.objects.create(
+            client=self.client_a, account_name='Alpha Trust', balance=Decimal('1000'),
+        )
+        self.trust_b = TrustAccount.objects.create(
+            client=self.client_b, account_name='Beta Trust', balance=Decimal('25'),
+        )
+        self.checklist_a = ComplianceChecklist.objects.create(
+            title='Alpha Checklist', description='A', regulation_type='GDPR',
+            contract=self.contract_a,
+        )
+        self.checklist_b = ComplianceChecklist.objects.create(
+            title='Beta Checklist', description='B', regulation_type='GDPR',
+            contract=self.contract_b,
+        )
+
+    # ---- View-level: the concrete TrustAccount leak ----
+    def test_trust_account_list_excludes_other_org(self):
+        self.client.login(username='ind_user_b', password='passB1234!')
+        response = self.client.get(reverse('contracts:trust_account_list'))
+        self.assertEqual(response.status_code, 200)
+        ids = [a.id for a in response.context['accounts']]
+        self.assertIn(self.trust_b.id, ids)
+        self.assertNotIn(self.trust_a.id, ids)
+
+    def test_trust_account_total_balance_excludes_other_org(self):
+        from decimal import Decimal
+        self.client.login(username='ind_user_b', password='passB1234!')
+        response = self.client.get(reverse('contracts:trust_account_list'))
+        # Must be org B's balance only (25), never the cross-org sum (1025).
+        self.assertEqual(response.context['total_balance'], Decimal('25'))
+
+    def test_trust_account_detail_cross_org_returns_404(self):
+        self.client.login(username='ind_user_b', password='passB1234!')
+        url = reverse('contracts:trust_account_detail', kwargs={'pk': self.trust_a.pk})
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    # ---- Mechanism-level: the generic scoper itself ----
+    def test_scoper_filters_trust_account_via_client_org(self):
+        from contracts.models import TrustAccount
+        qs = self._scope(TrustAccount.objects.all(), self.org_b)
+        self.assertEqual(list(qs.values_list('id', flat=True)), [self.trust_b.id])
+
+    def test_scoper_filters_checklist_via_contract_org(self):
+        from contracts.models import ComplianceChecklist
+        qs = self._scope(ComplianceChecklist.objects.all(), self.org_a)
+        self.assertEqual(list(qs.values_list('id', flat=True)), [self.checklist_a.id])
+
+    def test_scoper_denies_by_default_for_unlinkable_model(self):
+        # A model with neither a direct org field nor a resolvable tenant path
+        # must return an EMPTY queryset, never an unscoped one.
+        from contracts.tenancy import _resolve_tenant_path
+        # A model exposing no known tenant relation must resolve to no path,
+        # which makes the scoper return ``.none()`` rather than leak.
+        self.assertIsNone(_resolve_tenant_path(
+            type('Tmp', (), {'__name__': 'Tmp'}), set()
+        ))

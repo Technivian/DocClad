@@ -2,6 +2,7 @@
 """
 API views for CMS Aegis repository functionality.
 """
+import hashlib
 import json
 import logging
 import secrets
@@ -211,9 +212,15 @@ def _resolve_scim_organization(request):
     token = auth_header.split(' ', 1)[1].strip()
     if not token:
         return None, None
-    for organization in Organization.objects.filter(scim_enabled=True).only('id', 'scim_token_hash', 'scim_token_last4', 'name', 'slug'):
-        if organization.matches_scim_token(token):
-            return organization, token
+    token_hash = hashlib.sha256(token.encode('utf-8')).hexdigest()
+    organization = (
+        Organization.objects
+        .filter(scim_enabled=True, scim_token_hash=token_hash)
+        .only('id', 'scim_token_hash', 'scim_token_last4', 'name', 'slug')
+        .first()
+    )
+    if organization:
+        return organization, token
     return None, token
 
 
@@ -224,13 +231,22 @@ def _resolve_api_organization(request, required_scope='contracts:read'):
     token = auth_header.split(' ', 1)[1].strip()
     if not token:
         return None, None, None
-    for api_token in OrganizationAPIToken.objects.select_related('organization').filter(is_active=True, organization__is_active=True):
-        if api_token.matches_token(token):
-            if not api_token.has_scope(required_scope):
-                return None, token, api_token
-            api_token.last_used_at = timezone.now()
-            api_token.save(update_fields=['last_used_at', 'updated_at'])
-            return api_token.organization, token, api_token
+    api_token = (
+        OrganizationAPIToken.objects
+        .select_related('organization')
+        .filter(
+            token_hash=OrganizationAPIToken._hash_token(token),
+            is_active=True,
+            organization__is_active=True,
+        )
+        .first()
+    )
+    if api_token:
+        if not api_token.has_scope(required_scope):
+            return None, token, api_token
+        api_token.last_used_at = timezone.now()
+        api_token.save(update_fields=['last_used_at', 'updated_at'])
+        return api_token.organization, token, api_token
     return None, token, None
 
 

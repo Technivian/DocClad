@@ -18,7 +18,7 @@ class TrustAccountListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['total_balance'] = TrustAccount.objects.aggregate(total=Sum('balance'))['total'] or Decimal('0')
+        ctx['total_balance'] = self.get_queryset().aggregate(total=Sum('balance'))['total'] or Decimal('0')
         return ctx
 
 
