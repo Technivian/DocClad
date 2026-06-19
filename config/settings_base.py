@@ -310,11 +310,19 @@ SECURITY_HEADERS_ENABLED = _bool_env('SECURITY_HEADERS_ENABLED', default=True)
 CONTENT_SECURITY_POLICY = os.getenv(
     'CONTENT_SECURITY_POLICY',
     "default-src 'self'; "
+    # NOTE: script-src/style-src still allow 'unsafe-inline'. Removing it
+    # requires migrating 37 inline event handlers to addEventListener, adding
+    # per-request nonces to inline <script> blocks, and retiring the Tailwind
+    # Play CDN in base_fullscreen.html (which itself needs unsafe-inline/eval).
+    # Tracked as deferred hardening tied to UI-shell consolidation; Django
+    # template auto-escaping remains the primary XSS defense in the meantime.
     "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "img-src 'self' data:; "
     "connect-src 'self'; "
+    "object-src 'none'; "
+    "frame-src 'none'; "
     "frame-ancestors 'none'; "
     "base-uri 'self'; "
     "form-action 'self'"
