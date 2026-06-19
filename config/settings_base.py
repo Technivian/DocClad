@@ -359,11 +359,17 @@ NETSUITE_API_URL = os.getenv('NETSUITE_API_URL', '').strip()
 NETSUITE_TIMEOUT_SECONDS = int(os.getenv('NETSUITE_TIMEOUT_SECONDS', '30'))
 ESIGN_WEBHOOK_SECRET = os.getenv('ESIGN_WEBHOOK_SECRET', '').strip()
 # Outbound e-signature dispatch. 'null' simulates a send (no network) so the
-# flow works without credentials; 'http' posts to a configured e-sign gateway.
+# flow works without credentials; 'http' posts to a configured e-sign gateway;
+# 'docusign' uses the DocuSign eSignature REST API.
 ESIGN_PROVIDER = os.getenv('ESIGN_PROVIDER', 'null').strip().lower()
 ESIGN_API_BASE = os.getenv('ESIGN_API_BASE', '').strip()
 ESIGN_API_KEY = os.getenv('ESIGN_API_KEY', '').strip()
 ESIGN_API_TIMEOUT_SECONDS = int(os.getenv('ESIGN_API_TIMEOUT_SECONDS', '10'))
+# DocuSign provider (ESIGN_PROVIDER=docusign). Access token is obtained via
+# JWT/auth-code OAuth and refreshed out of band (~8h lifetime).
+ESIGN_DOCUSIGN_BASE_URI = os.getenv('ESIGN_DOCUSIGN_BASE_URI', '').strip()
+ESIGN_DOCUSIGN_ACCOUNT_ID = os.getenv('ESIGN_DOCUSIGN_ACCOUNT_ID', '').strip()
+ESIGN_DOCUSIGN_ACCESS_TOKEN = os.getenv('ESIGN_DOCUSIGN_ACCESS_TOKEN', '').strip()
 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@cms-aegis.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)

@@ -124,3 +124,77 @@ class OutboundSignatureTests(TestCase):
         self.client.login(username='other', password='passB1234!')
         url = reverse('contracts:signature_request_send', kwargs={'pk': self.sig.pk})
         self.assertEqual(self.client.post(url).status_code, 404)
+
+
+class DocuSignProviderTests(TestCase):
+    def setUp(self):
+        from contracts.models import Document
+        self.org = Organization.objects.create(name='DS Org', slug='ds-org')
+        self.user = User.objects.create_user(username='ds_user', password='p')
+        OrganizationMembership.objects.create(
+            organization=self.org, user=self.user,
+            role=OrganizationMembership.Role.OWNER, is_active=True,
+        )
+        self.contract = Contract.objects.create(
+            organization=self.org, title='DS NDA', contract_type='NDA',
+            status='ACTIVE', created_by=self.user,
+        )
+        self.document = Document.objects.create(
+            organization=self.org, title='NDA.pdf', mime_type='application/pdf',
+            uploaded_by=self.user,
+        )
+        from django.core.files.base import ContentFile
+        self.document.file.save('nda.pdf', ContentFile(b'%PDF-1.4 test'), save=True)
+        self.sig = SignatureRequest.objects.create(
+            organization=self.org, contract=self.contract, document=self.document,
+            signer_name='Dana Signer', signer_email='dana@example.com',
+            created_by=self.user,
+        )
+
+    def _provider(self, opener):
+        from contracts.services.signature_providers import DocuSignSignatureProvider
+        return DocuSignSignatureProvider(
+            'https://demo.docusign.net/restapi', 'acct-123', 'tok-abc', opener=opener,
+        )
+
+    def test_builds_envelope_and_parses_envelope_id(self):
+        captured = {}
+
+        def fake_opener(req, timeout=None):
+            captured['url'] = req.full_url
+            captured['auth'] = req.headers.get('Authorization')
+            captured['payload'] = json.loads(req.data.decode('utf-8'))
+            return _FakeResponse({'envelopeId': 'env-9', 'status': 'sent'})
+
+        result = send_signature_request(self.sig, actor=self.user, provider=self._provider(fake_opener))
+        self.sig.refresh_from_db()
+        self.assertEqual(result['external_id'], 'env-9')
+        self.assertEqual(self.sig.esign_provider, 'docusign')
+        self.assertEqual(self.sig.status, SignatureRequest.Status.SENT)
+        # Correct DocuSign envelopes endpoint + bearer auth + signer + document.
+        self.assertEqual(captured['url'], 'https://demo.docusign.net/restapi/v2.1/accounts/acct-123/envelopes')
+        self.assertEqual(captured['auth'], 'Bearer tok-abc')
+        self.assertEqual(captured['payload']['status'], 'sent')
+        self.assertEqual(captured['payload']['recipients']['signers'][0]['email'], 'dana@example.com')
+        self.assertTrue(captured['payload']['documents'][0]['documentBase64'])
+
+    def test_missing_document_raises(self):
+        from contracts.services.signature_providers import SignatureProviderError
+        self.sig.document = None
+        self.sig.save()
+        with self.assertRaises(SignatureProviderError):
+            self._provider(lambda req, timeout=None: _FakeResponse({})).send(self.sig)
+
+    def test_unconfigured_raises(self):
+        from contracts.services.signature_providers import DocuSignSignatureProvider, SignatureProviderError
+        provider = DocuSignSignatureProvider('', '', '', opener=lambda req, timeout=None: _FakeResponse({}))
+        with self.assertRaises(SignatureProviderError):
+            provider.send(self.sig)
+
+    @override_settings(
+        ESIGN_PROVIDER='docusign', ESIGN_DOCUSIGN_BASE_URI='https://demo.docusign.net/restapi',
+        ESIGN_DOCUSIGN_ACCOUNT_ID='a', ESIGN_DOCUSIGN_ACCESS_TOKEN='t',
+    )
+    def test_factory_builds_docusign(self):
+        from contracts.services.signature_providers import get_signature_provider, DocuSignSignatureProvider
+        self.assertIsInstance(get_signature_provider(), DocuSignSignatureProvider)
