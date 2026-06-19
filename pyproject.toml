@@ -1,0 +1,25 @@
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+follow_imports = "skip"
+disallow_untyped_defs = false
+check_untyped_defs = false
+no_implicit_optional = true
+warn_redundant_casts = true
+plugins = ["mypy_django_plugin.main"]
+
+# Incremental adoption: the gate is GREEN today on this allowlist and grows as
+# modules are typed. Add a module here once `mypy <module>` passes clean.
+# (Most of the codebase predates type hints; a blanket check would be noise.)
+files = [
+    "contracts/domain/contracts.py",
+    "contracts/services/workflow_simulation.py",
+    "contracts/services/signature_audit.py",
+    "contracts/services/clause_analytics.py",
+    "contracts/services/billing.py",
+    "contracts/services/obligations.py",
+    "contracts/services/starter_content.py",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.settings_development"

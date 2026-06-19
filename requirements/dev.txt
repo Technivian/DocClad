@@ -8,6 +8,10 @@ django-debug-toolbar==4.4.6
 Faker==17.3.0
 pip-audit==2.9.0
 
+# Static type checking (incremental adoption gate; see pyproject.toml)
+mypy==1.20.2
+django-stubs==6.0.3
+
 # Legacy browser/robot automation toolchain (kept for compatibility)
 robotframework==7.3.2
 robotframework-bsnlibrary==1.0.0

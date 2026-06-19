@@ -17,8 +17,8 @@ class ContractStatus(Enum):
 class ListParams:
     """Parameters for contract listing"""
     q: str = ""
-    status: List[str] = None
-    contract_type: List[str] = None
+    status: Optional[List[str]] = None
+    contract_type: Optional[List[str]] = None
     sort: str = "updated_desc"
     page: int = 1
     page_size: int = 25

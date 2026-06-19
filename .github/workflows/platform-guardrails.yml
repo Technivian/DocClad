@@ -78,6 +78,9 @@ jobs:
           SECURE_HSTS_PRELOAD: 'true'
         run: python manage.py check --deploy --fail-level WARNING
 
+      - name: Static type check (incremental allowlist)
+        run: mypy
+
       - name: Tenant integrity audit
         run: python manage.py audit_null_organizations
 
