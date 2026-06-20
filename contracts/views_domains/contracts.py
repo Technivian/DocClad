@@ -665,6 +665,27 @@ def dashboard(request):
     trust_balance = trust_accounts_qs.aggregate(total=Sum('balance'))['total'] or Decimal('0')
     total_documents = documents_qs.count()
 
+    expiring_contracts = list(case_qs.select_related('client').filter(
+        status='ACTIVE', end_date__lte=thirty_days, end_date__gte=today
+    ).order_by('end_date')[:5])
+
+    lifecycle_chart = []
+    status_colors = {
+        'ACTIVE': '#2563EB',
+        'PENDING': '#F59E0B',
+        'DRAFT': '#374151',
+        'EXPIRED': '#6B7280',
+        'TERMINATED': '#9CA3AF',
+    }
+    for status_code, label in [('ACTIVE', 'Active'), ('PENDING', 'Pending Approval'), ('DRAFT', 'Draft'), ('EXPIRED', 'Expired'), ('TERMINATED', 'Terminated')]:
+        count = status_counts_dict.get(status_code, 0)
+        if count > 0:
+            lifecycle_chart.append({
+                'label': label,
+                'count': count,
+                'color': status_colors.get(status_code, '#6B7280'),
+            })
+
     from django.shortcuts import render
 
     return render(request, 'dashboard.html', {
@@ -695,4 +716,7 @@ def dashboard(request):
         'total_contracts': case_stats['total'] or 0,
         'active_contracts': case_stats['active'] or 0,
         'expiring_soon': case_stats['expiring_soon'] or 0,
+        'expiring_contracts': expiring_contracts,
+        'lifecycle_chart': lifecycle_chart,
+        'lifecycle_total': case_stats['total'] or 0,
     })

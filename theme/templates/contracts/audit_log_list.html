@@ -1,6 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Audit Log - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  .tbl-row:hover {
+    background: var(--sidebar-hover);
+  }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -10,14 +27,14 @@
     </div>
 
     <form method="get" class="mb-4 flex gap-2">
-        <select name="action" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" data-autosubmit>
+        <select name="action" class="filter-select" data-autosubmit>
             <option value="">All Actions</option>
             <option value="CREATE" {% if request.GET.action == 'CREATE' %}selected{% endif %}>Created</option>
             <option value="UPDATE" {% if request.GET.action == 'UPDATE' %}selected{% endif %}>Updated</option>
             <option value="DELETE" {% if request.GET.action == 'DELETE' %}selected{% endif %}>Deleted</option>
             <option value="APPROVE" {% if request.GET.action == 'APPROVE' %}selected{% endif %}>Approved</option>
         </select>
-        <select name="model" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" data-autosubmit>
+        <select name="model" class="filter-select" data-autosubmit>
             <option value="">All Types</option>
             <option value="Contract" {% if request.GET.model == 'Contract' %}selected{% endif %}>Contract</option>
             <option value="Client" {% if request.GET.model == 'Client' %}selected{% endif %}>Client</option>
@@ -41,7 +58,7 @@
             </thead>
             <tbody class="divide-y">
                 {% for log in logs %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row">
                     <td class="px-5 py-3 tbl-td">{{ log.timestamp|date:"M d, Y H:i" }}</td>
                     <td class="px-5 py-3 tbl-td">{{ log.user.get_full_name|default:log.user.username }}</td>
                     <td class="px-5 py-3">

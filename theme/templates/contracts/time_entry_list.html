@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Time Tracking - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row-hover:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -41,7 +44,7 @@
             </thead>
             <tbody>
                 {% for entry in time_entries %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row tbl-row-hover">
                     <td class="px-5 py-3 tbl-td">{{ entry.date|date:"M d" }}</td>
                     <td class="px-5 py-3 tbl-td">{{ entry.matter.matter_number|default:"—" }}</td>
                     <td class="px-5 py-3">{{ entry.description|truncatechars:50 }}</td>

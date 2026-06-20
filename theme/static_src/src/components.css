@@ -267,3 +267,394 @@
 .section-header {
   @apply text-2xl font-semibold text-ink mb-4;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE ARCHETYPES  —  v1
+   Workspace | List | Detail | Dashboard
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Shared: page header ───────────────────────────────── */
+.arch-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.arch-header-left  { flex: 1 1 0; min-width: 0; }
+.arch-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 4px; }
+.arch-title-row    { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.arch-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.arch-subtitle { font-size: 14px; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+/* ── Shared: card levels ───────────────────────────────── */
+/* Level 1 — forms, tables, primary content */
+.card-l1 {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+}
+/* Level 2 — compact supporting panels */
+.card-l2 {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+/* Level 3 — inline notices, status blocks */
+.card-l3 {
+  background: var(--primary-subtle);
+  border: 1px solid rgba(37,99,235,0.18);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* ── Shared: button hierarchy ──────────────────────────── */
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--btn-gradient);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-cta:hover  { opacity: 0.88; }
+.btn-cta:disabled { opacity: 0.5; cursor: default; }
+
+.btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--primary-subtle);
+  color: var(--primary-light);
+  border: 1px solid var(--primary-bg);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-soft:hover { background: var(--primary-bg); }
+
+.btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-quiet:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-link:hover { color: var(--text-primary); background: var(--sidebar-hover); }
+
+.btn-danger-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #F87171;
+  background: none;
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-danger-soft:hover { background: rgba(239,68,68,0.08); }
+
+/* ════════════════════════════════════════════════
+   ARCHETYPE 1 — WORKSPACE
+   ════════════════════════════════════════════════ */
+
+/* Step progress */
+.arch-steps { display: flex; align-items: center; margin-bottom: 32px; overflow-x: auto; }
+.arch-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.arch-step.step-active { color: var(--primary-light); }
+.arch-step.step-done   { color: var(--text-secondary); }
+.arch-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-size: 11px; font-weight: 700;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.arch-step.step-active .arch-step-num { background: var(--primary); border-color: var(--primary); color: #fff; }
+.arch-step.step-done   .arch-step-num { background: #059669; border-color: #059669; color: #fff; }
+.arch-step-arrow { color: var(--text-dim); margin: 0 14px; font-size: 12px; }
+
+/* 8 + 4 content grid */
+.arch-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  gap: 24px;
+  align-items: start;
+}
+.arch-workspace-main    { min-width: 0; }
+.arch-workspace-sidebar { position: sticky; top: 80px; }
+@media (max-width: 1100px) {
+  .arch-workspace-grid            { grid-template-columns: 1fr; }
+  .arch-workspace-sidebar         { position: static; }
+}
+
+/* Sticky footer */
+.arch-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background: var(--card-bg);
+  border-top: 1px solid var(--card-border);
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+
+/* Completion panel */
+.arch-completion-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.arch-completion-count    { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -0.02em; }
+.arch-completion-sublabel { font-size: 12px; color: var(--text-secondary); margin-top: 2px; margin-bottom: 10px; }
+.arch-completion-track    { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 14px; }
+.arch-completion-fill     { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.3s ease; }
+.arch-missing-list { display: flex; flex-direction: column; gap: 6px; }
+.arch-missing-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.arch-missing-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+
+/* ════════════════════════════════════════════════
+   ARCHETYPE 2 — LIST
+   ════════════════════════════════════════════════ */
+
+.arch-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.arch-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.arch-toolbar-sep { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+
+.arch-search       { position: relative; flex: 1 1 200px; min-width: 0; max-width: 300px; }
+.arch-search-icon  {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--text-muted); pointer-events: none;
+}
+.arch-search-input {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.arch-search-input::placeholder { color: var(--text-muted); }
+.arch-search-input:focus         { outline: none; border-color: var(--primary); }
+
+.arch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.arch-chip:hover      { color: var(--text-primary); border-color: var(--text-muted); }
+.arch-chip.chip-active { color: var(--primary-light); border-color: var(--primary); background: var(--primary-subtle); }
+
+.arch-status-tabs {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.arch-status-tab {
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-block;
+}
+.arch-status-tab:hover    { color: var(--text-primary); background: var(--sidebar-hover); }
+.arch-status-tab.tab-active { color: var(--primary-light); background: var(--sidebar-active-bg); font-weight: 600; }
+
+/* ════════════════════════════════════════════════
+   ARCHETYPE 3 — DETAIL
+   ════════════════════════════════════════════════ */
+
+.arch-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.15s;
+}
+.arch-back:hover { color: var(--text-primary); }
+.arch-back svg   { width: 14px; height: 14px; }
+
+.arch-meta-strip { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.arch-meta-item  { font-size: 13px; color: var(--text-secondary); }
+.arch-meta-sep   { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
+
+/* Tabs */
+.arch-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.arch-tabs::-webkit-scrollbar { display: none; }
+.arch-tab {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  white-space: nowrap;
+}
+.arch-tab:hover         { color: var(--text-primary); }
+.arch-tab.tab-active    { color: var(--primary-light); border-bottom-color: var(--primary); font-weight: 600; }
+
+.arch-tab-panel            { display: none; }
+.arch-tab-panel.panel-active { display: block; }
+
+/* 8 + 4 detail grid */
+.arch-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 264px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .arch-detail-grid { grid-template-columns: 1fr; }
+}
+.arch-context-rail { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 80px; }
+
+/* ════════════════════════════════════════════════
+   ARCHETYPE 4 — DASHBOARD
+   ════════════════════════════════════════════════ */
+
+.arch-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}

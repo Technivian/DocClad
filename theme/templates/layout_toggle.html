@@ -1,9 +1,24 @@
 
+<style nonce="{{ csp_nonce }}">
+  .layout-toggle-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .layout-toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+</style>
+
 <!-- Feature Flag Toggle Component -->
 <div class="fixed bottom-4 right-4 z-50">
-    <div class="bg-white border border-stroke rounded-lg shadow-lg p-4">
+    <div class="layout-toggle-card">
         <div class="flex items-center space-x-3">
-            <span class="text-sm font-medium text-ink">Layout:</span>
+            <span class="layout-toggle-label">Layout:</span>
             <form method="post" action="{% url 'toggle_redesign' %}" class="inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm {% if FEATURE_REDESIGN %}btn-primary{% else %}btn-secondary{% endif %}">

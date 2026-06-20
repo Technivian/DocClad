@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Ethical Walls - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -26,7 +29,7 @@
             </thead>
             <tbody>
                 {% for item in walls %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row">
                     <td class="px-5 py-3">{{ item.name }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.matter|default:"—" }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.client|default:"—" }}</td>

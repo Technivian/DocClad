@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Operations Dashboard - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .drill-pre { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--card-border); }
+</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -69,7 +72,7 @@
       </div>
       <div class="panel-inner">
         <p class="text-sm c-muted mb-4">Use the drill command to queue work, process reminders/OCR jobs, and capture operational evidence.</p>
-        <pre class="text-xs rounded-lg bg-gray-50 p-4 overflow-x-auto" role="region" aria-label="Drill command">./.venv/bin/python manage.py run_operational_drill</pre>
+        <pre class="text-xs rounded-lg p-4 overflow-x-auto drill-pre" role="region" aria-label="Drill command">./.venv/bin/python manage.py run_operational_drill</pre>
         {% if drill_state.last_run_iso %}
         <p class="item-meta mt-4">Last drill: {{ drill_state.last_run_iso }}</p>
         <p class="text-sm c-muted mt-1">{{ drill_state.last_summary }}</p>

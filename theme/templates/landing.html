@@ -8,9 +8,9 @@
     .landing-page {
         --landing-section-end: #111827;
         --landing-panel-bg: rgba(17,24,39,0.72);
-        --landing-outline-bg: rgba(17,24,39,0.6);
-        --landing-outline-bg-hover: rgba(17,24,39,0.9);
-        --landing-outline-border: #1F2937;
+        --landing-outline-bg: rgba(255,255,255,0.04);
+        --landing-outline-bg-hover: rgba(255,255,255,0.08);
+        --landing-outline-border: rgba(255,255,255,0.18);
         --landing-muted-strong: #6B7280;
         --landing-muted-soft: #4B5563;
     }
@@ -97,6 +97,33 @@
     .security-glow-left { background: radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%); transform: translate(-30%, 30%); }
     .landing-cta-bg { background: linear-gradient(180deg, var(--landing-section-end) 0%, var(--bg) 100%); }
     .landing-footer-bg { background: var(--bg); }
+    .c-accent { color: var(--accent); }
+    .icon-bg-blue   { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.15); }
+    .icon-bg-amber  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.15); }
+    .icon-bg-green  { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); }
+    .icon-color-blue  { color: #2563EB; }
+    .icon-color-amber { color: #F59E0B; }
+    .icon-color-green { color: #22C55E; }
+    .icon-color-cyan  { color: #60A5FA; }
+    .gradient-text-primary { background: linear-gradient(135deg, #2563EB, #60A5FA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-bg-primary   { background: linear-gradient(135deg, rgba(37,99,235,0.08), rgba(34,197,94,0.04)); }
+    .btn-glow-blue { background: #2563EB; box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
+    .btn-glow-blue-lg { background: #2563EB; box-shadow: 0 8px 32px rgba(37,99,235,0.4), 0 2px 4px rgba(0,0,0,0.2); }
+    .btn-glow-blue:hover, .btn-glow-blue-lg:hover { background: #1d4ed8; }
+    .avatar-blue { background: #2563EB; }
+    .avatar-green { background: #059669; }
+    .avatar-purple { background: #7C3AED; }
+    .testimonials-grid { margin-bottom: 3.5rem; }
+    .hero-mockup-wrap { margin-top: 7rem; }
+    .hero-mockup-glow { box-shadow: 0 30px 60px rgba(37,99,235,0.15), 0 40px 80px rgba(0,0,0,0.5); pointer-events: none; border-radius: 16px; }
+    .hero-mockup-border { border-color: rgba(255,255,255,0.08); }
+    .hero-browser-chrome { background: #161b22; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .hero-url-bar { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); max-width: 240px; margin: 0 auto; }
+    .hero-dot-red, .hero-dot-yellow, .hero-dot-green { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .hero-dot-red { background: #FF5F57; }
+    .hero-dot-yellow { background: #FFBD2E; }
+    .hero-dot-green { background: #28C840; }
+    .hero-mockup-svg { display: block; width: 100%; background: #0D1117; }
 </style>
 
 <div class="landing-page landing-root min-h-screen">
@@ -137,11 +164,11 @@
                 Enterprise-Grade CLM Platform
             </div>
             <h1 class="landing-title text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] mb-6">
-                The command center for
-                <span class="block gradient-text-primary">modern contract teams</span>
+                From draft to signed
+                <span class="block gradient-text-primary">to audit-ready.</span>
             </h1>
             <p class="landing-muted text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-                Manage contracts, counterparties, workflows, billing, trust accounts, and compliance from one unified platform.
+                The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — CMS Aegis handles everything from first draft to renewal.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
@@ -152,6 +179,213 @@
                     Sign in to your account
                 </a>
             </div>
+        </div>
+
+        <div class="max-w-5xl mx-auto relative hero-mockup-wrap">
+                <div class="absolute inset-0 rounded-2xl hero-mockup-glow"></div>
+                <div class="rounded-2xl overflow-hidden border hero-mockup-border">
+                    <!-- Browser chrome -->
+                    <div class="flex items-center gap-2 px-4 py-3 hero-browser-chrome">
+                        <span class="hero-dot-red"></span>
+                        <span class="hero-dot-yellow"></span>
+                        <span class="hero-dot-green"></span>
+                        <div class="flex-1 mx-4 rounded-md px-3 py-1 text-[11px] text-center hero-url-bar">app.cmsaegis.com/dashboard</div>
+                    </div>
+                    <!-- Dashboard mockup SVG -->
+                    <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="hero-mockup-svg">
+                        <defs>
+                            <linearGradient id="lc-fade" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#0D1117" stop-opacity="0"/>
+                                <stop offset="100%" stop-color="#0D1117" stop-opacity="1"/>
+                            </linearGradient>
+                            <linearGradient id="av-grad" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#2563EB"/>
+                                <stop offset="100%" stop-color="#7c3aed"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- Sidebar -->
+                        <rect x="0" y="0" width="155" height="480" fill="#111827"/>
+                        <rect x="154" y="0" width="1" height="480" fill="rgba(255,255,255,0.05)"/>
+                        <rect x="12" y="12" width="20" height="20" rx="5" fill="#2563EB"/>
+                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">CMS Aegis</text>
+                        <rect x="7" y="44" width="141" height="24" rx="5" fill="rgba(37,99,235,0.15)"/>
+                        <rect x="18" y="52" width="6" height="6" rx="1" fill="#3B82F6"/>
+                        <text x="30" y="60" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.9)">Dashboard</text>
+                        <rect x="18" y="77" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="85" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Contracts</text>
+                        <rect x="18" y="95" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="103" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Workflows</text>
+                        <rect x="18" y="113" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="121" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Approvals</text>
+                        <rect x="18" y="131" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="139" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Documents</text>
+                        <text x="12" y="162" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.2)" letter-spacing="0.5">RISK &amp; COMPLIANCE</text>
+                        <rect x="18" y="169" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="177" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Risk Register</text>
+                        <rect x="18" y="187" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="195" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Compliance</text>
+                        <rect x="18" y="205" width="6" height="6" rx="1" fill="rgba(255,255,255,0.2)"/>
+                        <text x="30" y="213" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.4)">Audit Trail</text>
+                        <!-- Welcome hero card -->
+                        <rect x="163" y="8" width="709" height="46" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="179" y="26" font-family="system-ui,sans-serif" font-size="12" font-weight="800" fill="white">Welcome back, Haroon</text>
+                        <text x="179" y="41" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.35)">Here's what's happening in your legal operations workspace.</text>
+                        <rect x="791" y="14" width="73" height="22" rx="6" fill="#2563EB"/>
+                        <text x="827" y="29" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="white" text-anchor="middle">+ New Contract</text>
+                        <!-- Left: Needs your attention -->
+                        <rect x="163" y="62" width="330" height="186" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="179" y="82" font-family="system-ui,sans-serif" font-size="10.5" font-weight="700" fill="white">Needs your attention</text>
+                        <line x1="163" y1="92" x2="493" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                        <rect x="179" y="97" width="20" height="20" rx="5" fill="rgba(239,68,68,0.12)"/>
+                        <text x="189" y="110" font-family="system-ui,sans-serif" font-size="8" fill="#ef4444" text-anchor="middle" font-weight="800">!</text>
+                        <text x="207" y="109" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#ef4444">3</text>
+                        <text x="220" y="108" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">pending approvals</text>
+                        <text x="220" y="119" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Waiting for your approval</text>
+                        <text x="477" y="111" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
+                        <line x1="179" y1="124" x2="485" y2="124" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <rect x="179" y="129" width="20" height="20" rx="5" fill="rgba(249,115,22,0.12)"/>
+                        <text x="189" y="142" font-family="system-ui,sans-serif" font-size="9" fill="#f97316" text-anchor="middle">▲</text>
+                        <text x="207" y="140" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#f97316">2</text>
+                        <text x="220" y="139" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">contracts expiring within 30 days</text>
+                        <text x="220" y="150" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Requires renewal or action</text>
+                        <text x="477" y="142" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
+                        <line x1="179" y1="155" x2="485" y2="155" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <rect x="179" y="160" width="20" height="20" rx="5" fill="rgba(234,179,8,0.12)"/>
+                        <text x="189" y="173" font-family="system-ui,sans-serif" font-size="9" fill="#eab308" text-anchor="middle">●</text>
+                        <text x="207" y="172" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#eab308">1</text>
+                        <text x="220" y="171" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">overdue deadline</text>
+                        <text x="220" y="182" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Past due — immediate action needed</text>
+                        <text x="477" y="174" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
+                        <line x1="179" y1="187" x2="485" y2="187" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <rect x="179" y="192" width="20" height="20" rx="5" fill="rgba(168,85,247,0.12)"/>
+                        <text x="189" y="205" font-family="system-ui,sans-serif" font-size="8" fill="#a855f7" text-anchor="middle" font-weight="700">✦</text>
+                        <text x="207" y="203" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#a855f7">1</text>
+                        <text x="220" y="202" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.75)">high-risk contract</text>
+                        <text x="220" y="213" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.3)">Requires risk review</text>
+                        <text x="477" y="205" font-family="system-ui,sans-serif" font-size="12" fill="rgba(255,255,255,0.2)">›</text>
+                        <line x1="163" y1="220" x2="493" y2="220" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                        <text x="179" y="236" font-family="system-ui,sans-serif" font-size="9.5" font-weight="600" fill="#3b82f6">Go to My Work Queue →</text>
+                        <!-- Right: My Work Queue -->
+                        <rect x="499" y="62" width="373" height="186" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="515" y="82" font-family="system-ui,sans-serif" font-size="10.5" font-weight="700" fill="white">My Work Queue</text>
+                        <text x="734" y="82" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.3)">4 items</text>
+                        <text x="776" y="82" font-family="system-ui,sans-serif" font-size="8.5" fill="#3b82f6" font-weight="600">View all</text>
+                        <line x1="499" y1="92" x2="872" y2="92" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                        <text x="515" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">ITEM</text>
+                        <text x="714" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">TYPE</text>
+                        <text x="766" y="108" font-family="system-ui,sans-serif" font-size="7.5" font-weight="700" fill="rgba(255,255,255,0.25)">STATUS</text>
+                        <line x1="499" y1="113" x2="872" y2="113" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <text x="515" y="129" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">MSA with Acme Corp.</text>
+                        <text x="515" y="141" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">ACME-2024-0015</text>
+                        <text x="714" y="135" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Approval</text>
+                        <rect x="763" y="124" width="80" height="14" rx="6" fill="rgba(239,68,68,0.15)"/>
+                        <text x="803" y="134" font-family="system-ui,sans-serif" font-size="7.5" fill="#f87171" text-anchor="middle">Pending my approval</text>
+                        <line x1="499" y1="148" x2="872" y2="148" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <text x="515" y="164" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">NDA with Globex Inc.</text>
+                        <text x="515" y="176" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">GLOBEX-2024-0021</text>
+                        <text x="714" y="170" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Signature</text>
+                        <rect x="763" y="159" width="72" height="14" rx="6" fill="rgba(249,115,22,0.15)"/>
+                        <text x="799" y="169" font-family="system-ui,sans-serif" font-size="7.5" fill="#fb923c" text-anchor="middle">Pending signature</text>
+                        <line x1="499" y1="183" x2="872" y2="183" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <text x="515" y="199" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">SOW — Marketing Project</text>
+                        <text x="515" y="211" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">SOW-2024-0032</text>
+                        <text x="714" y="205" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.4)">Approval</text>
+                        <rect x="763" y="194" width="66" height="14" rx="6" fill="rgba(96,165,250,0.15)"/>
+                        <text x="796" y="204" font-family="system-ui,sans-serif" font-size="7.5" fill="#60a5fa" text-anchor="middle">Pending approval</text>
+                        <!-- KPI strip (5 cards w=137 gap=6) -->
+                        <rect x="163" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="179" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#3b82f6">128</text>
+                        <text x="179" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Active contracts</text>
+                        <rect x="179" y="306" width="36" height="13" rx="4" fill="rgba(59,130,246,0.1)"/>
+                        <text x="197" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#60a5fa" text-anchor="middle">↑ Active</text>
+                        <rect x="306" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="322" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#f59e0b">17</text>
+                        <text x="322" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Pending approvals</text>
+                        <rect x="322" y="306" width="38" height="13" rx="4" fill="rgba(245,158,11,0.1)"/>
+                        <text x="341" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#fbbf24" text-anchor="middle">In review</text>
+                        <rect x="449" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="465" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#a855f7">23</text>
+                        <text x="465" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Pending signatures</text>
+                        <rect x="465" y="306" width="50" height="13" rx="4" fill="rgba(168,85,247,0.1)"/>
+                        <text x="490" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#c084fc" text-anchor="middle">Awaiting sign</text>
+                        <rect x="592" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="608" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#f97316">14</text>
+                        <text x="608" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">Expiring within 30d</text>
+                        <rect x="608" y="306" width="56" height="13" rx="4" fill="rgba(249,115,22,0.1)"/>
+                        <text x="636" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#fb923c" text-anchor="middle">⚠ Needs action</text>
+                        <rect x="735" y="256" width="137" height="72" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="751" y="283" font-family="system-ui,sans-serif" font-size="22" font-weight="900" fill="#ef4444">7</text>
+                        <text x="751" y="298" font-family="system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.4)">High-risk contracts</text>
+                        <rect x="751" y="306" width="52" height="13" rx="4" fill="rgba(239,68,68,0.1)"/>
+                        <text x="777" y="316" font-family="system-ui,sans-serif" font-size="7.5" fill="#f87171" text-anchor="middle">High / Critical</text>
+                        <!-- Bottom row (3 cards w=232 gap=6) -->
+                        <!-- Lifecycle chart -->
+                        <rect x="163" y="336" width="232" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="179" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Contract lifecycle</text>
+                        <line x1="163" y1="360" x2="395" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <circle cx="213" cy="415" r="30" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="10"/>
+                        <path d="M 213 385 A 30 30 0 1 1 197.1 440.4" fill="none" stroke="#2563EB" stroke-width="10" stroke-linecap="round"/>
+                        <path d="M 197.1 440.4 A 30 30 0 0 1 186.8 429.5" fill="none" stroke="#F59E0B" stroke-width="10" stroke-linecap="round"/>
+                        <path d="M 186.8 429.5 A 30 30 0 0 1 183.5 409.3" fill="none" stroke="#A855F7" stroke-width="10" stroke-linecap="round"/>
+                        <path d="M 183.5 409.3 A 30 30 0 0 1 205.7 385.9" fill="none" stroke="#374151" stroke-width="10" stroke-linecap="round"/>
+                        <path d="M 205.7 385.9 A 30 30 0 0 1 213 385" fill="none" stroke="#6B7280" stroke-width="10" stroke-linecap="round"/>
+                        <text x="213" y="412" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="white" text-anchor="middle">128</text>
+                        <text x="213" y="423" font-family="system-ui,sans-serif" font-size="7" fill="rgba(255,255,255,0.3)" text-anchor="middle">contracts</text>
+                        <circle cx="255" cy="374" r="3.5" fill="#2563EB"/>
+                        <text x="263" y="377" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Active</text>
+                        <text x="340" y="377" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">128</text>
+                        <circle cx="255" cy="390" r="3.5" fill="#F59E0B"/>
+                        <text x="263" y="393" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Pending Appr.</text>
+                        <text x="340" y="393" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">17</text>
+                        <circle cx="255" cy="406" r="3.5" fill="#A855F7"/>
+                        <text x="263" y="409" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Pending Sign.</text>
+                        <text x="340" y="409" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">23</text>
+                        <circle cx="255" cy="422" r="3.5" fill="#374151"/>
+                        <text x="263" y="425" font-family="system-ui,sans-serif" font-size="8" fill="rgba(255,255,255,0.5)">Draft</text>
+                        <text x="340" y="425" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="rgba(255,255,255,0.7)">38</text>
+                        <!-- Expiring soon -->
+                        <rect x="401" y="336" width="232" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="417" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Contracts expiring soon</text>
+                        <text x="590" y="354" font-family="system-ui,sans-serif" font-size="8.5" fill="#3b82f6" font-weight="600">View all</text>
+                        <line x1="401" y1="360" x2="633" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <text x="417" y="378" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">MSA with TechCorp</text>
+                        <text x="417" y="389" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 15, 2026</text>
+                        <rect x="576" y="370" width="44" height="14" rx="6" fill="rgba(249,115,22,0.15)"/>
+                        <text x="598" y="380" font-family="system-ui,sans-serif" font-size="7.5" fill="#fb923c" text-anchor="middle">23 days</text>
+                        <line x1="417" y1="397" x2="627" y2="397" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <text x="417" y="411" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">SaaS Agreement — CloudCo</text>
+                        <text x="417" y="422" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 22, 2026</text>
+                        <rect x="576" y="403" width="44" height="14" rx="6" fill="rgba(249,115,22,0.15)"/>
+                        <text x="598" y="413" font-family="system-ui,sans-serif" font-size="7.5" fill="#fb923c" text-anchor="middle">30 days</text>
+                        <line x1="417" y1="430" x2="627" y2="430" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <text x="417" y="444" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.8)">Support Agreement — NetSys</text>
+                        <text x="417" y="455" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.3)">Jun 28, 2026</text>
+                        <rect x="576" y="436" width="44" height="14" rx="6" fill="rgba(249,115,22,0.15)"/>
+                        <text x="598" y="446" font-family="system-ui,sans-serif" font-size="7.5" fill="#fb923c" text-anchor="middle">36 days</text>
+                        <!-- Recent activity -->
+                        <rect x="639" y="336" width="233" height="116" rx="8" fill="#161b22" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+                        <text x="655" y="354" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">Recent activity</text>
+                        <text x="829" y="354" font-family="system-ui,sans-serif" font-size="8.5" fill="#3b82f6" font-weight="600">View all</text>
+                        <line x1="639" y1="360" x2="872" y2="360" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                        <circle cx="657" cy="378" r="8" fill="url(#av-grad)"/>
+                        <text x="657" y="381" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
+                        <text x="671" y="375" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Contract created</text>
+                        <text x="671" y="386" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">SOW — Marketing  · 2h ago</text>
+                        <line x1="655" y1="395" x2="866" y2="395" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <circle cx="657" cy="410" r="8" fill="url(#av-grad)"/>
+                        <text x="657" y="413" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
+                        <text x="671" y="407" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Approval completed</text>
+                        <text x="671" y="418" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">NDA with FutureTech  · 5h ago</text>
+                        <line x1="655" y1="427" x2="866" y2="427" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                        <circle cx="657" cy="442" r="8" fill="url(#av-grad)"/>
+                        <text x="657" y="445" font-family="system-ui,sans-serif" font-size="7" fill="white" text-anchor="middle" font-weight="700">H</text>
+                        <text x="671" y="439" font-family="system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)">Signature completed</text>
+                        <text x="671" y="450" font-family="system-ui,sans-serif" font-size="7.5" fill="rgba(255,255,255,0.25)">DPA with SecureIT  · 1d ago</text>
+                        <!-- Bottom fade -->
+                        <rect x="155" y="408" width="725" height="72" fill="url(#lc-fade)"/>
+                    </svg>
+                </div>
+                <p class="text-center text-[11px] mt-3 landing-muted-soft">Live dashboard — contract list, trust balances, and approval queues in one view</p>
         </div>
     </section>
 
@@ -287,15 +521,60 @@
 
     <section class="landing-cta-bg py-20 px-5 sm:px-8 relative">
         <div class="landing-edge-line"></div>
-        <div class="max-w-2xl mx-auto text-center">
-            <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Ready to modernize your contract operations?</h2>
-            <p class="landing-muted-strong text-base mb-10">Join teams that trust CMS Aegis for CLM.</p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
-                    Get started free
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                </a>
-                <a href="{% url 'login' %}" class="landing-link text-sm font-medium px-4 py-3">Already have an account? <span class="icon-color-blue">Sign in</span></a>
+        <div class="max-w-4xl mx-auto">
+            <!-- Testimonials -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 testimonials-grid">
+                <div class="landing-panel rounded-xl p-5">
+                    <div class="flex items-center gap-1 mb-3">
+                        {% for i in "12345" %}<svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{% endfor %}
+                    </div>
+                    <p class="landing-muted-strong text-sm leading-relaxed mb-4">"We finally retired our Google Sheets contract tracker. The IOLTA trust account integration alone saved us two hours a week in reconciliation."</p>
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold avatar-blue">SR</div>
+                        <div>
+                            <p class="landing-title text-xs font-bold">Sarah R.</p>
+                            <p class="landing-muted-soft text-[11px]">Managing Partner, Redstone Legal</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="landing-panel rounded-xl p-5">
+                    <div class="flex items-center gap-1 mb-3">
+                        {% for i in "12345" %}<svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{% endfor %}
+                    </div>
+                    <p class="landing-muted-strong text-sm leading-relaxed mb-4">"The deadline tracking and automated reminders have made missing a renewal date basically impossible. Our clients notice the difference."</p>
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold avatar-green">JM</div>
+                        <div>
+                            <p class="landing-title text-xs font-bold">James M.</p>
+                            <p class="landing-muted-soft text-[11px]">Head of Legal Ops, Crestview Group</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="landing-panel rounded-xl p-5">
+                    <div class="flex items-center gap-1 mb-3">
+                        {% for i in "12345" %}<svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>{% endfor %}
+                    </div>
+                    <p class="landing-muted-strong text-sm leading-relaxed mb-4">"Conflict-of-interest checks used to take us 30 minutes manually. Now it's instant at intake. The audit trail has been invaluable during our bar compliance review."</p>
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold avatar-purple">PT</div>
+                        <div>
+                            <p class="landing-title text-xs font-bold">Priya T.</p>
+                            <p class="landing-muted-soft text-[11px]">General Counsel, Talmor & Associates</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- CTA -->
+            <div class="text-center">
+                <h2 class="landing-title text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">Your next contract breach starts with a missed deadline.</h2>
+                <p class="landing-muted-strong text-base mb-10">CMS Aegis closes that gap. No credit card required.</p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <a href="{% url 'register' %}" class="glow-btn w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 text-white rounded-xl font-semibold text-[15px] transition-all duration-200 btn-glow-blue-lg">
+                        Get started free
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                    </a>
+                    <a href="{% url 'login' %}" class="landing-link text-sm font-medium px-4 py-3">Already have an account? <span class="icon-color-blue">Sign in</span></a>
+                </div>
             </div>
         </div>
     </section>
@@ -309,7 +588,11 @@
                 </div>
                 <span class="landing-muted-soft text-xs font-bold">CMS Aegis</span>
             </div>
-            <p class="landing-muted-soft text-[11px]">&copy; 2026 CMS Aegis. All rights reserved.</p>
+            <div class="flex items-center gap-5">
+                <a href="{% url 'privacy' %}" class="landing-muted-soft text-[11px] hover:text-gray-400 transition-colors">Privacy Policy</a>
+                <a href="{% url 'terms' %}" class="landing-muted-soft text-[11px] hover:text-gray-400 transition-colors">Terms of Service</a>
+                <p class="landing-muted-soft text-[11px]">&copy; 2026 CMS Aegis. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 </div>

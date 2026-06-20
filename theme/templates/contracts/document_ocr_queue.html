@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block title %}OCR Queue - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .ocr-queue-row {
+    border-bottom: 1px solid var(--card-border);
+    transition: background 0.15s;
+  }
+  .ocr-queue-row:hover {
+    background: var(--sidebar-hover);
+  }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -24,9 +33,9 @@
                     <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
                 </tr>
             </thead>
-            <tbody class="divide-y">
+            <tbody>
                 {% for review in reviews %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="ocr-queue-row tbl-row">
                     <td class="px-5 py-3">
                         <a href="{% url 'contracts:document_detail' review.document.pk %}" class="c-link font-medium">{{ review.document.title }}</a>
                         <div class="text-xs c-muted">v{{ review.document.version }}</div>

@@ -1,6 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ page_title }}{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+    .timeline-list > .timeline-row {
+        border-bottom: 1px solid var(--card-border);
+    }
+    .timeline-list > .timeline-row:last-child {
+        border-bottom: none;
+    }
+    .timeline-row {
+        transition: background 0.15s;
+    }
+    .timeline-row:hover {
+        background: var(--sidebar-hover);
+    }
+</style>
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
         <div class="workspace-main-head">
@@ -21,9 +35,9 @@
             <span class="panel-title">Activity Timeline</span>
             <span class="panel-link">Latest compliance events</span>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="timeline-list">
             {% for entry in audit_feed %}
-            <div class="px-5 py-4 hover:bg-gray-50 transition-colors">
+            <div class="timeline-row px-5 py-4">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2 flex-wrap">

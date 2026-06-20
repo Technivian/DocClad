@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Clause Categories - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
 
   <div class="page-header">
@@ -27,7 +30,7 @@
       </thead>
       <tbody>
         {% for item in categories %}
-        <tr class="border-b transition-colors tbl-row hover:bg-gray-50">
+        <tr class="border-b transition-colors tbl-row">
           <td class="px-5 py-3.5">{{ item.name }}</td>
           <td class="px-5 py-3.5 tbl-td">{{ item.description|truncatewords:15|default:"-" }}</td>
           <td class="px-5 py-3.5 tbl-td">{{ item.order }}</td>

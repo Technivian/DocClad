@@ -1,23 +1,35 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.detail-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px; }
+.detail-row { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+.detail-row:last-child { border-bottom: none; }
+.detail-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.detail-value { margin-top: 4px; font-size: 14px; color: var(--text-primary); }
+.back-link { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+.back-link:hover { color: var(--text-primary); }
+.page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
+.btn-primary { display: inline-block; padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+.btn-primary:hover { background: var(--primary-hover); }
+</style>
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <a href="{% url 'contracts:legal_hold_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
+            <a href="{% url 'contracts:legal_hold_list' %}" class="back-link">&larr; Back to list</a>
+            <h1 class="page-title">{{ object }}</h1>
         </div>
-        <a href="{% url 'contracts:legal_hold_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
+        <a href="{% url 'contracts:legal_hold_update' object.pk %}" class="btn-primary">Edit</a>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Status</span><p class="mt-1 text-sm text-gray-900">{{ object.get_status_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Matter</span><p class="mt-1 text-sm text-gray-900">{{ object.matter|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Client</span><p class="mt-1 text-sm text-gray-900">{{ object.client|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Start Date</span><p class="mt-1 text-sm text-gray-900">{{ object.hold_start_date }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">End Date</span><p class="mt-1 text-sm text-gray-900">{{ object.hold_end_date|default:"Indefinite" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Reason</span><p class="mt-1 text-sm text-gray-900">{{ object.reason|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Scope</span><p class="mt-1 text-sm text-gray-900">{{ object.scope|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Issued By</span><p class="mt-1 text-sm text-gray-900">{{ object.issued_by|default:"-" }}</p></div>
+    <div class="detail-card">
+        <div class="detail-row"><span class="detail-label">Status</span><p class="detail-value">{{ object.get_status_display }}</p></div>
+        <div class="detail-row"><span class="detail-label">Matter</span><p class="detail-value">{{ object.matter|default:"-" }}</p></div>
+        <div class="detail-row"><span class="detail-label">Client</span><p class="detail-value">{{ object.client|default:"-" }}</p></div>
+        <div class="detail-row"><span class="detail-label">Start Date</span><p class="detail-value">{{ object.hold_start_date }}</p></div>
+        <div class="detail-row"><span class="detail-label">End Date</span><p class="detail-value">{{ object.hold_end_date|default:"Indefinite" }}</p></div>
+        <div class="detail-row"><span class="detail-label">Reason</span><p class="detail-value">{{ object.reason|default:"-" }}</p></div>
+        <div class="detail-row"><span class="detail-label">Scope</span><p class="detail-value">{{ object.scope|default:"-" }}</p></div>
+        <div class="detail-row"><span class="detail-label">Issued By</span><p class="detail-value">{{ object.issued_by|default:"-" }}</p></div>
     </div>
 </div>
 {% endblock %}

@@ -3,6 +3,33 @@
 {% block title %}Template Comparison{% endblock %}
 
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+    .preset-chip-active {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+    }
+    .preset-chip-inactive {
+        background: var(--surface);
+        color: var(--text-secondary);
+        border-color: var(--border);
+    }
+    .preset-chip-inactive:hover {
+        background: var(--sidebar-hover);
+    }
+    .compare-card {
+        border-radius: 8px;
+        border: 1px solid var(--card-border);
+        background: var(--card-bg);
+        padding: 16px;
+    }
+    .diff-row {
+        border-radius: 8px;
+        border: 1px solid var(--card-border);
+        background: var(--surface);
+        padding: 16px;
+    }
+</style>
 <div class="page-wrap">
     <div class="panel panel-inner">
         <div class="flex items-center justify-between gap-4 mb-6">
@@ -15,21 +42,21 @@
 
         <div class="flex flex-wrap gap-2 mb-6">
             {% for preset_key, preset in comparison_presets.items %}
-            <a href="?preset={{ preset_key }}" class="px-3 py-1.5 rounded-full text-xs font-medium border {% if comparison.preset == preset_key %}bg-blue-600 text-white border-blue-600{% else %}bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200{% endif %}">
+            <a href="?preset={{ preset_key }}" class="chip px-3 py-1.5 rounded-full text-xs font-medium border {% if comparison.preset == preset_key %}preset-chip-active{% else %}preset-chip-inactive{% endif %}">
                 {{ preset.label }}
             </a>
             {% endfor %}
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
+            <div class="compare-card">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-semibold">Left</h2>
                     <span class="badge-sm badge-gray">v{{ comparison.left_template.version }}</span>
                 </div>
                 <p class="text-sm c-muted">{{ comparison.left_template.description }}</p>
             </div>
-            <div class="rounded-lg border border-gray-200 p-4 bg-gray-50">
+            <div class="compare-card">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="font-semibold">Right</h2>
                     <span class="badge-sm badge-gray">v{{ comparison.right_template.version }}</span>
@@ -47,7 +74,7 @@
                 {% if comparison.field_diffs %}
                 <div class="space-y-2">
                     {% for field_name, left_value, right_value in comparison.field_diffs %}
-                    <div class="rounded-lg border border-gray-200 p-4 bg-white">
+                    <div class="diff-row">
                         <div class="text-sm font-medium">{{ field_name }}</div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-sm">
                             <div><span class="c-muted">Left:</span> {{ left_value }}</div>
@@ -66,7 +93,7 @@
                 {% if comparison.step_diffs %}
                 <ul class="space-y-2">
                     {% for diff in comparison.step_diffs %}
-                    <li class="rounded-lg border border-gray-200 p-4 bg-white text-sm">{{ diff }}</li>
+                    <li class="diff-row text-sm">{{ diff }}</li>
                     {% endfor %}
                 </ul>
                 {% else %}

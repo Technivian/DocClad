@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'theme',
     'contracts',
 ]
@@ -290,6 +291,17 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 INTERNAL_IPS = _csv_env('INTERNAL_IPS', default=['127.0.0.1'])
+
+
+def _show_debug_toolbar(request):
+    if request.path in ('/', '/login/', '/register/'):
+        return False
+    return request.META.get('REMOTE_ADDR') in INTERNAL_IPS
+
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': _show_debug_toolbar,
+}
 
 RATELIMIT_ENABLED = _bool_env('RATELIMIT_ENABLED', default=True)
 RATELIMIT_PATHS = ('/login/', '/register/')

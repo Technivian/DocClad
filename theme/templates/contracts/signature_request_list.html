@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Signature Workspace - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .failed-packets-list > div { border-bottom: 1px solid var(--card-border); }
+  .failed-packets-list > div:last-child { border-bottom: none; }
+  .sig-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
         <div class="workspace-main-head">
@@ -57,7 +62,7 @@
             <span class="panel-title">Failed Packets</span>
             <span class="panel-link">Requires retry or manual intervention</span>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="failed-packets-list">
             {% for packet in failed_packets %}
             <div class="px-5 py-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -100,7 +105,7 @@
             </thead>
             <tbody>
                 {% for packet in packet_rows %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row sig-row">
                     <td class="px-5 py-3">
                         <a href="{{ packet.detail_url }}" class="c-link">{{ packet.contract_title }}</a>
                     </td>

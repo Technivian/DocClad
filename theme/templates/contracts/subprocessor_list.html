@@ -29,7 +29,7 @@
       </thead>
       <tbody>
         {% for item in subprocessors %}
-        <tr class="tbl-row hover:bg-gray-50">
+        <tr class="tbl-row list-row">
           <td class="tbl-td"><a href="{% url 'contracts:subprocessor_detail' item.pk %}" class="c-link font-medium">{{ item.name }}</a></td>
           <td class="tbl-td">{{ item.service_type }}</td>
           <td class="tbl-td">{{ item.country }}</td>

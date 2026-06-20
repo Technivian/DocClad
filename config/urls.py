@@ -55,6 +55,8 @@ urlpatterns = [
     path('login/', contract_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('toggle-redesign/', contract_views.toggle_redesign, name='toggle_redesign'),
+    path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
+    path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
 ]
 
 if 'debug_toolbar' in settings.INSTALLED_APPS:

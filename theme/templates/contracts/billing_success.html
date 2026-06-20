@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Subscription activated — CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .billing-success-subtitle { color: var(--text-muted); }
+</style>
 <div class="page-wrap max-w-lg mx-auto py-16 text-center">
   <div class="text-5xl mb-4">🎉</div>
   <h1 class="page-title mb-2">You're all set!</h1>
-  <p class="text-gray-600 mb-8">Your subscription is now active. Your plan limits have been updated.</p>
+  <p class="billing-success-subtitle mb-8">Your subscription is now active. Your plan limits have been updated.</p>
   <div class="flex justify-center gap-4">
     <a href="{% url 'contracts:billing_dashboard' %}" class="btn btn-primary">View billing</a>
     <a href="{% url 'contracts:contract_list' %}" class="btn btn-ghost">Go to contracts</a>

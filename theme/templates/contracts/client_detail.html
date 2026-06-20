@@ -55,7 +55,7 @@
     </div>
     <div>
       {% for matter in matters %}
-      <a href="{% url 'contracts:matter_detail' matter.pk %}" class="flex items-center justify-between px-5 py-3 border-b hover:bg-gray-50 transition-colors">
+      <a href="{% url 'contracts:matter_detail' matter.pk %}" class="list-row">
         <div>
           <div class="text-sm font-medium">{{ matter.matter_number }} - {{ matter.title }}</div>
           <div class="text-xs c-muted">{{ matter.get_practice_area_display }}</div>

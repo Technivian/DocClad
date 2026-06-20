@@ -1,270 +1,343 @@
 {% extends "base.html" %}
-{% block title %}{{ contract.title }} - CMS Aegis{% endblock %}
+{% block title %}{{ contract.title }} – CMS Aegis{% endblock %}
 {% block content %}
 <div class="page-wrap reveal-stagger">
-  <div class="workspace-main hero-shell mb-6">
-    <div class="workspace-main-head">
-      <div>
-        <h1 class="workspace-title">{{ contract.title }}</h1>
-        <p class="workspace-subtitle">Contract flow <span class="sr-only">Case Flow</span>&middot; {{ contract.get_contract_type_display }} &middot; {{ contract.get_status_display }} {% if contract.client %}&middot; {{ contract.client.name }}{% endif %}</p>
-        <div class="workspace-kicker-row">
-          <span class="workspace-kicker"><strong>{{ contract.get_status_display }}</strong> current status</span>
-          <span class="workspace-kicker"><strong>{{ contract.get_contract_type_display }}</strong> contract type</span>
-          {% if contract.end_date %}<span class="workspace-kicker"><strong>{{ contract.end_date|date:"M d, Y" }}</strong> target end date</span>{% endif %}
-        </div>
-      </div>
-      <div class="workspace-tools">
-        <a href="{% url 'contracts:contract_update' contract.pk %}" class="inline-flex items-center px-3 py-2 text-sm rounded-lg border btn-ghost">Edit</a>
-      </div>
-    </div>
-    <div class="workspace-toolbar">
-      <div class="summary-grid w-full">
-        <div class="summary-card">
-          <div class="summary-label">Lifecycle state</div>
-          <div class="summary-value">{{ lifecycle_guidance.state }}</div>
-          <div class="summary-meta">{{ lifecycle_guidance.next_stage }}</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-label">Counterparty</div>
-          <div class="summary-value">{{ contract.counterparty|default:"—" }}</div>
-          <div class="summary-meta">{% if contract.client %}{{ contract.client.name }}{% else %}No linked client{% endif %}</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-label">Commercial value</div>
-          <div class="summary-value">{% if contract.value %}${{ contract.value|floatformat:2 }}{% else %}—{% endif %}</div>
-          <div class="summary-meta">{% if contract.renewal_date %}Renewal {{ contract.renewal_date|date:"M d, Y" }}{% else %}No renewal date set{% endif %}</div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="panel mb-6">
-    <div class="panel-inner">
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="badge-sm {% if contract.case_phase == 'plaatsing' %}badge-blue{% else %}badge-gray{% endif %}">Draft</span>
-        <span class="c-muted">→</span>
-        <span class="badge-sm {% if contract.case_phase == 'beoordeling' %}badge-yellow{% else %}badge-gray{% endif %}">Review</span>
-        <span class="c-muted">→</span>
-        <span class="badge-sm {% if contract.case_phase == 'matching' %}badge-purple{% else %}badge-gray{% endif %}">Approval</span>
-        <span class="c-muted">→</span>
-        <span class="badge-sm {% if contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Signature</span>
-        <span class="c-muted">→</span>
-        <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Active</span>
-        <span class="c-muted">→</span>
-        <span class="badge-sm {% if contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">Renewal / Archive</span>
+  {# ── Back link ────────────────────────────────────────────── #}
+  <a href="{% url 'contracts:contract_list' %}" class="arch-back">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Contracts
+  </a>
+
+  {# ── Page header ──────────────────────────────────────────── #}
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">{{ contract.title }}</h1>
+        <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">
+          {{ contract.get_status_display }}
+        </span>
       </div>
+      <div class="arch-meta-strip">
+        <span class="arch-meta-item">{{ contract.get_contract_type_display }}</span>
+        {% if contract.counterparty %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">{{ contract.counterparty }}</span>
+        {% endif %}
+        {% if contract.client %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">{{ contract.client.name }}</span>
+        {% endif %}
+        {% if contract.value %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">${{ contract.value|floatformat:2 }}</span>
+        {% endif %}
+        {% if contract.end_date %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">Ends {{ contract.end_date|date:"M d, Y" }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>
+      <a href="{% url 'contracts:document_create' %}" class="btn-cta">
+        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        Add document
+      </a>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-    <div class="xl:col-span-3 space-y-6">
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Record Summary</h3>
-        </div>
-        <div class="panel-inner detail-stack">
-          <div class="detail-row"><span class="detail-label">Status</span><span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span></div>
-          <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">{{ contract.get_contract_type_display }}</span></div>
-          <div class="detail-row"><span class="detail-label">Counterparty</span><span class="detail-value">{{ contract.counterparty|default:"—" }}</span></div>
-          {% if contract.value %}<div class="detail-row"><span class="detail-label">Value</span><span class="detail-value">${{ contract.value|floatformat:2 }}</span></div>{% endif %}
-          {% if contract.start_date %}<div class="detail-row"><span class="detail-label">Start</span><span class="detail-value">{{ contract.start_date|date:"M d, Y" }}</span></div>{% endif %}
-          {% if contract.end_date %}<div class="detail-row"><span class="detail-label">End</span><span class="detail-value">{{ contract.end_date|date:"M d, Y" }}</span></div>{% endif %}
-          {% if contract.renewal_date %}<div class="detail-row"><span class="detail-label">Renewal</span><span class="detail-value">{{ contract.renewal_date|date:"M d, Y" }}</span></div>{% endif %}
-        </div>
-      </div>
+  {# ── Tab navigation ───────────────────────────────────────── #}
+  <div class="arch-tabs" role="tablist">
+    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
+  </div>
 
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Lifecycle Guidance</h3>
-        </div>
-        <div class="panel-inner detail-stack">
-          <div class="detail-row">
-            <span class="detail-label">State</span>
-            <span class="badge-sm {% if lifecycle_guidance.severity == 'high' %}badge-red{% elif lifecycle_guidance.severity == 'medium' %}badge-yellow{% else %}badge-green{% endif %}">{{ lifecycle_guidance.state }}</span>
-          </div>
-          <div>
-            <span class="detail-label">Next step</span>
-            <div class="mt-1 c-primary text-sm">{{ lifecycle_guidance.action }}</div>
-          </div>
-          <div>
-            <span class="detail-label">Target stage</span>
-            <div class="mt-1 c-primary text-sm">{{ lifecycle_guidance.next_stage }}</div>
-          </div>
-          {% if lifecycle_guidance.detail %}<div class="text-xs c-muted">{{ lifecycle_guidance.detail }}</div>{% endif %}
-          {% if lifecycle_guidance.signals %}
-          <div class="signal-list pt-1">
-            {% for signal in lifecycle_guidance.signals %}
-            <div class="signal-item">{{ signal }}</div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-      </div>
+  {# ── Content grid ─────────────────────────────────────────── #}
+  <div class="arch-detail-grid">
 
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Documents &amp; Versions</h3>
-        </div>
-        {% for doc in documents %}
-        <a href="{% url 'contracts:document_detail' doc.pk %}" class="list-row">
-          <div>
-            <div class="text-sm font-medium">{{ doc.title }}</div>
-            <div class="text-xs c-muted mt-1">Current attached version</div>
+    {# Main content — tabs #}
+    <div>
+
+      {# ── OVERVIEW ─────────────────────────────────────────── #}
+      <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel">
+        <div class="space-y-6">
+
+          {# Lifecycle stage strip #}
+          <div class="card-l2">
+            <div class="arch-section-label">Lifecycle</div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="badge-sm {% if contract.case_phase == 'plaatsing' %}badge-blue{% else %}badge-gray{% endif %}">Draft</span>
+              <span class="c-dim text-xs">→</span>
+              <span class="badge-sm {% if contract.case_phase == 'beoordeling' %}badge-yellow{% else %}badge-gray{% endif %}">Review</span>
+              <span class="c-dim text-xs">→</span>
+              <span class="badge-sm {% if contract.case_phase == 'matching' %}badge-purple{% else %}badge-gray{% endif %}">Approval</span>
+              <span class="c-dim text-xs">→</span>
+              <span class="badge-sm {% if contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Signature</span>
+              <span class="c-dim text-xs">→</span>
+              <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">Active</span>
+              <span class="c-dim text-xs">→</span>
+              <span class="badge-sm {% if contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">Archive</span>
+            </div>
+            {% if lifecycle_guidance %}
+            <div class="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap gap-4 text-sm">
+              <div>
+                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next step</span>
+                <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
+              </div>
+              <div>
+                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Target stage</span>
+                <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage }}</div>
+              </div>
+            </div>
+            {% endif %}
           </div>
-          <span class="text-xs c-muted">v{{ doc.version }}</span>
-        </a>
-        {% empty %}
-        <div class="panel-inner text-center c-muted text-sm">No documents attached.</div>
-        {% endfor %}
-      </div>
 
-      {% if deadlines %}
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Key Dates</h3>
-        </div>
-        {% for dl in deadlines %}
-        <div class="list-row">
-          <div class="text-sm">{{ dl.title }}</div>
-          <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
+          {# Primary draft #}
+          <div class="card-l1">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-700 c-primary">Primary Draft</h2>
+              <span class="badge-sm badge-blue">Source of truth</span>
+            </div>
+            {% if contract.content %}
+            <div class="content-surface">
+              <div class="content-prose">{{ contract.content }}</div>
+            </div>
+            {% else %}
+            <div class="empty-state text-sm c-muted">No contract body has been added yet.</div>
+            {% endif %}
+          </div>
 
-    <div class="xl:col-span-6 space-y-6">
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Primary Draft</h3>
-          <span class="badge-sm badge-blue">Source of truth</span>
-        </div>
-        <div class="panel-inner">
-          {% if contract.content %}
-          <div class="content-surface">
-            <div class="content-prose">{{ contract.content }}</div>
+          {# Negotiation notes #}
+          {% if negotiation_threads %}
+          <div class="card-l1">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-700 c-primary">Negotiation Notes</h2>
+              <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-quiet text-xs px-2.5 py-1.5">Add note</a>
+            </div>
+            <div class="divide-y divide-[var(--border)]">
+              {% for note in negotiation_threads %}
+              <div class="py-4 {% if forloop.first %}pt-0{% endif %}">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                  <div class="text-sm font-medium c-primary">{{ note.title }}</div>
+                  <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
+                </div>
+                <div class="text-sm c-secondary">{{ note.content|truncatechars:220 }}</div>
+                <div class="text-xs c-muted mt-2">{{ note.created_by.get_full_name|default:"—" }}</div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
           {% else %}
-          <div class="empty-state">No contract body has been added yet.</div>
+          <div class="card-l2 text-center">
+            <p class="text-sm c-muted">No negotiation notes yet.</p>
+            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft mt-3 text-sm">Add first note</a>
+          </div>
           {% endif %}
+
+          {# Quick actions #}
+          <div class="card-l2">
+            <div class="arch-section-label">Quick actions</div>
+            <div class="grid grid-cols-2 gap-2">
+              <a href="{% url 'contracts:approval_request_list' %}" class="action-link text-sm"><span>Approvals queue</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+              <a href="{% url 'contracts:signature_request_list' %}" class="action-link text-sm"><span>Signature requests</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+              <a href="{% url 'contracts:risk_log_list' %}" class="action-link text-sm"><span>Risk register</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+              <a href="{% url 'contracts:deadline_create' %}" class="action-link text-sm"><span>Add deadline</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+            </div>
+          </div>
+
+          {# AI assistant — collapsed by default #}
+          <details class="card-l2">
+            <summary class="cursor-pointer list-none flex items-center gap-2 font-medium text-sm c-primary select-none">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+              AI contract review
+              <span class="ml-auto text-xs font-normal c-muted">Closed-server, stays in your tenant</span>
+            </summary>
+            <div class="mt-4 space-y-3">
+              <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights…"></textarea>
+              <div class="flex items-center gap-3">
+                <button id="ai-assistant-submit" type="button" class="btn-soft text-sm">Analyze</button>
+                <span id="ai-assistant-status" class="text-xs c-muted"></span>
+              </div>
+              <pre id="ai-assistant-output" class="hidden pre-output c-muted text-xs" aria-live="polite" aria-label="AI assistant response"></pre>
+            </div>
+          </details>
+
+        </div>
+      </div>{# /tab-overview #}
+
+      {# ── DOCUMENTS ────────────────────────────────────────── #}
+      <div id="tab-documents" class="arch-tab-panel" role="tabpanel">
+        <div class="card-l1">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-700 c-primary">Documents &amp; Versions</h2>
+            <a href="{% url 'contracts:document_create' %}" class="btn-cta text-sm">Attach document</a>
+          </div>
+          {% if documents %}
+          <div class="divide-y divide-[var(--border)]">
+            {% for doc in documents %}
+            <a href="{% url 'contracts:document_detail' doc.pk %}" class="list-row">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--primary-subtle)">
+                  <svg class="w-4 h-4 c-primary" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-sm font-medium c-primary">{{ doc.title }}</div>
+                  <div class="text-xs c-muted mt-0.5">Version {{ doc.version }}</div>
+                </div>
+              </div>
+              <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="py-12 text-center">
+            <p class="text-sm c-muted mb-3">No documents attached yet.</p>
+            <a href="{% url 'contracts:document_create' %}" class="btn-soft text-sm">Attach first document</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>{# /tab-documents #}
+
+      {# ── WORKFLOW ─────────────────────────────────────────── #}
+      <div id="tab-workflow" class="arch-tab-panel" role="tabpanel">
+        <div class="card-l1">
+          <h2 class="text-base font-700 c-primary mb-4">Workflow &amp; Approvals</h2>
+          <div class="space-y-3">
+            <a href="{% url 'contracts:approval_request_list' %}" class="action-link"><span>View approval queue</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+            <a href="{% url 'contracts:signature_request_list' %}" class="action-link"><span>View signature requests</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+            <a href="{% url 'contracts:workflow_dashboard' %}" class="action-link"><span>Workflow board</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          </div>
+        </div>
+      </div>{# /tab-workflow #}
+
+      {# ── ACTIVITY ─────────────────────────────────────────── #}
+      <div id="tab-activity" class="arch-tab-panel" role="tabpanel">
+        <div class="card-l1">
+          <h2 class="text-base font-700 c-primary mb-4">Activity</h2>
+          <a href="{% url 'contracts:audit_log_list' %}" class="action-link"><span>View full audit log</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+        </div>
+      </div>{# /tab-activity #}
+
+    </div>{# /main content #}
+
+    {# ── Context rail ─────────────────────────────────────────── #}
+    <div class="arch-context-rail">
+
+      {# Record summary #}
+      <div class="card-l2">
+        <div class="arch-section-label">Record summary</div>
+        <div class="detail-stack">
+          <div class="detail-row">
+            <span class="detail-label">Status</span>
+            <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-blue{% elif contract.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">{{ contract.get_status_display }}</span>
+          </div>
+          <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">{{ contract.get_contract_type_display }}</span></div>
+          <div class="detail-row"><span class="detail-label">Counterparty</span><span class="detail-value">{{ contract.counterparty|default:"—" }}</span></div>
+          {% if contract.value %}
+          <div class="detail-row"><span class="detail-label">Value</span><span class="detail-value">${{ contract.value|floatformat:2 }}</span></div>
+          {% endif %}
+          {% if contract.client %}
+          <div class="detail-row"><span class="detail-label">Client</span><a href="{% url 'contracts:client_detail' contract.client.pk %}" class="detail-value c-link">{{ contract.client.name }}</a></div>
+          {% endif %}
+          <div class="detail-row"><span class="detail-label">Created by</span><span class="detail-value">{{ contract.created_by.get_full_name|default:"System" }}</span></div>
+          <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">{{ contract.created_at|date:"M d, Y" }}</span></div>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-head">
-          <h2 class="panel-title">Negotiation Stream</h2>
-        </div>
-        <div class="divide-y divide-gray-100">
-          {% for note in negotiation_threads %}
-          <div class="px-5 py-4">
-            <div class="flex items-center justify-between gap-3">
-              <div class="text-sm font-medium">{{ note.title }}</div>
-              <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
-            </div>
-            <div class="text-sm c-muted mt-2">{{ note.content|truncatechars:220 }}</div>
-            <div class="text-xs c-muted mt-2">{{ note.created_by.get_full_name|default:"—" }}</div>
+      {# Key dates #}
+      {% if contract.start_date or contract.end_date or contract.renewal_date or deadlines %}
+      <div class="card-l2">
+        <div class="arch-section-label">Key dates</div>
+        <div class="detail-stack">
+          {% if contract.start_date %}
+          <div class="detail-row"><span class="detail-label">Start</span><span class="detail-value">{{ contract.start_date|date:"M d, Y" }}</span></div>
+          {% endif %}
+          {% if contract.end_date %}
+          <div class="detail-row"><span class="detail-label">End</span><span class="detail-value">{{ contract.end_date|date:"M d, Y" }}</span></div>
+          {% endif %}
+          {% if contract.renewal_date %}
+          <div class="detail-row"><span class="detail-label">Renewal</span><span class="detail-value">{{ contract.renewal_date|date:"M d, Y" }}</span></div>
+          {% endif %}
+          {% for dl in deadlines %}
+          <div class="detail-row">
+            <span class="detail-label">{{ dl.title }}</span>
+            <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
           </div>
-          {% empty %}
-          <div class="px-5 py-8 text-center c-muted text-sm">No negotiation notes.</div>
           {% endfor %}
         </div>
       </div>
-    </div>
+      {% endif %}
 
-    <div class="xl:col-span-3 space-y-6">
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Action Cockpit</h3>
-        </div>
-        <div class="panel-inner action-list text-sm">
-          <a href="{% url 'contracts:approval_request_list' %}" class="action-link"><span>Approvals queue</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:signature_request_list' %}" class="action-link"><span>Signature requests</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:risk_log_list' %}" class="action-link"><span>Risk register</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:audit_log_list' %}" class="action-link"><span>Audit events</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:document_create' %}" class="action-link"><span>Attach document</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:deadline_create' %}" class="action-link"><span>Add deadline</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="action-link"><span>Add negotiation note</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-          <button id="ai-assistant-trigger" type="button" class="action-link text-left"><span>Run internal AI review</span><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
-        </div>
+      {# Related matter #}
+      {% if related_case_matter %}
+      <div class="card-l2">
+        <div class="arch-section-label">Related matter</div>
+        <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="text-sm c-link font-medium hover:underline">{{ related_case_matter.title }}</a>
       </div>
+      {% endif %}
 
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Record Context</h3>
-        </div>
-        <div class="panel-inner detail-stack text-sm">
-          {% if contract.client %}<div><span class="detail-label">Client</span><div class="mt-1"><a href="{% url 'contracts:client_detail' contract.client.pk %}" class="c-link">{{ contract.client.name }}</a></div></div>{% endif %}
-          {% if related_case_matter %}<div><span class="detail-label">Matter</span><div class="mt-1"><a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="c-link">{{ related_case_matter.title }}</a></div></div>{% endif %}
-          <div><span class="detail-label">Created by</span><div class="mt-1 c-primary">{{ contract.created_by.get_full_name|default:"System" }}</div></div>
-          <div><span class="detail-label">Created</span><div class="mt-1 c-primary">{{ contract.created_at|date:"M d, Y" }}</div></div>
-        </div>
-      </div>
+    </div>{# /arch-context-rail #}
 
-      <div class="panel">
-        <div class="panel-head">
-          <h3 class="panel-title">Internal AI Assistant</h3>
-        </div>
-        <div class="panel-inner">
-          <p class="text-sm c-muted mb-3">Closed-server assistant. Data stays in your tenant context and is processed by internal rules.</p>
-          <div class="flex flex-col gap-3">
-            <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="4" placeholder="Ask for risk, renewal, and action insights for this case..."></textarea>
-            <div class="flex items-center gap-3">
-              <button id="ai-assistant-submit" type="button"
-                      class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">Analyze</button>
-              <span id="ai-assistant-status" class="text-xs c-muted"></span>
-            </div>
-            <pre id="ai-assistant-output" class="hidden pre-output c-muted" aria-live="polite" aria-label="AI assistant response"></pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+  </div>{# /arch-detail-grid #}
+</div>{# /page-wrap #}
 
+{# ── Tab switcher JS ──────────────────────────────────────── #}
+<script nonce="{{ csp_nonce }}">
+(function () {
+    const tabs   = document.querySelectorAll('.arch-tab[data-tab]');
+    const panels = document.querySelectorAll('.arch-tab-panel');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t   => { t.classList.remove('tab-active'); t.setAttribute('aria-selected', 'false'); });
+            panels.forEach(p => p.classList.remove('panel-active'));
+            tab.classList.add('tab-active');
+            tab.setAttribute('aria-selected', 'true');
+            const target = document.getElementById('tab-' + tab.dataset.tab);
+            if (target) target.classList.add('panel-active');
+        });
+    });
+})();
+</script>
+
+{# ── AI assistant JS ─────────────────────────────────────── #}
 <script nonce="{{ csp_nonce }}">
 (() => {
     const prompt = document.getElementById('ai-assistant-prompt');
     const submit = document.getElementById('ai-assistant-submit');
-    const trigger = document.getElementById('ai-assistant-trigger');
     const status = document.getElementById('ai-assistant-status');
     const output = document.getElementById('ai-assistant-output');
-    if (!prompt || !submit || !status || !output) {
-        return;
-    }
-
-    const runAssistant = async () => {
-        status.textContent = 'Analyzing...';
+    if (!prompt || !submit || !status || !output) return;
+    submit.addEventListener('click', async () => {
+        status.textContent = 'Analyzing…';
         submit.disabled = true;
         try {
             const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                 body: JSON.stringify({ prompt: prompt.value })
             });
-            if (!response.ok) {
-                throw new Error('Request failed');
-            }
+            if (!response.ok) throw new Error('Request failed');
             const data = await response.json();
             output.textContent = JSON.stringify(data.response, null, 2);
             output.classList.remove('hidden');
             status.textContent = 'Done';
-        } catch (err) {
+        } catch {
             status.textContent = 'Unable to run assistant right now.';
         } finally {
             submit.disabled = false;
         }
-    };
-
-    submit.addEventListener('click', runAssistant);
-    if (trigger) {
-        trigger.addEventListener('click', () => {
-            prompt.focus();
-            runAssistant();
-        });
-    }
+    });
 })();
 </script>
 {% endblock %}

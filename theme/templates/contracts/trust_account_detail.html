@@ -1,45 +1,60 @@
 {% extends "base.html" %}
 {% block title %}{{ account.account_name }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .ta-heading { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+  .ta-subtext  { font-size: 0.875rem; color: var(--text-secondary); }
+  .ta-balance-label { font-size: 0.875rem; color: var(--text-secondary); }
+  .ta-balance-pos   { font-size: 1.5rem; font-weight: 700; color: #4ADE80; }
+  .ta-balance-neu   { font-size: 1.5rem; font-weight: 700; color: var(--text-secondary); }
+  .ta-form-label    { display: block; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; }
+  .ta-form-title    { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+  .ta-txn-desc      { font-size: 0.875rem; color: var(--text-primary); }
+  .ta-txn-meta      { font-size: 0.75rem; color: var(--text-secondary); }
+  .ta-amount-pos    { font-size: 0.875rem; font-weight: 500; color: #4ADE80; }
+  .ta-amount-neg    { font-size: 0.875rem; font-weight: 500; color: #F87171; }
+  .ta-btn           { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 0.875rem; border-radius: 8px; border: none; cursor: pointer; width: 100%; transition: background 0.15s; }
+  .ta-btn:hover     { background: var(--primary-hover); }
+</style>
 <div class="max-w-3xl">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ account.account_name }}</h1>
-            <p class="text-sm text-gray-500">{{ account.client.name }} {% if account.matter %}&middot; {{ account.matter.matter_number }}{% endif %}</p>
+            <h1 class="ta-heading">{{ account.account_name }}</h1>
+            <p class="ta-subtext">{{ account.client.name }} {% if account.matter %}&middot; {{ account.matter.matter_number }}{% endif %}</p>
         </div>
         <div class="text-right">
-            <div class="text-sm text-gray-500">Current Balance</div>
-            <div class="text-2xl font-bold {% if account.balance > 0 %}text-green-600{% else %}text-gray-600{% endif %}">${{ account.balance|floatformat:2 }}</div>
+            <div class="ta-balance-label">Current Balance</div>
+            <div class="{% if account.balance > 0 %}ta-balance-pos{% else %}ta-balance-neu{% endif %}">${{ account.balance|floatformat:2 }}</div>
         </div>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 mb-6 p-5">
-        <h3 class="font-semibold text-gray-900 mb-3">Record Transaction</h3>
+    <div class="panel mb-6 p-5">
+        <h3 class="ta-form-title">Record Transaction</h3>
         <form method="post" action="{% url 'contracts:add_trust_transaction' account.pk %}" class="grid grid-cols-1 md:grid-cols-4 gap-3">
             {% csrf_token %}
             {% for field in transaction_form %}
             <div>
-                <label class="block text-xs text-gray-500 mb-1">{{ field.label }}</label>
+                <label class="ta-form-label">{{ field.label }}</label>
                 {{ field }}
             </div>
             {% endfor %}
-            <div class="flex items-end"><button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 w-full">Record</button></div>
+            <div class="flex items-end"><button type="submit" class="ta-btn">Record</button></div>
         </form>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100"><h2 class="font-semibold text-gray-900">Transaction History</h2></div>
-        <div class="divide-y divide-gray-100">
+    <div class="panel">
+        <div class="panel-head"><h2 class="panel-title">Transaction History</h2></div>
+        <div>
             {% for txn in transactions %}
-            <div class="flex items-center justify-between px-5 py-3">
+            <div class="list-row">
                 <div>
-                    <div class="text-sm text-gray-900">{{ txn.description }}</div>
-                    <div class="text-xs text-gray-500">{{ txn.created_at|date:"M d, Y H:i" }} &middot; {{ txn.get_transaction_type_display }} {% if txn.reference_number %}&middot; Ref: {{ txn.reference_number }}{% endif %}</div>
+                    <div class="ta-txn-desc">{{ txn.description }}</div>
+                    <div class="ta-txn-meta">{{ txn.created_at|date:"M d, Y H:i" }} &middot; {{ txn.get_transaction_type_display }} {% if txn.reference_number %}&middot; Ref: {{ txn.reference_number }}{% endif %}</div>
                 </div>
-                <span class="text-sm font-medium {% if txn.transaction_type == 'DEPOSIT' %}text-green-600{% else %}text-red-600{% endif %}">
+                <span class="{% if txn.transaction_type == 'DEPOSIT' %}ta-amount-pos{% else %}ta-amount-neg{% endif %}">
                     {% if txn.transaction_type == 'DEPOSIT' %}+{% else %}-{% endif %}${{ txn.amount|floatformat:2 }}
                 </span>
             </div>
             {% empty %}
-            <div class="px-5 py-8 text-center text-gray-400 text-sm">No transactions.</div>
+            <div class="empty-state">No transactions.</div>
             {% endfor %}
         </div>
     </div>

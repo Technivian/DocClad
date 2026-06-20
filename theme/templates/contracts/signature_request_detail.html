@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.dd-value { color: var(--text-primary); margin-top: 4px; }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -34,19 +37,19 @@
     </div>
 
     {% if needs_follow_up %}
-    <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    <div class="alert-banner alert-banner-yellow mb-4">
         Follow-up recommended. This request has been waiting longer than {{ follow_up_threshold_days }} days since it was sent.
     </div>
     {% endif %}
 
     {% if routing_blockers %}
-    <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+    <div class="alert-banner alert-banner-blue mb-4">
         {% if routing_blockers|length == 1 %}
             Routing is waiting on one earlier signer step to complete before this request becomes active.
         {% else %}
             Routing is waiting on {{ routing_blockers|length }} earlier signer steps to complete before this request becomes active.
         {% endif %}
-        <div class="mt-2 text-xs text-blue-800">
+        <div class="mt-2 text-xs">
             {% for blocker in routing_blockers %}
                 <div>{{ blocker.order }}. {{ blocker.signer_name }} · {{ blocker.get_status_display }}</div>
             {% endfor %}
@@ -164,15 +167,15 @@
                     <dl class="space-y-3 text-sm">
                         <div>
                             <dt class="text-xs font-semibold c-muted uppercase tracking-wide">Document</dt>
-                            <dd class="text-gray-900 mt-1">{{ object.document|default:"-" }}</dd>
+                            <dd class="dd-value">{{ object.document|default:"-" }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-semibold c-muted uppercase tracking-wide">Created By</dt>
-                            <dd class="text-gray-900 mt-1">{{ object.created_by|default:"-" }}</dd>
+                            <dd class="dd-value">{{ object.created_by|default:"-" }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-semibold c-muted uppercase tracking-wide">Created At</dt>
-                            <dd class="text-gray-900 mt-1">{{ object.created_at }}</dd>
+                            <dd class="dd-value">{{ object.created_at }}</dd>
                         </div>
                     </dl>
                 </div>

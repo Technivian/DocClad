@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Legal Holds - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .lh-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -29,7 +32,7 @@
             </thead>
             <tbody class="divide-y">
                 {% for item in holds %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row lh-row">
                     <td class="px-5 py-3"><a href="{% url 'contracts:legal_hold_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
                     <td class="px-5 py-3 tbl-td">{{ item.matter|default:"—" }}</td>
                     <td class="px-5 py-3">

@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Billing &amp; Plan — CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .kpi-card-overage { border-color: rgba(239,68,68,0.5); }
+  .kpi-sub-over { color: #F87171; font-size: 12px; margin-top: 4px; }
+  .kpi-val-muted { font-size: 14px; color: var(--text-secondary); }
+  .plan-card { border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); }
+  .plan-card-active { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); background: var(--primary-subtle); }
+  .plan-name { font-weight: 600; font-size: 16px; color: var(--text-primary); }
+  .plan-price { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-top: 4px; }
+  .plan-price-unit { font-size: 14px; font-weight: 400; color: var(--text-secondary); }
+  .plan-features { font-size: 13px; color: var(--text-secondary); list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .plan-current-badge { display: block; text-align: center; font-size: 13px; font-weight: 500; color: var(--primary-light); background: var(--primary-subtle); border-radius: 8px; padding: 8px; }
+  .plan-downgrade { display: block; text-align: center; font-size: 13px; color: var(--text-muted); padding: 8px; }
+  .plan-btn { display: block; width: 100%; text-align: center; font-size: 13px; font-weight: 500; color: #fff; background: var(--primary); border-radius: 8px; padding: 8px 12px; border: none; cursor: pointer; text-decoration: none; transition: background 0.15s; box-sizing: border-box; }
+  .plan-btn:hover { background: var(--primary-hover); }
+  .sub-label { color: var(--text-secondary); }
+  .sub-value { font-weight: 500; color: var(--text-primary); }
+  .sub-mono { font-family: monospace; font-size: 12px; color: var(--text-secondary); }
+  .progress-fill-blue { background: var(--primary); }
+  .progress-fill-red { background: #EF4444; }
+</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -8,7 +28,7 @@
       <p class="page-subtitle">
         {{ usage.plan_name }} plan &nbsp;·&nbsp; {{ usage.period_start }} – {{ usage.period_end }}
         {% if current_sub and current_sub.subscription_status != 'free' %}
-          &nbsp;·&nbsp; <span class="badge badge-{% if current_sub.subscription_status == 'active' %}success{% elif current_sub.subscription_status == 'past_due' %}warning{% else %}neutral{% endif %}">{{ current_sub.subscription_status|title }}</span>
+          &nbsp;·&nbsp; <span class="badge-sm {% if current_sub.subscription_status == 'active' %}badge-green{% elif current_sub.subscription_status == 'past_due' %}badge-yellow{% else %}badge-gray{% endif %}">{{ current_sub.subscription_status|title }}</span>
         {% endif %}
       </p>
     </div>
@@ -32,48 +52,46 @@
 
   {# Usage meters #}
   <div class="dash-grid dash-grid-3 mb-6">
-    <div class="kpi-card{% if usage.overage_users %} border-red-400{% endif %}">
+    <div class="kpi-card{% if usage.overage_users %} kpi-card-overage{% endif %}">
       <div class="kpi-label">Team members</div>
-      <div class="kpi-value">{{ usage.user_count }} <span class="text-sm text-gray-400">/ {{ usage.max_users }}</span></div>
+      <div class="kpi-value">{{ usage.user_count }} <span class="kpi-val-muted">/ {{ usage.max_users }}</span></div>
       {% if usage.max_users > 0 %}
-        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-          <div class="h-1.5 rounded-full {% if usage.overage_users %}bg-red-500{% else %}bg-indigo-500{% endif %}"
-               style="width: {{ usage.user_count|floatformat:0 }}00%; max-width: 100%">
+        <div class="progress-bar-bg mt-2">
+          <div class="progress-bar-fill {% if usage.overage_users %}progress-fill-red{% else %}progress-fill-blue{% endif %}"
+               data-width="{{ usage.user_count|floatformat:0 }}%">
           </div>
         </div>
       {% endif %}
-      {% if usage.overage_users %}<div class="kpi-sub text-red-500">Over limit</div>{% endif %}
+      {% if usage.overage_users %}<div class="kpi-sub-over">Over limit</div>{% endif %}
     </div>
 
-    <div class="kpi-card{% if usage.overage_contracts %} border-red-400{% endif %}">
+    <div class="kpi-card{% if usage.overage_contracts %} kpi-card-overage{% endif %}">
       <div class="kpi-label">Contracts</div>
-      <div class="kpi-value">{{ usage.contract_count }} <span class="text-sm text-gray-400">/ {{ usage.max_contracts }}</span></div>
+      <div class="kpi-value">{{ usage.contract_count }} <span class="kpi-val-muted">/ {{ usage.max_contracts }}</span></div>
       {% if usage.max_contracts > 0 %}
         {% with pct=usage.contract_count %}
-        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-          <div class="h-1.5 rounded-full {% if usage.overage_contracts %}bg-red-500{% else %}bg-indigo-500{% endif %}"
-               style="width: min({{ pct }}%, 100%)">
+        <div class="progress-bar-bg mt-2">
+          <div class="progress-bar-fill {% if usage.overage_contracts %}progress-fill-red{% else %}progress-fill-blue{% endif %}"
+               data-width="{{ pct }}%">
           </div>
         </div>
         {% endwith %}
       {% endif %}
-      {% if usage.overage_contracts %}<div class="kpi-sub text-red-500">Over limit</div>{% endif %}
+      {% if usage.overage_contracts %}<div class="kpi-sub-over">Over limit</div>{% endif %}
     </div>
 
-    <div class="kpi-card{% if usage.overage_api_calls %} border-red-400{% endif %}">
+    <div class="kpi-card{% if usage.overage_api_calls %} kpi-card-overage{% endif %}">
       <div class="kpi-label">API calls this month</div>
-      <div class="kpi-value">{{ usage.api_call_count }} <span class="text-sm text-gray-400">/ {{ usage.max_api_calls_per_month }}</span></div>
-      {% if usage.overage_api_calls %}<div class="kpi-sub text-red-500">Over limit</div>{% endif %}
+      <div class="kpi-value">{{ usage.api_call_count }} <span class="kpi-val-muted">/ {{ usage.max_api_calls_per_month }}</span></div>
+      {% if usage.overage_api_calls %}<div class="kpi-sub-over">Over limit</div>{% endif %}
     </div>
   </div>
 
   {# Overage banner #}
   {% if usage.any_overage %}
-  <div class="panel mb-6 border-l-4 border-amber-400 bg-amber-50">
-    <div class="panel-inner py-3 px-4 flex items-center gap-3">
-      <span class="text-amber-600 font-semibold">You have exceeded your plan limits.</span>
-      <span class="text-sm text-amber-700">Upgrade to avoid service interruption.</span>
-    </div>
+  <div class="alert-banner alert-banner-yellow mb-6">
+    <span class="font-semibold">You have exceeded your plan limits.</span>
+    <span>Upgrade to avoid service interruption.</span>
   </div>
   {% endif %}
 
@@ -85,47 +103,41 @@
     <div class="panel-inner">
       <div class="dash-grid dash-grid-{% if plans|length >= 4 %}4{% else %}3{% endif %} gap-4">
         {% for plan in plans %}
-        <div class="border rounded-xl p-5 flex flex-col gap-3 {% if usage.plan_name == plan.name %}ring-2 ring-indigo-500 bg-indigo-50{% else %}bg-white{% endif %}">
+        <div class="plan-card {% if usage.plan_name == plan.name %}plan-card-active{% endif %}">
           <div>
-            <div class="font-semibold text-base">{{ plan.name|title }}</div>
-            <div class="text-2xl font-bold mt-1">
+            <div class="plan-name">{{ plan.name|title }}</div>
+            <div class="plan-price">
               {% if plan.price_monthly == 0 %}
                 Free
               {% else %}
-                ${{ plan.price_monthly }}<span class="text-sm font-normal text-gray-500">/mo</span>
+                ${{ plan.price_monthly }}<span class="plan-price-unit">/mo</span>
               {% endif %}
             </div>
           </div>
-          <ul class="text-sm text-gray-600 space-y-1 flex-1">
+          <ul class="plan-features">
             <li>Up to {{ plan.max_users }} team member{{ plan.max_users|pluralize }}</li>
             <li>{{ plan.max_contracts }} contract{{ plan.max_contracts|pluralize }}</li>
             <li>{{ plan.max_api_calls_per_month }} API calls/month</li>
           </ul>
           {% if usage.plan_name == plan.name %}
-            <span class="inline-block text-center text-sm font-medium text-indigo-700 bg-indigo-100 rounded-lg py-2">Current plan</span>
+            <span class="plan-current-badge">Current plan</span>
           {% elif plan.name == 'FREE' %}
-            <span class="inline-block text-center text-sm text-gray-400 py-2">Downgrade via support</span>
+            <span class="plan-downgrade">Downgrade via support</span>
           {% elif stripe_enabled %}
             {% if plan.name == 'ENTERPRISE' %}
-              <a href="mailto:sales@cms-aegis.com"
-                 class="inline-block text-center text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg py-2 px-3">
-                Contact sales
-              </a>
+              <a href="mailto:sales@cms-aegis.com" class="plan-btn">Contact sales</a>
             {% else %}
               <form method="post" action="{% url 'contracts:billing_checkout' plan.name %}">
                 {% csrf_token %}
-                <button type="submit"
-                        class="w-full text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg py-2 px-3">
-                  Upgrade to {{ plan.name|title }}
-                </button>
+                <button type="submit" class="plan-btn">Upgrade to {{ plan.name|title }}</button>
               </form>
             {% endif %}
           {% else %}
-            <span class="inline-block text-center text-sm text-gray-400 py-2">Payment not configured</span>
+            <span class="plan-downgrade">Payment not configured</span>
           {% endif %}
         </div>
         {% empty %}
-          <p class="text-gray-500 text-sm col-span-full">No plans configured. Seed BillingPlan records via the admin or a data migration.</p>
+          <p class="empty-state col-span-full">No plans configured. Seed BillingPlan records via the admin or a data migration.</p>
         {% endfor %}
       </div>
     </div>
@@ -139,17 +151,23 @@
     </div>
     <div class="panel-inner">
       <dl class="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-        <div><dt class="text-gray-500">Status</dt><dd class="font-medium">{{ current_sub.subscription_status|title }}</dd></div>
-        <div><dt class="text-gray-500">Plan</dt><dd class="font-medium">{{ current_sub.plan.name }}</dd></div>
+        <div><dt class="sub-label">Status</dt><dd class="sub-value">{{ current_sub.subscription_status|title }}</dd></div>
+        <div><dt class="sub-label">Plan</dt><dd class="sub-value">{{ current_sub.plan.name }}</dd></div>
         {% if current_sub.current_period_end %}
-        <div><dt class="text-gray-500">Renews / expires</dt><dd class="font-medium">{{ current_sub.current_period_end|date:"N j, Y" }}</dd></div>
+        <div><dt class="sub-label">Renews / expires</dt><dd class="sub-value">{{ current_sub.current_period_end|date:"N j, Y" }}</dd></div>
         {% endif %}
         {% if current_sub.stripe_customer_id %}
-        <div><dt class="text-gray-500">Stripe customer</dt><dd class="font-mono text-xs text-gray-600">{{ current_sub.stripe_customer_id }}</dd></div>
+        <div><dt class="sub-label">Stripe customer</dt><dd class="sub-mono">{{ current_sub.stripe_customer_id }}</dd></div>
         {% endif %}
       </dl>
     </div>
   </div>
   {% endif %}
 </div>
+<script nonce="{{ csp_nonce }}">
+  document.querySelectorAll('.progress-bar-fill[data-width]').forEach(function(el) {
+    var w = parseFloat(el.dataset.width);
+    el.style.width = Math.min(w, 100) + '%';
+  });
+</script>
 {% endblock %}

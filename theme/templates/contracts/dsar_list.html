@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}DSAR Requests - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .dsar-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -30,7 +33,7 @@
             </thead>
             <tbody class="divide-y">
                 {% for item in requests %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row dsar-row">
                     <td class="px-5 py-3"><a href="{% url 'contracts:dsar_detail' item.pk %}" class="c-link font-medium">{{ item.reference_number }}</a></td>
                     <td class="px-5 py-3 tbl-td">{{ item.get_request_type_display }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.requester_name }}</td>

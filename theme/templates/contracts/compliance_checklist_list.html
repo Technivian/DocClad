@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Compliance Checklists - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row { border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
+  .tbl-row:hover { background: var(--sidebar-hover); }
+  .tbl-tbody { border-collapse: collapse; }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -46,9 +51,9 @@
                     <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y">
+            <tbody>
                 {% for checklist in checklists %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="tbl-row">
                     <td class="px-5 py-3 font-medium tbl-td">{{ checklist.name }}</td>
                     <td class="px-5 py-3 tbl-td">{{ checklist.regulation }}</td>
                     <td class="px-5 py-3">

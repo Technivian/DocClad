@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Reports & Analytics - CMS Aegis{% endblock %}
+
+{% block extra_css %}
+<style nonce="{{ csp_nonce }}">
+    .chart-bar-label { font-size: 12px; color: var(--text-muted); }
+    .chart-bar-fill-blue { width: 100%; background: var(--primary); border-radius: 4px 4px 0 0; }
+    .chart-bar-fill-red  { width: 100%; background: #EF4444; border-radius: 4px 4px 0 0; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-wrap">
 
@@ -171,15 +180,15 @@
             const height = Math.max((d.total / max) * 160, 4);
 
             const amount = document.createElement('div');
-            amount.className = 'text-xs text-gray-500 mb-1';
+            amount.className = 'chart-bar-label mb-1';
             amount.textContent = `$${Math.round(d.total / 1000)}k`;
 
             const fill = document.createElement('div');
-            fill.className = 'w-full bg-blue-500 rounded-t';
+            fill.className = 'chart-bar-fill-blue';
             fill.style.height = `${height}px`;
 
             const label = document.createElement('div');
-            label.className = 'text-xs text-gray-500 mt-1';
+            label.className = 'chart-bar-label mt-1';
             label.textContent = d.month.split(' ')[0];
 
             bar.appendChild(amount);
@@ -199,15 +208,15 @@
             const height = Math.max((d.total / maxRisk) * 160, 4);
 
             const amount = document.createElement('div');
-            amount.className = 'text-xs text-gray-500 mb-1';
+            amount.className = 'chart-bar-label mb-1';
             amount.textContent = String(d.total);
 
             const fill = document.createElement('div');
-            fill.className = 'w-full bg-red-500 rounded-t';
+            fill.className = 'chart-bar-fill-red';
             fill.style.height = `${height}px`;
 
             const label = document.createElement('div');
-            label.className = 'text-xs text-gray-500 mt-1';
+            label.className = 'chart-bar-label mt-1';
             label.textContent = d.month.split(' ')[0];
 
             bar.appendChild(amount);

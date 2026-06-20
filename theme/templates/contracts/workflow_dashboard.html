@@ -116,7 +116,7 @@
             <span class="panel-link">{{ workflows|length }} in view</span>
         </div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+            <table class="tbl-table min-w-full">
                 <thead class="tbl-head">
                     <tr>
                         <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Workflow Name</th>
@@ -129,9 +129,9 @@
                         <th class="tbl-th px-6 py-3 text-left text-xs uppercase tracking-wider">Progress</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="tbl-body">
                     {% for workflow in workflows %}
-                    <tr class="tbl-row hover:bg-gray-50">
+                    <tr class="tbl-row">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <span class="status-dot mr-3
@@ -181,7 +181,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="progress-bar-bg mr-2">
-                                    <div class="progress-bar-fill bg-blue-600 workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
+                                    <div class="progress-bar-fill workflow-progress-fill" data-width="{{ workflow.progress_percentage }}"></div>
                                 </div>
                                 <span class="text-sm c-muted">{{ workflow.progress_percentage }}%</span>
                             </div>
@@ -189,7 +189,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="px-6 py-8 text-center c-muted">
+                        <td colspan="8" class="empty-state">
                             No workflows found. <a href="{% url 'contracts:contract_list' %}" class="c-link">Create a contract</a> to start a workflow.
                         </td>
                     </tr>
@@ -215,6 +215,12 @@
     </div>
     {% endif %}
 </div>
+
+<style nonce="{{ csp_nonce }}">
+.tbl-table { border-collapse: collapse; }
+.tbl-body tr { border-bottom: 1px solid var(--card-border); }
+.tbl-row:hover { background: var(--sidebar-hover); }
+</style>
 
 <script nonce="{{ csp_nonce }}">
 function toggleFilters() {

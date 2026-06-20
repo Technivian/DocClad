@@ -5,7 +5,11 @@
       "name": "django",
       "runtimeExecutable": ".venv/bin/python",
       "runtimeArgs": ["manage.py", "runserver", "8061"],
-      "port": 8061
+      "port": 8061,
+      "env": {
+        "DJANGO_ENV": "development",
+        "DJANGO_DEBUG": "true"
+      }
     }
   ]
 }

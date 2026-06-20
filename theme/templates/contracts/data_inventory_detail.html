@@ -1,26 +1,35 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.di-back-link { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+.di-back-link:hover { color: var(--text-secondary); }
+.di-page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
+.di-field-row { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+.di-field-row:last-child { border-bottom: none; }
+.di-field-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.di-field-value { margin-top: 4px; font-size: 13px; color: var(--text-primary); }
+</style>
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <a href="{% url 'contracts:data_inventory_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
+            <a href="{% url 'contracts:data_inventory_list' %}" class="di-back-link">&larr; Back to list</a>
+            <h1 class="di-page-title">{{ object }}</h1>
         </div>
-        <a href="{% url 'contracts:data_inventory_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
+        <a href="{% url 'contracts:data_inventory_update' object.pk %}" class="chip chip-active text-sm font-medium">Edit</a>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Data Categories</span><p class="mt-1 text-sm text-gray-900">{{ object.data_categories }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Data Subjects</span><p class="mt-1 text-sm text-gray-900">{{ object.data_subjects }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Purpose</span><p class="mt-1 text-sm text-gray-900">{{ object.purpose }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Lawful Basis</span><p class="mt-1 text-sm text-gray-900">{{ object.get_lawful_basis_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Retention Period</span><p class="mt-1 text-sm text-gray-900">{{ object.retention_period }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Recipients</span><p class="mt-1 text-sm text-gray-900">{{ object.recipients|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">3rd Country Transfers</span><p class="mt-1 text-sm text-gray-900">{{ object.third_country_transfers|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Transfer Safeguards</span><p class="mt-1 text-sm text-gray-900">{{ object.transfer_safeguards|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Technical Measures</span><p class="mt-1 text-sm text-gray-900">{{ object.technical_measures|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Controller</span><p class="mt-1 text-sm text-gray-900">{{ object.controller|default:"-" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Processor</span><p class="mt-1 text-sm text-gray-900">{{ object.processor|default:"-" }}</p></div>
+    <div class="panel p-6">
+        <div class="di-field-row"><span class="di-field-label">Data Categories</span><p class="di-field-value">{{ object.data_categories }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Data Subjects</span><p class="di-field-value">{{ object.data_subjects }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Purpose</span><p class="di-field-value">{{ object.purpose }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Lawful Basis</span><p class="di-field-value">{{ object.get_lawful_basis_display }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Retention Period</span><p class="di-field-value">{{ object.retention_period }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Recipients</span><p class="di-field-value">{{ object.recipients|default:"-" }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">3rd Country Transfers</span><p class="di-field-value">{{ object.third_country_transfers|yesno:"Yes,No" }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Transfer Safeguards</span><p class="di-field-value">{{ object.transfer_safeguards|default:"-" }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Technical Measures</span><p class="di-field-value">{{ object.technical_measures|default:"-" }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Controller</span><p class="di-field-value">{{ object.controller|default:"-" }}</p></div>
+        <div class="di-field-row"><span class="di-field-label">Processor</span><p class="di-field-value">{{ object.processor|default:"-" }}</p></div>
     </div>
 </div>
 {% endblock %}

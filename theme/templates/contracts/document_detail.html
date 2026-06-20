@@ -1,6 +1,35 @@
 {% extends "base.html" %}
 {% block title %}{{ document.title }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.file-hash-code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.version-list {
+    border-top: 1px solid var(--card-border);
+}
+.version-list > div {
+    border-bottom: 1px solid var(--card-border);
+}
+.version-list > div:last-child {
+    border-bottom: none;
+}
+.ocr-pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 11px;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+}
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -23,7 +52,7 @@
                 <div><span class="c-muted">Uploaded by:</span> {{ document.uploaded_by.get_full_name|default:"—" }}</div>
                 <div><span class="c-muted">Created:</span> {{ document.created_at|date:"M d, Y H:i" }}</div>
                 {% if document.file_size %}<div><span class="c-muted">Size:</span> {{ document.file_size|filesizeformat }}</div>{% endif %}
-                {% if document.file_hash %}<div class="col-span-2"><span class="c-muted">File hash:</span> <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{ document.file_hash }}</code></div>{% endif %}
+                {% if document.file_hash %}<div class="col-span-2"><span class="c-muted">File hash:</span> <code class="file-hash-code">{{ document.file_hash }}</code></div>{% endif %}
                 {% if document.tags %}<div><span class="c-muted">Tags:</span> {{ document.tags }}</div>{% endif %}
             </div>
             {% if document.is_privileged or document.is_confidential %}
@@ -47,7 +76,7 @@
     {% if versions %}
     <div class="panel mb-6">
         <div class="panel-head"><h2 class="panel-title">Version History</h2></div>
-        <div class="divide-y divide-gray-100">
+        <div class="version-list">
             {% for v in versions %}
             <div class="px-5 py-3 flex items-center justify-between">
                 <div class="text-sm">v{{ v.version }} – {{ v.created_at|date:"M d, Y" }}</div>
@@ -64,7 +93,7 @@
     {% if version_chain %}
     <div class="panel mb-6">
         <div class="panel-head"><h2 class="panel-title">Version Lineage</h2></div>
-        <div class="divide-y divide-gray-100">
+        <div class="version-list">
             {% for version in version_chain %}
             <div class="px-5 py-3 flex items-center justify-between">
                 <div class="text-sm">v{{ version.version }} – {{ version.created_at|date:"M d, Y" }}</div>
@@ -90,7 +119,7 @@
             {% if document.ocr_review.extracted_text %}
             <div>
                 <div class="font-medium mb-1">Extracted text</div>
-                <pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs overflow-auto whitespace-pre-wrap">{{ document.ocr_review.extracted_text }}</pre>
+                <pre class="ocr-pre">{{ document.ocr_review.extracted_text }}</pre>
             </div>
             {% endif %}
         </div>

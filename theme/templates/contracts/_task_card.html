@@ -1,41 +1,56 @@
-<div class="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+<style nonce="{{ csp_nonce }}">
+.task-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; transition: box-shadow 0.15s; }
+.task-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.task-title { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.task-body { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+.task-meta { font-size: 12px; color: var(--text-muted); }
+.task-link { font-size: 12px; color: var(--primary-light); font-weight: 600; text-decoration: none; }
+.task-link:hover { text-decoration: underline; }
+.task-due-overdue { color: #F87171; }
+.task-complete-btn { font-size: 12px; color: #4ADE80; background: none; border: none; cursor: pointer; padding: 0; }
+.task-complete-btn:hover { text-decoration: underline; }
+</style>
+
+<div class="task-card">
     <div class="flex justify-between items-start">
-        <p class="font-semibold text-gray-800">{{ task.title }}</p>
-        <span class="px-2 py-1 text-xs font-semibold leading-tight rounded-full
-            {% if task.priority == 'HIGH' %} bg-red-100 text-red-700 {% endif %}
-            {% if task.priority == 'MEDIUM' %} bg-yellow-100 text-yellow-700 {% endif %}
-            {% if task.priority == 'LOW' %} bg-green-100 text-green-700 {% endif %}
+        <p class="task-title">{{ task.title }}</p>
+        <span class="badge-sm
+            {% if task.priority == 'HIGH' %}badge-red
+            {% elif task.priority == 'MEDIUM' %}badge-yellow
+            {% elif task.priority == 'LOW' %}badge-green
+            {% endif %}
         ">{{ task.get_priority_display }}</span>
     </div>
-    <p class="text-sm text-gray-600 mt-2">{{ task.subject|truncatewords:15 }}</p>
-    <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+    <p class="task-body">{{ task.subject|truncatewords:15 }}</p>
+    <div class="mt-4 flex items-center justify-between task-meta">
         <span>Due: {{ task.due_date|default:"N/A" }}</span>
-        <a href="{% url 'contracts:legal_task_update' task.pk %}" class="font-medium text-blue-600 hover:underline">Edit</a>
+        <a href="{% url 'contracts:legal_task_update' task.pk %}" class="task-link">Edit</a>
     </div>
 </div>
-<div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+
+<div class="task-card">
     <div class="flex items-start justify-between mb-2">
-        <h4 class="font-medium text-gray-900 text-sm">{{ task.title }}</h4>
-        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-            {% if task.priority == 'HIGH' %}bg-red-100 text-red-700
-            {% elif task.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-700
-            {% else %}bg-green-100 text-green-700{% endif %}">
+        <h4 class="task-title">{{ task.title }}</h4>
+        <span class="badge-sm
+            {% if task.priority == 'HIGH' %}badge-red
+            {% elif task.priority == 'MEDIUM' %}badge-yellow
+            {% else %}badge-green{% endif %}">
             {{ task.get_priority_display }}
         </span>
     </div>
     {% if task.subject %}
-    <p class="text-sm text-gray-600 mb-3">{{ task.subject|truncatewords:15 }}</p>
+    <p class="task-body mb-3">{{ task.subject|truncatewords:15 }}</p>
     {% endif %}
-    <div class="flex items-center justify-between text-xs text-gray-500">
+    <div class="flex items-center justify-between task-meta">
         <span>{{ task.assigned_to.username|default:"Unassigned" }}</span>
         {% if task.due_date %}
-        <span class="{% if task.due_date < today %}text-red-600{% endif %}">Due {{ task.due_date|date:"M d" }}</span>
+        <span class="{% if task.due_date < today %}task-due-overdue{% endif %}">Due {{ task.due_date|date:"M d" }}</span>
         {% endif %}
     </div>
     <div class="mt-3 flex space-x-2">
-        <a href="{% url 'contracts:legal_task_update' task.pk %}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+        <a href="{% url 'contracts:legal_task_update' task.pk %}" class="task-link">Edit</a>
         {% if task.status != 'DONE' %}
-        <button type="button" data-action="complete-task" data-task-id="{{ task.id }}" class="text-green-600 hover:text-green-800 text-xs">Complete</button>
+        <button type="button" data-action="complete-task" data-task-id="{{ task.id }}" class="task-complete-btn">Complete</button>
         {% endif %}
     </div>
 </div>

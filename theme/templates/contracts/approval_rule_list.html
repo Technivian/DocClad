@@ -29,7 +29,7 @@
       </thead>
       <tbody>
         {% for item in rules %}
-        <tr class="tbl-row hover:bg-gray-50">
+        <tr class="tbl-row">
           <td class="tbl-td">{{ item.name }}</td>
           <td class="tbl-td">{{ item.get_trigger_type_display }}</td>
           <td class="tbl-td c-muted">{{ item.trigger_value }}</td>

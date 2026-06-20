@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Conflict Checks - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .conflict-tbody tr { border-bottom: 1px solid var(--card-border); }
+  .conflict-tbody tr:last-child { border-bottom: none; }
+  .tbl-row-hover:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
 
   <div class="page-header mb-6">
@@ -29,9 +34,9 @@
           <th class="tbl-th px-5 py-3 text-right">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="conflict-tbody">
         {% for check in conflict_checks %}
-        <tr class="tbl-row hover:bg-gray-50">
+        <tr class="tbl-row tbl-row-hover">
           <td class="tbl-td px-5 py-3 font-medium">{{ check.checked_party }}</td>
           <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_party_type|default:"—" }}</td>
           <td class="tbl-td px-5 py-3 c-muted">{{ check.client.name|default:"—" }}</td>

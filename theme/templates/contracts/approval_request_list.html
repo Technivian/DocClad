@@ -29,7 +29,7 @@
       </thead>
       <tbody>
         {% for item in approvals %}
-        <tr class="tbl-row hover:bg-gray-50">
+        <tr class="tbl-row">
           <td class="tbl-td">{{ item.contract.title }}</td>
           <td class="tbl-td">{{ item.approval_step }}</td>
           <td class="tbl-td c-muted">{{ item.assigned_to|default:"-" }}</td>

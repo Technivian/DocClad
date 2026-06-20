@@ -1,6 +1,44 @@
 {% extends "base.html" %}
 {% block title %}{{ checklist.name }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.checklist-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+}
+.checklist-item.is-checked {
+    background: rgba(34,197,94,0.08);
+    border-color: rgba(34,197,94,0.2);
+}
+.checklist-item-text.is-checked {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+.checklist-checkbox {
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--card-border);
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.add-item-border {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--card-border);
+}
+.add-item-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -54,22 +92,22 @@
                 <div class="panel-inner">
                     <div class="space-y-3">
                         {% for item in checklist.items.all %}
-                        <div class="flex items-center justify-between p-3 rounded-md {% if item.is_checked %}bg-green-50{% else %}bg-gray-50{% endif %}">
-                            <span class="{% if item.is_checked %}line-through text-gray-500{% endif %}">{{ item.text }}</span>
+                        <div class="checklist-item {% if item.is_checked %}is-checked{% endif %}">
+                            <span class="checklist-item-text {% if item.is_checked %}is-checked{% endif %}">{{ item.text }}</span>
                             <form action="{% url 'contracts:toggle_checklist_item' item.pk %}" method="post">
                                 {% csrf_token %}
                                 <input type="checkbox" data-autosubmit {% if item.is_checked %}checked{% endif %}
-                                       class="h-6 w-6 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                       class="checklist-checkbox">
                             </form>
                         </div>
                         {% empty %}
-                        <p class="c-muted italic">No items have been added to this checklist yet.</p>
+                        <p class="empty-state italic">No items have been added to this checklist yet.</p>
                         {% endfor %}
                     </div>
 
                     <!-- Add Item Form -->
-                    <div class="mt-6 pt-6 border-t">
-                        <h4 class="text-sm font-semibold mb-3">Add New Item</h4>
+                    <div class="add-item-border">
+                        <h4 class="add-item-label">Add New Item</h4>
                         <form action="{% url 'contracts:add_checklist_item' checklist.pk %}" method="post" class="flex items-center gap-2">
                             {% csrf_token %}
                             <div class="flex-grow">{{ item_form.text }}</div>

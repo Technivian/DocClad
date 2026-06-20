@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Clause Library - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row-hover:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
 
   <div class="page-header">
@@ -29,7 +32,7 @@
       </thead>
       <tbody>
         {% for item in clauses %}
-        <tr class="border-b transition-colors tbl-row hover:bg-gray-50">
+        <tr class="border-b transition-colors tbl-row tbl-row-hover">
           <td class="px-5 py-3.5"><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
           <td class="px-5 py-3.5 tbl-td">{{ item.category|default:"-" }}</td>
           <td class="px-5 py-3.5 tbl-td">{{ item.get_jurisdiction_scope_display }}</td>

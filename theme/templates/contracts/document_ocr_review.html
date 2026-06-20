@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Review OCR - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.ocr-pre {
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+}
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -22,7 +34,7 @@
             {% if form.instance.extracted_text %}
             <div class="mt-4">
                 <div class="text-sm font-medium mb-2">Extracted text</div>
-                <pre class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs overflow-auto whitespace-pre-wrap">{{ form.instance.extracted_text }}</pre>
+                <pre class="ocr-pre">{{ form.instance.extracted_text }}</pre>
             </div>
             {% endif %}
         </div>

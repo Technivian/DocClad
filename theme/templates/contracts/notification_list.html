@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Notifications - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .notif-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .notif-icon-deadline { background: rgba(239,68,68,0.12); color: #F87171; }
+  .notif-icon-task     { background: rgba(37,99,235,0.12);  color: var(--primary-light); }
+  .notif-icon-system   { background: rgba(107,114,128,0.12); color: #9CA3AF; }
+  .notif-icon svg      { width: 16px; height: 16px; }
+  .row-unread          { border-left: 3px solid var(--primary); }
+</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -32,16 +40,16 @@
     <div class="list-row {% if not notification.is_read %}row-unread{% endif %}">
       <div class="flex-shrink-0 mt-0.5">
         {% if notification.notification_type == 'DEADLINE' %}
-          <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center" aria-label="Deadline notification">
-            <svg class="w-4 h-4 text-red-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div class="notif-icon notif-icon-deadline" aria-label="Deadline notification">
+            <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           </div>
         {% elif notification.notification_type == 'TASK' %}
-          <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center" aria-label="Task notification">
-            <svg class="w-4 h-4 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+          <div class="notif-icon notif-icon-task" aria-label="Task notification">
+            <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
           </div>
         {% else %}
-          <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-label="System notification">
-            <svg class="w-4 h-4 text-gray-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <div class="notif-icon notif-icon-system" aria-label="System notification">
+            <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
           </div>
         {% endif %}
       </div>

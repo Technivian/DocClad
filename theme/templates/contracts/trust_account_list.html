@@ -24,7 +24,7 @@
             </thead>
             <tbody>
                 {% for acct in accounts %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="tbl-row">
                     <td class="px-5 py-3"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="font-medium c-link">{{ acct.account_name }}</a></td>
                     <td class="px-5 py-3 tbl-td">{{ acct.client.name }}</td>
                     <td class="px-5 py-3 tbl-td">{{ acct.matter.matter_number|default:"—" }}</td>

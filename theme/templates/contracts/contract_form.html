@@ -1,246 +1,297 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Contract - CMS Aegis{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+/* draft section cards */
+.draft-section-card {
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 16px;
+}
+.draft-drag-handle {
+  display: inline-flex;
+  height: 32px; width: 32px;
+  align-items: center; justify-content: center;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--surface);
+  cursor: grab;
+  font-size: 13px;
+}
+.draft-label      { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.draft-order-row  { font-size: 12px; color: var(--text-secondary); }
+.draft-order-input { width: 72px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); padding: 4px 8px; font-size: 13px; }
+.draft-field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.draft-text-input, .draft-textarea {
+  width: 100%; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 8px 12px; font-size: 14px;
+}
+.draft-source-label { font-size: 11px; color: var(--text-muted); }
+.draft-link { color: var(--primary-light); font-weight: 500; text-decoration: none; font-size: 12px; }
+.draft-link:hover { text-decoration: underline; }
+.draft-btn-insert {
+  padding: 5px 11px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer;
+}
+.draft-btn-insert:hover { background: var(--sidebar-hover); }
+.draft-btn-remove {
+  padding: 5px 11px; border-radius: 7px;
+  border: 1px solid rgba(239,68,68,0.25); background: var(--surface);
+  color: #F87171; font-size: 12px; font-weight: 500; cursor: pointer;
+}
+.draft-btn-remove:hover { background: rgba(239,68,68,0.08); }
+.draft-add-btn {
+  padding: 7px 14px; background: var(--primary); color: #fff;
+  font-size: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer;
+}
+.draft-add-btn:hover { background: var(--primary-hover); }
+</style>
+
 <div class="page-wrap">
-    <div class="workspace-split">
-        <aside class="views-rail">
-            <div class="views-rail-head">
-                <p class="views-rail-title">Intake cockpit</p>
-                <a href="{% url 'contracts:contract_list' %}" class="btn-ghost text-xs px-2 py-1">Open queue</a>
-            </div>
-            <div class="views-rail-list">
-                <a href="{% url 'contracts:contract_create' %}" class="views-rail-link {% if not form.instance.pk %}active{% endif %}">
-                    <span>Request intake</span>
-                    <span class="views-rail-count">Live</span>
-                </a>
-                <a href="{% url 'contracts:contract_list' %}" class="views-rail-link">
-                    <span>Portfolio queue</span>
-                    <span class="views-rail-count">Table</span>
-                </a>
-                {% if form.instance.pk %}
-                <a href="{% url 'contracts:contract_detail' form.instance.pk %}" class="views-rail-link active">
-                    <span>Current record</span>
-                    <span class="views-rail-count">#{{ form.instance.pk }}</span>
-                </a>
-                {% endif %}
-            </div>
-            <div class="panel mt-4">
-                <div class="panel-head"><span class="panel-title">Submission guidance</span></div>
-                <div class="panel-inner space-y-2 text-sm">
-                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
-                        <summary class="cursor-pointer list-none font-medium c-primary">Recommended path</summary>
-                        <div class="mt-2 text-xs c-muted">Business terms first, legal constraints second, fallback text last.</div>
-                    </details>
-                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
-                        <summary class="cursor-pointer list-none font-medium c-primary">Review triggers</summary>
-                        <div class="mt-2 text-xs c-muted">High value, unusual jurisdiction, missing counterparty, or non-standard paper.</div>
-                    </details>
-                    <details class="rounded-lg border border-transparent open:border-[var(--border)] open:bg-[var(--surface)] px-3 py-2">
-                        <summary class="cursor-pointer list-none font-medium c-primary">Next step after save</summary>
-                        <div class="mt-2 text-xs c-muted">Route to review, launch approval, or generate draft sections.</div>
-                    </details>
-                </div>
-            </div>
-        </aside>
 
-        <section class="workspace-main">
-            <div class="workspace-main-head">
-                <div>
-                    <h1 class="workspace-title">{% if form.instance.pk %}Edit Contract Intake{% else %}New Contract Intake{% endif %}</h1>
-                    <p class="workspace-subtitle">Open a new legal request with commercial facts, governing terms, and drafting context in a single intake pass.</p>
-                </div>
-                <div class="workspace-tools">
-                    <a href="{% url 'contracts:contract_list' %}" class="btn-ghost text-sm px-3 py-1.5">Back to Contracts</a>
-                </div>
-            </div>
-
-            <div class="workspace-toolbar justify-between">
-                <div class="flex items-center gap-2 overflow-x-auto pr-2">
-                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Intake</span>
-                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Risk Signal</span>
-                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Draft</span>
-                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Review</span>
-                    <span class="px-3 py-1.5 text-xs font-semibold rounded-md border btn-ghost whitespace-nowrap">Approval</span>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflow Board</a>
-                    <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals</a>
-                </div>
-            </div>
-
-            <div class="panel mb-4">
-                <div class="panel-inner">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                        <div class="rounded-lg border p-3 surface-subtle">
-                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Primary objective</div>
-                            <div class="font-medium c-primary">Capture a clean request package for legal review.</div>
-                        </div>
-                        <div class="rounded-lg border p-3 surface-subtle">
-                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Owner</div>
-                            <div class="font-medium c-primary">{{ user.first_name|default:user.username }}</div>
-                        </div>
-                        <div class="rounded-lg border p-3 surface-subtle">
-                            <div class="text-xs uppercase tracking-wide c-muted mb-1">Status on submit</div>
-                            <div class="font-medium c-primary">Draft until routed</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-            <div class="panel-inner">
-                <form method="post" action="{{ form_action|default:request.path }}" class="space-y-4">
-                    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
-                    {% csrf_token %}
-                    <div class="mb-2">
-                        <div class="text-xs uppercase tracking-[0.18em] c-muted mb-2">Request package</div>
-                        <div class="h-px u-divider"></div>
-                    </div>
-                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                        <div class="xl:col-span-3 space-y-4">
-                            <div class="rounded-xl border p-4 surface-subtle">
-                                <div class="text-xs uppercase tracking-[0.18em] c-muted mb-3">Metadata lane</div>
-                                <div class="space-y-4">
-                                    {% for field in form.visible_fields %}
-                                    {% if field.name != 'title' and field.name != 'content' and field.name != 'clause_templates' %}
-                                    <div>
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
-                                        {{ field }}
-                                        {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="xl:col-span-9 space-y-4">
-                            <div class="rounded-xl border p-4 surface-subtle u-min-h-editor">
-                                <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
-                                    <div>
-                                        <div class="text-xs uppercase tracking-[0.18em] c-muted mb-1">Drafting canvas</div>
-                                        <div class="text-sm c-secondary">Capture the request title, source paper, and drafting basis before routing.</div>
-                                    </div>
-                                    <span class="badge-sm badge-blue">Live intake</span>
-                                </div>
-                                <div class="space-y-4">
-                                    {% for field in form.visible_fields %}
-                                    {% if field.name == 'title' or field.name == 'content' or field.name == 'clause_templates' %}
-                                    <div>
-                                        <label class="form-label">{{ field.label }}</label>
-                                        {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
-                                        {{ field }}
-                                        {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% if preview_mode and draft_sections %}
-                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-4">
-                        <div>
-                            <h2 class="text-sm font-semibold text-blue-900">Draft sections</h2>
-                            <p class="text-xs text-blue-700">Reorder, remove, or edit generated sections before saving. Generated from {{ draft_preview_selected_clause_count }} selected clause template{{ draft_preview_selected_clause_count|pluralize }}.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" id="add-draft-section" class="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700">Add section</button>
-                            <span class="text-xs text-blue-700">Drag the handle to reorder.</span>
-                        </div>
-                        <input type="hidden" name="draft_section_count" value="{{ draft_sections|length }}">
-                        <div id="draft-section-list" class="space-y-4" data-draft-section-list>
-                            {% for section in draft_sections %}
-                            <div class="rounded-xl border border-blue-100 bg-white p-4 space-y-3 shadow-sm" data-draft-section-card draggable="true">
-                                <div class="flex flex-wrap items-center justify-between gap-3">
-                                    <div class="flex items-center gap-3">
-                                        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 text-blue-700 bg-blue-50 cursor-grab" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
-                                        <label class="inline-flex items-center gap-2 text-xs font-medium text-blue-900">
-                                            <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-draft-field="include">
-                                            Include section
-                                        </label>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 text-xs text-blue-700">
-                                        <span>Order</span>
-                                        <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="w-20 rounded-lg border border-blue-200 px-2 py-1 text-sm" data-draft-field="order" data-draft-section-order>
-                                        <button type="button" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 text-xs font-medium" data-draft-insert-below>Insert below</button>
-                                        <button type="button" class="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-700 hover:bg-red-50 text-xs font-medium" data-draft-remove-section>Remove</button>
-                                    </div>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section title</label>
-                                    <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="title">
-                                </div>
-                                {% if section.badges %}
-                                <div class="flex flex-wrap gap-2">
-                                    {% for badge in section.badges %}
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold {% if badge.tone == 'indigo' %}bg-indigo-100 text-indigo-800{% elif badge.tone == 'blue' %}bg-blue-100 text-blue-800{% elif badge.tone == 'red' %}bg-red-100 text-red-800{% elif badge.tone == 'amber' %}bg-amber-100 text-amber-800{% elif badge.tone == 'emerald' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-800{% endif %}" title="{{ badge.label }}">
-                                        {{ badge.label }}
-                                    </span>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                                <div class="flex flex-wrap items-center gap-2 text-xs">
-                                    {% if section.template_url %}
-                                    <a href="{{ section.template_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open source clause</a>
-                                    {% endif %}
-                                    {% if section.playbook_url %}
-                                    <a href="{{ section.playbook_url }}" class="text-blue-700 hover:text-blue-900 font-medium">Open playbook context</a>
-                                    {% endif %}
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section content</label>
-                                    <textarea name="draft_section_{{ section.index }}_content" rows="8" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="content">{{ section.content }}</textarea>
-                                </div>
-                                <p class="text-xs text-blue-700">Source: {{ section.source_label }}</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    <div class="flex gap-3 pt-4 border-t border-gray-100">
-                        <button type="submit" name="preview_draft" value="1" class="btn-ghost">Preview draft</button>
-                        <button type="submit" class="btn-primary-grad text-white">{% if form.instance.pk %}Update{% else %}Create{% endif %} Contract</button>
-                        <a href="{% url 'contracts:contract_list' %}" class="btn-ghost">Cancel</a>
-                    </div>
-                </form>
-            </div>
-            </div>
-        </section>
+  {# ── Page header ──────────────────────────────────────────── #}
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">
+          {% if form.instance.pk %}Edit Contract{% else %}New Contract Request{% endif %}
+        </h1>
+        <span class="badge-sm badge-gray">Draft</span>
+      </div>
+      <p class="arch-subtitle">
+        {% if form.instance.pk %}
+          Update the details for this legal request.
+        {% else %}
+          Create a new legal request with the essential details.
+        {% endif %}
+      </p>
     </div>
-</div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
+    </div>
+  </div>
 
+  {# ── Workspace form ───────────────────────────────────────── #}
+  <form method="post" action="{{ form_action|default:request.path }}" id="contract-form">
+    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+    {% csrf_token %}
+
+    <div class="arch-workspace-grid">
+
+      {# ── Main content ──────────────────────────────────────── #}
+      <div class="arch-workspace-main space-y-6">
+
+        {# Title field — full-width, always first #}
+        {% for field in form.visible_fields %}{% if field.name == 'title' %}
+        <div class="card-l1">
+          <label class="form-label">
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+          </label>
+          {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
+          {{ field }}
+          {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+
+        {# Metadata fields — 2-column grid #}
+        <div class="card-l1">
+          <div class="text-xs font-semibold uppercase tracking-[0.12em] c-muted mb-4">Contract details</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for field in form.visible_fields %}
+            {% if field.name != 'title' and field.name != 'content' and field.name != 'clause_templates' %}
+            <div class="{% if field.name == 'counterparty' or field.name == 'description' %}sm:col-span-2{% endif %}">
+              <label class="form-label">
+                {{ field.label }}
+                {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+              </label>
+              {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+              {{ field }}
+              {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        {# Content textarea — full-width #}
+        {% for field in form.visible_fields %}{% if field.name == 'content' %}
+        <div class="card-l1">
+          <label class="form-label">
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+          </label>
+          {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
+          {{ field }}
+          {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+        </div>
+        {% endif %}{% endfor %}
+
+        {# Advanced options — collapsed by default #}
+        {% for field in form.visible_fields %}{% if field.name == 'clause_templates' %}
+        <details class="card-l1">
+          <summary class="cursor-pointer list-none flex items-center gap-2 font-medium text-sm c-primary select-none">
+            <svg class="w-4 h-4 transition-transform details-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            Advanced options
+            <span class="ml-auto text-xs font-normal c-muted">Clause templates, governing law&hellip;</span>
+          </summary>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="form-label">{{ field.label }}</label>
+              {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
+              {{ field }}
+              {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+        </details>
+        {% endif %}{% endfor %}
+
+        {# Draft sections preview (AI-generated) #}
+        {% if preview_mode and draft_sections %}
+        <div class="card-l1 space-y-4">
+          <div>
+            <h2 class="text-sm font-700 c-primary">Draft sections</h2>
+            <p class="text-xs c-muted mt-1">Reorder, remove or edit generated sections before saving. Generated from {{ draft_preview_selected_clause_count }} clause template{{ draft_preview_selected_clause_count|pluralize }}.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="add-draft-section" class="draft-add-btn">Add section</button>
+            <span class="text-xs c-muted">Drag the handle to reorder.</span>
+          </div>
+          <input type="hidden" name="draft_section_count" value="{{ draft_sections|length }}">
+          <div id="draft-section-list" class="space-y-4" data-draft-section-list>
+            {% for section in draft_sections %}
+            <div class="draft-section-card space-y-3" data-draft-section-card draggable="true">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <button type="button" class="draft-drag-handle" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
+                  <label class="draft-label">
+                    <input type="checkbox" name="draft_section_{{ section.index }}_include" value="on" {% if section.include %}checked{% endif %} class="h-4 w-4 rounded" data-draft-field="include">
+                    Include section
+                  </label>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 draft-order-row">
+                  <span>Order</span>
+                  <input type="number" name="draft_section_{{ section.index }}_order" value="{{ section.order }}" min="1" class="draft-order-input" data-draft-field="order" data-draft-section-order>
+                  <button type="button" class="draft-btn-insert" data-draft-insert-below>Insert below</button>
+                  <button type="button" class="draft-btn-remove" data-draft-remove-section>Remove</button>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <label class="draft-field-label">Section title</label>
+                <input type="text" name="draft_section_{{ section.index }}_title" value="{{ section.title }}" class="draft-text-input" data-draft-field="title">
+              </div>
+              {% if section.badges %}
+              <div class="flex flex-wrap gap-2">
+                {% for badge in section.badges %}
+                <span class="badge-sm {% if badge.tone == 'indigo' %}badge-purple{% elif badge.tone == 'blue' %}badge-blue{% elif badge.tone == 'red' %}badge-red{% elif badge.tone == 'amber' %}badge-yellow{% elif badge.tone == 'emerald' %}badge-green{% else %}badge-gray{% endif %}" title="{{ badge.label }}">{{ badge.label }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+              <div class="flex flex-wrap items-center gap-2">
+                {% if section.template_url %}<a href="{{ section.template_url }}" class="draft-link">Open source clause</a>{% endif %}
+                {% if section.playbook_url %}<a href="{{ section.playbook_url }}" class="draft-link">Open playbook context</a>{% endif %}
+              </div>
+              <div class="space-y-2">
+                <label class="draft-field-label">Section content</label>
+                <textarea name="draft_section_{{ section.index }}_content" rows="8" class="draft-textarea" data-draft-field="content">{{ section.content }}</textarea>
+              </div>
+              <p class="draft-source-label">Source: {{ section.source_label }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>{# /arch-workspace-main #}
+
+      {# ── Context sidebar ───────────────────────────────────── #}
+      <div class="arch-workspace-sidebar">
+        <div class="card-l2">
+          <div class="arch-completion-label">Request completion</div>
+          <div class="arch-completion-count" id="completion-count">—</div>
+          <div class="arch-completion-sublabel" id="completion-sublabel">required fields completed</div>
+          <div class="arch-completion-track">
+            <div class="arch-completion-fill" id="completion-bar" style="width:0%"></div>
+          </div>
+          <div class="arch-missing-list" id="missing-fields-list">
+            <div class="text-xs c-muted">Fill in the form to track completion.</div>
+          </div>
+        </div>
+
+        <div class="card-l2 mt-4">
+          <div class="arch-section-label">What happens next</div>
+          <div class="space-y-3 text-sm">
+            <div class="flex gap-2">
+              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--primary-subtle)] text-[var(--primary-light)] flex items-center justify-center text-xs font-bold">1</span>
+              <span class="c-secondary">Draft is saved with your details.</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] flex items-center justify-center text-xs font-bold">2</span>
+              <span class="c-muted">Route to legal review or launch approval.</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="flex-shrink-0 w-5 h-5 rounded-full bg-[var(--surface)] text-[var(--text-muted)] border border-[var(--border)] flex items-center justify-center text-xs font-bold">3</span>
+              <span class="c-muted">Signature, execution, and lifecycle tracking.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>{# /arch-workspace-grid #}
+
+    {# ── Sticky footer actions ─────────────────────────────── #}
+    <div class="arch-sticky-footer">
+      <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
+      <div class="flex-1"></div>
+      <button type="submit" name="preview_draft" value="1" class="btn-quiet">Preview draft</button>
+      <button type="submit" class="btn-cta">
+        {% if form.instance.pk %}Update Contract{% else %}Create Contract{% endif %}
+      </button>
+    </div>
+
+  </form>
+
+</div>{# /page-wrap #}
+
+{# ── Draft section template + JS ──────────────────────────── #}
 {% if preview_mode and draft_sections %}
 <template id="draft-section-template">
-    <div class="rounded-xl border border-blue-100 bg-white p-4 space-y-3 shadow-sm" data-draft-section-card draggable="true">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-200 text-blue-700 bg-blue-50 cursor-grab" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
-                <label class="inline-flex items-center gap-2 text-xs font-medium text-blue-900">
-                    <input type="checkbox" value="on" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded" data-draft-field="include">
-                    Include section
-                </label>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-xs text-blue-700">
-                <span>Order</span>
-                <input type="number" min="1" class="w-20 rounded-lg border border-blue-200 px-2 py-1 text-sm" data-draft-field="order" data-draft-section-order>
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 text-xs font-medium" data-draft-insert-below>Insert below</button>
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-700 hover:bg-red-50 text-xs font-medium" data-draft-remove-section>Remove</button>
-            </div>
-        </div>
-        <div class="space-y-2">
-            <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section title</label>
-            <input type="text" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="title">
-        </div>
-        <div class="flex flex-wrap gap-2" data-draft-badges></div>
-        <div class="flex flex-wrap items-center gap-2 text-xs" data-draft-links></div>
-        <div class="space-y-2">
-            <label class="block text-xs font-semibold uppercase tracking-wide text-blue-900">Section content</label>
-            <textarea rows="8" class="w-full rounded-lg border border-blue-200 px-3 py-2 text-sm" data-draft-field="content"></textarea>
-        </div>
-        <p class="text-xs text-blue-700" data-draft-section-source>Source: Inserted section</p>
+  <div class="draft-section-card space-y-3" data-draft-section-card draggable="true">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <button type="button" class="draft-drag-handle" title="Drag to reorder" data-draft-drag-handle aria-label="Drag section to reorder">⋮⋮</button>
+        <label class="draft-label">
+          <input type="checkbox" value="on" checked class="h-4 w-4 rounded" data-draft-field="include">
+          Include section
+        </label>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 draft-order-row">
+        <span>Order</span>
+        <input type="number" min="1" class="draft-order-input" data-draft-field="order" data-draft-section-order>
+        <button type="button" class="draft-btn-insert" data-draft-insert-below>Insert below</button>
+        <button type="button" class="draft-btn-remove" data-draft-remove-section>Remove</button>
+      </div>
     </div>
+    <div class="space-y-2">
+      <label class="draft-field-label">Section title</label>
+      <input type="text" class="draft-text-input" data-draft-field="title">
+    </div>
+    <div class="flex flex-wrap gap-2" data-draft-badges></div>
+    <div class="flex flex-wrap items-center gap-2" data-draft-links></div>
+    <div class="space-y-2">
+      <label class="draft-field-label">Section content</label>
+      <textarea rows="8" class="draft-textarea" data-draft-field="content"></textarea>
+    </div>
+    <p class="draft-source-label" data-draft-section-source>Source: Inserted section</p>
+  </div>
 </template>
 <script nonce="{{ csp_nonce }}">
 (function () {
@@ -248,76 +299,36 @@
     const template = document.getElementById('draft-section-template');
     const addButton = document.getElementById('add-draft-section');
     const countInput = document.querySelector('input[name="draft_section_count"]');
-    if (!list || !template || !addButton || !countInput) {
-        return;
-    }
-
+    if (!list || !template || !addButton || !countInput) return;
     let dragSource = null;
-
     function renumberSections() {
         const cards = Array.from(list.querySelectorAll('[data-draft-section-card]'));
         cards.forEach((card, index) => {
             card.dataset.draftSectionIndex = String(index);
             card.querySelectorAll('[data-draft-field]').forEach((field) => {
-                field.name = `draft_section_${index}_${field.dataset.draftField}`;
+                field.name = 'draft_section_' + index + '_' + field.dataset.draftField;
             });
             const orderField = card.querySelector('[data-draft-section-order]');
-            if (orderField) {
-                orderField.value = String(index + 1);
-            }
+            if (orderField) orderField.value = String(index + 1);
         });
         countInput.value = String(cards.length);
     }
-
     function bindCard(card) {
-        card.addEventListener('dragstart', (event) => {
-            dragSource = card;
-            card.classList.add('opacity-60');
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/plain', '');
-        });
-        card.addEventListener('dragend', () => {
-            dragSource = null;
-            card.classList.remove('opacity-60');
-        });
-        card.addEventListener('dragover', (event) => {
-            event.preventDefault();
-        });
-        card.addEventListener('drop', (event) => {
-            event.preventDefault();
-            if (!dragSource || dragSource === card) {
-                return;
-            }
+        card.addEventListener('dragstart', (e) => { dragSource = card; card.classList.add('opacity-60'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', ''); });
+        card.addEventListener('dragend', () => { dragSource = null; card.classList.remove('opacity-60'); });
+        card.addEventListener('dragover', (e) => e.preventDefault());
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!dragSource || dragSource === card) return;
             const cards = Array.from(list.querySelectorAll('[data-draft-section-card]'));
-            const sourceIndex = cards.indexOf(dragSource);
-            const targetIndex = cards.indexOf(card);
-            if (sourceIndex === -1 || targetIndex === -1) {
-                return;
-            }
-            if (sourceIndex < targetIndex) {
-                list.insertBefore(dragSource, card.nextSibling);
-            } else {
-                list.insertBefore(dragSource, card);
-            }
+            const si = cards.indexOf(dragSource), ti = cards.indexOf(card);
+            if (si === -1 || ti === -1) return;
+            list.insertBefore(dragSource, si < ti ? card.nextSibling : card);
             renumberSections();
         });
-
-        const insertBelow = card.querySelector('[data-draft-insert-below]');
-        if (insertBelow) {
-            insertBelow.addEventListener('click', () => {
-                insertSectionAfter(card);
-            });
-        }
-
-        const removeButton = card.querySelector('[data-draft-remove-section]');
-        if (removeButton) {
-            removeButton.addEventListener('click', () => {
-                card.remove();
-                renumberSections();
-            });
-        }
+        card.querySelector('[data-draft-insert-below]')?.addEventListener('click', () => insertSectionAfter(card));
+        card.querySelector('[data-draft-remove-section]')?.addEventListener('click', () => { card.remove(); renumberSections(); });
     }
-
     function buildBlankSection() {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = template.innerHTML.trim();
@@ -325,36 +336,74 @@
         bindCard(card);
         return card;
     }
-
-    function insertSectionAfter(referenceCard) {
+    function insertSectionAfter(ref) {
         const card = buildBlankSection();
-        const sourceLabel = card.querySelector('[data-draft-section-source]');
-        if (sourceLabel) {
-            sourceLabel.textContent = 'Source: Inserted section';
-        }
         const badges = card.querySelector('[data-draft-badges]');
-        if (badges) {
-            badges.innerHTML = '<span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-800">New section</span>';
-        }
+        if (badges) badges.innerHTML = '<span class="badge-sm badge-gray">New section</span>';
         const links = card.querySelector('[data-draft-links]');
-        if (links) {
-            links.innerHTML = '<span class="text-slate-500">Inserted sections have no source clause yet.</span>';
-        }
-        if (referenceCard && referenceCard.nextSibling) {
-            list.insertBefore(card, referenceCard.nextSibling);
-        } else {
-            list.appendChild(card);
-        }
+        if (links) links.innerHTML = '<span class="draft-source-label">No source clause.</span>';
+        list.insertBefore(card, ref?.nextSibling || null);
         renumberSections();
     }
-
-    addButton.addEventListener('click', () => {
-        insertSectionAfter(list.querySelector('[data-draft-section-card]:last-child'));
-    });
-
-    list.querySelectorAll('[data-draft-section-card]').forEach((card) => bindCard(card));
+    addButton.addEventListener('click', () => insertSectionAfter(list.querySelector('[data-draft-section-card]:last-child')));
+    list.querySelectorAll('[data-draft-section-card]').forEach(bindCard);
     renumberSections();
 })();
 </script>
 {% endif %}
+
+{# ── Completion tracker JS ─────────────────────────────────── #}
+<script nonce="{{ csp_nonce }}">
+(function () {
+    const form       = document.getElementById('contract-form');
+    const countEl    = document.getElementById('completion-count');
+    const sublabelEl = document.getElementById('completion-sublabel');
+    const barEl      = document.getElementById('completion-bar');
+    const listEl     = document.getElementById('missing-fields-list');
+    if (!form || !countEl || !barEl || !listEl) return;
+
+    function getRequiredFields() {
+        return Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'))
+            .filter(el => el.type !== 'hidden' && !el.closest('details:not([open])'));
+    }
+
+    function isFilled(el) {
+        if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+        if (el.tagName === 'SELECT') return el.value && el.value !== '';
+        return el.value.trim() !== '';
+    }
+
+    function getLabelFor(el) {
+        const labelEl = el.closest('.form-group, div')?.querySelector('label');
+        if (labelEl) return labelEl.textContent.replace('*', '').trim();
+        return el.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function update() {
+        const required = getRequiredFields();
+        const total    = required.length;
+        if (total === 0) { countEl.textContent = '—'; sublabelEl.textContent = 'No required fields detected'; listEl.innerHTML = ''; return; }
+        const filled  = required.filter(isFilled);
+        const missing = required.filter(el => !isFilled(el));
+        const pct     = Math.round((filled.length / total) * 100);
+
+        countEl.textContent    = filled.length + ' of ' + total;
+        sublabelEl.textContent = 'required fields completed';
+        barEl.style.width      = pct + '%';
+
+        if (missing.length === 0) {
+            listEl.innerHTML = '<div class="flex items-center gap-2 text-xs" style="color:#4ade80"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
+        } else {
+            listEl.innerHTML = missing.map(el =>
+                '<div class="arch-missing-item"><div class="arch-missing-dot"></div>' + getLabelFor(el) + '</div>'
+            ).join('');
+        }
+    }
+
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    update();
+})();
+</script>
+
 {% endblock %}

@@ -1,462 +1,715 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - CMS Aegis CLM{% endblock %}
+{% load humanize %}
+{% block title %}Dashboard — CMS Aegis CLM{% endblock %}
 
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+/* ═══════════════════════════════════════════════════════════
+   AegisDashboard v2 — action-first layout
+   ═══════════════════════════════════════════════════════════ */
 
-<div class="page-wrap reveal-stagger">
+.AegisDashboard {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 4px 24px;
+  box-sizing: border-box;
+}
 
-    <div class="workspace-main hero-shell mb-6">
-        <div class="workspace-main-head">
-            <div>
-                <h1 class="workspace-title">Legal Operations Workspace{% if user.first_name %} · {{ user.first_name }}{% endif %}</h1>
-                <p class="workspace-subtitle">{{ today|date:"l, F j, Y" }} · Central command center for contracts, approvals, workflows, and compliance operations.</p>
-                <div class="workspace-kicker-row">
-                    <span class="workspace-kicker"><strong>{{ active_cases }}</strong> active contracts</span>
-                    <span class="workspace-kicker"><strong>{{ approval_stats.pending|default:0 }}</strong> pending approvals</span>
-                    <span class="workspace-kicker"><strong>{{ signature_stats.pending|default:0 }}</strong> signatures waiting</span>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:contract_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg">
-                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    New Contract
-                </a>
-                <a href="{% url 'contracts:global_search' %}" class="btn-ghost inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border">
-                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    Search Workspace
-                </a>
-            </div>
+/* ── Card baseline ──────────────────────────────────────── */
+.ad-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Shared card header ─────────────────────────────────── */
+.ad-head {
+  height: 52px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--card-border);
+  box-sizing: border-box;
+}
+.ad-head-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.ad-head-meta  { display: flex; align-items: center; gap: 12px; }
+.ad-head-count { font-size: 12px; color: var(--text-muted); }
+.ad-head-link  { font-size: 12px; font-weight: 600; color: var(--primary-light); text-decoration: none; white-space: nowrap; }
+.ad-head-link:hover { text-decoration: underline; }
+
+/* ── Page header ────────────────────────────────────────── */
+.ad-page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 4px 0;
+}
+.ad-page-h1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+.ad-page-date { font-size: 12px; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════════════════
+   ONBOARDING STATE
+   ═══════════════════════════════════════════════════════════ */
+.ad-onboard-wrap {
+  max-width: 600px;
+  margin: 48px auto 0;
+  text-align: center;
+}
+.ad-onboard-h { font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px; }
+.ad-onboard-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 32px; }
+.ad-onboard-card { text-align: left; }
+.ad-onboard-progress {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ad-onboard-progress-label { font-size: 12px; color: var(--text-muted); }
+.ad-onboard-progress-count { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.ad-onboard-bar-wrap { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; margin: 0 20px; }
+.ad-onboard-bar { height: 4px; background: var(--primary); border-radius: 2px; transition: width 0.3s; }
+.ad-onboard-step {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--card-border);
+  text-decoration: none; color: inherit;
+  transition: background 0.12s;
+}
+.ad-onboard-step:last-child { border-bottom: none; }
+.ad-onboard-step:hover { background: var(--sidebar-hover); }
+.ad-onboard-check {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--card-border);
+}
+.ad-onboard-check.done { background: #059669; border-color: #059669; }
+.ad-onboard-check.done svg { width: 12px; height: 12px; color: #fff; }
+.ad-onboard-check.todo { border-color: rgba(255,255,255,0.15); }
+.ad-onboard-step-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.ad-onboard-step-sub   { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.ad-onboard-step-chev  { margin-left: auto; color: var(--text-muted); }
+.ad-onboard-step-chev svg { width: 14px; height: 14px; }
+
+/* ═══════════════════════════════════════════════════════════
+   NORMAL DASHBOARD
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Primary grid: Attention | Work Queue ────────────── */
+.ad-top {
+  display: grid;
+  grid-template-columns: 520px minmax(0, 1fr);
+  gap: 16px;
+  height: 310px;
+  margin-bottom: 14px;
+}
+.ad-top > .ad-card {
+  height: 310px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Attention card */
+.ad-attn-body {
+  flex: 1; min-height: 0; overflow: hidden;
+  display: flex; flex-direction: column;
+  padding: 0 20px;
+}
+.ad-attn-row {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--card-border);
+  text-decoration: none; color: inherit;
+  transition: opacity 0.12s;
+}
+.ad-attn-row:last-of-type { border-bottom: none; }
+.ad-attn-row:hover { opacity: 0.75; }
+.ad-attn-badge {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ad-attn-badge svg { width: 16px; height: 16px; }
+.ad-attn-badge.c-red    { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.ad-attn-badge.c-orange { background: rgba(249,115,22,0.12); color: #f97316; }
+.ad-attn-badge.c-yellow { background: rgba(234,179,8,0.12);  color: #eab308; }
+.ad-attn-badge.c-purple { background: rgba(168,85,247,0.12); color: #a855f7; }
+.ad-attn-txt { flex: 1; min-width: 0; }
+.ad-attn-lbl { font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-attn-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.ad-attn-chev { color: var(--text-muted); flex-shrink: 0; line-height: 0; }
+.ad-attn-chev svg { width: 13px; height: 13px; }
+.ad-attn-foot {
+  height: 46px; flex-shrink: 0;
+  display: flex; align-items: center; padding: 0 20px;
+  border-top: 1px solid var(--card-border); box-sizing: border-box;
+}
+.ad-attn-foot a {
+  font-size: 12px; font-weight: 600; color: var(--primary-light);
+  text-decoration: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.ad-attn-foot a:hover { text-decoration: underline; }
+.ad-attn-foot a svg { width: 11px; height: 11px; }
+
+/* Work queue */
+.ad-wq-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.ad-wq-table { width: 100%; border-collapse: collapse; }
+.ad-wq-table th {
+  padding: 7px 14px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text-muted); text-align: left;
+  border-bottom: 1px solid var(--card-border);
+}
+.ad-wq-table td {
+  padding: 9px 14px;
+  font-size: 12.5px; color: var(--text-primary);
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+}
+.ad-wq-table tr:last-child td { border-bottom: none; }
+.ad-wq-table tr:hover td { background: var(--sidebar-hover); }
+.ad-wq-table a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
+.ad-wq-table a:hover { color: var(--primary-light); }
+.ad-wq-td-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.ad-wq-type { color: var(--text-secondary); font-size: 12px; }
+.ad-wq-due  { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+
+/* Badges */
+.ad-badge { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+.ad-badge.blue   { background: rgba(59,130,246,0.12);  color: #60a5fa; }
+.ad-badge.red    { background: rgba(239,68,68,0.12);   color: #f87171; }
+.ad-badge.amber  { background: rgba(245,158,11,0.12);  color: #fbbf24; }
+.ad-badge.green  { background: rgba(34,197,94,0.12);   color: #4ade80; }
+.ad-badge.purple { background: rgba(168,85,247,0.12);  color: #c084fc; }
+.ad-badge.gray   { background: rgba(107,114,128,0.12); color: #9ca3af; }
+
+/* Empty fallback */
+.ad-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-muted); }
+
+/* ── 2. KPI strip ───────────────────────────────────────── */
+.ad-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ad-kpi {
+  height: 88px;
+  padding: 14px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.ad-kpi:hover { border-color: var(--primary-bg); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+.ad-kpi-num { font-size: 28px; font-weight: 900; line-height: 1; letter-spacing: -0.5px; }
+.ad-kpi-num.kc-blue   { color: #3b82f6; }
+.ad-kpi-num.kc-amber  { color: #f59e0b; }
+.ad-kpi-num.kc-purple { color: #a855f7; }
+.ad-kpi-num.kc-orange { color: #f97316; }
+.ad-kpi-num.kc-red    { color: #ef4444; }
+.ad-kpi-label { font-size: 11px; color: var(--text-secondary); line-height: 1.3; }
+
+/* ── 3. Bottom row ──────────────────────────────────────── */
+.ad-bottom {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr 1.05fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ad-bottom > .ad-card {
+  height: 256px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ad-bot-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* Donut */
+.ad-donut-wrap {
+  flex: 1; min-height: 0;
+  padding: 14px 20px;
+  display: flex; gap: 18px; align-items: center;
+}
+.ad-donut-wrap canvas { flex-shrink: 0; }
+.ad-legend { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0; }
+.ad-legend-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; }
+.ad-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ad-legend-lbl { color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-legend-cnt { color: var(--text-primary); font-weight: 600; min-width: 22px; text-align: right; }
+
+/* Expiring soon */
+.ad-exp-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--card-border);
+  text-decoration: none; color: inherit;
+}
+.ad-exp-item:last-child { border-bottom: none; }
+.ad-exp-item:hover { background: var(--sidebar-hover); }
+.ad-exp-icon {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: rgba(249,115,22,0.1); color: #f97316;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ad-exp-icon svg { width: 14px; height: 14px; }
+.ad-exp-info { flex: 1; min-width: 0; }
+.ad-exp-name   { font-size: 12px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-exp-client { font-size: 11px; color: var(--text-muted); }
+.ad-exp-tag { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; }
+.ad-exp-tag.urgent { background: rgba(239,68,68,0.12); color: #f87171; }
+.ad-exp-tag.soon   { background: rgba(249,115,22,0.12); color: #fb923c; }
+
+/* Activity */
+.ad-act-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--card-border);
+}
+.ad-act-item:last-child { border-bottom: none; }
+.ad-act-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--avatar-gradient);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 1px;
+}
+.ad-act-body { flex: 1; min-width: 0; }
+.ad-act-desc  { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
+.ad-act-desc strong { font-weight: 600; }
+.ad-act-verb  { color: var(--text-secondary); font-weight: 400; }
+.ad-act-model { color: var(--text-muted); }
+.ad-act-time  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.ad-act-badge { font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+.ad-act-badge.CREATE { background: rgba(34,197,94,0.12);   color: #4ade80; }
+.ad-act-badge.UPDATE { background: rgba(59,130,246,0.12);  color: #60a5fa; }
+.ad-act-badge.DELETE { background: rgba(239,68,68,0.12);   color: #f87171; }
+.ad-act-badge.VIEW   { background: rgba(107,114,128,0.12); color: #9ca3af; }
+
+/* ── 4. Quick actions ───────────────────────────────────── */
+.ad-quick { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.ad-qa {
+  padding: 16px; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.ad-qa:hover { border-color: var(--primary-glow); background: var(--primary-subtle); transform: translateY(-1px); }
+.ad-qa-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: var(--primary-subtle); color: var(--primary-light);
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--primary-bg);
+}
+.ad-qa-icon svg { width: 15px; height: 15px; }
+.ad-qa-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.ad-qa-sub   { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .ad-top    { grid-template-columns: 1fr 1fr; height: auto; }
+  .ad-top > .ad-card { height: auto; }
+  .ad-bottom { grid-template-columns: 1fr 1fr; }
+  .ad-bottom > .ad-card { height: auto; }
+  .ad-kpis   { grid-template-columns: repeat(3, 1fr); }
+  .ad-quick  { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 800px) {
+  .AegisDashboard { padding: 0 0 24px; }
+  .ad-top    { grid-template-columns: 1fr; }
+  .ad-bottom { grid-template-columns: 1fr; }
+  .ad-kpis   { grid-template-columns: repeat(2, 1fr); }
+  .ad-quick  { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+
+<div class="AegisDashboard">
+
+  {# ── Page header ─────────────────────────────────────── #}
+  <div class="arch-header" style="margin-bottom:20px">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title" style="font-size:20px">Dashboard</h1>
+      </div>
+      <p class="arch-subtitle" id="adPageDate" style="font-size:13px"></p>
+    </div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:contract_list' %}" class="arch-chip">
+        <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        Contracts
+      </a>
+      <a href="{% url 'contracts:reports_dashboard' %}" class="arch-chip">
+        <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Reports
+      </a>
+      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
+        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        New Contract
+      </a>
+    </div>
+  </div>
+
+  {% if not active_cases and not my_work_items %}
+  {# ══ ONBOARDING STATE ════════════════════════════════════ #}
+  <div class="ad-onboard-wrap">
+    <h2 class="ad-onboard-h">Start building your legal workspace</h2>
+    <p class="ad-onboard-sub">Complete these steps to get the most out of CMS Aegis.</p>
+
+    <div class="ad-card ad-onboard-card">
+      <div class="ad-onboard-progress">
+        <span class="ad-onboard-progress-label">Getting started</span>
+        <span class="ad-onboard-progress-count">0 of 4 completed</span>
+      </div>
+      <div class="ad-onboard-bar-wrap">
+        <div class="ad-onboard-bar" id="adOnboardBar"></div>
+      </div>
+
+      <a href="{% url 'contracts:contract_create' %}" class="ad-onboard-step">
+        <span class="ad-onboard-check todo"></span>
+        <div>
+          <div class="ad-onboard-step-title">Create or upload your first contract</div>
+          <div class="ad-onboard-step-sub">Add a contract from scratch or upload an existing document</div>
         </div>
-        <div class="workspace-toolbar">
-            <a href="{% url 'contracts:contract_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Repository</a>
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflow Board</a>
-            <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals Queue</a>
-            <a href="{% url 'contracts:signature_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Signature Queue</a>
-            <a href="{% url 'contracts:audit_log_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Audit Trail</a>
+        <span class="ad-onboard-step-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
+      </a>
+
+      <a href="{% url 'contracts:counterparty_create' %}" class="ad-onboard-step">
+        <span class="ad-onboard-check todo"></span>
+        <div>
+          <div class="ad-onboard-step-title">Add a counterparty</div>
+          <div class="ad-onboard-step-sub">Register the companies or individuals you contract with</div>
         </div>
+        <span class="ad-onboard-step-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
+      </a>
+
+      <a href="{% url 'contracts:workflow_dashboard' %}" class="ad-onboard-step">
+        <span class="ad-onboard-check todo"></span>
+        <div>
+          <div class="ad-onboard-step-title">Configure an approval workflow</div>
+          <div class="ad-onboard-step-sub">Set up review and sign-off steps for your contracts</div>
+        </div>
+        <span class="ad-onboard-step-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
+      </a>
+
+      <a href="{% url 'settings_hub' %}" class="ad-onboard-step">
+        <span class="ad-onboard-check todo"></span>
+        <div>
+          <div class="ad-onboard-step-title">Invite a team member</div>
+          <div class="ad-onboard-step-sub">Collaborate by adding colleagues to your workspace</div>
+        </div>
+        <span class="ad-onboard-step-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
+      </a>
+    </div>
+  </div>
+
+  {% else %}
+  {# ══ NORMAL DASHBOARD ════════════════════════════════════ #}
+
+  {# ── 1. Needs your attention + My work queue ─────────── #}
+  <div class="ad-top">
+
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Needs your attention</span>
+      </div>
+      <div class="ad-attn-body">
+
+        <a href="{% url 'contracts:approval_request_list' %}" class="ad-attn-row">
+          <div class="ad-attn-badge c-red">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          </div>
+          <div class="ad-attn-txt">
+            <div class="ad-attn-lbl">{{ approval_stats.pending|default:0 }} pending approval{{ approval_stats.pending|default:0|pluralize }}</div>
+            <div class="ad-attn-meta">Waiting for your approval</div>
+          </div>
+          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
+        </a>
+
+        <a href="{% url 'contracts:contract_list' %}" class="ad-attn-row">
+          <div class="ad-attn-badge c-orange">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div class="ad-attn-txt">
+            <div class="ad-attn-lbl">{{ expiring_case_count|default:0 }} contract{{ expiring_case_count|default:0|pluralize }} expiring within 30 days</div>
+            <div class="ad-attn-meta">Requires renewal or action</div>
+          </div>
+          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
+        </a>
+
+        <a href="{% url 'contracts:deadline_list' %}" class="ad-attn-row">
+          <div class="ad-attn-badge c-yellow">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="ad-attn-txt">
+            <div class="ad-attn-lbl">{{ deadline_stats.overdue|default:0 }} overdue deadline{{ deadline_stats.overdue|default:0|pluralize }}</div>
+            <div class="ad-attn-meta">Past due — immediate action needed</div>
+          </div>
+          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
+        </a>
+
+        <a href="{% url 'contracts:risk_log_list' %}" class="ad-attn-row">
+          <div class="ad-attn-badge c-purple">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div class="ad-attn-txt">
+            <div class="ad-attn-lbl">{{ risk_stats.high_critical|default:0 }} high-risk contract{{ risk_stats.high_critical|default:0|pluralize }}</div>
+            <div class="ad-attn-meta">Require risk review</div>
+          </div>
+          <div class="ad-attn-chev"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
+        </a>
+
+      </div>
+      <div class="ad-attn-foot">
+        <a href="{% url 'contracts:contract_list' %}">
+          Go to contract list
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        </a>
+      </div>
     </div>
 
-    {% if urgent_case_count > 0 or provider_capacity_critical_count > 0 %}
-    <div class="flex gap-3 mb-6 flex-wrap">
-        {% if urgent_case_count > 0 %}
-        <a href="{% url 'contracts:deadline_list' %}" class="alert-banner alert-banner-red alert-link-fill">
-            <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-            <span><strong>{{ urgent_case_count }}</strong> urgent matter{{ urgent_case_count|pluralize }} require immediate follow-up</span>
-            <svg aria-hidden="true" class="ic-sm ml-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </a>
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">My work queue</span>
+        <div class="ad-head-meta">
+          <span class="ad-head-count">{{ my_work_items|length }} item{{ my_work_items|length|pluralize }}</span>
+          <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
+        </div>
+      </div>
+      <div class="ad-wq-body">
+        {% if my_work_items %}
+        <table class="ad-wq-table">
+          <thead><tr><th>ITEM</th><th>TYPE</th><th>STATUS</th><th>DUE</th></tr></thead>
+          <tbody>
+            {% for item in my_work_items %}
+            <tr>
+              <td>
+                <a href="{{ item.href }}">{{ item.title|truncatechars:36 }}</a>
+                <div class="ad-wq-td-meta">{{ item.meta|truncatechars:38 }}</div>
+              </td>
+              <td class="ad-wq-type">{{ item.type|default:item.badge }}</td>
+              <td><span class="ad-badge {{ item.badge_class }}">{{ item.badge }}</span></td>
+              <td class="ad-wq-due">—</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="ad-empty">No items currently assigned to you.</div>
         {% endif %}
-        {% if provider_capacity_critical_count > 0 %}
-        <a href="{% url 'contracts:client_list' %}" class="alert-banner alert-banner-yellow alert-link-fill">
-            <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            <span><strong>{{ provider_capacity_critical_count }}</strong> counterparties need capacity review or follow-up</span>
-            <svg aria-hidden="true" class="ic-sm ml-auto opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </a>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <div class="panel mb-6">
-        <div class="panel-inner">
-            <div class="text-xs font-semibold uppercase tracking-[0.18em] c-muted mb-3">Operational snapshot</div>
-            <div class="ops-strip">
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ active_cases }}</div>
-                    <div class="ops-kpi-label">Active contracts</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ approval_stats.pending|default:0 }}</div>
-                    <div class="ops-kpi-label">Pending approval</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ expiring_case_count }}</div>
-                    <div class="ops-kpi-label">Expiring soon</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ risk_stats.high_critical|default:0 }}</div>
-                    <div class="ops-kpi-label">High risk</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ dsar_stats.open|default:0 }}</div>
-                    <div class="ops-kpi-label">Compliance issues</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ case_stats.draft|default:0 }}</div>
-                    <div class="ops-kpi-label">Drafts</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ signature_stats.pending|default:0 }}</div>
-                    <div class="ops-kpi-label">Signatures pending</div>
-                </div>
-                <div class="ops-kpi">
-                    <div class="ops-kpi-value">{{ recent_audit|length }}</div>
-                    <div class="ops-kpi-label">Recent activity</div>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <div class="panel mb-6">
-        <div class="panel-head">
-            <div class="panel-head-inner">
-                <div class="dot dot-green"></div>
-                <span class="panel-title">My Work Queue</span>
-            </div>
-            <span class="panel-link">{{ my_work_items|length }} items</span>
+  </div>{# /ad-top #}
+
+  {# ── 2. KPI strip ────────────────────────────────────── #}
+  <div class="ad-kpis">
+    <div class="ad-card ad-kpi">
+      <div class="ad-kpi-num kc-blue">{{ active_cases|default:0 }}</div>
+      <div class="ad-kpi-label">Active contracts</div>
+    </div>
+    <div class="ad-card ad-kpi">
+      <div class="ad-kpi-num kc-amber">{{ approval_stats.pending|default:0 }}</div>
+      <div class="ad-kpi-label">Pending approvals</div>
+    </div>
+    <div class="ad-card ad-kpi">
+      <div class="ad-kpi-num kc-purple">{{ signature_stats.pending|default:0 }}</div>
+      <div class="ad-kpi-label">Pending signatures</div>
+    </div>
+    <div class="ad-card ad-kpi">
+      <div class="ad-kpi-num kc-orange">{{ expiring_case_count|default:0 }}</div>
+      <div class="ad-kpi-label">Expiring within 30 days</div>
+    </div>
+    <div class="ad-card ad-kpi">
+      <div class="ad-kpi-num kc-red">{{ risk_stats.high_critical|default:0 }}</div>
+      <div class="ad-kpi-label">High-risk contracts</div>
+    </div>
+  </div>{# /ad-kpis #}
+
+  {# ── 3. Bottom row ───────────────────────────────────── #}
+  <div class="ad-bottom">
+
+    <div class="ad-card">
+      <div class="ad-head"><span class="ad-head-title">Contract lifecycle</span></div>
+      <div class="ad-donut-wrap">
+        <canvas id="adLifecycleChart" width="130" height="130"></canvas>
+        <div class="ad-legend">
+          {% for item in lifecycle_chart %}
+          <div class="ad-legend-row">
+            <span class="ad-legend-dot" data-color="{{ item.color }}"></span>
+            <span class="ad-legend-lbl">{{ item.label }}</span>
+            <span class="ad-legend-cnt">{{ item.count }}</span>
+          </div>
+          {% empty %}
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#3b82f6"></span><span class="ad-legend-lbl">Active</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#f59e0b"></span><span class="ad-legend-lbl">In review</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#a855f7"></span><span class="ad-legend-lbl">Pending signature</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#10b981"></span><span class="ad-legend-lbl">Executed</span><span class="ad-legend-cnt">—</span></div>
+          <div class="ad-legend-row"><span class="ad-legend-dot" data-color="#6b7280"></span><span class="ad-legend-lbl">Expired</span><span class="ad-legend-cnt">—</span></div>
+          {% endfor %}
         </div>
-        {% for item in my_work_items %}
-        <a href="{{ item.href }}" class="list-row">
-            <div class="item-row">
-                <div class="status-dot {{ item.dot }}"></div>
-                <div class="min-w-0">
-                    <div class="item-title">{{ item.title|truncatechars:52 }}</div>
-                    <div class="item-meta">{{ item.meta }}</div>
-                </div>
-            </div>
-            <span class="badge-sm {{ item.badge_class }}">{{ item.badge }}</span>
-        </a>
-        {% empty %}
-        <div class="empty-state">
-            No assigned work items yet.
-        </div>
-        {% endfor %}
+      </div>
     </div>
 
-    <div class="dash-grid dash-grid-2-1 mb-6">
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-head-inner">
-                    <div class="dot dot-blue"></div>
-                    <span class="panel-title">Recent Contracts<span class="sr-only">Recent Cases</span></span>
-                </div>
-                <a href="{% url 'contracts:contract_list' %}" class="panel-link">
-                    View all
-                    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-            {% for contract in recent_cases %}
-            <a href="{% url 'contracts:contract_detail' contract.pk %}" class="list-row">
-                <div class="item-row">
-                    <div class="status-dot {% if contract.status == 'ACTIVE' %}green{% elif contract.status == 'PENDING' %}yellow{% elif contract.status == 'EXPIRED' %}red{% elif contract.status == 'DRAFT' %}blue{% else %}gray{% endif %}"></div>
-                    <div class="min-w-0">
-                        <div class="item-title">{{ contract.title|truncatechars:52 }}</div>
-                        <div class="item-meta">{{ contract.client.name|default:'No client' }} &middot; {{ contract.get_status_display }}{% if contract.value %} &middot; {{ contract.value }}{% endif %}</div>
-                    </div>
-                </div>
-                <span class="badge-sm {% if contract.status == 'ACTIVE' %}badge-green{% elif contract.status == 'PENDING' %}badge-yellow{% elif contract.status == 'EXPIRED' %}badge-red{% elif contract.status == 'DRAFT' %}badge-blue{% else %}badge-gray{% endif %}">
-                    {{ contract.get_status_display }}
-                </span>
-            </a>
-            {% empty %}
-            <div class="empty-state">
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                No contracts yet.
-                <a href="{% url 'contracts:contract_create' %}" class="c-link no-underline font-semibold"> Create your first contract</a>
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-head-inner">
-                    <div class="dot dot-purple"></div>
-                    <span class="panel-title">Case Portfolio</span>
-                </div>
-            </div>
-            <div class="panel-inner">
-                {% if case_status_data %}
-                {% for item in case_status_data %}
-                <div class="portfolio-item {% if forloop.last %}mb-0{% endif %}">
-                    <div class="portfolio-row-head">
-                        <span class="port-label">{{ item.label }}</span>
-                        <span class="port-count">{{ item.count }}</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill {{ item.tone }}" data-width="{% widthratio item.count flow_total 100 %}"></div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="no-data-msg">No contract data available yet</div>
-                {% endif %}
-
-                <div class="panel-divider">
-                    <div class="panel-2col">
-                        <div>
-                            <div class="metric-md">{{ total_documents }}</div>
-                            <div class="item-meta">Documenten</div>
-                        </div>
-                        <div>
-                            <div class="metric-md">{{ total_case_matters }}</div>
-                            <div class="item-meta">Total Matters</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="dash-grid dash-grid-2 mb-6">
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-head-inner">
-                    <div class="dot dot-purple"></div>
-                    <span class="panel-title">Workflow recommendations open</span>
-                    {% if match_recommendations %}
-                    <span class="badge-sm badge-blue ml-1">{{ match_recommendations|length }}</span>
-                    {% endif %}
-                </div>
-                <a href="{% url 'contracts:contract_list' %}?flow=matching" class="panel-link">
-                    Start from contract
-                    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-            {% if matching_focus_case %}
-            <div class="list-row block">
-                <div class="item-row items-start">
-                    <div class="status-dot blue mt-1"></div>
-                    <div class="min-w-0 flex-1">
-                        <div class="item-title">Contract focus: {{ matching_focus_case.title|truncatechars:48 }}</div>
-                        <div class="item-meta">Recommendations are calculated for this contract.</div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% for item in match_recommendations %}
-            <div class="list-row block">
-                <div class="item-row items-start">
-                    <div class="status-dot blue mt-1"></div>
-                    <div class="min-w-0 flex-1">
-                        <div class="item-title">{{ item.case_record.title|default:item.contract.title|truncatechars:42 }}</div>
-                        <div class="item-meta">Top-3 suggesties klaar • {{ item.days_open }} dagen open</div>
-                        <div class="mt-2 space-y-2">
-                            {% for suggestion in item.suggestions %}
-                            <div class="flex items-start justify-between gap-3">
-                                <div>
-                                    <div class="item-title text-[13px]">{{ suggestion.name }}</div>
-                                    <div class="item-meta">Matchscore {{ suggestion.match_score }} · Wachttijd {% if suggestion.wait_days is not None %}{{ suggestion.wait_days }} dagen{% else %}onbekend{% endif %} · Capaciteit {{ suggestion.capacity }}</div>
-                                    <div class="item-meta">Reden: {{ suggestion.match_reason }}</div>
-                                </div>
-                                <a href="{{ item.action_href }}&provider={{ suggestion.id }}" class="c-link no-underline text-[12px] font-semibold">Choose from contract</a>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <div class="mt-2">
-                            <a href="{{ item.action_href }}" class="c-link no-underline text-[12px] font-semibold">Open contract for workflow</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state">
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                No open workflow recommendations.
-                <a href="{% url 'contracts:contract_list' %}?flow=matching" class="c-link no-underline font-semibold"> Start workflow from contract</a>
-                {% if not has_providers %}
-                <a href="{% url 'contracts:client_create' %}" class="c-link no-underline font-semibold"> Add a counterparty</a>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-head-inner">
-                    <div class="dot dot-amber"></div>
-                    <span class="panel-title">Task Signals<span class="sr-only">Pending Tasks</span></span>
-                </div>
-                <a href="{% url 'contracts:client_list' %}" class="panel-link">
-                    View all
-                    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-            {% for provider in provider_capacity_signals %}
-            <div class="list-row">
-                <div class="item-row">
-                    <div class="task-check"></div>
-                    <div class="min-w-0">
-                        <div class="item-title">{{ provider.name|truncatechars:40 }}</div>
-                        <div class="item-meta">{{ provider.detail }}</div>
-                    </div>
-                </div>
-                <span class="badge-sm {{ provider.badge_class }}">
-                    {{ provider.signal }}
-                </span>
-            </div>
-            {% empty %}
-            <div class="empty-state">
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                No capacity pressure detected.
-                {% if not has_providers %}
-                <a href="{% url 'contracts:client_create' %}" class="c-link no-underline font-semibold"> Add a counterparty</a>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="panel mb-6">
-        <div class="panel-head">
-            <div class="panel-head-inner">
-                <div class="dot dot-blue"></div>
-            <span class="panel-title">Follow-up / Tasks</span>
-            </div>
-                <a href="{% url 'contracts:legal_task_kanban' %}" class="panel-link">
-                View all
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
-        </div>
-        {% for task in followup_tasks %}
-        <a href="{% url 'contracts:legal_task_update' task.pk %}" class="list-row">
-            <div class="item-row">
-                <div class="status-dot {% if task.priority == 'URGENT' %}red{% elif task.priority == 'HIGH' %}yellow{% else %}blue{% endif %}"></div>
-                <div class="min-w-0">
-                    <div class="item-title">{{ task.title|truncatechars:46 }}</div>
-                    <div class="item-meta">{{ task.due_diligence_process.title|default:'Niet gekoppeld' }} &middot; {{ task.get_task_type_display }} &middot; {{ task.due_date|date:"M d" }}</div>
-                </div>
-            </div>
-            <span class="badge-sm {% if task.is_overdue %}badge-red{% elif task.priority == 'URGENT' %}badge-red{% elif task.priority == 'HIGH' %}badge-yellow{% else %}badge-blue{% endif %}">
-                {% if task.is_overdue %}Te laat{% elif task.priority == 'URGENT' %}Urgent{% else %}{{ task.get_priority_display }}{% endif %}
-            </span>
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Expiring contracts</span>
+        <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all</a>
+      </div>
+      <div class="ad-bot-body">
+        {% for contract in expiring_contracts %}
+        <a href="{% url 'contracts:contract_detail' contract.pk %}" class="ad-exp-item">
+          <div class="ad-exp-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
+          <div class="ad-exp-info">
+            <div class="ad-exp-name">{{ contract.title|truncatechars:32 }}</div>
+            <div class="ad-exp-client">{{ contract.client.name|default:"No client" }}</div>
+          </div>
+          <span class="ad-exp-tag soon">{{ contract.end_date|timeuntil }} left</span>
         </a>
         {% empty %}
-        <div class="empty-state">
-            No open follow-up tasks.
-            <a href="{% url 'contracts:legal_task_create' %}" class="c-link no-underline font-semibold"> Add a task</a>
-        </div>
+        <div class="ad-empty">No contracts expiring soon.</div>
         {% endfor %}
+      </div>
     </div>
 
-    <div class="panel mb-6">
-        <div class="panel-head">
-            <div class="panel-head-inner">
-                <div class="dot dot-red"></div>
-            <span class="panel-title">Recent risks</span>
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-title">Recent activity</span>
+        <a href="{% url 'contracts:audit_log_list' %}" class="ad-head-link">View all</a>
+      </div>
+      <div class="ad-bot-body">
+        {% for log in recent_audit|slice:":4" %}
+        <div class="ad-act-item">
+          <div class="ad-act-avatar">{% if log.user %}{{ log.user.first_name|default:log.user.username|slice:":1"|upper }}{% else %}S{% endif %}</div>
+          <div class="ad-act-body">
+            <div class="ad-act-desc">
+              <strong>{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}System{% endif %}</strong>
+              <span class="ad-act-verb"> {{ log.get_action_display|lower }} </span>
+              <span class="ad-act-model">{{ log.model_name }}</span>
             </div>
-            <a href="{% url 'contracts:risk_log_list' %}" class="panel-link">
-                View all
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
+            <div class="ad-act-time">{{ log.timestamp|timesince }} ago</div>
+          </div>
+          <span class="ad-act-badge {{ log.action }}">{{ log.get_action_display }}</span>
         </div>
-        {% for signal in recent_signals %}
-        <a href="{% url 'contracts:risk_log_update' signal.pk %}" class="list-row">
-            <div class="item-row">
-                <div class="status-dot {% if signal.risk_level == 'CRITICAL' %}red{% elif signal.risk_level == 'HIGH' %}yellow{% else %}blue{% endif %}"></div>
-                <div class="min-w-0">
-                    <div class="item-title">{{ signal.get_signal_type_display }}{% if signal.due_diligence_process %} · {{ signal.due_diligence_process.title|truncatechars:35 }}{% endif %}</div>
-                    <div class="item-meta">{{ signal.description|truncatechars:80 }}</div>
-                </div>
-            </div>
-            <span class="badge-sm {% if signal.status == 'OPEN' %}badge-red{% elif signal.status == 'IN_PROGRESS' %}badge-yellow{% else %}badge-green{% endif %}">
-                {{ signal.get_status_display }}
-            </span>
-        </a>
         {% empty %}
-        <div class="empty-state">
-            Geen recente signalen.
-            <a href="{% url 'contracts:risk_log_create' %}" class="c-link no-underline font-semibold"> Add a risk</a>
-        </div>
+        <div class="ad-empty">No recent activity.</div>
         {% endfor %}
+      </div>
     </div>
 
-    <div class="dash-grid dash-grid-2-1 mb-6">
-        <div class="panel">
-            <div class="panel-head">
-                <div class="panel-head-inner">
-                    <div class="dot dot-green"></div>
-                <span class="panel-title">Governance activity</span>
-                </div>
-                <a href="{% url 'contracts:audit_log_list' %}" class="panel-link">
-                    Full audit log
-                    <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-            {% for log in recent_audit %}
-            <div class="list-row kpi-row">
-                <div class="avatar-xs avatar-gradient-bg">
-                    {% if log.user %}
-                    {{ log.user.first_name|default:log.user.username|slice:":1"|upper }}
-                    {% else %}
-                    S
-                    {% endif %}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-[13px] c-primary">
-                        <span class="font-bold">{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}System{% endif %}</span>
-                        <span class="c-secondary font-normal">{{ log.get_action_display|lower }}</span>
-                        <span class="font-medium">{{ log.model_name }}</span>
-                    </div>
-                    <div class="item-meta">{{ log.timestamp|timesince }} ago</div>
-                </div>
-                <span class="badge-sm {% if log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' %}badge-blue{% elif log.action == 'DELETE' %}badge-red{% else %}badge-gray{% endif %}">
-                    {{ log.get_action_display }}
-                </span>
-            </div>
-            {% empty %}
-            <div class="empty-state">
-                <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                No recent governance activity.
-            </div>
-            {% endfor %}
-        </div>
+  </div>{# /ad-bottom #}
 
-        <div class="stk-col">
-            <div class="panel">
-                <div class="panel-head">
-                    <span class="panel-title">Portfolio snapshot</span>
-                </div>
-                <div class="panel-inner">
-                    <div class="mb-5">
-                        <div class="metric-label">Avg. intake → signature</div>
-                        <div class="metric-xl">{{ avg_intake_to_placement_days|floatformat:1 }}<span class="metric-unit">days</span></div>
-                    </div>
-                    <div class="panel-divider">
-                        <div class="metric-label">Counterparties with capacity</div>
-                        <div class="metric-lg metric-trust">{{ providers_with_capacity }}</div>
-                    </div>
-                </div>
-            </div>
+  {# ── 4. Quick actions ────────────────────────────────── #}
+  <div class="ad-quick">
+    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-qa">
+      <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></div>
+      <div><div class="ad-qa-title">Create contract</div><div class="ad-qa-sub">New contract from template or scratch</div></div>
+    </a>
+    <a href="{% url 'contracts:contract_create' %}" class="ad-card ad-qa">
+      <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg></div>
+      <div><div class="ad-qa-title">Upload contract</div><div class="ad-qa-sub">Add existing contract to repository</div></div>
+    </a>
+    <a href="{% url 'contracts:workflow_dashboard' %}" class="ad-card ad-qa">
+      <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <div><div class="ad-qa-title">Start workflow</div><div class="ad-qa-sub">Trigger approval or review workflow</div></div>
+    </a>
+    <a href="{% url 'contracts:counterparty_create' %}" class="ad-card ad-qa">
+      <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+      <div><div class="ad-qa-title">Add counterparty</div><div class="ad-qa-sub">Register a new counterparty</div></div>
+    </a>
+    <a href="{% url 'contracts:reports_dashboard' %}" class="ad-card ad-qa">
+      <div class="ad-qa-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <div><div class="ad-qa-title">Run report</div><div class="ad-qa-sub">Generate reports and insights</div></div>
+    </a>
+  </div>
 
-            <div class="panel">
-                <div class="panel-head">
-                    <span class="panel-title">Quick links</span>
-                </div>
-                <a href="{% url 'contracts:reports_dashboard' %}" class="list-row nav-row">
-                    <div class="nav-row-body">
-                        <svg aria-hidden="true" class="ic-muted w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        <span class="nav-row-label">Reports &amp; analytics</span>
-                    </div>
-                    <svg aria-hidden="true" class="ic-muted ic-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="{% url 'contracts:privacy_dashboard' %}" class="list-row nav-row">
-                    <div class="nav-row-body">
-                        <svg aria-hidden="true" class="ic-muted w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        <span class="nav-row-label">Privacy &amp; compliance</span>
-                    </div>
-                    <svg aria-hidden="true" class="ic-muted ic-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="list-row nav-row">
-                    <div class="nav-row-body">
-                        <svg aria-hidden="true" class="ic-muted w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        <span class="nav-row-label">Workflow overview</span>
-                    </div>
-                    <svg aria-hidden="true" class="ic-muted ic-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-                <a href="{% url 'contracts:contract_create' %}" class="list-row nav-row">
-                    <div class="nav-row-body">
-                        <svg aria-hidden="true" class="ic-muted w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        <span class="nav-row-label">Create new contract</span>
-                    </div>
-                    <svg aria-hidden="true" class="ic-muted ic-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-            </div>
-        </div>
-    </div>
+  {% endif %}{# /normal dashboard #}
 
-</div>
+</div>{# /AegisDashboard #}
+
+{{ lifecycle_chart|json_script:"ad-lc-data" }}
 <script nonce="{{ csp_nonce }}">
-document.querySelectorAll('.progress-bar-fill[data-width]').forEach((bar) => {
-    const width = Number(bar.dataset.width || 0);
-    bar.style.width = `${Math.max(0, Math.min(100, width))}%`;
-});
+(function () {
+  /* Date in page header */
+  var dateEl = document.getElementById('adPageDate');
+  if (dateEl) {
+    var d = new Date();
+    var days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    dateEl.textContent = days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  /* Legend dot colors (JS inline style — not blocked by CSP style-src) */
+  document.querySelectorAll('.ad-legend-dot[data-color]').forEach(function (el) {
+    el.style.background = el.getAttribute('data-color');
+  });
+
+  /* Donut chart */
+  var raw   = document.getElementById('ad-lc-data');
+  var segs  = raw ? JSON.parse(raw.textContent || '[]') : [];
+  var total = {{ lifecycle_total|default:0 }};
+  var canvas = document.getElementById('adLifecycleChart');
+  if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W / 2, cy = H / 2;
+  var R = Math.min(W, H) / 2 - 12;
+  var T = 20, GAP = 0.03;
+  var cs = getComputedStyle(document.documentElement);
+  var textPrimary = cs.getPropertyValue('--text-primary').trim() || '#f1f5f9';
+  var textMuted   = cs.getPropertyValue('--text-muted').trim()   || '#64748b';
+
+  if (!segs.length || total === 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(148,163,184,0.10)';
+    ctx.lineWidth = T;
+    ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = textMuted;
+    ctx.font = '11px system-ui, -apple-system, sans-serif';
+    ctx.fillText('No data', cx, cy);
+    return;
+  }
+
+  var start = -Math.PI / 2;
+  segs.forEach(function (s) {
+    var sweep = (s.count / total) * (Math.PI * 2 - GAP * segs.length);
+    if (sweep <= 0) return;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, start + GAP / 2, start + GAP / 2 + sweep);
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = T;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    start += sweep + GAP;
+  });
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = textPrimary;
+  ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+  ctx.fillText(String(total), cx, cy - 8);
+  ctx.font = '10px system-ui, -apple-system, sans-serif';
+  ctx.fillStyle = textMuted;
+  ctx.fillText('contracts', cx, cy + 10);
+})();
 </script>
 {% endblock %}

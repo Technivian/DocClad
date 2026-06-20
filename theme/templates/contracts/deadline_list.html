@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Deadlines - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">.overdue-date { color: #F87171; }</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -45,7 +46,7 @@
             <td class="px-5 py-3.5 tbl-td">
               <span class="badge-sm {% if deadline.priority == 'CRITICAL' %}badge-red{% elif deadline.priority == 'HIGH' %}badge-red{% elif deadline.priority == 'MEDIUM' %}badge-yellow{% else %}badge-gray{% endif %}">{{ deadline.get_priority_display }}</span>
             </td>
-            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}text-red-600 font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
+            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}overdue-date font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
             <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
             <td class="px-5 py-3.5 tbl-td">
               {% if deadline.is_completed %}<span class="badge-sm badge-green">Done</span>

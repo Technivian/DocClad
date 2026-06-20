@@ -1,26 +1,38 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.dsar-back { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+.dsar-back:hover { color: var(--text-secondary); }
+.dsar-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 8px; }
+.dsar-field { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+.dsar-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.dsar-value { margin-top: 4px; font-size: 13px; color: var(--text-primary); }
+.btn-edit { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+.btn-edit:hover { background: var(--primary-hover); }
+.dsar-panel { padding: 0 22px; }
+.dsar-field-last { border-bottom: none; }
+</style>
 <div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between mb-6">
         <div>
-            <a href="{% url 'contracts:dsar_list' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to list</a>
-            <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ object }}</h1>
+            <a href="{% url 'contracts:dsar_list' %}" class="dsar-back">&larr; Back to list</a>
+            <div class="dsar-title">{{ object }}</div>
         </div>
-        <a href="{% url 'contracts:dsar_update' object.pk %}" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">Edit</a>
+        <a href="{% url 'contracts:dsar_update' object.pk %}" class="btn-edit">Edit</a>
     </div>
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Reference</span><p class="mt-1 text-sm text-gray-900">{{ object.reference_number }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Type</span><p class="mt-1 text-sm text-gray-900">{{ object.get_request_type_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Status</span><p class="mt-1 text-sm text-gray-900">{{ object.get_status_display }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Requester</span><p class="mt-1 text-sm text-gray-900">{{ object.requester_name }} ({{ object.requester_email }})</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">ID Verified</span><p class="mt-1 text-sm text-gray-900">{{ object.requester_id_verified|yesno:"Yes,No" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Description</span><p class="mt-1 text-sm text-gray-900">{{ object.description }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Response</span><p class="mt-1 text-sm text-gray-900">{{ object.response|default:"Pending" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Received</span><p class="mt-1 text-sm text-gray-900">{{ object.received_date }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Due</span><p class="mt-1 text-sm text-gray-900">{{ object.due_date }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Completed</span><p class="mt-1 text-sm text-gray-900">{{ object.completed_date|default:"Not completed" }}</p></div>
-            <div class="py-3 border-b border-gray-100"><span class="text-xs font-medium text-gray-500 uppercase">Extension</span><p class="mt-1 text-sm text-gray-900">{{ object.extended|yesno:"Yes,No" }}</p></div>
+    <div class="panel dsar-panel">
+            <div class="dsar-field"><span class="dsar-label">Reference</span><p class="dsar-value">{{ object.reference_number }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Type</span><p class="dsar-value">{{ object.get_request_type_display }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Status</span><p class="dsar-value">{{ object.get_status_display }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Requester</span><p class="dsar-value">{{ object.requester_name }} ({{ object.requester_email }})</p></div>
+            <div class="dsar-field"><span class="dsar-label">ID Verified</span><p class="dsar-value">{{ object.requester_id_verified|yesno:"Yes,No" }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Description</span><p class="dsar-value">{{ object.description }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Response</span><p class="dsar-value">{{ object.response|default:"Pending" }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Received</span><p class="dsar-value">{{ object.received_date }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Due</span><p class="dsar-value">{{ object.due_date }}</p></div>
+            <div class="dsar-field"><span class="dsar-label">Completed</span><p class="dsar-value">{{ object.completed_date|default:"Not completed" }}</p></div>
+            <div class="dsar-field dsar-field-last"><span class="dsar-label">Extension</span><p class="dsar-value">{{ object.extended|yesno:"Yes,No" }}</p></div>
     </div>
 </div>
 {% endblock %}

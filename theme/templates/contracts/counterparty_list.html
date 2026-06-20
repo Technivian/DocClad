@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Counterparties - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tbl-row { border-bottom: 1px solid var(--card-border); }
+  .tbl-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -28,7 +32,7 @@
       </thead>
       <tbody>
         {% for item in counterparties %}
-        <tr class="tbl-row border-b hover:bg-gray-50">
+        <tr class="tbl-row">
           <td class="tbl-td px-5 py-3 text-sm">{{ item.name }}</td>
           <td class="tbl-td px-5 py-3 text-sm">{{ item.get_entity_type_display }}</td>
           <td class="tbl-td px-5 py-3 text-sm">{{ item.jurisdiction|default:"-" }}</td>

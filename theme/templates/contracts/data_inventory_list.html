@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Data Inventory (RoPA) - CMS Aegis{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .di-row:hover { background: var(--sidebar-hover); }
+</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -26,7 +29,7 @@
             </thead>
             <tbody>
                 {% for item in records %}
-                <tr class="border-b transition-colors hover:bg-gray-50 tbl-row">
+                <tr class="border-b transition-colors tbl-row di-row">
                     <td class="px-5 py-3"><a href="{% url 'contracts:data_inventory_detail' item.pk %}" class="font-medium c-link">{{ item.title }}</a></td>
                     <td class="px-5 py-3 tbl-td">{{ item.get_lawful_basis_display }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.retention_period }}</td>

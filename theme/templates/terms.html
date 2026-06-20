@@ -1,0 +1,83 @@
+{% extends 'base_fullscreen.html' %}
+{% load static %}
+
+{% block title %}Terms of Service — CMS Aegis{% endblock %}
+
+{% block body %}
+<style nonce="{{ csp_nonce }}">
+    .legal-page { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; color: var(--text-primary); }
+    .legal-page h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+    .legal-page .meta { color: var(--text-secondary); font-size: 13px; margin-bottom: 48px; }
+    .legal-page h2 { font-size: 1rem; font-weight: 700; margin: 32px 0 10px; }
+    .legal-page p, .legal-page li { font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 12px; }
+    .legal-page ul { padding-left: 20px; }
+    .legal-page a { color: var(--primary); text-decoration: underline; }
+    .legal-nav { position: fixed; top: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+    .legal-nav-inner { max-width: 720px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-brand { color: var(--text-primary); }
+    .nav-back { color: var(--text-secondary); }
+</style>
+
+<nav class="legal-nav">
+    <div class="legal-nav-inner">
+        <a href="/" class="flex items-center gap-2 text-sm font-bold nav-brand">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            CMS Aegis
+        </a>
+        <a href="/" class="text-sm nav-back">← Back to home</a>
+    </div>
+</nav>
+
+<div class="legal-page">
+    <h1>Terms of Service</h1>
+    <p class="meta">Last updated: June 20, 2026</p>
+
+    <p>These Terms of Service ("Terms") govern your use of the CMS Aegis platform operated by CMS Aegis ("we", "our", or "us"). By creating an account or using the platform, you agree to these Terms.</p>
+
+    <h2>1. Eligibility</h2>
+    <p>You must be at least 18 years old and have authority to bind your organisation to these Terms. The platform is intended for legal professionals and organisations managing contracts and related legal operations.</p>
+
+    <h2>2. Your Account</h2>
+    <p>You are responsible for maintaining the confidentiality of your credentials and all activity under your account. Notify us immediately at <a href="mailto:support@cmsaegis.com">support@cmsaegis.com</a> if you suspect unauthorised access. You may not share accounts or use the platform on behalf of a third party without their authorisation.</p>
+
+    <h2>3. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+        <li>Use the platform for any unlawful purpose or in violation of applicable professional conduct rules</li>
+        <li>Upload content that infringes third-party intellectual property rights</li>
+        <li>Attempt to reverse-engineer, disassemble, or circumvent any security feature of the platform</li>
+        <li>Scrape, harvest, or bulk-export data in ways not expressly permitted by your plan</li>
+        <li>Interfere with the availability or performance of the platform for other users</li>
+    </ul>
+
+    <h2>4. Subscription and Billing</h2>
+    <p>Access to paid features requires a subscription. Fees are billed in advance on a monthly or annual basis. All fees are non-refundable except where required by law or as stated in our refund policy. We reserve the right to change pricing with 30 days' written notice. Continued use after a price change constitutes acceptance of the new fee.</p>
+
+    <h2>5. IOLTA Trust Accounts</h2>
+    <p>CMS Aegis provides tooling to help you manage and record IOLTA trust account transactions. You remain solely responsible for compliance with applicable bar rules, ethics regulations, and jurisdiction-specific IOLTA requirements. CMS Aegis does not hold, process, or transmit client funds; the platform is a record-keeping and workflow tool only.</p>
+
+    <h2>6. Data Ownership</h2>
+    <p>You retain full ownership of all data, documents, and content you upload to CMS Aegis. You grant us a limited licence to store, process, and display your content solely to provide the service. We will not use your content to train AI models without your explicit consent.</p>
+
+    <h2>7. Confidentiality</h2>
+    <p>We treat all data you store on the platform as confidential. Our staff access your data only when necessary to provide support or as required by law, and only under strict internal controls. See our <a href="{% url 'privacy' %}">Privacy Policy</a> for full details.</p>
+
+    <h2>8. Uptime and Support</h2>
+    <p>We target 99.9% monthly uptime for the core platform. Scheduled maintenance will be communicated with at least 24 hours' notice. Support is available via email during business hours. We do not guarantee specific response times under the free tier.</p>
+
+    <h2>9. Termination</h2>
+    <p>You may cancel your account at any time from your account settings. We may suspend or terminate your account for material breach of these Terms, non-payment after a 14-day cure period, or if continued access poses a security risk to other users. Upon termination, you may export your data for 30 days before it is deleted.</p>
+
+    <h2>10. Limitation of Liability</h2>
+    <p>To the fullest extent permitted by law, our total liability to you for any claim arising from these Terms or your use of the platform shall not exceed the fees you paid in the 12 months preceding the claim. We are not liable for indirect, incidental, consequential, or punitive damages.</p>
+
+    <h2>11. Governing Law</h2>
+    <p>These Terms are governed by the laws of the jurisdiction in which CMS Aegis is incorporated, without regard to conflict-of-law principles. Any disputes shall be resolved by binding arbitration, except that either party may seek injunctive relief in a court of competent jurisdiction.</p>
+
+    <h2>12. Changes to These Terms</h2>
+    <p>We may update these Terms from time to time. We will notify you by email or in-app notice at least 14 days before material changes take effect. Continued use after the effective date constitutes acceptance.</p>
+
+    <h2>13. Contact</h2>
+    <p>For questions about these Terms, contact us at <a href="mailto:legal@cmsaegis.com">legal@cmsaegis.com</a>.</p>
+</div>
+{% endblock %}
