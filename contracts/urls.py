@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/integrations/netsuite/sync/', api_views.netsuite_sync_api, name='netsuite_sync_api'),
     path('api/integrations/webhooks/deliveries/', api_views.webhook_deliveries_api, name='webhook_deliveries_api'),
     path('api/integrations/esign/webhook/', api_views.esign_webhook_api, name='esign_webhook_api'),
+    path('api/integrations/esign/documenso/webhook/', api_views.documenso_esign_webhook_api, name='documenso_esign_webhook_api'),
     path('api/analytics/executive/', api_views.executive_analytics_api, name='executive_analytics_api'),
     path('api/analytics/executive/presets/', api_views.executive_dashboard_presets_api, name='executive_dashboard_presets_api'),
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),

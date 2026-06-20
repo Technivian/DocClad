@@ -66,6 +66,7 @@ from contracts.api.integrations import (
     salesforce_sync_runs_api,
     netsuite_sync_api,
     webhook_deliveries_api,
+    documenso_esign_webhook_api,
     esign_webhook_api,
     api_webhook_failed,
     api_webhook_retry,

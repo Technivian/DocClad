@@ -641,6 +641,96 @@ def esign_webhook_api(request):
     return JsonResponse({'summary': summary})
 
 
+# Documenso event type → internal status string (matches PROVIDER_STATUS_MAP in esign.py)
+_DOCUMENSO_EVENT_STATUS = {
+    'document.sent': 'sent',
+    'document.opened': 'opened',
+    'document.signed': 'signed',
+    'document.completed': 'completed',
+    'document.declined': 'declined',
+    'document.cancelled': 'cancelled',
+    'document.expired': 'expired',
+}
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def documenso_esign_webhook_api(request):
+    """Receive Documenso webhook events and reconcile signature request status.
+
+    Documenso sends an X-Documenso-Secret header containing the webhook secret
+    configured in the Documenso dashboard. We verify it with constant-time
+    comparison to prevent timing attacks.
+
+    The externalId on the Documenso document is set to
+    'cms-aegis-{org_id}-{sig_req_id}' by DocumensoSignatureProvider.send(),
+    so we first try to look up by that, then fall back to the numeric doc id
+    stored in SignatureRequest.external_id.
+    """
+    secret = str(getattr(settings, 'ESIGN_DOCUMENSO_WEBHOOK_SECRET', '') or '').strip()
+    if not secret:
+        return HttpResponse('Webhook not configured', status=400)
+
+    provided = str(request.headers.get('X-Documenso-Secret', '') or '').strip()
+    if not provided or not secrets.compare_digest(secret, provided):
+        return HttpResponse('Invalid webhook secret', status=403)
+
+    try:
+        payload = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return HttpResponse('Invalid JSON', status=400)
+
+    event_type = str(payload.get('event') or '').strip()
+    internal_status = _DOCUMENSO_EVENT_STATUS.get(event_type)
+    if not internal_status:
+        # Unknown event type — acknowledge but don't process
+        logger.debug('documenso_webhook: unhandled event type %s', event_type)
+        return JsonResponse({'received': True, 'processed': False})
+
+    data = payload.get('data') or {}
+    doc_id = str(data.get('id') or '').strip()
+    external_id = str(data.get('externalId') or '').strip()
+    created_at = str(payload.get('createdAt') or '').strip()
+
+    # Look up SignatureRequest: first by our externalId pattern, then by doc id
+    sig_req = None
+    if external_id.startswith('cms-aegis-'):
+        parts = external_id.split('-')
+        if len(parts) == 4:
+            try:
+                sig_req = SignatureRequest.objects.filter(id=int(parts[3])).first()
+            except (ValueError, TypeError):
+                pass
+    if sig_req is None and doc_id:
+        sig_req = SignatureRequest.objects.filter(external_id=doc_id).order_by('-id').first()
+
+    if sig_req is None:
+        logger.warning('documenso_webhook: no SignatureRequest found for doc_id=%s externalId=%s', doc_id, external_id)
+        return JsonResponse({'received': True, 'processed': False, 'reason': 'signature_request_not_found'})
+
+    event = {
+        'event_id': f'documenso-{event_type}-{doc_id}-{created_at}',
+        'provider': 'documenso',
+        'external_id': doc_id,
+        'status': internal_status,
+        'event_at': created_at or None,
+    }
+
+    # For declined events, pull reason from recipient if available
+    recipients = data.get('recipients') or []
+    declined = next((r for r in recipients if r.get('signingStatus', '').upper() == 'REJECTED'), None)
+    if declined:
+        event['decline_reason'] = declined.get('rejectionReason', '')
+
+    try:
+        result = apply_esign_event(sig_req, event, dry_run=False)
+    except ESignReconciliationError as exc:
+        logger.warning('documenso_webhook: reconciliation error: %s', exc)
+        return JsonResponse({'received': True, 'processed': False, 'error': str(exc)})
+
+    return JsonResponse({'received': True, 'processed': True, 'result': result.get('result')})
+
+
 @login_required
 @require_http_methods(['GET'])
 def api_webhook_failed(request):
