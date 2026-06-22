@@ -261,8 +261,12 @@ class ContractLifecycleService:
 
         contract_id = contract.pk if hasattr(contract, 'pk') else contract
         with transaction.atomic():
+            # Lock only the contract row: select_related('organization') adds a
+            # LEFT OUTER JOIN (organization is nullable) and PostgreSQL refuses
+            # FOR UPDATE on the nullable side of an outer join, so scope the lock
+            # with of=('self',).
             contract = (
-                Contract.objects.select_for_update().select_related('organization')
+                Contract.objects.select_for_update(of=('self',)).select_related('organization')
                 .get(pk=contract_id)
             )
             old_status = contract.status

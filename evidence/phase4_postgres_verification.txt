@@ -1,0 +1,19 @@
+===== Phase 4 PostgreSQL verification =====
+## migrations apply on PostgreSQL (0052-0057)
+  Applying contracts.0052_audit_chain_fields... OK
+  Applying contracts.0053_auditlog_append_only_trigger... OK
+  Applying contracts.0054_audit_system_chain_seq_uniqueness... OK
+  Applying contracts.0055_document_soft_delete... OK
+  Applying contracts.0056_saml_mfa_trust... OK
+  Applying contracts.0057_invitation_delivery_state... OK
+ENGINE=postgresql
+
+## Phase 4 + audit suites against PostgreSQL (lifecycle locking, expiration, etc.)
+Ran 87 tests in 18.129s
+
+FAILED (failures=6, errors=12)
+Destroying test database for alias 'default'...
+Found 87 test(s).
+System check identified no issues (0 silenced).
+Ran 87 tests in 18.470s
+OK
