@@ -77,6 +77,10 @@ class SamlAndScimGroupTests(TestCase):
             'last_name': 'User',
             'role': OrganizationMembership.Role.ADMIN,
         }
+        # Phase 4G: SAML satisfies MFA only via explicit trust. Enable the org
+        # compatibility flag so the IdP assertion is accepted as MFA assurance.
+        self.organization.saml_mfa_trusted = True
+        self.organization.save(update_fields=['saml_mfa_trusted'])
 
         response = self.client.post(reverse('saml_acs', kwargs={'organization_slug': self.organization.slug}))
 

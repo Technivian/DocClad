@@ -115,22 +115,45 @@ def saml_acs(request, organization_slug):
         role=identity['role'],
     )
 
-    if organization.require_mfa and not profile.mfa_enabled:
-        profile.mfa_enabled = True
-        profile.mfa_verified_at = timezone.now()
-        profile.save(update_fields=['mfa_enabled', 'mfa_verified_at', 'updated_at'])
+    # MFA assurance (Phase 4G): only treat the SAML session as MFA-satisfied when
+    # the assertion proves an accepted AuthnContext, or the org has explicitly
+    # opted into trusting the IdP. Otherwise fail closed — the user must still
+    # complete DocClad MFA (the session is left unverified so the MFA gate fires).
+    from contracts.saml import saml_mfa_satisfied as _saml_mfa_satisfied
+    from contracts.services.mfa_policy import organization_requires_mfa as _org_requires_mfa
+
+    mfa_required = _org_requires_mfa(organization)
+    assurance = {'satisfied': True, 'mode': 'mfa_not_required', 'contexts': []}
+    if mfa_required:
+        assurance = _saml_mfa_satisfied(organization, auth)
 
     auth_login(request, membership.user, backend='django.contrib.auth.backends.ModelBackend')
+
+    if mfa_required and assurance['satisfied']:
+        if not profile.mfa_enabled:
+            profile.mfa_enabled = True
+            profile.mfa_verified_at = timezone.now()
+            profile.save(update_fields=['mfa_enabled', 'mfa_verified_at', 'updated_at'])
+        request.session['mfa_verified'] = True
+    elif mfa_required:
+        # Authenticated via SAML but MFA assurance not proven: do NOT mark the
+        # session verified — the MFA gate will require DocClad MFA next.
+        request.session['mfa_verified'] = False
+
     log_action(
         membership.user,
         AuditLog.Action.LOGIN,
         'OrganizationMembership',
         object_id=membership.id,
         object_repr=str(membership),
+        organization=organization,
         changes={
             'event': 'saml_login',
             'organization_id': organization.id,
             'email': identity['email'],
+            'mfa_required': mfa_required,
+            'mfa_assurance': assurance['mode'],
+            'mfa_satisfied': bool(assurance['satisfied']),
         },
         request=request,
     )

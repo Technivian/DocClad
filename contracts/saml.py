@@ -325,3 +325,74 @@ def provision_saml_membership(
         profile.is_active = True
         profile.save(update_fields=['is_active', 'updated_at'])
     return membership, profile
+
+
+# ---------------------------------------------------------------------------
+# SAML MFA assurance (Phase 4G)
+# ---------------------------------------------------------------------------
+
+def _parse_accepted_contexts(raw: str):
+    if not raw:
+        return set()
+    parts = [p.strip() for chunk in raw.splitlines() for p in chunk.split(',')]
+    return {p for p in parts if p}
+
+
+def get_assertion_authn_contexts(auth) -> list:
+    """Best-effort extraction of AuthnContextClassRef values from the response."""
+    for method in ('get_last_authn_contexts', 'get_last_authn_context'):
+        fn = getattr(auth, method, None)
+        if not fn:
+            continue
+        try:
+            value = fn()
+        except Exception:
+            continue
+        if not value:
+            continue
+        return list(value) if isinstance(value, (list, tuple, set)) else [value]
+    return []
+
+
+def saml_mfa_satisfied(organization, auth) -> dict:
+    """Decide whether a SAML assertion provides acceptable MFA assurance.
+
+    Returns {'satisfied': bool, 'mode': str, 'contexts': [...]}. Fail-closed:
+    satisfied only via an accepted AuthnContext, or the explicit org compatibility
+    flag `saml_mfa_trusted`.
+    """
+    contexts = get_assertion_authn_contexts(auth)
+    if getattr(organization, 'saml_mfa_trusted', False):
+        return {'satisfied': True, 'mode': 'org_trusted_idp', 'contexts': contexts}
+    accepted = _parse_accepted_contexts(getattr(organization, 'saml_accepted_authn_contexts', '') or '')
+    if accepted and any(ctx in accepted for ctx in contexts):
+        return {'satisfied': True, 'mode': 'accepted_authn_context', 'contexts': contexts}
+    return {'satisfied': False, 'mode': 'no_acceptable_assurance', 'contexts': contexts}
+
+
+def set_saml_mfa_policy(organization, *, trusted=None, accepted_contexts=None, user=None, request=None):
+    """Change the org SAML MFA trust policy with a chained audit event."""
+    from contracts.middleware import log_action
+    from contracts.models import AuditLog
+
+    fields = []
+    before = {'saml_mfa_trusted': organization.saml_mfa_trusted,
+              'saml_accepted_authn_contexts': organization.saml_accepted_authn_contexts}
+    if trusted is not None and organization.saml_mfa_trusted != bool(trusted):
+        organization.saml_mfa_trusted = bool(trusted)
+        fields.append('saml_mfa_trusted')
+    if accepted_contexts is not None and organization.saml_accepted_authn_contexts != accepted_contexts:
+        organization.saml_accepted_authn_contexts = accepted_contexts
+        fields.append('saml_accepted_authn_contexts')
+    if not fields:
+        return organization
+    organization.save(update_fields=fields + ['updated_at'])
+    log_action(
+        user, AuditLog.Action.UPDATE, 'Organization',
+        object_id=organization.id, object_repr=organization.name,
+        organization=organization, request=request,
+        event_type='saml.mfa_policy_changed',
+        changes={'event': 'saml.mfa_policy_changed', 'changed_fields': fields,
+                 'saml_mfa_trusted': organization.saml_mfa_trusted},
+    )
+    return organization

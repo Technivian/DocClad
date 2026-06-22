@@ -37,6 +37,14 @@ class Organization(models.Model):
     saml_slo_url = models.URLField(blank=True)
     saml_metadata_url = models.URLField(blank=True)
     saml_x509_certificate = models.TextField(blank=True)
+    # SAML MFA trust policy (Phase 4G). DocClad marks a SAML session as
+    # MFA-satisfied only when the assertion's AuthnContextClassRef is in
+    # `saml_accepted_authn_contexts` (comma/newline-separated), OR when the org
+    # has explicitly enabled `saml_mfa_trusted` (compatibility mode: delegates
+    # MFA enforcement entirely to the IdP). Default is fail-closed: a SAML login
+    # without proven MFA assurance must still complete DocClad MFA.
+    saml_mfa_trusted = models.BooleanField(default=False)
+    saml_accepted_authn_contexts = models.TextField(blank=True)
     scim_enabled = models.BooleanField(default=False)
     scim_token_hash = models.CharField(max_length=64, blank=True)
     scim_token_last4 = models.CharField(max_length=4, blank=True)
