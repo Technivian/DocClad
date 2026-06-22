@@ -1,0 +1,27 @@
+===== Phase 5H automatic expiration rehearsal =====
+Canonical timezone: UTC (settings TIME_ZONE='UTC', USE_TZ=True) -> boundary is the UTC date.
+Exact rule: a fixed-term ACTIVE contract is valid THROUGH end_date (inclusive) and expires once
+  end_date < today (UTC). No DST ambiguity (UTC). auto_renew=True excluded. Only ACTIVE eligible.
+  (If Europe/Amsterdam semantics are desired for the pilot, change TIME_ZONE -> operator decision.)
+
+Scenarios verified (PostgreSQL, real expiration job run_contract_expiration):
+  end_date < today        -> EXPIRED
+  end_date == today (UTC) -> stays ACTIVE (valid through end date)
+  end_date > today        -> stays ACTIVE
+  status TERMINATED/COMPLETED/CANCELLED/DRAFT/APPROVED -> never auto-expired
+  auto_renew=True past end -> excluded
+  already EXPIRED -> not reprocessed; no duplicate audit; records_changed=0
+  repeated execution -> idempotent (one EXPIRED audit only)
+  no notifications emitted by expiration (no duplicate-notification risk)
+  job-run evidence: ScheduledJobRun records_changed/records_examined populated
+  tenant isolation: --organization-slug expires only that org
+  partial tenant failure: org A transition raises -> caught, org B still expired (one tenant
+    failure does not block others)
+  duplicate concurrent cron (PostgreSQL, 2 threads) -> contract expires ONCE, exactly one EXPIRED
+    audit, no uncaught DB error (overlap lock + row lock + idempotent transition)
+
+Transitions go through ContractLifecycleService (system=True) -> chained contract.status_changed
+  audit linked to the ScheduledJobRun run_id.
+
+Tests: tests/test_5h_expiration_rehearsal.py 10 (9 SQLite + 1 PostgreSQL-only). exit 0 on both.
+No product defect found in 5H (the 4C job behaves correctly).
