@@ -1,0 +1,36 @@
+===== Phase 5F role-based pilot walkthrough =====
+Driver: Django test client (real URL routing -> middleware -> auth -> views). 2 orgs (Alpha/Beta),
+OWNER/ADMIN/MEMBER each. tests/test_5f_role_walkthrough.py: 30 tests, exit 0. Full suite 1005, exit 0.
+
+ROLE MATRIX (server-enforced, HTTP):
+  Unauth: login page DocClad branding (no 'CMS Aegis'); success login 302; failed login generic
+    'Invalid username or password' (no enumeration); registration creates account; logout ok;
+    anonymous protected -> 302 /login; 404 page no traceback.
+  OWNER: organization_team 200; audit_log_list 200; invite create 302; role change ok.
+  ADMIN: create contract via HTTP (forced DRAFT); CANNOT self-approve own contract (stays PENDING, 200 re-render).
+  MEMBER: contract_list 200; deletes OWN upload (is_deleted) but NOT another user's (blocked);
+    cannot change roles (403).
+
+CROSS-TENANT NEGATIVE MATRIX (Org A actor -> Org B resource); expected vs actual:
+  client_detail        404 / 404  no leak
+  matter_detail        404 / 404  no leak
+  contract_detail      404 / 404  no leak
+  document_detail      404 / 404  no leak
+  document_download     404 / 404  no leak; blocked event on ACTOR org, no target metadata
+  document_delete      403|404 / blocked; target not deleted
+  contract_transition  403|404 / blocked; target status unchanged (DRAFT)
+  bulk_transition (foreign id)  out-of-scope; target unchanged
+  approval_action      403|404 / blocked; target approval still PENDING
+  audit_log            scoped; only actor-org rows; no leak
+  invitation revoke/resend/retry  403|404; target invite unchanged
+  job-run evidence     operations dashboard shows actor-org runs only
+  org switch (altered id -> non-member org)  refused; reads remain org A only; no leak
+
+STALE-SESSION / AUTHORIZATION RECHECK:
+  role downgrade (OWNER->MEMBER) mid-session: next privileged request -> 403 (fresh DB role check)
+  membership deactivation mid-session: next request no longer shows org B data (no stale privilege)
+
+DEFECT FOUND & FIXED (P2): switch_organization referenced OrganizationMembership without importing it
+  -> NameError/500 on every org-switch (failed CLOSED, so not an isolation breach, but a broken
+  tenant-boundary endpoint returning 500 instead of a clean membership-gated denial). Added the import;
+  now refuses non-member switches cleanly. Regression covered by test_guessed_and_altered_org_switch.
