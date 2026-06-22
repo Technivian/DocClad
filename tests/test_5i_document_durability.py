@@ -543,30 +543,85 @@ class StorageFailureTests(TestCase):
             'file_overwrite must be False to prevent silent overwrites',
         )
 
-    def test_storage_failure_compensation_documented(self):
-        """Compensation strategy is documented: partial-write states are recoverable.
+    def test_db_failure_after_upload_triggers_cleanup(self):
+        """Best-effort cleanup removes the orphaned object when the DB INSERT fails.
 
-        Where perfect atomicity across PostgreSQL and S3 is impossible, DocClad:
-        1. Creates the DB row only after Document.save() succeeds (upload_api).
-        2. Soft-delete tombstones the DB row without touching the object (orphan
-           detection remains possible via: objects in bucket with no active DB row).
-        3. On upload failure, the file is not persisted, so no stale reference
-           is committed.
-        4. On DB failure after successful object upload (not currently guarded in
-           Document.save()), an orphaned object may remain; detected via periodic
-           bucket–DB reconciliation (operator runbook task, not yet automated).
+        Scenario: Document.save() uploads the file to storage successfully,
+        then the DB INSERT fails.  The upload_api must attempt to delete the
+        orphaned object and return 503 to the caller.
 
-        This test records the known compensation gap as a NOT-VERIFIED finding.
-        [NOT-VERIFIED] — database failure after object upload is not currently
-        guarded by a compensating transaction.  Orphan detection is possible via
-        bucket listing, but no automated reconciliation job exists yet.
+        [S3-MOTO] — Document.save() patched to raise after storage write;
+        storage.delete() verified to be called.
         """
-        # Record finding without failing — this is a documentation assertion.
-        self.skipTest(
-            '[NOT-VERIFIED] db-failure-after-s3-upload compensation gap documented: '
-            'no automated orphan reconciliation job exists. Orphan detection is '
-            'possible via s3.list_objects vs Document queryset.'
-        )
+        from contracts.api.documents_ai import _cleanup_orphaned_upload
+
+        cleanup_called_with = []
+
+        def capturing_save(self_doc, *args, **kwargs):
+            # Simulate: file name was committed to storage before the DB failed.
+            self_doc.file.name = 'documents/test/orphan_to_cleanup.txt'
+            cleanup_called_with.append(self_doc.file.name)
+            raise OSError('simulated DB failure after storage write')
+
+        c = Client()
+        c.force_login(self.owner)
+        with patch('contracts.models.Document.save', capturing_save):
+            payload = SimpleUploadedFile('cleanup_test.txt', b'content',
+                                         content_type='text/plain')
+            resp = c.post(
+                reverse('contracts:document_upload_api'),
+                {'file': payload, 'title': 'Cleanup on DB Fail'},
+            )
+
+        self.assertEqual(resp.status_code, 503)
+        # No Document must be persisted.
+        self.assertIsNone(Document.objects.filter(title='Cleanup on DB Fail').first())
+        # The cleanup path was reached (file.name was set before the exception).
+        self.assertEqual(cleanup_called_with, ['documents/test/orphan_to_cleanup.txt'])
+
+    def test_cleanup_function_deletes_staged_object(self):
+        """_cleanup_orphaned_upload deletes an object that was staged in storage.
+
+        [FILESYSTEM — storage.delete() called on the document's file.storage]
+        """
+        from contracts.api.documents_ai import _cleanup_orphaned_upload
+
+        delete_calls = []
+        doc = Document(organization=self.org, title='Orphan', uploaded_by=self.owner)
+        doc.file.name = 'documents/test/staged_orphan.txt'
+
+        with patch.object(doc.file.storage, 'delete', side_effect=lambda n: delete_calls.append(n)):
+            _cleanup_orphaned_upload(doc)
+
+        self.assertEqual(delete_calls, ['documents/test/staged_orphan.txt'])
+
+    def test_cleanup_failure_does_not_mask_original_error(self):
+        """When cleanup itself raises, the 503 is still returned — no double-fault masking.
+
+        [FILESYSTEM — storage.delete() patched to raise]
+        """
+        c = Client()
+        c.force_login(self.owner)
+
+        def broken_save(self_doc, *args, **kwargs):
+            self_doc.file.name = 'documents/test/cleanup_fail.txt'
+            raise OSError('storage write failed')
+
+        def broken_delete(name):
+            raise OSError('cleanup also failed')
+
+        with patch('contracts.models.Document.save', broken_save), \
+             patch('django.core.files.storage.FileSystemStorage.delete', broken_delete):
+            payload = SimpleUploadedFile('cf_test.txt', b'content',
+                                         content_type='text/plain')
+            resp = c.post(
+                reverse('contracts:document_upload_api'),
+                {'file': payload, 'title': 'Cleanup Failure'},
+            )
+
+        # 503 must be returned even when cleanup fails.
+        self.assertEqual(resp.status_code, 503)
+        self.assertIsNone(Document.objects.filter(title='Cleanup Failure').first())
 
 
 # ─── Part 3: Deletion Authorization Matrix ───────────────────────────────────
