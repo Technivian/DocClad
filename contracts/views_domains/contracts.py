@@ -98,7 +98,15 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         context['FEATURE_REDESIGN'] = is_feature_redesign_enabled()
         context['search_query'] = self.request.GET.get('q', '')
         context['sort'] = self.request.GET.get('sort', '-created_at')
-        context['status_tabs'] = [('All', ''), ('Active', 'ACTIVE'), ('Draft', 'DRAFT'), ('Pending', 'PENDING'), ('Expired', 'EXPIRED')]
+        context['current_status'] = self.request.GET.get('status', '')
+        context['status_tabs'] = [
+            ('All', ''),
+            ('In progress', 'ACTIVE'),
+            ('Active', 'ACTIVE'),
+            ('Draft', 'DRAFT'),
+            ('Pending', 'PENDING'),
+            ('Expired', 'EXPIRED'),
+        ]
         context['total_cases'] = case_stats['total'] or 0
         context['active_cases'] = case_stats['active'] or 0
         context['expiring_case_count'] = case_stats['expiring_soon'] or 0
@@ -221,6 +229,10 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     def form_valid(self, form):
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
         form.instance.created_by = self.request.user
+        # New contracts always start in DRAFT; reaching ACTIVE etc. must go
+        # through ContractLifecycleService transitions (prevents create-as-ACTIVE
+        # bypassing the approval prerequisite).
+        form.instance.status = Contract.Status.DRAFT
         response = super().form_valid(form)
         log_action(
             self.request.user,
@@ -317,6 +329,24 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        from contracts.services.contract_lifecycle import (
+            ContractTransitionError,
+            can_transition_contract_status,
+            get_contract_lifecycle_service,
+        )
+        new_status = form.cleaned_data.get('status')
+        original_status = getattr(self, 'original_contract', None) and self.original_contract.status
+        status_changing = bool(original_status) and new_status != original_status
+
+        # The status transition is owned by the lifecycle service, not the form.
+        # Pre-validate the graph cheaply, then keep the form save status-neutral
+        # and apply the transition through the service after the field edits land.
+        if status_changing:
+            if not can_transition_contract_status(original_status, new_status):
+                form.add_error('status', f'Cannot change status from {original_status} to {new_status}.')
+                return self.form_invalid(form)
+            form.instance.status = original_status  # field edits save with the old status
+
         response = super().form_valid(form)
         changes = build_contract_audit_changes(getattr(self, 'original_contract', None), self.object)
         event = 'contract_updated'
@@ -335,6 +365,15 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
             },
             request=self.request,
         )
+
+        if status_changing:
+            try:
+                get_contract_lifecycle_service().transition(
+                    self.object, new_status, self.request.user, request=self.request,
+                )
+            except ContractTransitionError as exc:
+                form.add_error('status', str(exc))
+                return self.form_invalid(form)
         return response
 
 

@@ -144,23 +144,35 @@ class DjangoRepositoryService:
             if updates['lifecycle_stage'] not in allowed_stages:
                 raise BulkUpdateValidationError('lifecycle_stage must be a valid lifecycle stage')
 
+        from contracts.services.contract_lifecycle import (
+            ContractTransitionError,
+            get_contract_lifecycle_service,
+        )
+        lifecycle = get_contract_lifecycle_service()
         queryset = scope_queryset_for_organization(Contract.objects.filter(id__in=contract_ids), self.organization)
         updated_count = 0
         for contract in queryset.select_related('organization', 'created_by'):
-            update_fields = []
+            changed = False
+            # Status changes go through the canonical lifecycle service so bulk
+            # cannot bypass the transition graph / approval prerequisites.
             if 'status' in updates and contract.status != updates['status']:
-                contract.status = updates['status']
-                update_fields.append('status')
+                try:
+                    lifecycle.transition(contract, updates['status'], self.user,
+                                         reason='bulk_update')
+                    changed = True
+                except ContractTransitionError as exc:
+                    raise BulkUpdateValidationError(
+                        f'Contract {contract.id}: {exc}'
+                    )
             if 'lifecycle_stage' in updates and contract.lifecycle_stage != updates['lifecycle_stage']:
                 if not contract.can_transition_lifecycle_stage(updates['lifecycle_stage']):
                     raise BulkUpdateValidationError(
                         f'Contract {contract.id} cannot transition from {contract.lifecycle_stage} to {updates["lifecycle_stage"]}'
                     )
                 contract.lifecycle_stage = updates['lifecycle_stage']
-                update_fields.append('lifecycle_stage')
-            if contract.pk:
-                if update_fields:
-                    contract.save(update_fields=update_fields + ['updated_at'])
-                    updated_count += 1
+                contract.save(update_fields=['lifecycle_stage', 'updated_at'])
+                changed = True
+            if changed:
+                updated_count += 1
 
         return updated_count

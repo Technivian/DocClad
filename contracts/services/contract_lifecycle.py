@@ -1,7 +1,11 @@
+import logging
 from datetime import date
 from decimal import Decimal
 
+from django.db import transaction
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 CONTRACT_LIFECYCLE_TRANSITIONS = {
@@ -171,3 +175,148 @@ def build_contract_lifecycle_guidance(contract, today=None):
         })
 
     return guidance
+
+
+# ---------------------------------------------------------------------------
+# Canonical Contract.status lifecycle (Phase 4B)
+#
+# `status` is the business lifecycle (distinct from `lifecycle_stage` above).
+# Every status change must go through ContractLifecycleService.transition so the
+# same graph, permissions, prerequisites, atomicity and chained audit apply to
+# HTML, API, bulk, jobs and admin paths alike.
+# ---------------------------------------------------------------------------
+
+# Allowed status transitions. Terminal states have no outgoing edges; returning
+# from a terminal state requires a separately designed restoration workflow
+# (intentionally not provided here).
+CONTRACT_STATUS_TRANSITIONS = {
+    'DRAFT': {'IN_REVIEW', 'PENDING', 'CANCELLED'},
+    'PENDING': {'IN_REVIEW', 'APPROVED', 'CANCELLED'},        # submitted for approval
+    'IN_REVIEW': {'APPROVED', 'PENDING', 'DRAFT', 'CANCELLED'},
+    'APPROVED': {'ACTIVE', 'CANCELLED'},
+    'ACTIVE': {'EXPIRED', 'TERMINATED', 'COMPLETED'},
+    'EXPIRED': set(),
+    'TERMINATED': set(),
+    'COMPLETED': set(),
+    'CANCELLED': set(),
+}
+CONTRACT_TERMINAL_STATUSES = frozenset({'EXPIRED', 'TERMINATED', 'COMPLETED', 'CANCELLED'})
+
+
+class ContractTransitionError(Exception):
+    """Base for contract status transition failures (carries an HTTP status_code)."""
+    status_code = 400
+
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        if status_code is not None:
+            self.status_code = status_code
+
+
+class InvalidContractTransition(ContractTransitionError):
+    status_code = 400
+
+
+class ContractTransitionForbidden(ContractTransitionError):
+    status_code = 403
+
+
+class ContractTransitionPreconditionFailed(ContractTransitionError):
+    status_code = 409
+
+
+def get_allowed_contract_statuses(current_status):
+    return CONTRACT_STATUS_TRANSITIONS.get(current_status, set())
+
+
+def can_transition_contract_status(current_status, new_status):
+    if not new_status:
+        return False
+    if new_status == current_status:
+        return True
+    return new_status in get_allowed_contract_statuses(current_status)
+
+
+class ContractLifecycleService:
+    """Single authority for Contract.status transitions."""
+
+    def transition(self, contract, new_status, actor=None, *, system=False,
+                   reason='', request=None, actor_type=None, job_run_id=None):
+        """Transition a contract to ``new_status`` atomically.
+
+        - Locks the contract row (concurrent transitions serialize).
+        - Verifies tenant ownership + actor permission (unless ``system=True``).
+        - Validates the transition graph and prerequisites.
+        - Writes a Phase 3 chained audit event.
+        Returns the updated Contract; raises a ContractTransitionError subclass.
+        Same-status requests are idempotent no-ops (no audit, no error).
+        """
+        from contracts.models import ApprovalRequest, AuditLog, Contract, SignatureRequest
+        from contracts.middleware import log_action
+        from contracts.permissions import ContractAction, can_access_contract_action
+
+        contract_id = contract.pk if hasattr(contract, 'pk') else contract
+        with transaction.atomic():
+            contract = (
+                Contract.objects.select_for_update().select_related('organization')
+                .get(pk=contract_id)
+            )
+            old_status = contract.status
+
+            if not system:
+                if actor is None or not getattr(actor, 'is_authenticated', False):
+                    raise ContractTransitionForbidden('Authentication required.', status_code=403)
+                # Tenant + permission (can_access_contract_action checks org membership).
+                if not can_access_contract_action(actor, contract, ContractAction.EDIT):
+                    raise ContractTransitionForbidden(
+                        'You do not have permission to change this contract.', status_code=403)
+
+            # Idempotent no-op.
+            if new_status == old_status:
+                return contract
+
+            if new_status not in get_allowed_contract_statuses(old_status):
+                raise InvalidContractTransition(
+                    f'Cannot move a contract from {old_status} to {new_status}.')
+
+            self._check_preconditions(contract, new_status, ApprovalRequest, SignatureRequest)
+
+            contract.status = new_status
+            contract.save(update_fields=['status', 'updated_at'])
+
+            resolved_actor_type = actor_type or (
+                AuditLog.ActorType.SCHEDULED_JOB if system and actor is None
+                else (AuditLog.ActorType.HUMAN if actor is not None else AuditLog.ActorType.SYSTEM)
+            )
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'Contract',
+                object_id=contract.pk, object_repr=str(contract)[:300],
+                organization=contract.organization, request=request,
+                event_type='contract.status_changed', actor_type=resolved_actor_type,
+                job_run_id=job_run_id,
+                changes={
+                    'event': 'contract.status_changed',
+                    'from': old_status, 'to': new_status,
+                    'reason': (reason or '')[:300],
+                },
+            )
+        return contract
+
+    def _check_preconditions(self, contract, new_status, ApprovalRequest, SignatureRequest):
+        if new_status == 'ACTIVE':
+            has_approval = ApprovalRequest.objects.filter(
+                contract=contract, status=ApprovalRequest.Status.APPROVED,
+            ).exists()
+            if not has_approval:
+                raise ContractTransitionPreconditionFailed(
+                    'A contract cannot be activated without an approved approval request.')
+            # Signature is required only where the workflow configured it (i.e.
+            # signature requests exist). If so, every request must be SIGNED.
+            sig_qs = SignatureRequest.objects.filter(contract=contract)
+            if sig_qs.exists() and sig_qs.exclude(status=SignatureRequest.Status.SIGNED).exists():
+                raise ContractTransitionPreconditionFailed(
+                    'A contract with signature requests cannot be activated until all are signed.')
+
+
+def get_contract_lifecycle_service():
+    return ContractLifecycleService()

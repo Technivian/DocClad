@@ -193,6 +193,6 @@ services:
     branch: main
     schedule: "30 2 * * *"
     buildCommand: ./build.sh
-    startCommand: sh -c 'python3 manage.py run_contract_lifecycle_jobs && python3 manage.py run_retention_jobs'
+    startCommand: sh -c 'python3 manage.py run_contract_expiration && python3 manage.py run_contract_lifecycle_jobs && python3 manage.py run_retention_jobs'
     envVars:
       - fromGroup: docclad-shared
