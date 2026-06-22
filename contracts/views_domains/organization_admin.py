@@ -131,11 +131,16 @@ def organization_team(request):
                 request=request,
             )
             invite_url = _build_invite_url(request, invitation)
-            try:
-                _send_invitation_email(invitation, invite_url)
-                messages.success(request, f'Invitation created and emailed to {email}. Link: {invite_url}')
-            except Exception:
-                messages.warning(request, f'Invitation created for {email}, but email delivery failed. Share this link manually: {invite_url}')
+            from contracts.services.invitations import deliver_invitation
+            sent = deliver_invitation(invitation, invite_url, actor=request.user, request=request)
+            if sent:
+                messages.success(request, f'Invitation created and emailed to {email}.')
+            else:
+                messages.warning(
+                    request,
+                    f'Invitation created for {email}, but email delivery failed. '
+                    f'Share this link manually or retry delivery: {invite_url}',
+                )
             return redirect('contracts:organization_team')
     else:
         form = OrganizationInvitationForm()
@@ -244,11 +249,41 @@ def resend_organization_invite(request, invite_id):
         request=request,
     )
     invite_url = _build_invite_url(request, new_invitation)
-    try:
-        _send_invitation_email(new_invitation, invite_url)
+    from contracts.services.invitations import deliver_invitation
+    if deliver_invitation(new_invitation, invite_url, actor=request.user, request=request):
         messages.success(request, f'Invitation resent to {new_invitation.email}.')
-    except Exception:
-        messages.warning(request, f'New invitation generated, but email delivery failed. Share this link manually: {invite_url}')
+    else:
+        messages.warning(
+            request,
+            f'New invitation generated, but email delivery failed. '
+            f'Share this link manually or retry delivery: {invite_url}',
+        )
+    return redirect('contracts:organization_team')
+
+
+@login_required
+@require_POST
+def retry_organization_invite(request, invite_id):
+    """Re-attempt delivery of an EXISTING pending invitation (no new token)."""
+    organization = getattr(request, 'organization', None) or get_user_organization(request.user)
+    if not organization or not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Insufficient permissions.')
+
+    invitation = get_object_or_404(OrganizationInvitation, id=invite_id, organization=organization)
+    if invitation.status != OrganizationInvitation.Status.PENDING:
+        messages.info(request, 'Only pending invitations can have delivery retried.')
+        return redirect('contracts:organization_team')
+
+    from contracts.services.invitations import deliver_invitation
+    invite_url = _build_invite_url(request, invitation)
+    if deliver_invitation(invitation, invite_url, actor=request.user, request=request):
+        messages.success(request, f'Delivery retried for {invitation.email}.')
+    else:
+        messages.warning(
+            request,
+            f'Delivery retry failed for {invitation.email}. '
+            f'Share this link manually: {invite_url}',
+        )
     return redirect('contracts:organization_team')
 
 

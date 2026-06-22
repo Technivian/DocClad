@@ -175,6 +175,7 @@ urlpatterns = [
     path('organizations/invitations/<uuid:token>/accept/', views.accept_organization_invite, name='accept_organization_invite'),
     path('organizations/invitations/<int:invite_id>/revoke/', views.revoke_organization_invite, name='revoke_organization_invite'),
     path('organizations/invitations/<int:invite_id>/resend/', views.resend_organization_invite, name='resend_organization_invite'),
+    path('organizations/invitations/<int:invite_id>/retry/', views.retry_organization_invite, name='retry_organization_invite'),
     path('organizations/members/<int:membership_id>/role/', views.update_membership_role, name='update_membership_role'),
     path('organizations/members/<int:membership_id>/deactivate/', views.deactivate_organization_member, name='deactivate_organization_member'),
     path('organizations/members/<int:membership_id>/reactivate/', views.reactivate_organization_member, name='reactivate_organization_member'),

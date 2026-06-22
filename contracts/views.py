@@ -127,6 +127,7 @@ from .views_domains.organization_admin import (
     reports_dashboard,
     reports_export,
     resend_organization_invite,
+    retry_organization_invite,
     revoke_organization_invite,
     update_membership_role,
 )

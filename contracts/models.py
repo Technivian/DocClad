@@ -125,6 +125,18 @@ class OrganizationInvitation(models.Model):
     invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_organization_invitations')
     invited_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='accepted_organization_invitations')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+
+    class DeliveryStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SENT = 'SENT', 'Sent'
+        FAILED = 'FAILED', 'Failed'
+
+    # Delivery state is tracked separately from invitation state (Phase 4D): a
+    # mail-provider failure must not corrupt the invitation. delivery_error holds
+    # a SAFE classification (exception class name), never a traceback or secrets.
+    delivery_status = models.CharField(max_length=10, choices=DeliveryStatus.choices, default=DeliveryStatus.PENDING)
+    delivery_error = models.CharField(max_length=100, blank=True)
+    last_delivery_attempt_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
