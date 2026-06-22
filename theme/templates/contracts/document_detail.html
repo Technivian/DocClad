@@ -107,7 +107,7 @@
     {% if document.ocr_review %}
     <div class="panel">
         <div class="panel-head">
-            <h2 class="panel-title">OCR Review</h2>
+            <h2 class="panel-title">Text Extraction Review</h2>
             <a href="{% url 'contracts:document_ocr_review' document.ocr_review.pk %}" class="text-sm c-link">Review queue item</a>
         </div>
         <div class="panel-inner text-sm space-y-2">

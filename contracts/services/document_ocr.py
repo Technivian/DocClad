@@ -54,8 +54,11 @@ def _extract_pdf_text(document):
         for page in reader.pages:
             pages.append(page.extract_text() or '')
         text = '\n'.join(pages).strip()
-        confidence = Decimal('0.82') if text else Decimal('0.15')
-        return text, confidence, 'pdf-extraction'
+        if not text:
+            # No embedded text: a scanned/image-only PDF. DocClad does text
+            # extraction, not image OCR — route to manual review explicitly.
+            return '', Decimal('0.15'), 'manual-review-image-pdf'
+        return text, Decimal('0.82'), 'pdf-extraction'
     except Exception:
         return '', Decimal('0.10'), 'manual-review'
 
@@ -70,8 +73,9 @@ def _extract_docx_text(document):
         doc = python_docx.Document(BytesIO(raw_bytes))
         paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
         text = '\n'.join(paragraphs).strip()
-        confidence = Decimal('0.90') if text else Decimal('0.15')
-        return text, confidence, 'docx-extraction'
+        if not text:
+            return '', Decimal('0.15'), 'manual-review-empty'
+        return text, Decimal('0.90'), 'docx-extraction'
     except Exception:
         return '', Decimal('0.10'), 'manual-review'
 
@@ -94,8 +98,9 @@ def extract_document_text(document):
         raw_bytes = document.file.read()
         document.file.seek(0)
         extracted_text = raw_bytes.decode('utf-8', errors='ignore').strip()
-        confidence = Decimal('0.95') if extracted_text else Decimal('0.35')
-        return extracted_text, confidence, 'text-extraction'
+        if not extracted_text:
+            return '', Decimal('0.35'), 'manual-review-empty'
+        return extracted_text, Decimal('0.95'), 'text-extraction'
     except Exception:
         return '', Decimal('0.20'), 'manual-review'
 

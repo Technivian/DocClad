@@ -71,7 +71,7 @@
         <span class="item-meta">Run queue and alert evidence</span>
       </div>
       <div class="panel-inner">
-        <p class="text-sm c-muted mb-4">Use the drill command to queue work, process reminders/OCR jobs, and capture operational evidence.</p>
+        <p class="text-sm c-muted mb-4">Use the drill command to queue work, process reminders/text-extraction jobs, and capture operational evidence.</p>
         <pre class="text-xs rounded-lg p-4 overflow-x-auto drill-pre" role="region" aria-label="Drill command">./.venv/bin/python manage.py run_operational_drill</pre>
         {% if drill_state.last_run_iso %}
         <p class="item-meta mt-4">Last drill: {{ drill_state.last_run_iso }}</p>

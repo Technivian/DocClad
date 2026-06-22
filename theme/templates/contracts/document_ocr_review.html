@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Review OCR - CMS Aegis{% endblock %}
+{% block title %}Review Extracted Text – CMS Aegis{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .ocr-pre {
@@ -16,7 +16,7 @@
 <div class="page-wrap">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Review OCR</h1>
+            <h1 class="page-title">Review Extracted Text</h1>
             <p class="page-subtitle">{{ form.instance.document.title }} &middot; {{ form.instance.get_status_display }}</p>
         </div>
         <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Back to queue</a>

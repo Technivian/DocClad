@@ -993,7 +993,27 @@ class DocumentOCRReview(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'OCR Review for {self.document.title} ({self.get_status_display()})'
+        return f'Text extraction review for {self.document.title} ({self.get_status_display()})'
+
+    @property
+    def needs_manual_review(self):
+        return (self.source or '').startswith('manual-review')
+
+    @property
+    def extraction_reason(self):
+        """Human-readable status of automatic text extraction (not image OCR)."""
+        reasons = {
+            'manual-review-image-pdf':
+                'No machine-readable text found (scanned/image-only PDF). '
+                'Automatic text extraction cannot read images — manual review required.',
+            'manual-review-empty': 'No readable text found in the document — manual review required.',
+            'manual-review': 'Unsupported or unreadable file — manual review required.',
+            'no-file': 'No file attached.',
+            'pdf-extraction': 'Text extracted from PDF.',
+            'docx-extraction': 'Text extracted from Word document.',
+            'text-extraction': 'Text extracted.',
+        }
+        return reasons.get(self.source or '', 'Pending text extraction.')
 
     def mark_verified(self, reviewer=None):
         self.status = self.Status.VERIFIED

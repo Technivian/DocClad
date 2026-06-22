@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}OCR Queue - CMS Aegis{% endblock %}
+{% block title %}Text Extraction Queue – CMS Aegis{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .ocr-queue-row {
@@ -13,7 +13,7 @@
 <div class="page-wrap">
     <div class="page-header">
         <div>
-            <h1 class="page-title">OCR Queue</h1>
+            <h1 class="page-title">Text Extraction Queue</h1>
             <p class="page-subtitle c-muted">Review extracted text before it is treated as verified content.</p>
         </div>
         <div class="page-actions">
@@ -50,7 +50,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="empty-state">No OCR jobs found.</td>
+                    <td colspan="6" class="empty-state">No text-extraction jobs found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
