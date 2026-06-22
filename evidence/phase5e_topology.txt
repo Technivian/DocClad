@@ -1,0 +1,41 @@
+===== Phase 5E production-like topology validation =====
+Topology (production-compatible, local; NOT the live hosting env):
+  web=gunicorn (config.wsgi, settings_production, separate process)
+  worker=manage.py run_worker (separate process)
+  cron=independent manage.py invocations (expiration/lifecycle/retention, queue/process)
+  db=PostgreSQL 14.20 (local)   storage=MinIO (S3-compatible, docker)   smtp=aiosmtpd sink (no-auth)
+  settings module: config.settings_production (DJANGO_ENV=production)
+
+Dependency evidence labels:
+  PostgreSQL ............ production-compatible verified (real PG, prod settings, shared by web/worker/cron)
+  Object storage (S3) ... production-compatible verified (MinIO real object I/O)
+  Worker process ........ production-compatible verified (separate proc, processed real queued DB job)
+  Cron commands ......... production-compatible verified (independent, shared prod DB, exit 0)
+  Email submission ...... production-compatible verified (SMTP submission to no-auth sink; 250 accepted)
+  Email AUTH/real provider deliverability ... NOT verified (sink lacks AUTH; operator: real SMTP creds)
+  SAML/IdP .............. not verified (Phase 5K)
+  Render hosting ........ not verified (no deploy performed)
+
+Validations:
+  /_health/ via web -> HTTP 200 status=ok db=healthy
+  static asset via web (/static/css/dist/styles.css) -> HTTP 200
+  shared DB: worker(separate proc) processed jobs created by dispatch(separate proc); IDs 1-4
+  job evidence: BackgroundJob COMPLETED:3 FAILED:1 ; ScheduledJobRun queue_background_jobs=SUCCESS, run_obligation_reminders=SUCCESS
+  worker failure visible in DB+log: FAILED job error_message="DSARRequest not found: 999999"; worker log failures=1
+  object I/O (MinIO): upload key=documents/general/topology-test.txt; head_object size=31;
+    signed URL retrieval HTTP 200 (correct content); unsigned/public access HTTP 403 (private bucket);
+    soft-delete preserves object (head_object still present)
+  email: submission ok=True delivery_status=SENT (no-auth sink); failure classification safe_error=ConnectionRefusedError, delivery_status=FAILED
+  audit: verify_audit_chain -> org=1 valid checked=3 (exit 0)
+  logs distinguish processes: [WEB] gunicorn "Listening at", [WORKER] "[worker] Starting", [CRON] JSON summary
+  no secrets exposed in DB errors, storage errors, or boot output
+
+Render resource-creation risk:
+  render.yaml has NO top-level `databases:` block (DATABASE_URL is external/sync:false) -> no managed DB created
+  4 fixed-name services (docclad, docclad-worker, docclad-cron-dispatch, docclad-cron-daily) ->
+  applying to an existing env updates by name; does NOT create duplicate web/worker/cron resources.
+  (No deploy performed.)
+
+DEFECT FOUND & FIXED (P1): settings_base S3 OPTIONS used invalid django-storages key
+  'signed_url_expire' -> S3Storage raised ImproperlyConfigured at FIRST file op (uploads/downloads
+  broken in production). Renamed to 'querystring_expire'. Regression test added (instantiates S3Storage).

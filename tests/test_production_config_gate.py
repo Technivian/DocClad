@@ -126,6 +126,24 @@ class EmergencyBypassWarnings(SimpleTestCase):
         self.assertIn('ALLOW_SQLITE_IN_PRODUCTION', r.stderr)
 
 
+class S3StorageOptionsValid(SimpleTestCase):
+    """Regression: the production s3 STORAGES OPTIONS must be valid django-storages
+    settings (the invalid `signed_url_expire` raised only at first file op)."""
+
+    def test_s3_default_storage_instantiates(self):
+        probe = subprocess.run([sys.executable, '-c', 'import storages'], capture_output=True)
+        if probe.returncode != 0:
+            self.skipTest('django-storages not installed in this environment')
+        code = (
+            'import django; django.setup(); '
+            'from django.core.files.storage import storages; '
+            's = storages["default"]; print("STORAGE", type(s).__name__)'
+        )
+        r = _run({}, code=code)  # valid env: MEDIA_STORAGE_BACKEND=s3 + bucket
+        self.assertEqual(r.returncode, 0, r.stderr[-600:])
+        self.assertIn('S3Storage', r.stdout)
+
+
 class RenderDeploymentConfig(SimpleTestCase):
     """render.yaml: worker/cron use production settings + shared production DB."""
 
