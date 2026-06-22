@@ -1043,8 +1043,8 @@
             .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 10px; padding: 8px 10px 8px 32px; font-size: 12px; }
             .global-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
             .logo-link        { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
-            .logo-wordmark    { height: 32px; object-fit: contain; display: block; border-radius: 6px; }
-            .logo-mark        { width: 36px; height: 36px; object-fit: contain; display: none; border-radius: 8px; }
+            .logo-wordmark    { height: 28px; width: auto; object-fit: contain; display: block; }
+            .logo-mark        { width: 28px; height: 28px; object-fit: contain; display: none; }
             body.nav-collapsed .logo-wordmark { display: none; }
             body.nav-collapsed .logo-mark     { display: block; }
             .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
@@ -1088,8 +1088,8 @@
             </button>
             {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-dark-header-logo.png' %}" alt="DocClad" class="logo-wordmark">
-                <img src="{% static 'img/brand/docclad-app-icon.png' %}" alt="" aria-hidden="true" class="logo-mark">
+                <img src="{% static 'img/brand/docclad-wordmark-dark.svg' %}" alt="DocClad" class="logo-wordmark">
+                <img src="{% static 'img/brand/docclad-icon-dark.svg' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
