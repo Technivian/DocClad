@@ -7,11 +7,16 @@
     <title>{% block title %}DocClad{% endblock %}</title>
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
-    <link rel="icon" type="image/x-icon"  href="{% static 'img/brand/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/brand/favicon.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
-    <link rel="icon" type="image/png" sizes="48x48" href="{% static 'img/brand/favicon-48.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <meta name="theme-color" content="#0B1330">
+    <meta property="og:title" content="DocClad">
+    <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -97,16 +102,11 @@
         [data-theme="dark"]  .brand-logo-light { display: none; }
         [data-theme="light"] .brand-logo-dark  { display: none; }
 
-        /* ── Brand logo sizing + white-canvas crop (inline style= blocked by CSP) ── */
-        /* clip-path trims measured white border + 1.5% anti-aliasing buffer per edge */
-        .logo-left-dark   { display:block; width:auto;  height:80px;    object-fit:contain;
-                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
-        .logo-left-light  { display:block; width:340px; max-width:100%; height:auto; object-fit:contain;
-                            clip-path: inset(20% 2.5% 6% 3%); mix-blend-mode: multiply; }
-        .logo-right-dark  { display:block; width:auto;  height:44px;    object-fit:contain;
-                            clip-path: inset(14.5% 3% 1.5% 4.5%); }
-        .logo-right-light { display:block; width:auto;  height:44px;    object-fit:contain;
-                            clip-path: inset(25.5% 2% 2% 11%); }
+        /* ── Brand logo sizing (SVGs have transparent backgrounds — no crop needed) ── */
+        .logo-left-dark   { height: var(--docclad-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
+        .logo-left-light  { height: var(--docclad-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
+        .logo-right-dark  { height: 38px; width: auto; display: block; object-fit: contain; }
+        .logo-right-light { height: 38px; width: auto; display: block; object-fit: contain; }
 
         /* ── Auth pages (login / register) ─────────────────────────────────── */
         .login-panel-left  { background: var(--surface); }

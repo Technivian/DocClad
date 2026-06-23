@@ -8,10 +8,10 @@
   <text x="50" y="23" dominant-baseline="central"
         font-family="Inter,'Segoe UI',system-ui,-apple-system,sans-serif"
         font-size="28" font-weight="700" letter-spacing="-0.5">
-    <tspan fill="#FFFFFF">Doc</tspan><tspan fill="#11B39A">Clad</tspan>
+    <tspan fill="#0B1330">Doc</tspan><tspan fill="#11B39A">Clad</tspan>
   </text>
   <text x="50" y="44"
         font-family="Inter,'Segoe UI',system-ui,-apple-system,sans-serif"
         font-size="7.5" font-weight="500" letter-spacing="1.4"
-        fill="#9CA3AF">CONTRACT LIFECYCLE MANAGEMENT</text>
+        fill="#6B7E9C">CONTRACT LIFECYCLE MANAGEMENT</text>
 </svg>

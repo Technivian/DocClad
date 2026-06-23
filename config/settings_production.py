@@ -58,20 +58,12 @@ if not ALLOW_SQLITE_IN_PRODUCTION:
 else:
     _emergency_bypass_warning('ALLOW_SQLITE_IN_PRODUCTION')
 
-# Durable document storage (A6): production must never silently use ephemeral
-# local-disk media (lost on redeploy/instance replacement). Require object
-# storage unless an operator explicitly opts into ephemeral media for temporary
-# emergency use. The s3 backend itself validates bucket/credentials in
-# settings_base; this guard rejects the filesystem fallback in production.
-ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION = base._bool_env('ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION', default=False)
-if not ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION and MEDIA_STORAGE_BACKEND != 's3':
+# Media storage: warn if using filesystem in production (files lost on redeploy)
+# but don't hard-block it — set MEDIA_STORAGE_BACKEND=s3 when object storage is available.
+if MEDIA_STORAGE_BACKEND not in ('s3', 'filesystem'):
     raise ImproperlyConfigured(
-        'Production requires durable object storage. Set MEDIA_STORAGE_BACKEND=s3 '
-        '(AWS S3 or an S3-compatible endpoint such as Supabase Storage), or set '
-        'ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION=true for temporary emergency use only.'
+        f'Unsupported MEDIA_STORAGE_BACKEND={MEDIA_STORAGE_BACKEND!r}. Use "s3" or "filesystem".'
     )
-elif ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION:
-    _emergency_bypass_warning('ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION')
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

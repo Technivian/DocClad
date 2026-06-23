@@ -228,13 +228,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'theme' / 'static']
 # ---------------------------------------------------------------------------
-# Media storage (roadmap B1 — uploaded contract documents must NOT live on
-# Render's ephemeral local disk, which is wiped on every deploy).
+# Media storage — set MEDIA_STORAGE_BACKEND=s3 in any real deployment.
+# Works with AWS S3 and Supabase Storage's S3-compatible endpoint.
+# Falls back to local filesystem only for local development.
 # ---------------------------------------------------------------------------
-# Set MEDIA_STORAGE_BACKEND=s3 in any real deployment. Works with AWS S3 and
-# with Supabase Storage's S3-compatible endpoint (set AWS_S3_ENDPOINT_URL to
-# the Supabase project's storage endpoint). Falls back to local disk only for
-# local development.
 MEDIA_STORAGE_BACKEND = os.getenv('MEDIA_STORAGE_BACKEND', 'filesystem').strip().lower()
 
 if MEDIA_STORAGE_BACKEND == 's3':
@@ -243,14 +240,10 @@ if MEDIA_STORAGE_BACKEND == 's3':
         'region_name': os.getenv('AWS_S3_REGION_NAME', '').strip() or None,
         'access_key': os.getenv('AWS_ACCESS_KEY_ID', '').strip() or None,
         'secret_key': os.getenv('AWS_SECRET_ACCESS_KEY', '').strip() or None,
-        # Supabase / other S3-compatible providers: set the endpoint URL.
         'endpoint_url': os.getenv('AWS_S3_ENDPOINT_URL', '').strip() or None,
-        # Private by default — contract documents must never be world-readable.
         'default_acl': os.getenv('AWS_DEFAULT_ACL', 'private').strip() or None,
         'querystring_auth': True,
         'file_overwrite': False,
-        # django-storages S3Storage option is `querystring_expire` (seconds);
-        # `signed_url_expire` is NOT a valid option and raises at first file op.
         'querystring_expire': int(os.getenv('AWS_SIGNED_URL_EXPIRE', '3600')),
     }
     if not _s3_options['bucket_name']:

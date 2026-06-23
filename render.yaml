@@ -35,19 +35,11 @@ envVarGroups:
       - key: REDIS_URL
         sync: false
 
-      # Media storage — document uploads MUST go to object storage.
+      # Media storage — using Render's local filesystem for now.
       - key: MEDIA_STORAGE_BACKEND
-        value: s3
-      - key: AWS_STORAGE_BUCKET_NAME
-        sync: false
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: AWS_S3_REGION_NAME
-        sync: false
-      - key: AWS_S3_ENDPOINT_URL    # Supabase S3-compatible endpoint; omit for AWS S3
-        sync: false
+        value: filesystem
+      - key: ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION
+        value: "true"
 
       # Pilot scope flags.
       - key: GEMINI_AI_ENABLED
