@@ -7,11 +7,16 @@
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
     {% load static %}
-    <link rel="icon" type="image/x-icon"  href="{% static 'img/brand/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/brand/favicon.svg' %}">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
-    <link rel="icon" type="image/png" sizes="48x48" href="{% static 'img/brand/favicon-48.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    <meta name="theme-color" content="#0B1330">
+    <meta property="og:title" content="DocClad">
+    <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
     <link href="{% static 'css/docclad-tokens.css' %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1043,8 +1048,8 @@
             .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 10px; padding: 8px 10px 8px 32px; font-size: 12px; }
             .global-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
             .logo-link        { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
-            .logo-wordmark    { height: 28px; width: auto; object-fit: contain; display: block; }
-            .logo-mark        { width: 28px; height: 28px; object-fit: contain; display: none; }
+            .logo-wordmark    { height: var(--docclad-logo-header-height, 38px); width: auto; object-fit: contain; display: block; }
+            .logo-mark        { width: var(--docclad-mark-size, 34px); height: var(--docclad-mark-size, 34px); object-fit: contain; display: none; }
             body.nav-collapsed .logo-wordmark { display: none; }
             body.nav-collapsed .logo-mark     { display: block; }
             .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
@@ -1088,8 +1093,8 @@
             </button>
             {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-lockup-dark.svg' %}" alt="DocClad" class="logo-wordmark">
-                <img src="{% static 'img/brand/docclad-app-icon-transparent.png' %}" alt="" aria-hidden="true" class="logo-mark">
+                <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="logo-wordmark">
+                <img src="{% static 'img/brand/docclad-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">

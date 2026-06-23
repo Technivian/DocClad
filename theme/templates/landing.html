@@ -25,7 +25,7 @@
     }
 
     .brand-text { color: var(--text-primary); }
-    .nav-logo { display:block; width:auto; height:54px; object-fit:contain; }
+    .nav-logo { display:block; width:auto; height:var(--docclad-logo-header-height, 40px); object-fit:contain; max-width:220px; }
     [data-theme="dark"]  .nav-logo-light { display:none; }
     [data-theme="light"] .nav-logo-dark  { display:none; }
     .landing-link { color: var(--text-secondary); transition: color 0.2s ease; }
@@ -136,8 +136,8 @@
         <div class="max-w-6xl mx-auto px-5 sm:px-8">
             <div class="flex items-center justify-between h-16">
                 <a href="/" aria-label="DocClad">
-                    <img src="{% static 'img/brand/docclad-lockup-dark.svg' %}" alt="DocClad" class="nav-logo nav-logo-dark">
-                    <img src="{% static 'img/brand/docclad-lockup-light.svg' %}" alt="DocClad" class="nav-logo nav-logo-light">
+                    <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="nav-logo nav-logo-dark">
+                    <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad" class="nav-logo nav-logo-light">
                 </a>
                 <div class="hidden md:flex items-center gap-7">
                     <a href="#features" class="landing-link text-[13px] font-medium">Features</a>
