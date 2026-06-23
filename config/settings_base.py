@@ -134,6 +134,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'contracts.context_processors.feature_flags',
+                'contracts.context_processors.asset_version',
             ],
         },
     },

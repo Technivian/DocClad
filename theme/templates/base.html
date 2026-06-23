@@ -17,8 +17,8 @@
     <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
-    <link href="{% static 'css/docclad-tokens.css' %}" rel="stylesheet">
-    <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -392,12 +392,23 @@
         [data-theme="dark"] .bg-emerald-100, [data-theme="dark"] .bg-teal-100 { background-color: rgba(16,185,129,0.15) !important; }
         [data-theme="dark"] .text-emerald-800, [data-theme="dark"] .text-teal-800 { color: #34D399 !important; }
         [data-theme="dark"] .shadow-sm, [data-theme="dark"] .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; }
-        [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea {
-            background-color: #0B0F19 !important; color: #F9FAFB !important; border-color: #1F2937 !important;
+        /* Fallback theming for un-migrated, hand-written inputs. Token-backed
+           (no hardcoded hex) and NO !important — canonical component classes
+           (.form-control / .form-check-input) and any future component own their
+           appearance. Checkbox/radio and .form-control are excluded so they are
+           never force-themed here. This fallback shrinks as templates migrate to
+           .form-control; the end state removes it entirely. */
+        [data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not(.form-control):not(.form-check-input),
+        [data-theme="dark"] select:not(.form-control),
+        [data-theme="dark"] textarea:not(.form-control) {
+            background-color: var(--input-bg); color: var(--text-primary); border-color: var(--border);
         }
-        [data-theme="dark"] input::placeholder, [data-theme="dark"] textarea::placeholder { color: #4B5563 !important; }
-        [data-theme="dark"] input:focus, [data-theme="dark"] select:focus, [data-theme="dark"] textarea:focus {
-            border-color: #2563EB !important; box-shadow: 0 0 0 2px rgba(37,99,235,0.3) !important;
+        [data-theme="dark"] input:not(.form-control)::placeholder,
+        [data-theme="dark"] textarea:not(.form-control)::placeholder { color: var(--text-dim); }
+        [data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not(.form-control):not(.form-check-input):focus,
+        [data-theme="dark"] select:not(.form-control):focus,
+        [data-theme="dark"] textarea:not(.form-control):focus {
+            border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow);
         }
         [data-theme="dark"] table { color: #F9FAFB; }
         [data-theme="dark"] th { color: #9CA3AF !important; border-color: #1F2937 !important; }

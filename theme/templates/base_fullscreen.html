@@ -20,8 +20,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="{% static 'css/docclad-tokens.css' %}" rel="stylesheet">
-    <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">
         // Apply persisted theme before paint to avoid a flash.

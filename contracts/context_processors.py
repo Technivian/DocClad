@@ -1,4 +1,6 @@
 
+import os
+
 from django.conf import settings
 
 from config.feature_flags import (
@@ -9,6 +11,37 @@ from config.feature_flags import (
     is_test_mode_enabled
 )
 from .models import Notification, OrganizationMembership
+
+_ASSET_VERSION_CACHE = None
+
+
+def _compute_asset_version():
+    """mtime of the built stylesheet, used to cache-bust in development.
+
+    Production serves hashed filenames via CompressedManifestStaticFilesStorage,
+    so this returns '' there (no redundant query string). In DEBUG the dev server
+    serves unhashed static files, so a per-build version query ensures rebuilt CSS
+    is picked up without a manual hard refresh.
+    """
+    if not getattr(settings, 'DEBUG', False):
+        return ''
+    css_path = os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css')
+    try:
+        return str(int(os.path.getmtime(css_path)))
+    except OSError:
+        return ''
+
+
+def asset_version(request):
+    """Expose ASSET_VERSION for cache-busting static asset URLs in templates."""
+    global _ASSET_VERSION_CACHE
+    # Recompute every request in DEBUG (cheap stat); cache once otherwise.
+    if getattr(settings, 'DEBUG', False):
+        return {'ASSET_VERSION': _compute_asset_version()}
+    if _ASSET_VERSION_CACHE is None:
+        _ASSET_VERSION_CACHE = _compute_asset_version()
+    return {'ASSET_VERSION': _ASSET_VERSION_CACHE}
+
 
 def feature_flags(request):
     """Add feature flags to template context"""

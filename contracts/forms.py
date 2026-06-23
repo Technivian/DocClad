@@ -26,37 +26,50 @@ from .models import (
 
 User = get_user_model()
 
-TAILWIND_INPUT = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm'
-TAILWIND_SELECT = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white'
-TAILWIND_TEXTAREA = 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm'
-TAILWIND_CHECKBOX = 'h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
-TAILWIND_FILE = 'w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+# Canonical token-backed form-control classes. Styling lives in the CSS
+# pipeline (theme/static_src/src/components.css), not in Python — these classes
+# adapt to dark/light theme tokens. Use these for all new form widgets.
+FORM_CONTROL = 'form-control'        # text/email/number/url/select/textarea
+FORM_CHECK = 'form-check-input'      # checkbox/radio
+FORM_FILE = 'form-file'              # file inputs
+
+# Backward-compatible aliases. The former TAILWIND_* values were hardcoded
+# light-mode utility strings (border-gray-300 / bg-white) that only rendered
+# correctly because of !important blanket overrides in base.html. They now point
+# at the canonical classes so every existing widget is token-backed. Renaming the
+# ~380 call sites to FORM_* is a mechanical follow-up.
+TAILWIND_INPUT = FORM_CONTROL
+TAILWIND_SELECT = FORM_CONTROL
+TAILWIND_TEXTAREA = FORM_CONTROL
+TAILWIND_CHECKBOX = FORM_CHECK
+TAILWIND_FILE = FORM_FILE
 
 
 class UserProfileForm(forms.ModelForm):
-    first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}))
-    last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}))
-    email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': TAILWIND_INPUT}))
+    # Canonical token-backed controls (no hardcoded Tailwind strings).
+    first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
+    last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
+    email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': FORM_CONTROL}))
     mfa_enrollment_code = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
+        widget=forms.TextInput(attrs={'class': FORM_CONTROL, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
     )
     mfa_recovery_code = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
+        widget=forms.TextInput(attrs={'class': FORM_CONTROL, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
     )
 
     class Meta:
         model = UserProfile
         fields = ['role', 'phone', 'bar_number', 'department', 'hourly_rate', 'bio', 'mfa_enabled']
         widgets = {
-            'role': forms.Select(attrs={'class': TAILWIND_SELECT}),
-            'phone': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
-            'bar_number': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
-            'department': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
-            'hourly_rate': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'step': '0.01'}),
-            'bio': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3}),
-            'mfa_enabled': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'role': forms.Select(attrs={'class': FORM_CONTROL}),
+            'phone': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'bar_number': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'department': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'hourly_rate': forms.NumberInput(attrs={'class': FORM_CONTROL, 'step': '0.01'}),
+            'bio': forms.Textarea(attrs={'class': FORM_CONTROL, 'rows': 3}),
+            'mfa_enabled': forms.CheckboxInput(attrs={'class': FORM_CHECK}),
         }
 
 
