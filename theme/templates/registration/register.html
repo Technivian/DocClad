@@ -64,7 +64,7 @@
                 <div>
                     <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold mb-2 login-title">Username</label>
                     <input type="text" name="username" id="{{ form.username.id_for_label }}" value="{{ form.username.value|default:'' }}" autofocus required autocomplete="username"
-                        class="login-input{% if form.username.errors %} has-error{% endif %}"
+                        class="login-input form-control{% if form.username.errors %} has-error{% endif %}"
                         placeholder="Choose a username">
                     {% if form.username.errors %}<p class="mt-1.5 text-xs c-error">{% for e in form.username.errors %}{{ e }}{% endfor %}</p>{% endif %}
                 </div>
