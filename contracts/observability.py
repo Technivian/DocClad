@@ -1,9 +1,12 @@
+import logging
 import time
 
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 SCHEDULER_LAST_SUCCESS_EPOCH_KEY = 'reminder_scheduler.last_success_epoch'
@@ -16,9 +19,17 @@ REQUEST_LAST_SEEN_EPOCH_KEY = 'http.requests.last_seen_epoch'
 
 
 def _cache_incr(key, amount=1):
-    if cache.add(key, 0, timeout=None):
-        pass
-    cache.incr(key, amount)
+    cache.add(key, 0, timeout=None)
+    try:
+        cache.incr(key, amount)
+    except ValueError:
+        # The key can be evicted between add() and incr() (cache memory
+        # pressure, a flush, or another process racing on the same key) —
+        # django-redis raises ValueError on incr() of a missing key rather
+        # than auto-vivifying it like a raw Redis INCR would. Recreate the
+        # key and retry once instead of losing the counter.
+        cache.add(key, 0, timeout=None)
+        cache.incr(key, amount)
 
 
 def _status_bucket(status_code):
@@ -40,11 +51,16 @@ def _route_bucket(path):
 def record_request_metric(path, status_code, latency_ms):
     if not getattr(settings, 'REQUEST_METRICS_ENABLED', True):
         return
-    _cache_incr(REQUEST_COUNT_KEY, 1)
-    _cache_incr(REQUEST_LATENCY_SUM_KEY, max(0, int(latency_ms)))
-    _cache_incr(f'http.requests.status.{_status_bucket(status_code)}', 1)
-    _cache_incr(f'http.requests.route.{_route_bucket(path)}', 1)
-    cache.set(REQUEST_LAST_SEEN_EPOCH_KEY, int(time.time()), timeout=None)
+    try:
+        _cache_incr(REQUEST_COUNT_KEY, 1)
+        _cache_incr(REQUEST_LATENCY_SUM_KEY, max(0, int(latency_ms)))
+        _cache_incr(f'http.requests.status.{_status_bucket(status_code)}', 1)
+        _cache_incr(f'http.requests.route.{_route_bucket(path)}', 1)
+        cache.set(REQUEST_LAST_SEEN_EPOCH_KEY, int(time.time()), timeout=None)
+    except Exception:
+        # Best-effort metrics collection must never break the request that
+        # triggered it (this runs from middleware on every single request).
+        logger.exception('record_request_metric_failed')
 
 
 def request_metrics_snapshot():
