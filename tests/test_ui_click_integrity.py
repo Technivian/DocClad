@@ -174,9 +174,9 @@ class UIButtonAndFlowIntegrityTests(TestCase):
 
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)
-        self.assertContains(detail_response, 'Case Flow')
-        self.assertContains(detail_response, 'Record Summary')
-        self.assertContains(detail_response, 'Action Cockpit')
+        self.assertContains(detail_response, 'Workflow')
+        self.assertContains(detail_response, 'Overview')
+        self.assertContains(detail_response, 'Activity')
 
         search_response = self.client.get(reverse('contracts:global_search'), {'q': 'UI Integrity'})
         self.assertEqual(search_response.status_code, 200)

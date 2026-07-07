@@ -25,6 +25,7 @@ from contracts.models import (
     Contract,
     Document,
     Invoice,
+    LegalTask,
     Matter,
     NegotiationThread,
     Notification,
@@ -154,7 +155,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         case_record = self.object
         ctx['case'] = case_record
         ctx['case_record'] = case_record
-        ctx['documents'] = case_record.documents.all()[:10]
+        ctx['documents'] = case_record.documents.select_related('uploaded_by').all()[:10]
         ctx['case_documents'] = ctx['documents']
         ctx['deadlines'] = case_record.deadlines.filter(is_completed=False)[:5]
         ctx['case_deadlines'] = ctx['deadlines']
@@ -162,6 +163,24 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['case_negotiation_threads'] = ctx['negotiation_threads']
         ctx['related_case_matter'] = case_record.matter
         ctx['lifecycle_guidance'] = build_contract_lifecycle_guidance(case_record)
+
+        # Record-shell convergence: owner/assignee, and the Workflow/Activity
+        # tabs' embedded content. Contract has no owner field of its own —
+        # reuse the exact same derivation Dashboard/Repository already use
+        # (assignee_map_for_contracts), so "who owns this" agrees everywhere.
+        org = get_user_organization(self.request.user)
+        ctx['owner'] = assignee_map_for_contracts(org, [case_record.pk]).get(case_record.pk)
+        ctx['approval_requests'] = case_record.approval_requests.select_related(
+            'assigned_to', 'delegated_to',
+        ).order_by('-created_at')[:10]
+        ctx['signature_requests'] = case_record.signature_requests.order_by('-created_at')[:10]
+        ctx['contract_tasks'] = LegalTask.objects.filter(contract=case_record).select_related(
+            'assigned_to',
+        ).order_by('due_date')[:10]
+        ctx['activity_entries'] = AuditLog.objects.filter(
+            organization=org, model_name='Contract', object_id=case_record.pk,
+        ).select_related('user').order_by('-timestamp')[:20]
+        ctx['contract_risks'] = RiskLog.objects.filter(contract=case_record).select_related('assigned_to')[:10]
         return ctx
 
 

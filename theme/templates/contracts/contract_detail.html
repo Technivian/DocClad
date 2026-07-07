@@ -1,7 +1,24 @@
 {% extends "base.html" %}
 {% load docclad_format %}
+{% load docclad_components %}
 {% block title %}{{ contract.title }} – DocClad{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .arch-header-chips { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .arch-action-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .cdoc-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .cdoc-row:last-child { border-bottom: none; }
+  .cdoc-icon {
+    width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; background: var(--primary-subtle);
+  }
+  .wf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .wf-row:last-child { border-bottom: none; }
+  .wf-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+</style>
 <div class="page-wrap reveal-stagger">
 
   {# ── Back link ────────────────────────────────────────────── #}
@@ -12,14 +29,15 @@
     Contracts
   </a>
 
-  {# ── Page header ──────────────────────────────────────────── #}
+  {# ── ContractMetadataHeader ───────────────────────────────── #}
   <div class="arch-header">
     <div class="arch-header-left">
       <div class="arch-title-row">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="badge-sm {{ contract.status|status_badge_class }}">
-          {{ contract.get_status_display }}
-        </span>
+        <span class="badge-sm {{ contract.status|status_badge_class }}">{{ contract.get_status_display }}</span>
+        {% if contract.risk_level %}
+        <span class="badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }} risk</span>
+        {% endif %}
       </div>
       <div class="arch-meta-strip">
         <span class="arch-meta-item">{{ contract.get_contract_type_display }}</span>
@@ -35,30 +53,51 @@
         <div class="arch-meta-sep"></div>
         <span class="arch-meta-item">{{ contract.value|money:contract.currency }}</span>
         {% endif %}
+        {% if contract.start_date %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">Starts {{ contract.start_date|date:"M d, Y" }}</span>
+        {% endif %}
         {% if contract.end_date %}
         <div class="arch-meta-sep"></div>
         <span class="arch-meta-item">Ends {{ contract.end_date|date:"M d, Y" }}</span>
         {% endif %}
+        {% if contract.renewal_date %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">Renews {{ contract.renewal_date|date:"M d, Y" }}</span>
+        {% elif contract.notice_period_days %}
+        <div class="arch-meta-sep"></div>
+        <span class="arch-meta-item">{{ contract.notice_period_days }}-day notice</span>
+        {% endif %}
+      </div>
+      <div class="arch-header-chips">
+        {% stage_dots contract %}
+        {% assignee_chip owner %}
       </div>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>
-      <a href="{% url 'contracts:document_create' %}" class="btn-cta">
-        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        Add document
-      </a>
+      <div class="arch-action-bar">
+        <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>
+        <a href="{% url 'contracts:approval_request_create' %}" class="btn-quiet">Request approval</a>
+        <a href="{% url 'contracts:signature_request_create' %}" class="btn-quiet">Send for signature</a>
+        <button type="button" id="run-grounded-check" class="btn-cta">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+          Run grounded check
+        </button>
+      </div>
     </div>
   </div>
 
-  {# ── Tab navigation ───────────────────────────────────────── #}
-  {# semantic labels: Case Flow / Record Summary / Action Cockpit #}
+  {# ── Tabs ──────────────────────────────────────────────────── #}
   <div class="arch-tabs" role="tablist">
-    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Record Summary</button>
+    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
     <button class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Case Flow</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Action Cockpit</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
+    {% if contract_risks %}
+    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="compliance" aria-controls="tab-compliance">Compliance</button>
+    {% endif %}
   </div>
 
   {# ── Content grid ─────────────────────────────────────────── #}
@@ -90,7 +129,7 @@
                 <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
               </div>
               <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Target stage</span>
+                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next stage</span>
                 <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage|event_label }}</div>
               </div>
             </div>
@@ -139,19 +178,8 @@
           </div>
           {% endif %}
 
-          {# Quick actions #}
-          <div class="card-l2">
-            <div class="arch-section-label">Quick actions</div>
-            <div class="grid grid-cols-2 gap-2">
-              <a href="{% url 'contracts:approval_request_list' %}" class="action-link text-sm"><span>Approvals queue</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-              <a href="{% url 'contracts:signature_request_list' %}" class="action-link text-sm"><span>Signature requests</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-              <a href="{% url 'contracts:risk_log_list' %}" class="action-link text-sm"><span>Risk register</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-              <a href="{% url 'contracts:deadline_create' %}" class="action-link text-sm"><span>Add deadline</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-            </div>
-          </div>
-
           {# Contract field review — a grounded rules-engine check, not generative AI; collapsed by default. #}
-          <details class="card-l2">
+          <details class="card-l2" id="contract-field-review">
             <summary class="cursor-pointer list-none flex items-center gap-2 font-medium text-sm c-primary select-none">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
@@ -181,21 +209,27 @@
             <a href="{% url 'contracts:document_create' %}" class="btn-cta text-sm">Attach document</a>
           </div>
           {% if documents %}
-          <div class="divide-y divide-[var(--border)]">
+          <div>
             {% for doc in documents %}
-            <a href="{% url 'contracts:document_detail' doc.pk %}" class="list-row">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--primary-subtle)">
+            <a href="{% url 'contracts:document_detail' doc.pk %}" class="cdoc-row">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="cdoc-icon">
                   <svg class="w-4 h-4 c-primary" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
                 </div>
-                <div>
-                  <div class="text-sm font-medium c-primary">{{ doc.title }}</div>
-                  <div class="text-xs c-muted mt-0.5">Version {{ doc.version }}</div>
+                <div class="min-w-0">
+                  <div class="text-sm font-medium c-primary truncate">{{ doc.title }}</div>
+                  <div class="text-xs c-muted mt-0.5">{{ doc.get_document_type_display }} · v{{ doc.version }}</div>
                 </div>
               </div>
-              <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="text-right hidden sm:block">
+                  <div class="text-xs c-secondary">{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username|default:"—" }}</div>
+                  <div class="text-xs c-muted">{{ doc.created_at|date:"M d, Y" }}</div>
+                </div>
+                <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
             </a>
             {% endfor %}
           </div>
@@ -210,64 +244,135 @@
 
       {# ── WORKFLOW ─────────────────────────────────────────── #}
       <div id="tab-workflow" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <h2 class="text-base font-700 c-primary mb-4">Workflow &amp; Approvals</h2>
-          <div class="space-y-3">
-            <a href="{% url 'contracts:approval_request_list' %}" class="action-link"><span>View approval queue</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-            <a href="{% url 'contracts:signature_request_list' %}" class="action-link"><span>View signature requests</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
-            <a href="{% url 'contracts:workflow_dashboard' %}" class="action-link"><span>Workflow board</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+        <div class="space-y-6">
+
+          {# Approvals #}
+          <div class="card-l1">
+            <div class="wf-section-head">
+              <h2 class="text-base font-700 c-primary">Approvals</h2>
+              <a href="{% url 'contracts:approval_request_list' %}" class="text-xs c-link font-medium">View all</a>
+            </div>
+            {% if approval_requests %}
+            <div>
+              {% for approval in approval_requests %}
+              <div class="wf-row">
+                <div class="flex items-center gap-3 min-w-0">
+                  {% assignee_chip approval.assigned_to %}
+                  <span class="text-sm c-primary">{{ approval.approval_step|approval_step_label }}</span>
+                </div>
+                <span class="badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-6 text-center text-sm c-muted">No approvals requested for this contract yet.</div>
+            {% endif %}
           </div>
+
+          {# Signatures #}
+          <div class="card-l1">
+            <div class="wf-section-head">
+              <h2 class="text-base font-700 c-primary">Signatures</h2>
+              <a href="{% url 'contracts:signature_request_list' %}" class="text-xs c-link font-medium">View all</a>
+            </div>
+            {% if signature_requests %}
+            <div>
+              {% for sig in signature_requests %}
+              <div class="wf-row">
+                <div class="min-w-0">
+                  <div class="text-sm c-primary">{{ sig.signer_name }}</div>
+                  <div class="text-xs c-muted">{{ sig.signer_role|default:sig.signer_email }}</div>
+                </div>
+                <span class="badge-sm {{ sig.status|signature_status_badge_class }}">{{ sig.get_status_display }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-6 text-center text-sm c-muted">No signature requests for this contract yet.</div>
+            {% endif %}
+          </div>
+
+          {# Tasks #}
+          <div class="card-l1">
+            <div class="wf-section-head">
+              <h2 class="text-base font-700 c-primary">Tasks</h2>
+              <a href="{% url 'contracts:legal_task_kanban' %}" class="text-xs c-link font-medium">View all</a>
+            </div>
+            {% if contract_tasks %}
+            <div>
+              {% for task in contract_tasks %}
+              <div class="wf-row">
+                <div class="flex items-center gap-3 min-w-0">
+                  {% assignee_chip task.assigned_to %}
+                  <span class="text-sm c-primary truncate">{{ task.title }}</span>
+                </div>
+                <span class="badge-sm {{ task.status|task_status_badge_class }}">{{ task.get_status_display }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-6 text-center text-sm c-muted">No tasks linked to this contract yet.</div>
+            {% endif %}
+          </div>
+
         </div>
       </div>{# /tab-workflow #}
 
       {# ── ACTIVITY ─────────────────────────────────────────── #}
       <div id="tab-activity" class="arch-tab-panel" role="tabpanel">
         <div class="card-l1">
-          <h2 class="text-base font-700 c-primary mb-4">Activity</h2>
-          <a href="{% url 'contracts:audit_log_list' %}" class="action-link"><span>View full audit log</span><svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>
+          <div class="wf-section-head">
+            <h2 class="text-base font-700 c-primary">Activity</h2>
+            <a href="{% url 'contracts:audit_log_list' %}" class="text-xs c-link font-medium">View full audit trail</a>
+          </div>
+          {% if activity_entries %}
+          <div>
+            {% for entry in activity_entries %}
+            {% activity_line entry %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="py-6 text-center text-sm c-muted">No recent activity recorded for this contract.</div>
+          {% endif %}
         </div>
       </div>{# /tab-activity #}
+
+      {% if contract_risks %}
+      {# ── COMPLIANCE ───────────────────────────────────────── #}
+      <div id="tab-compliance" class="arch-tab-panel" role="tabpanel">
+        <div class="card-l1">
+          <div class="wf-section-head">
+            <h2 class="text-base font-700 c-primary">Risks</h2>
+            <a href="{% url 'contracts:risk_log_list' %}" class="text-xs c-link font-medium">View risk register</a>
+          </div>
+          <div>
+            {% for risk in contract_risks %}
+            <div class="wf-row">
+              <div class="flex items-center gap-3 min-w-0">
+                {% assignee_chip risk.assigned_to %}
+                <span class="text-sm c-primary truncate">{{ risk.title }}</span>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
+                <span class="badge-sm {{ risk.status|risk_status_badge_class }}">{{ risk.status|risk_status_label }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>{# /tab-compliance #}
+      {% endif %}
 
     </div>{# /main content #}
 
     {# ── Context rail ─────────────────────────────────────────── #}
     <div class="arch-context-rail">
 
-      {# Record summary #}
+      {# Deadlines — genuinely dynamic, not shown in the header #}
+      {% if deadlines %}
       <div class="card-l2">
-        <div class="arch-section-label">Record summary</div>
+        <div class="arch-section-label">Deadlines</div>
         <div class="detail-stack">
-          <div class="detail-row">
-            <span class="detail-label">Status</span>
-            <span class="badge-sm {{ contract.status|status_badge_class }}">{{ contract.get_status_display }}</span>
-          </div>
-          <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">{{ contract.get_contract_type_display }}</span></div>
-          <div class="detail-row"><span class="detail-label">Counterparty</span><span class="detail-value">{{ contract.counterparty|default:"—" }}</span></div>
-          {% if contract.value %}
-          <div class="detail-row"><span class="detail-label">Value</span><span class="detail-value">{{ contract.value|money:contract.currency }}</span></div>
-          {% endif %}
-          {% if contract.client %}
-          <div class="detail-row"><span class="detail-label">Client</span><a href="{% url 'contracts:client_detail' contract.client.pk %}" class="detail-value c-link">{{ contract.client.name }}</a></div>
-          {% endif %}
-          <div class="detail-row"><span class="detail-label">Created by</span><span class="detail-value">{{ contract.created_by.get_full_name|default:"System" }}</span></div>
-          <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">{{ contract.created_at|date:"M d, Y" }}</span></div>
-        </div>
-      </div>
-
-      {# Key dates #}
-      {% if contract.start_date or contract.end_date or contract.renewal_date or deadlines %}
-      <div class="card-l2">
-        <div class="arch-section-label">Key dates</div>
-        <div class="detail-stack">
-          {% if contract.start_date %}
-          <div class="detail-row"><span class="detail-label">Start</span><span class="detail-value">{{ contract.start_date|date:"M d, Y" }}</span></div>
-          {% endif %}
-          {% if contract.end_date %}
-          <div class="detail-row"><span class="detail-label">End</span><span class="detail-value">{{ contract.end_date|date:"M d, Y" }}</span></div>
-          {% endif %}
-          {% if contract.renewal_date %}
-          <div class="detail-row"><span class="detail-label">Renewal</span><span class="detail-value">{{ contract.renewal_date|date:"M d, Y" }}</span></div>
-          {% endif %}
           {% for dl in deadlines %}
           <div class="detail-row">
             <span class="detail-label">{{ dl.title }}</span>
@@ -286,6 +391,15 @@
       </div>
       {% endif %}
 
+      {# Quick links — secondary navigation not already covered by the action bar or tabs #}
+      <div class="card-l2">
+        <div class="arch-section-label">Quick links</div>
+        <div class="detail-stack">
+          <a href="{% url 'contracts:risk_log_list' %}" class="text-sm c-link font-medium">Risk register</a>
+          <a href="{% url 'contracts:deadline_create' %}" class="text-sm c-link font-medium">Add deadline</a>
+        </div>
+      </div>
+
     </div>{# /arch-context-rail #}
 
   </div>{# /arch-detail-grid #}
@@ -296,16 +410,25 @@
 (function () {
     const tabs   = document.querySelectorAll('.arch-tab[data-tab]');
     const panels = document.querySelectorAll('.arch-tab-panel');
+
+    function activateTab(key) {
+        tabs.forEach(t   => { t.classList.toggle('tab-active', t.dataset.tab === key); t.setAttribute('aria-selected', t.dataset.tab === key ? 'true' : 'false'); });
+        panels.forEach(p => p.classList.toggle('panel-active', p.id === 'tab-' + key));
+    }
+
     tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t   => { t.classList.remove('tab-active'); t.setAttribute('aria-selected', 'false'); });
-            panels.forEach(p => p.classList.remove('panel-active'));
-            tab.classList.add('tab-active');
-            tab.setAttribute('aria-selected', 'true');
-            const target = document.getElementById('tab-' + tab.dataset.tab);
-            if (target) target.classList.add('panel-active');
-        });
+        tab.addEventListener('click', () => activateTab(tab.dataset.tab));
     });
+
+    const runCheckBtn = document.getElementById('run-grounded-check');
+    const reviewDetails = document.getElementById('contract-field-review');
+    if (runCheckBtn && reviewDetails) {
+        runCheckBtn.addEventListener('click', () => {
+            activateTab('overview');
+            reviewDetails.open = true;
+            reviewDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
 })();
 </script>
 
