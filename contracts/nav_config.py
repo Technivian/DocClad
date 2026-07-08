@@ -13,15 +13,15 @@ same items, same order, same sections, same icons, same active-state rules,
 same permission gate on Escrow. `in_house_clm` renders the focused
 Payrollminds nav from the memo's Section D.
 
-Two nav items in `in_house_clm` point at the closest existing page rather
-than a dedicated one, because building the dedicated page is out of scope
-for this phase (see the memo's Phase 4/5 and this repo's Phase 1 ticket):
-  - "Obligations" -> Deadlines (`deadline_list`) until a real Obligations
-    view exists.
+One nav item in `in_house_clm` still points at the closest existing page
+rather than a dedicated one, because building the dedicated page is out of
+scope for this phase:
   - "Playbooks" -> the DPA playbook positions list (`dpa_playbook_list`)
     until Clause Library playbooks are merged in.
-These are called out explicitly in NAV_ITEMS below and in the Phase 1
-implementation summary — not a silent stand-in.
+This is called out explicitly in NAV_ITEMS below — not a silent stand-in.
+
+"Obligations" -> `obligations_workspace` (Phase 4), a dedicated view built
+on the existing Deadline entity — see contracts/views_domains/deadlines.py.
 """
 from django.utils.safestring import mark_safe
 
@@ -132,8 +132,8 @@ _IN_HOUSE_CLM_NAV = [
      'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _always},
     {'kind': 'item', 'label': 'Approvals', 'url_name': 'contracts:approval_request_list', 'icon': _ICON_APPROVAL,
      'active': lambda n: bool(n) and 'approval_request' in n, 'visible': _always},
-    {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:deadline_list', 'icon': _ICON_TASK,
-     'active': lambda n: bool(n) and 'deadline' in n, 'visible': _always},
+    {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:obligations_workspace', 'icon': _ICON_TASK,
+     'active': lambda n: bool(n) and ('obligations' in n or 'deadline' in n), 'visible': _always},
     {'kind': 'item', 'label': 'Playbooks', 'url_name': 'contracts:dpa_playbook_list', 'icon': _ICON_SHIELD,
      'active': lambda n: n == 'dpa_playbook_list', 'visible': _always},
     {'kind': 'item', 'label': 'Reports', 'url_name': 'contracts:reports_dashboard', 'icon': _ICON_REPORT,

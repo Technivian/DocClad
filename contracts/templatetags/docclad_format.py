@@ -412,6 +412,52 @@ def contract_risk_badge_class(risk_level):
     return _CONTRACT_RISK_BADGES.get(risk_level, 'badge-gray')
 
 
+_OBLIGATION_COMPLIANCE_LABELS = {
+    'MET': 'Met',
+    'OVERDUE': 'Overdue',
+    'BREACH_RISK': 'Breach Risk',
+    'PENDING': 'Pending Action',
+}
+
+_OBLIGATION_COMPLIANCE_BADGES = {
+    'MET': 'badge-green',
+    'OVERDUE': 'badge-red',
+    'BREACH_RISK': 'badge-yellow',
+    'PENDING': 'badge-blue',
+}
+
+
+@register.filter
+def obligation_compliance_status(deadline):
+    """Deadline -> derived compliance status key.
+
+    There is no stored status field for this — it's computed from
+    is_completed/is_overdue/days_remaining/reminder_days so the Obligations
+    workspace always reflects the deadline's current state, not a value that
+    can go stale.
+    """
+    if not deadline or deadline.is_completed:
+        return 'MET'
+    if deadline.is_overdue:
+        return 'OVERDUE'
+    days_left = deadline.days_remaining
+    if days_left is not None and days_left <= deadline.reminder_days:
+        return 'BREACH_RISK'
+    return 'PENDING'
+
+
+@register.filter
+def obligation_compliance_label(deadline):
+    """Deadline -> human label for its derived compliance status."""
+    return _OBLIGATION_COMPLIANCE_LABELS.get(obligation_compliance_status(deadline), '—')
+
+
+@register.filter
+def obligation_compliance_badge_class(deadline):
+    """Deadline -> canonical badge class for its derived compliance status."""
+    return _OBLIGATION_COMPLIANCE_BADGES.get(obligation_compliance_status(deadline), 'badge-gray')
+
+
 @register.filter
 def dpa_severity_badge_class(severity):
     """DPARiskItem severity key -> canonical badge class."""

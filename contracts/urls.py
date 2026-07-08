@@ -154,6 +154,7 @@ urlpatterns = [
 
     # Deadlines
     path('deadlines/', views.DeadlineListView.as_view(), name='deadline_list'),
+    path('obligations/', views.ObligationsWorkspaceView.as_view(), name='obligations_workspace'),
     path('deadlines/new/', views.DeadlineCreateView.as_view(), name='deadline_create'),
     path('deadlines/<int:pk>/edit/', views.DeadlineUpdateView.as_view(), name='deadline_update'),
     path('deadlines/<int:pk>/complete/', views.deadline_complete, name='deadline_complete'),

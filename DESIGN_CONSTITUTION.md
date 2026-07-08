@@ -1,8 +1,8 @@
 # DESIGN CONSTITUTION - CMS Aegis
 
-Version: 1.4
+Version: 1.5
 Status: Mandatory
-Last amended: 2026-07-07 (§14 — "Ledger" v1.2: teal is the general accent, copper is CTA-only; see DOCCLAD_DESIGN_SYSTEM.md v1.2 changelog)
+Last amended: 2026-07-07 (§15 — Pipeline Governance: single-PR rule for token+template changes, exceptions convention)
 Purpose: enforce one coherent enterprise-grade product language across all pages
 
 ## 1) Non-Negotiable Principles
@@ -354,3 +354,46 @@ Dynamic output regions (AI assistant, search results loaded asynchronously, stat
 - `aria-live="polite"` for non-urgent updates (AI output, background loading)
 - `aria-live="assertive"` only for critical errors that interrupt workflow
 - The `aria-live` region must exist in the DOM before content is injected (not created dynamically)
+
+## 15) Pipeline Governance (added 2026-07-07, v1.5)
+
+### Single-PR rule for Ledger token changes
+
+- Any change to a token in `theme/static/css/docclad-tokens.css` must ship in the
+  same pull request as the Django template changes that consume it. Token edits
+  and their consuming markup are never split across separate PRs — a token
+  landing without its consumer (or vice versa) is a review-blocking defect,
+  since it leaves deployed styles and token values out of sync for the window
+  between merges.
+- This is a review criterion enforced at pull-request review time. There is no
+  automated CI check for this yet — do not describe this rule as CI-enforced
+  until a lint/grep step actually exists in the test suite.
+
+### Exceptions convention
+
+Temporary deviations from a Ledger rule (e.g., a raw hex value used under
+engineering urgency, a one-off spacing value, a component variant that hasn't
+been standardized yet) are permitted only if logged in the table below —
+never hardcoded silently into a template.
+
+| Location (file:line) | Rule bypassed | Reason | Ticket | Expiry |
+|---|---|---|---|---|
+| _(none currently logged)_ | | | | |
+
+- Every row requires a ticket reference and a hard expiry date. An exception
+  past its expiry date is a defect, not a grandfathered pattern — it must be
+  resolved (migrated to a token/primitive) or the exception renewed with a new
+  ticket and date, not left in place silently.
+- This table lives in this document, not scattered as inline comments, so a
+  reviewer can audit all outstanding exceptions in one place.
+
+### Aspirational vs. actual enforcement
+
+- Rules in this document describe **mandatory pull-request review criteria**
+  unless explicitly stated otherwise. None of the rules above are currently
+  backed by an automated CI gate (no linter or grep step rejects raw hex
+  values or non-CTA copper usage today).
+- If automated enforcement is added later, this section must be updated to
+  name the specific check and where it runs — do not leave enforcement
+  claims ambiguous between "reviewers must catch this" and "CI will catch
+  this."

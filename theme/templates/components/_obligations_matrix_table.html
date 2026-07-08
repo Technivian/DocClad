@@ -1,0 +1,36 @@
+{% load docclad_format %}
+<table class="wq-table">
+  <thead>
+    <tr>
+      <th>Obligation</th>
+      <th>Source</th>
+      <th>Responsible Party</th>
+      <th class="wq-col-num">Due Date</th>
+      <th>Compliance Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for obligation in obligations %}
+    <tr>
+      <td>
+        <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link">{{ obligation.title|truncatechars:60 }}</a>
+        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
+      </td>
+      <td>
+        {% if obligation.contract %}
+        <a href="{% url 'contracts:contract_detail' obligation.contract.pk %}" class="c-link">{{ obligation.contract.title|truncatechars:36 }}</a>
+        {% elif obligation.matter %}
+        <a href="{% url 'contracts:matter_detail' obligation.matter.pk %}" class="c-link">{{ obligation.matter.title|truncatechars:36 }}</a>
+        {% else %}
+        <span class="c-dim">&mdash;</span>
+        {% endif %}
+      </td>
+      <td>{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
+      <td class="wq-col-num{% if obligation.is_overdue %} wq-due-overdue{% endif %}">{{ obligation.due_date|due_countdown }}</td>
+      <td><span class="badge-sm {{ obligation|obligation_compliance_badge_class }}">{{ obligation|obligation_compliance_label }}</span></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="wq-empty">No obligations tracked yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

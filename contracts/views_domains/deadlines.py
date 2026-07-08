@@ -8,12 +8,13 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.templatetags.docclad_format import obligation_compliance_status
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
     TenantAssignCreateMixin,
@@ -53,6 +54,52 @@ class DeadlineListView(LoginRequiredMixin, ListView):
         context['overdue_count'] = org_deadlines.filter(is_completed=False, due_date__lt=date.today()).count()
         context['upcoming_count'] = org_deadlines.filter(is_completed=False, due_date__gte=date.today()).count()
         context['show'] = self.request.GET.get('show', 'upcoming')
+        return context
+
+
+class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
+    """Phase 4: the in_house_clm "Obligations" workspace.
+
+    Reuses the existing Deadline entity — there is no separate Obligation
+    model. Compliance status (Met/Overdue/Breach Risk/Pending Action) is
+    derived per-row via obligation_compliance_status, never stored, so it
+    can't drift from the deadline's actual due_date/is_completed state.
+
+    Deliberately uses Deadline.objects.for_organization(org) rather than the
+    generic scope_queryset_for_organization helper: Deadline rows reach an
+    organization through *either* contract or matter (both nullable FKs), an
+    OR relationship the generic single-path resolver isn't built to express.
+    for_organization() already encodes that OR correctly (see
+    DeadlineQuerySet above) and is the same method DeadlineListView uses.
+    """
+    template_name = 'contracts/obligations_workspace.html'
+
+    def get_organization(self):
+        if not hasattr(self.request, '_cached_organization'):
+            self.request._cached_organization = get_user_organization(self.request.user)
+        return self.request._cached_organization
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        org = self.get_organization()
+        obligations = list(
+            Deadline.objects
+            .for_organization(org)
+            .select_related('matter', 'contract', 'assigned_to')
+            .order_by('due_date')
+        )
+
+        counts = {'MET': 0, 'OVERDUE': 0, 'BREACH_RISK': 0, 'PENDING': 0}
+        for obligation in obligations:
+            obligation.compliance_status = obligation_compliance_status(obligation)
+            obligation.source = obligation.contract or obligation.matter
+            counts[obligation.compliance_status] += 1
+
+        context['obligations'] = obligations
+        context['obligations_met_count'] = counts['MET']
+        context['obligations_overdue_count'] = counts['OVERDUE']
+        context['obligations_breach_risk_count'] = counts['BREACH_RISK']
+        context['obligations_pending_count'] = counts['PENDING']
         return context
 
 

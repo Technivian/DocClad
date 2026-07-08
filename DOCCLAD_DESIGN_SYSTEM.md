@@ -1,9 +1,9 @@
 # DocClad Design System — "Ledger"
 
-Version: 1.2 · 2026-07-07
+Version: 1.3 · 2026-07-07
 Tokens: `theme/static/css/docclad-tokens.css`
 Brand authority: `docclad_agent_brand_kit/docs/docclad-approved-brand-board.png`
-Governance: `DESIGN_CONSTITUTION.md` §14
+Governance: `DESIGN_CONSTITUTION.md` §14, §15 (Pipeline Governance)
 Research basis: `IRONCLAD_DESIGN_AUDIT.md` (verified from Ironclad's shipped CSS) plus a
 verified seven-product sweep (Juro, LinkSquares, Evisort/Workday CLM, Icertis, Spellbook,
 Clio, Ironclad) — token-level, from fetched production CSS where available.
@@ -250,3 +250,34 @@ overrides) — the constitution's existing rules already forbid new ones.
    deliberately different hues).
 9. Dark theme is derived from tokens only — no `[data-theme="dark"] .foo` one-offs
    for new work.
+
+## 9) Pipeline governance — why the process rules exist
+
+`DESIGN_CONSTITUTION.md` §15 adds process rules (single-PR token/template
+atomicity, a logged-exceptions table) on top of the token/component rules
+above. The rationale:
+
+- **Why single-PR, not just "keep them close in time":** a token value and
+  the markup that consumes it are one unit of meaning — a token renamed or
+  repointed without its consuming template change (or the reverse) leaves a
+  window where deployed styles don't match the documented token values, which
+  is exactly the kind of silent drift this system exists to prevent (see the
+  "Generic tell" table in §1 — DocClad drifted to default-Tailwind precisely
+  through accumulated small, disconnected changes).
+- **Why logged exceptions instead of inline comments:** a `// temporary, see
+  ticket #123` comment buried in a template is invisible to anyone auditing
+  the design system as a whole. A single table in the constitution makes
+  every outstanding deviation from Ledger visible in one place, with an
+  expiry date that forces a decision (migrate or renew) instead of the
+  exception quietly becoming permanent.
+- **Authority order:** `DESIGN_CONSTITUTION.md` is the enforceable rule set;
+  this document explains why those rules exist and how to apply them when a
+  new page or component doesn't map cleanly onto an existing primitive. When
+  the two disagree, the constitution wins and this document is stale and
+  needs updating — not the other way around.
+- **No claim of automated enforcement:** as of this writing, compliance with
+  §15 is a pull-request review responsibility, not a CI gate. Nothing in this
+  system currently blocks a merge automatically for a raw hex value or
+  misplaced copper usage. Treat any statement to the contrary as out of date
+  until a linter/grep step is actually wired into the test suite and named
+  here.
