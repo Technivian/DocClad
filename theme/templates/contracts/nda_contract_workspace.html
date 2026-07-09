@@ -1,0 +1,208 @@
+<style nonce="{{ csp_nonce }}">
+.nda-ws { padding: 10px 4px 28px 10px; }
+.nda-ws-header { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
+.nda-ws-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.nda-ws-title { color: var(--text-primary); font-size: 24px; line-height: 1.15; font-weight: 750; margin: 0; }
+.nda-ws-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+.nda-ws-meta-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.nda-ws-meta { border: 1px solid var(--card-border); border-radius: 6px; padding: 10px 11px; background: var(--surface-alt); min-width: 0; }
+.nda-ws-meta-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.nda-ws-meta-value { color: var(--text-primary); font-size: 12px; font-weight: 750; margin-top: 4px; overflow-wrap: anywhere; }
+.nda-ws-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border-radius: 7px; border: 1px solid rgba(181,80,46,.35); color: #fff; background: var(--btn-gradient); font-size: 12.5px; font-weight: 750; text-decoration: none; white-space: nowrap; }
+.nda-ws-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.nda-ws-action-secondary, .nda-ws-action-teal { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border-radius: 7px; text-decoration: none; font-size: 12px; font-weight: 750; cursor: pointer; }
+.nda-ws-action-secondary { border: 1px solid var(--card-border); color: var(--text-primary); background: var(--card-bg); }
+.nda-ws-action-teal { border: 1px solid rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.nda-ws-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; font-weight: 800; border: 1px solid rgba(10,114,100,.18); }
+.nda-ws-badge.light { background: rgba(10,114,100,.08); }
+.nda-ws-timeline { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+.nda-ws-timeline-title { color: var(--text-primary); font-size: 13px; font-weight: 800; margin-bottom: 14px; }
+.nda-ws-track { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; }
+.nda-ws-step { position: relative; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.nda-ws-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--border); }
+.nda-ws-dot { width: 26px; height: 26px; border-radius: 999px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; position: relative; z-index: 1; font-size: 11px; font-weight: 800; }
+.nda-ws-step.is-done .nda-ws-dot, .nda-ws-step.is-active .nda-ws-dot { border-color: var(--primary); color: var(--primary); background: var(--primary-subtle); }
+.nda-ws-step.is-active { color: var(--text-primary); }
+.nda-ws-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 16px; align-items: start; }
+.nda-ws-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
+.nda-ws-card + .nda-ws-card { margin-top: 12px; }
+.nda-ws-card-head { padding: 13px 15px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nda-ws-card-title { color: var(--text-primary); font-size: 13px; font-weight: 800; }
+.nda-ws-card-body { padding: 14px 15px; }
+.nda-doc { max-width: 78ch; margin: 0 auto; color: var(--text-primary); font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif; font-size: 13px; line-height: 1.72; }
+.nda-clause { border: 1px solid var(--card-border); border-radius: 7px; padding: 13px 14px; background: var(--surface-alt); margin-bottom: 11px; }
+.nda-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
+.nda-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.nda-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.nda-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
+.nda-source.ai, .nda-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.nda-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
+.nda-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.nda-rail-item:last-child { border-bottom: none; }
+.nda-rail-dot { width: 21px; height: 21px; border-radius: 6px; flex: 0 0 auto; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
+.nda-rail-title { color: var(--text-primary); font-size: 11px; font-weight: 800; }
+.nda-rail-copy { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; margin-top: 2px; }
+.nda-risk-card, .nda-approval-card, .nda-audit-row { border: 1px solid var(--card-border); border-radius: 7px; padding: 11px; background: var(--surface-alt); }
+.nda-risk-card + .nda-risk-card, .nda-approval-card + .nda-approval-card, .nda-audit-row + .nda-audit-row { margin-top: 9px; }
+.nda-risk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.nda-risk-title, .nda-approval-title, .nda-audit-title { color: var(--text-primary); font-size: 12px; font-weight: 800; }
+.nda-risk-sev { border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 850; text-transform: uppercase; background: var(--msg-warning-bg); color: var(--msg-warning-text); border: 1px solid var(--msg-warning-border); }
+.nda-risk-sev.high, .nda-risk-sev.critical { background: var(--msg-error-bg); color: var(--msg-error-text); border-color: var(--msg-error-border); }
+.nda-risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.nda-risk-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--primary); font-size: 11px; font-weight: 800; text-decoration: none; }
+.nda-kv-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.nda-kv-value { color: var(--text-primary); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+.nda-status { color: var(--primary); font-weight: 800; }
+.nda-audit-meta { color: var(--text-muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+.nda-field-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nda-field-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; background: var(--primary-subtle); color: var(--primary); font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; }
+.nda-approval-trigger { margin-top: 8px; }
+@media (max-width: 1180px) {
+  .nda-ws-meta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .nda-ws-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="page-wrap page-wrap-fluid nda-ws">
+  <section class="nda-ws-header">
+    <div class="nda-ws-title-row">
+      <div>
+        <div class="nda-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
+        <h1 class="nda-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
+        <p class="nda-ws-subtitle">{{ workflow.title }} · Mutual NDA · Netherlands · B2B</p>
+        <div class="nda-ws-actions">
+          <button type="button" class="nda-ws-cta">Send for signature</button>
+          {% if nda_workspace.legal_review_triggered %}<button type="button" class="nda-ws-action-secondary">Send to Legal Review</button>{% endif %}
+          <button type="button" class="nda-ws-action-teal">Generate NDA summary</button>
+          <button type="button" class="nda-ws-action-secondary">Export Word</button>
+        </div>
+      </div>
+      <a class="nda-ws-cta" href="#risk-signals">Review next action</a>
+    </div>
+    <div class="nda-ws-meta-grid">
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Contract type</div><div class="nda-ws-meta-value">NDA</div></div>
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Counterparty</div><div class="nda-ws-meta-value">{{ workflow.contract.counterparty|default:"Counterparty pending" }}</div></div>
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Current stage</div><div class="nda-ws-meta-value">{{ nda_workspace.current_stage }}</div></div>
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Owner</div><div class="nda-ws-meta-value">{{ nda_workspace.owner }}</div></div>
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Risk level</div><div class="nda-ws-meta-value">{{ nda_workspace.risk_level }}</div></div>
+      <div class="nda-ws-meta"><div class="nda-ws-meta-label">Primary next action</div><div class="nda-ws-meta-value">{{ nda_workspace.next_action }}</div></div>
+    </div>
+  </section>
+
+  <section class="nda-ws-timeline" aria-label="Workflow Timeline">
+    <div class="nda-ws-timeline-title">Workflow Timeline</div>
+    <div class="nda-ws-track">
+      {% for step in nda_workspace.timeline %}
+      <div class="nda-ws-step{% if forloop.counter0 < nda_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == nda_workspace.active_timeline_index %} is-active{% endif %}">
+        <div class="nda-ws-dot">{% if forloop.counter0 < nda_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
+        <div>{{ step }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="nda-ws-grid">
+    <main>
+      <section class="nda-ws-card">
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Generated NDA Draft</div><span class="nda-ws-badge light">{% if nda_workspace.self_serve_eligible %}Self-serve eligible{% else %}Governed review active{% endif %}</span></div>
+        <div class="nda-ws-card-body">
+          <div class="nda-doc">
+            {% for section in nda_workspace.document_sections %}
+            <article class="nda-clause" id="{{ section.section_id }}">
+              <div class="nda-clause-head">
+                <div class="nda-clause-title">{{ section.title }}</div>
+                <span class="nda-source {{ section.tone }}">{{ section.source }}</span>
+              </div>
+              <p>{{ section.content|linebreaksbr }}</p>
+              <div class="nda-rail-copy">{{ section.source_detail }}</div>
+              {% if section.fields %}
+              <div class="nda-field-chip-row">
+                {% for field in section.fields %}
+                <span class="nda-field-chip">{{ field }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="nda-ws-card" id="risk-signals">
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Risk Signals</div><span class="nda-ws-badge">{{ nda_workspace.risk_cards|length }} active</span></div>
+        <div class="nda-ws-card-body">
+          {% for risk in nda_workspace.risk_cards %}
+          <article class="nda-risk-card">
+            <div class="nda-risk-top">
+              <div class="nda-risk-title">{{ risk.title }}</div>
+              <span class="nda-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span>
+            </div>
+            <div class="nda-risk-grid">
+              <div><div class="nda-kv-label">Reason</div><div class="nda-kv-value">{{ risk.reason }}</div></div>
+              <div><div class="nda-kv-label">Source</div><div class="nda-kv-value">{{ risk.source }}</div></div>
+              <div><div class="nda-kv-label">Recommended action</div><div class="nda-kv-value">{{ risk.recommended_action }}</div></div>
+              <div><div class="nda-kv-label">Approval impact</div><div class="nda-kv-value">{{ risk.approval_impact }}</div></div>
+              <div><div class="nda-kv-label">Status</div><div class="nda-kv-value nda-status">{{ risk.status }}</div></div>
+            </div>
+            <a class="nda-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="nda-ws-card">
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Governance Rail</div></div>
+        <div class="nda-ws-card-body">
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Template selected</div><div class="nda-rail-copy">Mutual NDA · Netherlands · B2B</div></div></div>
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Playbook applied</div><div class="nda-rail-copy">NDA Self-Serve Playbook</div></div></div>
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Clause library active</div><div class="nda-rail-copy">Approved confidentiality, privacy, and governing law fallback clauses available</div></div></div>
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Risk checks active</div><div class="nda-rail-copy">Confidentiality, privacy, residual knowledge, and governing law checks ran</div></div></div>
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Approval route</div><div class="nda-rail-copy">{% for approval in nda_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
+          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Audit trail enabled</div><div class="nda-rail-copy">{{ nda_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
+        </div>
+      </section>
+
+      <section class="nda-ws-card">
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Approval Route</div></div>
+        <div class="nda-ws-card-body">
+          {% for approval in nda_workspace.approval_cards %}
+          <article class="nda-approval-card">
+            <div class="nda-risk-top"><div class="nda-approval-title">{{ approval.name }}</div><span class="nda-ws-badge">{{ approval.status }}</span></div>
+            <div class="nda-kv-label">Why triggered</div>
+            <div class="nda-kv-value">{{ approval.reason }}</div>
+            <div class="nda-kv-label nda-approval-trigger">Trigger</div>
+            <div class="nda-kv-value">{{ approval.trigger }}</div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="nda-ws-card">
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Audit Trail Preview</div></div>
+        <div class="nda-ws-card-body">
+          {% for entry in nda_workspace.audit_preview %}
+          <div class="nda-audit-row">
+            <div class="nda-audit-title">{{ entry.event }}</div>
+            <div class="nda-audit-meta">{{ entry.meta }}</div>
+            <div class="nda-audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('click', function (event) {
+  var link = event.target.closest('[data-clause-link]');
+  if (!link) return;
+  var target = document.getElementById(link.getAttribute('data-clause-link'));
+  if (!target) return;
+  document.querySelectorAll('.nda-clause.is-linked').forEach(function (node) {
+    node.classList.remove('is-linked');
+  });
+  target.classList.add('is-linked');
+});
+</script>

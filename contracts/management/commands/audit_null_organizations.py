@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
+from django.db.models import Q
 from django.db.migrations.executor import MigrationExecutor
 
 from contracts.models import (
@@ -19,6 +20,20 @@ from contracts.models import (
     TransferRecord,
     Workflow,
 )
+
+
+def _tenant_owned_rows(model):
+    qs = model.objects.filter(organization__isnull=True)
+    # Global clause library seeds are intentionally organization-less; the
+    # tenant audit should focus on rows that are expected to belong to a
+    # workspace rather than shared system content.
+    if model is ClauseCategory:
+        return qs.filter(
+            Q(clauses__created_by__isnull=False) | Q(clauses__approved_by__isnull=False)
+        ).distinct()
+    if model is ClauseTemplate:
+        qs = qs.exclude(created_by__isnull=True, approved_by__isnull=True)
+    return qs
 
 
 MODEL_CONFIGS = [
@@ -76,13 +91,14 @@ class Command(BaseCommand):
 
         total_rows = 0
         for model, label_field in MODEL_CONFIGS:
-            row_count = model.objects.filter(organization__isnull=True).count()
+            rows = _tenant_owned_rows(model)
+            row_count = rows.count()
             if not row_count:
                 continue
 
             total_rows += row_count
             self.stdout.write(f'\n{model.__name__}: {row_count} row(s)')
-            for row in model.objects.filter(organization__isnull=True).iterator():
+            for row in rows.iterator():
                 label = getattr(row, label_field, '')
                 owner_user_id = getattr(row, 'created_by_id', None)
                 if owner_user_id is None:

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from decimal import Decimal
@@ -763,16 +764,24 @@ class Contract(models.Model):
 
     class ContractType(models.TextChoices):
         NDA = 'NDA', 'Non-Disclosure Agreement'
+        NON_COMPETE = 'NON_COMPETE', 'Non-Compete / Non-Solicitation Agreement'
         MSA = 'MSA', 'Master Service Agreement'
         SOW = 'SOW', 'Statement of Work'
+        SUBCONTRACTOR_SOW = 'SUBCONTRACTOR_SOW', 'Subcontractor SOW Agreement'
+        CONSULTING = 'CONSULTING', 'Consulting / Independent Contractor Agreement'
         EMPLOYMENT = 'EMPLOYMENT', 'Employment Agreement'
         LEASE = 'LEASE', 'Lease Agreement'
         LICENSE = 'LICENSE', 'License Agreement'
+        SAAS = 'SAAS', 'SaaS Agreement'
+        TERMS_OF_SERVICE = 'TERMS_OF_SERVICE', 'Terms of Service / Terms & Conditions'
         VENDOR = 'VENDOR', 'Vendor Agreement'
+        PURCHASE_ORDER = 'PURCHASE_ORDER', 'Purchase Order'
         PARTNERSHIP = 'PARTNERSHIP', 'Partnership Agreement'
+        RESELLER = 'RESELLER', 'Referral / Reseller / Channel Partner Agreement'
         SETTLEMENT = 'SETTLEMENT', 'Settlement Agreement'
         AMENDMENT = 'AMENDMENT', 'Amendment'
         DPA = 'DPA', 'Data Processing Agreement'
+        BAA = 'BAA', 'Business Associate Agreement (BAA)'
         OTHER = 'OTHER', 'Other'
 
     class RiskLevel(models.TextChoices):
@@ -881,6 +890,29 @@ class Contract(models.Model):
             models.Index(fields=['organization', 'created_at'], name='ctr_org_created_ix'),
             models.Index(fields=['organization', 'source_system', 'source_system_id'], name='ctr_org_src_ref_ix'),
         ]
+
+
+class ContractTemplate(models.Model):
+    """A pre-approved starting draft for a given contract type.
+
+    Body text may contain `{{merge_field}}` tokens (see
+    contracts.services.contract_templates.MERGE_FIELDS) that get substituted
+    with the new contract's own field values at save time — see
+    render_merge_fields() and ContractCreateView.form_valid(). Global/shared
+    across organizations for now; not org-scoped.
+    """
+    name = models.CharField(max_length=200)
+    contract_type = models.CharField(max_length=20, choices=Contract.ContractType.choices)
+    description = models.CharField(max_length=300, blank=True)
+    body = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['contract_type', 'name']
+
+    def __str__(self):
+        return f'{self.name} ({self.get_contract_type_display()})'
 
 
 class Document(models.Model):
@@ -1767,6 +1799,192 @@ class RiskLog(models.Model):
         return self.title
 
 
+class CommandCenterSavedView(models.Model):
+    """Persisted workspace view definition for the Command Center.
+
+    This gives the dashboard an explicit data contract for saved views instead
+    of hardcoding every tab/filter in the template. The filters are descriptive
+    metadata consumed by the Command Center service/UI; they do not enforce
+    authorization or workflow transitions.
+    """
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='command_center_saved_views')
+    key = models.SlugField(max_length=60)
+    name = models.CharField(max_length=120)
+    description = models.CharField(max_length=240, blank=True)
+    filters = models.JSONField(default=dict, blank=True)
+    is_default = models.BooleanField(default=False)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='command_center_saved_views_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'key'], name='cc_saved_view_org_key_uniq'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class CommandCenterWorkItem(models.Model):
+    """Normalized actionable row for the Command Center workbench.
+
+    Rows can point to the existing source record that created the action
+    (Contract, DPA finding, ApprovalRequest, Deadline, LegalTask, or RiskLog),
+    but the display and ranking fields are denormalized so the dashboard can
+    render a stable legal-ops queue without re-running scanners or business
+    logic at request time.
+    """
+
+    class SourceType(models.TextChoices):
+        CONTRACT = 'CONTRACT', 'Contract'
+        DPA_CONFLICT = 'DPA_CONFLICT', 'DPA / MSA Conflict'
+        APPROVAL = 'APPROVAL', 'Approval'
+        DEADLINE = 'DEADLINE', 'Deadline'
+        LEGAL_TASK = 'LEGAL_TASK', 'Legal Task'
+        RISK = 'RISK', 'Risk'
+        REVIEW_MEMO = 'REVIEW_MEMO', 'Review Memo'
+        WORKFLOW = 'WORKFLOW', 'Workflow'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+        BLOCKED = 'BLOCKED', 'Blocked'
+        DONE = 'DONE', 'Done'
+        DISMISSED = 'DISMISSED', 'Dismissed'
+
+    class Priority(models.IntegerChoices):
+        LOW = 30, 'Low'
+        MEDIUM = 50, 'Medium'
+        HIGH = 70, 'High'
+        CRITICAL = 90, 'Critical'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='command_center_work_items')
+    source_type = models.CharField(max_length=20, choices=SourceType.choices)
+    source_model = models.CharField(max_length=80, blank=True)
+    source_object_id = models.PositiveBigIntegerField(null=True, blank=True)
+
+    title = models.CharField(max_length=240)
+    subtitle = models.CharField(max_length=300, blank=True)
+    item_type = models.CharField(max_length=60, blank=True)
+    stage = models.CharField(max_length=80, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    risk_level = models.CharField(max_length=10, choices=Contract.RiskLevel.choices, default=Contract.RiskLevel.LOW)
+    priority = models.PositiveSmallIntegerField(choices=Priority.choices, default=Priority.MEDIUM)
+
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='command_center_work_items')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    dpa_review_pack = models.ForeignKey('DPAReviewPack', on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    dpa_risk_item = models.ForeignKey('DPARiskItem', on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    approval_request = models.ForeignKey('ApprovalRequest', on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    deadline = models.ForeignKey(Deadline, on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    legal_task = models.ForeignKey(LegalTask, on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    risk_log = models.ForeignKey(RiskLog, on_delete=models.CASCADE, null=True, blank=True, related_name='command_center_work_items')
+    workflow = models.ForeignKey('Workflow', on_delete=models.SET_NULL, null=True, blank=True, related_name='command_center_work_items')
+
+    due_at = models.DateTimeField(null=True, blank=True)
+    action_label = models.CharField(max_length=80, default='Open')
+    action_path = models.CharField(max_length=500, blank=True)
+    flags = models.JSONField(default=dict, blank=True)
+    last_source_synced_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-priority', 'due_at', '-updated_at']
+        indexes = [
+            models.Index(fields=['organization', 'status', '-priority'], name='cc_work_org_status_pri_ix'),
+            models.Index(fields=['organization', 'source_type', 'source_object_id'], name='cc_work_org_source_ix'),
+            models.Index(fields=['organization', 'due_at'], name='cc_work_org_due_ix'),
+            models.Index(fields=['organization', 'owner', 'status'], name='cc_work_org_owner_ix'),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'source_type', 'source_model', 'source_object_id'],
+                name='cc_work_source_uniq',
+            ),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class CommandCenterRailItem(models.Model):
+    """Persisted right-rail command signal for approvals, deadlines, memos, etc."""
+
+    class Kind(models.TextChoices):
+        APPROVALS = 'APPROVALS', 'Approvals'
+        DEADLINES = 'DEADLINES', 'Deadlines'
+        DPA_CONFLICTS = 'DPA_CONFLICTS', 'DPA / MSA Conflicts'
+        REVIEW_MEMOS = 'REVIEW_MEMOS', 'Review Memos'
+        RISK = 'RISK', 'Risk'
+        ACTIVITY = 'ACTIVITY', 'Activity'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='command_center_rail_items')
+    kind = models.CharField(max_length=20, choices=Kind.choices)
+    title = models.CharField(max_length=160)
+    summary = models.CharField(max_length=300, blank=True)
+    count = models.PositiveIntegerField(default=0)
+    severity = models.CharField(max_length=10, choices=Contract.RiskLevel.choices, default=Contract.RiskLevel.LOW)
+    action_label = models.CharField(max_length=80, default='Open')
+    action_path = models.CharField(max_length=500, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    payload = models.JSONField(default=dict, blank=True)
+    generated_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'title']
+        constraints = [
+            models.UniqueConstraint(fields=['organization', 'kind'], name='cc_rail_org_kind_uniq'),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
+class ReviewMemo(models.Model):
+    """First-class review memo record surfaced in the Command Center.
+
+    DPAReviewPack.review_memo remains for backwards compatibility; this model
+    records memos as their own searchable/referencable artifacts and can point
+    back to the DPA review pack or contract that generated them.
+    """
+
+    class MemoType(models.TextChoices):
+        DPA_REVIEW = 'DPA_REVIEW', 'DPA Review'
+        RISK_REVIEW = 'RISK_REVIEW', 'Risk Review'
+        APPROVAL = 'APPROVAL', 'Approval'
+        GENERAL = 'GENERAL', 'General'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='review_memos')
+    title = models.CharField(max_length=240)
+    memo_type = models.CharField(max_length=20, choices=MemoType.choices, default=MemoType.GENERAL)
+    body = models.TextField()
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, null=True, blank=True, related_name='review_memos')
+    dpa_review_pack = models.ForeignKey('DPAReviewPack', on_delete=models.CASCADE, null=True, blank=True, related_name='review_memos')
+    generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='review_memos_generated')
+    generated_at = models.DateTimeField(default=timezone.now)
+    source = models.CharField(max_length=80, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-generated_at']
+        indexes = [
+            models.Index(fields=['organization', '-generated_at'], name='review_memo_org_gen_ix'),
+            models.Index(fields=['organization', 'memo_type'], name='review_memo_org_type_ix'),
+        ]
+
+    def __str__(self):
+        return self.title
+
+
 class ComplianceChecklist(models.Model):
     class RegulationType(models.TextChoices):
         GDPR = 'GDPR', 'GDPR'
@@ -1828,6 +2046,17 @@ class WorkflowTemplate(models.Model):
         null=True,
         blank=True,
         related_name='derived_versions',
+    )
+    # Direct type binding for the workflow-first flow (e.g. the DPA Privacy
+    # Review Workflow) — lets a template be looked up by contract type
+    # exactly, instead of only via the heuristic category matching in
+    # contracts/services/workflow_routing.py::suggest_workflow_template_for_contract.
+    contract_type = models.ForeignKey(
+        'ContractType',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workflow_templates',
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1969,6 +2198,155 @@ class WorkflowStep(models.Model):
             and self.status in {self.Status.PENDING, self.Status.IN_PROGRESS}
             and self.due_date < timezone.now()
         )
+
+
+# ── Workflow-first CLM model ────────────────────────────────────────────
+# "New Contract" is moving from a plain form to starting a governed
+# workflow instance for the selected contract type. `Workflow`/`WorkflowStep`
+# above already play the role of "workflow instance"/"workflow stage" — the
+# models below are the genuinely new pieces this needs: a real ContractType
+# lookup, data-driven field definitions/values (so a workflow's intake
+# fields are configuration, not hardcoded ModelForm fields), a persisted
+# draft document, a lightweight approval-route definition, and rule-based
+# (not AI) risk signals detected while drafting.
+
+class ContractType(models.Model):
+    """Lookup/config row per contract type, e.g. DPA. Does not replace
+    Contract.ContractType (still the canonical choices field on Contract
+    itself) — this is the FK target that lets a WorkflowTemplate bind
+    directly to a type instead of only being matched heuristically."""
+    code = models.CharField(max_length=20, unique=True, help_text='Matches a Contract.ContractType value, e.g. DPA')
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class FieldDefinition(models.Model):
+    """A configurable intake field on a WorkflowTemplate — required fields
+    and "smart questions" as data, not hardcoded form fields."""
+    class Section(models.TextChoices):
+        BASIC_DETAILS = 'BASIC_DETAILS', 'Basic details'
+        NDA_TERMS = 'NDA_TERMS', 'NDA terms'
+        COMMERCIAL_TERMS = 'COMMERCIAL_TERMS', 'Commercial terms'
+        SERVICES_SCOPE = 'SERVICES_SCOPE', 'Services & scope'
+        PRIVACY_DETAILS = 'PRIVACY_DETAILS', 'Privacy details'
+        LEGAL_POSITION = 'LEGAL_POSITION', 'Legal position'
+        PRIVACY_QUESTIONS = 'PRIVACY_QUESTIONS', 'Smart privacy questions'
+        SMART_QUESTIONS = 'SMART_QUESTIONS', 'AI smart questions'
+
+    class FieldType(models.TextChoices):
+        TEXT = 'TEXT', 'Text'
+        TEXTAREA = 'TEXTAREA', 'Textarea'
+        DATE = 'DATE', 'Date'
+        NUMBER = 'NUMBER', 'Number'
+        BOOLEAN = 'BOOLEAN', 'Yes/No'
+        SELECT = 'SELECT', 'Select'
+
+    workflow_template = models.ForeignKey(WorkflowTemplate, on_delete=models.CASCADE, related_name='field_definitions')
+    key = models.SlugField(max_length=60, help_text='Merge-field token name, e.g. dpo_contact')
+    label = models.CharField(max_length=200)
+    help_text = models.CharField(max_length=300, blank=True)
+    section = models.CharField(max_length=20, choices=Section.choices, default=Section.BASIC_DETAILS)
+    field_type = models.CharField(max_length=10, choices=FieldType.choices, default=FieldType.TEXT)
+    options = models.JSONField(default=list, blank=True, help_text='Choices for SELECT fields')
+    is_required = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+    maps_to_contract_field = models.CharField(
+        max_length=40, blank=True,
+        help_text='If set, this value is also written onto Contract.<field> on submit (e.g. counterparty, start_date).',
+    )
+
+    class Meta:
+        ordering = ['section', 'order']
+        constraints = [models.UniqueConstraint(fields=['workflow_template', 'key'], name='fielddef_template_key_uniq')]
+
+    def __str__(self):
+        return f'{self.workflow_template.name} · {self.label}'
+
+
+class FieldValue(models.Model):
+    """A submitted answer for one FieldDefinition on one Workflow instance."""
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE, related_name='field_values')
+    field_definition = models.ForeignKey(FieldDefinition, on_delete=models.CASCADE, related_name='values')
+    value = models.JSONField(null=True, blank=True, encoder=DjangoJSONEncoder)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['workflow', 'field_definition'], name='fieldvalue_workflow_field_uniq')]
+
+    def __str__(self):
+        return f'{self.workflow.title} · {self.field_definition.key}'
+
+
+class DraftDocument(models.Model):
+    """The live/versioned draft document tied to a Workflow instance —
+    distinct from Contract.content, which stays the saved/final text."""
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE, related_name='draft_documents')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, null=True, blank=True, related_name='draft_documents')
+    content = models.TextField(blank=True)
+    version = models.PositiveIntegerField(default=1)
+    is_current = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-version']
+
+    def __str__(self):
+        return f'{self.workflow.title} draft v{self.version}'
+
+
+class ApprovalRoute(models.Model):
+    """A persisted, ordered approval-step definition per WorkflowTemplate —
+    formalizes what draft_cockpit.get_approval_route_preview() otherwise
+    fabricates ad hoc for the generic (non-workflow) create page. Not built
+    on ApprovalRule/ApprovalRequest, which model conditional rule-matching
+    and real tracked per-contract approvals — a heavier concern than a
+    template-level approval-chain definition."""
+    workflow_template = models.ForeignKey(WorkflowTemplate, on_delete=models.CASCADE, related_name='approval_routes')
+    name = models.CharField(max_length=100, help_text='e.g. Contract Owner, Legal, DPO, Finance')
+    order = models.PositiveIntegerField(default=0)
+    role_label = models.CharField(max_length=100, blank=True, help_text='Plain-language role description shown in the UI')
+    is_conditional = models.BooleanField(default=False)
+    condition_note = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        ordering = ['workflow_template', 'order']
+
+    def __str__(self):
+        return f'{self.workflow_template.name} · {self.name}'
+
+
+class RiskSignal(models.Model):
+    """A rule-based (not AI) risk signal detected while drafting a Workflow
+    instance — deliberately lighter than DPARiskItem, which is built for
+    the separate, deep DPAReviewPack analysis flow."""
+    class Severity(models.TextChoices):
+        LOW = 'LOW', 'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH = 'HIGH', 'High'
+        CRITICAL = 'CRITICAL', 'Critical'
+
+    workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE, related_name='risk_signals')
+    code = models.CharField(max_length=60, help_text='Stable rule identifier, e.g. cross_border_no_mechanism')
+    description = models.CharField(max_length=300)
+    severity = models.CharField(max_length=10, choices=Severity.choices, default=Severity.MEDIUM)
+    detected_at = models.DateTimeField(auto_now_add=True)
+    is_resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-severity', 'detected_at']
+
+    def __str__(self):
+        return f'{self.workflow.title} · {self.code}'
 
 
 class DueDiligenceProcess(models.Model):

@@ -1,0 +1,220 @@
+<style nonce="{{ csp_nonce }}">
+.dpa-ws { padding: 10px 4px 28px 10px; }
+.dpa-ws-header {
+  background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px;
+  padding: 18px 20px; margin-bottom: 16px;
+}
+.dpa-ws-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.dpa-ws-title { color: var(--text-primary); font-size: 24px; line-height: 1.15; font-weight: 750; letter-spacing: 0; margin: 0; }
+.dpa-ws-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+.dpa-ws-meta-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.dpa-ws-meta { border: 1px solid var(--card-border); border-radius: 6px; padding: 10px 11px; background: var(--surface-alt); min-width: 0; }
+.dpa-ws-meta-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.dpa-ws-meta-value { color: var(--text-primary); font-size: 12px; font-weight: 750; margin-top: 4px; overflow-wrap: anywhere; }
+.dpa-ws-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border-radius: 7px; border: 1px solid rgba(181,80,46,.35); color: #fff; background: var(--btn-gradient); font-size: 12.5px; font-weight: 750; text-decoration: none; white-space: nowrap; }
+.dpa-ws-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.dpa-ws-action-secondary, .dpa-ws-action-teal { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border-radius: 7px; text-decoration: none; font-size: 12px; font-weight: 750; cursor: pointer; }
+.dpa-ws-action-secondary { border: 1px solid var(--card-border); color: var(--text-primary); background: var(--card-bg); }
+.dpa-ws-action-teal { border: 1px solid rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.dpa-ws-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; font-weight: 800; border: 1px solid rgba(10,114,100,.18); }
+.dpa-ws-timeline { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+.dpa-ws-timeline-title { color: var(--text-primary); font-size: 13px; font-weight: 800; margin-bottom: 14px; }
+.dpa-ws-track { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+.dpa-ws-step { position: relative; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.dpa-ws-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--border); }
+.dpa-ws-dot { width: 26px; height: 26px; border-radius: 999px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; position: relative; z-index: 1; font-size: 11px; font-weight: 800; }
+.dpa-ws-step.is-done .dpa-ws-dot, .dpa-ws-step.is-active .dpa-ws-dot { border-color: var(--primary); color: var(--primary); background: var(--primary-subtle); }
+.dpa-ws-step.is-active { color: var(--text-primary); }
+.dpa-ws-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 16px; align-items: start; }
+.dpa-ws-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
+.dpa-ws-card + .dpa-ws-card { margin-top: 12px; }
+.dpa-ws-card-head { padding: 13px 15px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dpa-ws-card-title { color: var(--text-primary); font-size: 13px; font-weight: 800; }
+.dpa-ws-card-body { padding: 14px 15px; }
+.dpa-doc { max-width: 78ch; margin: 0 auto; color: var(--text-primary); font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif; font-size: 13px; line-height: 1.72; }
+.dpa-clause { border: 1px solid var(--card-border); border-radius: 7px; padding: 13px 14px; background: var(--surface-alt); margin-bottom: 11px; }
+.dpa-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
+.dpa-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.dpa-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.dpa-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
+.dpa-source.ai, .dpa-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.dpa-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
+.dpa-highlight { background: var(--primary-subtle); color: var(--primary); border-radius: 4px; padding: 1px 4px; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 750; }
+.dpa-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.dpa-rail-item:last-child { border-bottom: none; }
+.dpa-rail-dot { width: 21px; height: 21px; border-radius: 6px; flex: 0 0 auto; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
+.dpa-rail-title { color: var(--text-primary); font-size: 11px; font-weight: 800; }
+.dpa-rail-copy { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; margin-top: 2px; }
+.dpa-risk-card, .dpa-approval-card, .dpa-audit-row { border: 1px solid var(--card-border); border-radius: 7px; padding: 11px; background: var(--surface-alt); }
+.dpa-risk-card + .dpa-risk-card, .dpa-approval-card + .dpa-approval-card, .dpa-audit-row + .dpa-audit-row { margin-top: 9px; }
+.dpa-risk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.dpa-risk-title, .dpa-approval-title, .dpa-audit-title { color: var(--text-primary); font-size: 12px; font-weight: 800; }
+.dpa-risk-sev { border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 850; text-transform: uppercase; background: var(--msg-warning-bg); color: var(--msg-warning-text); border: 1px solid var(--msg-warning-border); }
+.dpa-risk-sev.high, .dpa-risk-sev.critical { background: var(--msg-error-bg); color: var(--msg-error-text); border-color: var(--msg-error-border); }
+.dpa-risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dpa-risk-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--primary); font-size: 11px; font-weight: 800; text-decoration: none; }
+.dpa-kv-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.dpa-kv-value { color: var(--text-primary); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+.dpa-status { color: var(--primary); font-weight: 800; }
+.dpa-audit-meta { color: var(--text-muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+.dpa-field-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.dpa-field-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; background: var(--primary-subtle); color: var(--primary); font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; }
+.dpa-approval-trigger { margin-top: 8px; }
+@media (max-width: 1180px) {
+  .dpa-ws-meta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dpa-ws-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="page-wrap page-wrap-fluid dpa-ws">
+  <section class="dpa-ws-header">
+    <div class="dpa-ws-title-row">
+      <div>
+        <div class="dpa-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
+        <h1 class="dpa-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
+        <p class="dpa-ws-subtitle">{{ workflow.title }} · GDPR Processor DPA · Netherlands · B2B</p>
+        <div class="dpa-ws-actions">
+          <button type="button" class="dpa-ws-cta">Send to Legal Review</button>
+          {% if dpa_workspace.dpo_approval_triggered %}<button type="button" class="dpa-ws-action-secondary">Send to DPO</button>{% endif %}
+          <button type="button" class="dpa-ws-action-teal">Generate DPA review memo</button>
+          <button type="button" class="dpa-ws-action-secondary">Export Word</button>
+        </div>
+      </div>
+      <a class="dpa-ws-cta" href="#risk-signals">Review next action</a>
+    </div>
+    <div class="dpa-ws-meta-grid">
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Contract type</div><div class="dpa-ws-meta-value">DPA</div></div>
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Counterparty</div><div class="dpa-ws-meta-value">{{ workflow.contract.counterparty|default:"Counterparty pending" }}</div></div>
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Current stage</div><div class="dpa-ws-meta-value">{{ dpa_workspace.current_stage }}</div></div>
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Owner</div><div class="dpa-ws-meta-value">{{ dpa_workspace.owner }}</div></div>
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Risk level</div><div class="dpa-ws-meta-value">{{ dpa_workspace.risk_level }}</div></div>
+      <div class="dpa-ws-meta"><div class="dpa-ws-meta-label">Primary next action</div><div class="dpa-ws-meta-value">{{ dpa_workspace.next_action }}</div></div>
+    </div>
+  </section>
+
+  <section class="dpa-ws-timeline" aria-label="Workflow Timeline">
+    <div class="dpa-ws-timeline-title">Workflow Timeline</div>
+    <div class="dpa-ws-track">
+      {% for step in dpa_workspace.timeline %}
+      <div class="dpa-ws-step{% if forloop.counter0 < dpa_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == dpa_workspace.active_timeline_index %} is-active{% endif %}">
+        <div class="dpa-ws-dot">{% if forloop.counter0 < dpa_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
+        <div>{{ step }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="dpa-ws-grid">
+    <main>
+      <section class="dpa-ws-card">
+        <div class="dpa-ws-card-head">
+          <div class="dpa-ws-card-title">Generated DPA Draft</div>
+          <span class="dpa-ws-badge">Version {{ dpa_workspace.draft_document.version|default:"1" }}</span>
+        </div>
+        <div class="dpa-ws-card-body">
+          <div class="dpa-doc">
+            {% for section in dpa_workspace.document_sections %}
+            <article class="dpa-clause" id="{{ section.section_id }}">
+              <div class="dpa-clause-head">
+                <div class="dpa-clause-title">{{ section.title }}</div>
+                <span class="dpa-source {{ section.tone }}">{{ section.source }}</span>
+              </div>
+              <p>{{ section.content|linebreaksbr }}</p>
+              <div class="dpa-rail-copy">{{ section.source_detail }}</div>
+              {% if section.fields %}
+              <div class="dpa-field-chip-row" aria-label="Highlighted mapped fields">
+                {% for field in section.fields %}
+                <span class="dpa-field-chip">{{ field }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="dpa-ws-card" id="risk-signals">
+        <div class="dpa-ws-card-head">
+          <div class="dpa-ws-card-title">Risk Signals</div>
+          <span class="dpa-ws-badge">{{ dpa_workspace.risk_cards|length }} active</span>
+        </div>
+        <div class="dpa-ws-card-body">
+          {% for risk in dpa_workspace.risk_cards %}
+          <article class="dpa-risk-card">
+            <div class="dpa-risk-top">
+              <div class="dpa-risk-title">{{ risk.title }}</div>
+              <span class="dpa-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span>
+            </div>
+            <div class="dpa-risk-grid">
+              <div><div class="dpa-kv-label">Reason</div><div class="dpa-kv-value">{{ risk.reason }}</div></div>
+              <div><div class="dpa-kv-label">Source</div><div class="dpa-kv-value">{{ risk.source }}</div></div>
+              <div><div class="dpa-kv-label">Recommended action</div><div class="dpa-kv-value">{{ risk.recommended_action }}</div></div>
+              <div><div class="dpa-kv-label">Approval impact</div><div class="dpa-kv-value">{{ risk.approval_impact }}</div></div>
+              <div><div class="dpa-kv-label">Status</div><div class="dpa-kv-value dpa-status">{{ risk.status }}</div></div>
+            </div>
+            <a class="dpa-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="dpa-ws-card">
+        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Governance Rail</div></div>
+        <div class="dpa-ws-card-body">
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Template selected</div><div class="dpa-rail-copy">GDPR Processor DPA · Netherlands · B2B</div></div></div>
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Playbook applied</div><div class="dpa-rail-copy">GDPR Processor DPA playbook</div></div></div>
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Clause library active</div><div class="dpa-rail-copy">Approved SCC and subprocessor fallback clauses available</div></div></div>
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Risk checks active</div><div class="dpa-rail-copy">Personal data, EEA/SCC, subprocessor, DPO, and breach-window checks ran</div></div></div>
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Approval route</div><div class="dpa-rail-copy">{% for approval in dpa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
+          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Audit trail enabled</div><div class="dpa-rail-copy">{{ dpa_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
+        </div>
+      </section>
+
+      <section class="dpa-ws-card">
+        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Approval Route</div></div>
+        <div class="dpa-ws-card-body">
+          {% for approval in dpa_workspace.approval_cards %}
+          <article class="dpa-approval-card">
+            <div class="dpa-risk-top">
+              <div class="dpa-approval-title">{{ approval.name }}</div>
+              <span class="dpa-ws-badge">{{ approval.status }}</span>
+            </div>
+            <div class="dpa-kv-label">Why triggered</div>
+            <div class="dpa-kv-value">{{ approval.reason }}</div>
+            <div class="dpa-kv-label dpa-approval-trigger">Trigger</div>
+            <div class="dpa-kv-value">{{ approval.trigger }}</div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="dpa-ws-card">
+        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Audit Trail Preview</div></div>
+        <div class="dpa-ws-card-body">
+          {% for entry in dpa_workspace.audit_preview %}
+          <div class="dpa-audit-row">
+            <div class="dpa-audit-title">{{ entry.event }}</div>
+            <div class="dpa-audit-meta">{{ entry.meta }}</div>
+            <div class="dpa-audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('click', function (event) {
+  var link = event.target.closest('[data-clause-link]');
+  if (!link) return;
+  var target = document.getElementById(link.getAttribute('data-clause-link'));
+  if (!target) return;
+  document.querySelectorAll('.dpa-clause.is-linked').forEach(function (node) {
+    node.classList.remove('is-linked');
+  });
+  target.classList.add('is-linked');
+});
+</script>

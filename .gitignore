@@ -1,7 +1,9 @@
 __pycache__/
+.DS_Store
 *.py[cod]
 *.so
 db.sqlite3
+e2e.sqlite3
 db.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
@@ -13,6 +15,8 @@ media/
 .upm/
 node_modules/
 client/node_modules/
+test-results/
+playwright-report/
 *.z01
 *.z02
 *.z03

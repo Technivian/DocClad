@@ -11,7 +11,19 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from contracts.forms import WorkflowForm, WorkflowStepForm, WorkflowTemplateForm, WorkflowTemplatePreviewForm, WorkflowTemplateStepForm
-from contracts.models import ApprovalRequest, ApprovalRule, Contract, Workflow, WorkflowStep, WorkflowTemplate, WorkflowTemplateStep
+from contracts.models import (
+    ApprovalRequest,
+    ApprovalRoute,
+    ApprovalRule,
+    Contract,
+    DraftDocument,
+    FieldValue,
+    RiskSignal,
+    Workflow,
+    WorkflowStep,
+    WorkflowTemplate,
+    WorkflowTemplateStep,
+)
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.services.workflow_routing import build_approval_request_plan_for_contract, suggest_workflow_template_for_contract
@@ -718,6 +730,723 @@ def _build_template_step_controls(steps):
     return controls
 
 
+def _workflow_is_dpa(workflow):
+    return bool(
+        workflow
+        and workflow.contract
+        and workflow.contract.contract_type == Contract.ContractType.DPA
+        and workflow.template
+        and workflow.template.name == 'DPA Privacy Review Workflow'
+    )
+
+
+def _workflow_is_msa(workflow):
+    return bool(
+        workflow
+        and workflow.contract
+        and workflow.contract.contract_type == Contract.ContractType.MSA
+        and workflow.template
+        and workflow.template.name == 'MSA Commercial Review Workflow'
+    )
+
+
+def _workflow_is_nda(workflow):
+    return bool(
+        workflow
+        and workflow.contract
+        and workflow.contract.contract_type == Contract.ContractType.NDA
+        and workflow.template
+        and workflow.template.name == 'NDA Self-Serve Workflow'
+    )
+
+
+def _field_values_by_key(workflow):
+    values = {}
+    qs = FieldValue.objects.filter(workflow=workflow).select_related('field_definition')
+    for field_value in qs:
+        values[field_value.field_definition.key] = field_value.value
+    return values
+
+
+def _risk_level_for_signals(signals):
+    rank = {
+        RiskSignal.Severity.LOW: 1,
+        RiskSignal.Severity.MEDIUM: 2,
+        RiskSignal.Severity.HIGH: 3,
+        RiskSignal.Severity.CRITICAL: 4,
+    }
+    if not signals:
+        return 'Low'
+    return max(signals, key=lambda s: rank.get(s.severity, 0)).get_severity_display()
+
+
+def _risk_detail_for_signal(signal):
+    details = {
+        'dpa_review_required': {
+            'title': 'Personal data processing review',
+            'source': 'AI Smart Questions · Personal data involved',
+            'recommended_action': 'Confirm processing purpose, categories of data, and controller/processor posture.',
+            'approval_impact': 'Legal review required; DPO visibility retained.',
+            'section_anchor': 'processing-details',
+        },
+        'scc_transfer_review': {
+            'title': 'EEA/SCC risk',
+            'source': 'AI Smart Questions · Data leaves EEA',
+            'recommended_action': 'Insert or confirm approved SCC transfer fallback and transfer mechanism.',
+            'approval_impact': 'DPO approval required before signature.',
+            'section_anchor': 'international-transfers',
+        },
+        'cross_border_no_mechanism': {
+            'title': 'Missing transfer mechanism',
+            'source': 'Risk checks · Cross-border transfer mechanism',
+            'recommended_action': 'Select SCC, BCR, adequacy decision, or document accepted risk.',
+            'approval_impact': 'DPO approval required; Legal cannot clear signature until resolved.',
+            'section_anchor': 'international-transfers',
+        },
+        'subprocessor_review': {
+            'title': 'Subprocessor review',
+            'source': 'AI Smart Questions · Subprocessors involved',
+            'recommended_action': 'Review approved subprocessor flow-down clause and notice position.',
+            'approval_impact': 'Legal review required; DPO informed if transfer posture changes.',
+            'section_anchor': 'subprocessors',
+        },
+        'subprocessors_undisclosed': {
+            'title': 'Subprocessor fallback missing',
+            'source': 'Legal Position · Fallback liability position',
+            'recommended_action': 'Capture fallback liability and subprocessor notice position.',
+            'approval_impact': 'Legal review required before approval route can advance.',
+            'section_anchor': 'subprocessors',
+        },
+        'missing_dpo_contact': {
+            'title': 'Missing DPO contact',
+            'source': 'AI Smart Questions · DPO contact',
+            'recommended_action': 'Add the privacy contact or confirm no named DPO is required.',
+            'approval_impact': 'DPO approval may be delayed until ownership is clear.',
+            'section_anchor': 'processing-details',
+        },
+        'breach_window_too_long': {
+            'title': 'Breach notice window review',
+            'source': 'AI Smart Questions · Breach notification window',
+            'recommended_action': 'Align breach notification timing to the approved DPA playbook.',
+            'approval_impact': 'Legal review required for any non-standard window.',
+            'section_anchor': 'breach-notification',
+        },
+        'special_categories_risk': {
+            'title': 'Special categories risk',
+            'source': 'AI Smart Questions · Special categories of data',
+            'recommended_action': 'Confirm the lawful basis and additional safeguards for special category data.',
+            'approval_impact': 'Legal and DPO approval required before signature.',
+            'section_anchor': 'processing-details',
+        },
+        'scc_fallback_included': {
+            'title': 'SCC fallback language included',
+            'source': 'AI Smart Questions · SCC fallback language',
+            'recommended_action': 'Confirm the approved SCC fallback clause matches the current playbook version.',
+            'approval_impact': 'DPO informed; no additional approval beyond the standard transfer review.',
+            'section_anchor': 'international-transfers',
+        },
+    }
+    fallback = {
+        'title': signal.description,
+        'source': 'DPA risk checks',
+        'recommended_action': 'Review against the approved DPA playbook.',
+        'approval_impact': 'Legal review required.',
+        'section_anchor': 'processing-details',
+    }
+    data = details.get(signal.code, fallback)
+    return {
+        'title': data['title'],
+        'severity': signal.get_severity_display(),
+        'severity_code': signal.severity.lower(),
+        'reason': signal.description,
+        'source': data['source'],
+        'recommended_action': data['recommended_action'],
+        'approval_impact': data['approval_impact'],
+        'status': 'Open' if not signal.is_resolved else 'Resolved',
+        'section_anchor': data['section_anchor'],
+    }
+
+
+def _dpa_approval_cards(workflow, values, risk_codes):
+    cards = [
+        {
+            'name': 'Contract owner',
+            'status': 'Active',
+            'reason': 'Owns field completeness and business context for the generated DPA draft.',
+            'trigger': 'Workflow instance created',
+        },
+        {
+            'name': 'Legal',
+            'status': 'Triggered',
+            'reason': 'Personal data processing and approved DPA playbook checks require legal control.',
+            'trigger': 'Personal data processing review',
+        },
+    ]
+    dpo_risk_codes = {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk'}
+    if (
+        values.get('personal_data_involved')
+        or values.get('cross_border_transfer')
+        or values.get('special_categories_data')
+        or dpo_risk_codes & risk_codes
+    ):
+        cards.append({
+            'name': 'DPO',
+            'status': 'Triggered',
+            'reason': 'DPO review is required because personal data processing, EEA/SCC posture, or special category data are in scope.',
+            'trigger': 'Privacy and transfer risk rules',
+        })
+    return cards
+
+
+def _dpa_document_sections(draft_content, values):
+    content = draft_content or ''
+    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+    sections = []
+    for index, paragraph in enumerate(paragraphs):
+        title = 'Generated DPA draft' if index == 0 else 'DPA clause'
+        source = 'Approved template'
+        source_detail = 'GDPR Processor DPA · Netherlands · B2B'
+        tone = 'template'
+        if 'Subject Matter' in paragraph or 'Categories of Data' in paragraph:
+            title = 'Processing Details'
+            source = 'AI-assisted suggestion'
+            source_detail = 'Field values mapped into approved playbook language'
+            tone = 'ai'
+            fields = ['Processing purpose', 'Personal data categories', 'Data subjects']
+            section_id = 'processing-details'
+        elif 'Sub-processors' in paragraph:
+            title = 'Subprocessor clause'
+            source = 'Approved clause library' if values.get('subprocessors_used') else 'Approved template'
+            source_detail = 'Subprocessor flow-down position'
+            tone = 'library'
+            fields = ['Subprocessor position']
+            section_id = 'subprocessors'
+        elif 'International Transfers' in paragraph:
+            title = 'Transfer clause'
+            source = 'Risk-triggered fallback' if values.get('cross_border_transfer') else 'Approved template'
+            source_detail = 'SCC / EEA transfer rule'
+            tone = 'risk' if values.get('cross_border_transfer') else 'template'
+            fields = ['Data transfer position', 'Transfer mechanism']
+            section_id = 'international-transfers'
+        elif 'Security' in paragraph:
+            title = 'Security clause'
+            source = 'Approved clause library'
+            source_detail = 'Standard TOMs obligation'
+            tone = 'library'
+            fields = []
+            section_id = 'security'
+        elif 'Breach Notification' in paragraph:
+            title = 'Breach notice clause'
+            source = 'Approved template'
+            source_detail = 'GDPR Processor DPA playbook'
+            tone = 'template'
+            fields = ['Breach notification window']
+            section_id = 'breach-notification'
+        elif 'Governing Law' in paragraph:
+            title = 'Governing law'
+            source = 'Approved template'
+            source_detail = 'Legal position field'
+            tone = 'template'
+            fields = ['Governing law']
+            section_id = 'governing-law'
+        else:
+            fields = ['Counterparty name', 'Effective date'] if index == 0 else []
+            section_id = 'generated-dpa-draft' if index == 0 else f'dpa-clause-{index}'
+        sections.append({
+            'title': title,
+            'content': paragraph,
+            'source': source,
+            'source_detail': source_detail,
+            'tone': tone,
+            'fields': fields,
+            'section_id': section_id,
+        })
+    return sections
+
+
+def _dpa_audit_preview(workflow):
+    timestamp = workflow.created_at
+    return [
+        {'event': 'Workflow created', 'meta': 'DPA Privacy Review Workflow instance opened', 'timestamp': timestamp},
+        {'event': 'Approved template applied', 'meta': 'GDPR Processor DPA · Netherlands · B2B', 'timestamp': timestamp},
+        {'event': 'Field values captured', 'meta': 'Required DPA fields and smart privacy questions stored', 'timestamp': timestamp},
+        {'event': 'Risk checks run', 'meta': 'Personal data, EEA/SCC, subprocessor, breach-window, and DPO checks evaluated', 'timestamp': timestamp},
+        {'event': 'Approval route generated', 'meta': 'Contract owner, Legal, and conditional DPO routing prepared', 'timestamp': timestamp},
+    ]
+
+
+def _dpa_workspace_context(workflow):
+    values = _field_values_by_key(workflow)
+    risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
+    risk_codes = {signal.code for signal in risk_signals}
+    draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
+    template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
+    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    if current_step is None:
+        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+
+    return {
+        'values': values,
+        'current_stage': current_step.name if current_step else 'AI Draft',
+        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
+        'risk_level': _risk_level_for_signals(risk_signals),
+        'next_action': 'Review DPA risk signals',
+        'timeline': ['Intake', 'AI Draft', 'Privacy Review', 'Legal Review', 'DPO Approval', 'Signature', 'Repository'],
+        'active_timeline_index': 2 if risk_signals else 1,
+        'draft_document': draft_document,
+        'document_sections': _dpa_document_sections(draft_document.content if draft_document else '', values),
+        'risk_cards': [_risk_detail_for_signal(signal) for signal in risk_signals],
+        'approval_cards': _dpa_approval_cards(workflow, values, risk_codes),
+        'dpo_approval_triggered': bool(
+            values.get('personal_data_involved')
+            or values.get('cross_border_transfer')
+            or values.get('special_categories_data')
+            or {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk'} & risk_codes
+        ),
+        'template_routes': template_routes,
+        'audit_preview': _dpa_audit_preview(workflow),
+        'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+    }
+
+
+def _msa_risk_detail_for_signal(signal):
+    details = {
+        'finance_approval_required': {
+            'title': 'Finance approval signal',
+            'source': 'AI Smart Questions · Finance threshold',
+            'recommended_action': 'Confirm commercial value, payment terms, and finance approval threshold alignment.',
+            'approval_impact': 'Finance approval required before signature.',
+            'section_anchor': 'fees-payment',
+        },
+        'liability_cap_nonstandard': {
+            'title': 'Liability cap deviation',
+            'source': 'AI Smart Questions · Liability cap position',
+            'recommended_action': 'Review fallback liability clause against the MSA commercial playbook.',
+            'approval_impact': 'Legal approval required before the workflow can advance.',
+            'section_anchor': 'liability',
+        },
+        'msa_dpa_review_required': {
+            'title': 'DPA / privacy review signal',
+            'source': 'AI Smart Questions · Personal data processing',
+            'recommended_action': 'Review the data protection section and launch or link a DPA workflow if required.',
+            'approval_impact': 'Legal review required; linked DPA workflow may be needed.',
+            'section_anchor': 'data-protection',
+        },
+        'renewal_notice_review': {
+            'title': 'Renewal notice signal',
+            'source': 'AI Smart Questions · Auto-renewal included',
+            'recommended_action': 'Confirm notice periods and obligation tracking for renewal terms.',
+            'approval_impact': 'Commercial review required before signature.',
+            'section_anchor': 'term-renewal',
+        },
+        'nonstandard_ip_ownership': {
+            'title': 'Non-standard IP ownership',
+            'source': 'AI Smart Questions · IP ownership',
+            'recommended_action': 'Review the IP ownership fallback and document the approved commercial position.',
+            'approval_impact': 'Legal approval required.',
+            'section_anchor': 'intellectual-property',
+        },
+        'nonpreferred_governing_law': {
+            'title': 'Governing law escalation',
+            'source': 'AI Smart Questions · Preferred jurisdiction',
+            'recommended_action': 'Escalate governing law outside the preferred jurisdiction to Legal.',
+            'approval_impact': 'Legal escalation required before signature.',
+            'section_anchor': 'governing-law',
+        },
+    }
+    fallback = {
+        'title': signal.description,
+        'source': 'MSA risk checks',
+        'recommended_action': 'Review against the approved MSA commercial playbook.',
+        'approval_impact': 'Legal review required.',
+        'section_anchor': 'services',
+    }
+    data = details.get(signal.code, fallback)
+    return {
+        'title': data['title'],
+        'severity': signal.get_severity_display(),
+        'severity_code': signal.severity.lower(),
+        'reason': signal.description,
+        'source': data['source'],
+        'recommended_action': data['recommended_action'],
+        'approval_impact': data['approval_impact'],
+        'status': 'Open' if not signal.is_resolved else 'Resolved',
+        'section_anchor': data['section_anchor'],
+    }
+
+
+def _msa_approval_cards(workflow, values, risk_codes):
+    cards = [
+        {
+            'name': 'Contract owner',
+            'status': 'Active',
+            'reason': 'Owns field completeness, business context, and commercial posture for the generated MSA draft.',
+            'trigger': 'Workflow instance created',
+        },
+    ]
+    if {'liability_cap_nonstandard', 'msa_dpa_review_required', 'nonstandard_ip_ownership', 'nonpreferred_governing_law'} & risk_codes:
+        cards.append({
+            'name': 'Legal',
+            'status': 'Triggered',
+            'reason': 'Fallback positions, privacy scope, IP ownership, or governing law require legal control.',
+            'trigger': 'Commercial and legal risk rules',
+        })
+    if 'finance_approval_required' in risk_codes:
+        cards.append({
+            'name': 'Finance',
+            'status': 'Triggered',
+            'reason': 'Contract value is above the finance approval threshold.',
+            'trigger': 'Finance approval threshold',
+        })
+    return cards
+
+
+def _msa_document_sections(draft_content, values):
+    content = draft_content or ''
+    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+    sections = []
+    for index, paragraph in enumerate(paragraphs):
+        title = 'Generated MSA draft' if index == 0 else 'MSA clause'
+        source = 'Approved template'
+        source_detail = 'Enterprise Services MSA · Netherlands · B2B'
+        tone = 'template'
+        if '1. Services' in paragraph:
+            title = 'Services'
+            source = 'AI-assisted suggestion'
+            source_detail = 'Field values mapped into approved services language'
+            tone = 'ai'
+            fields = ['Services description', 'Statement of Work required', 'Deliverables defined', 'Acceptance criteria required']
+            section_id = 'services'
+        elif '2. Fees and Payment' in paragraph:
+            title = 'Fees and Payment'
+            source = 'Approved template'
+            source_detail = 'Commercial terms field mapping'
+            tone = 'template'
+            fields = ['Contract value', 'Currency', 'Payment terms']
+            section_id = 'fees-payment'
+        elif '3. Term and Renewal' in paragraph:
+            title = 'Term and Renewal'
+            source = 'Risk-triggered fallback' if values.get('auto_renewal_included') or str(values.get('renewal_type', '')).lower() == 'auto-renew' else 'Approved template'
+            source_detail = 'Term, renewal, and notice position'
+            tone = 'risk' if values.get('auto_renewal_included') or str(values.get('renewal_type', '')).lower() == 'auto-renew' else 'template'
+            fields = ['Initial term', 'Renewal type', 'Termination notice period']
+            section_id = 'term-renewal'
+        elif '4. Liability' in paragraph:
+            title = 'Liability'
+            source = 'Risk-triggered fallback' if values.get('liability_cap_nonstandard') else 'Approved clause library'
+            source_detail = 'Approved liability cap position'
+            tone = 'risk' if values.get('liability_cap_nonstandard') else 'library'
+            fields = ['Liability cap']
+            section_id = 'liability'
+        elif '5. Intellectual Property' in paragraph:
+            title = 'Intellectual Property'
+            source = 'Risk-triggered fallback' if values.get('ip_ownership_nonstandard') else 'Approved clause library'
+            source_detail = 'IP ownership position'
+            tone = 'risk' if values.get('ip_ownership_nonstandard') else 'library'
+            fields = ['IP ownership']
+            section_id = 'intellectual-property'
+        elif '6. Data Protection' in paragraph:
+            title = 'Data Protection'
+            source = 'AI-assisted suggestion' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'Approved template'
+            source_detail = 'Privacy scope and linked DPA guidance'
+            tone = 'ai' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'template'
+            fields = ['Personal data involved']
+            section_id = 'data-protection'
+        elif '7. Governing Law' in paragraph:
+            title = 'Governing Law'
+            source = 'Risk-triggered fallback' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'Approved template'
+            source_detail = 'Jurisdiction and governing law position'
+            tone = 'risk' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'template'
+            fields = ['Governing law', 'Jurisdiction']
+            section_id = 'governing-law'
+        else:
+            fields = ['Counterparty name', 'Effective date'] if index == 0 else []
+            section_id = 'generated-msa-draft' if index == 0 else f'msa-clause-{index}'
+        sections.append({
+            'title': title,
+            'content': paragraph,
+            'source': source,
+            'source_detail': source_detail,
+            'tone': tone,
+            'fields': fields,
+            'section_id': section_id,
+        })
+    return sections
+
+
+def _msa_audit_preview(workflow):
+    timestamp = workflow.created_at
+    return [
+        {'event': 'Workflow created', 'meta': 'MSA Commercial Review Workflow instance opened', 'timestamp': timestamp},
+        {'event': 'Approved template applied', 'meta': 'Enterprise Services MSA · Netherlands · B2B', 'timestamp': timestamp},
+        {'event': 'Field values captured', 'meta': 'Required MSA fields and smart questions stored', 'timestamp': timestamp},
+        {'event': 'Risk checks run', 'meta': 'Finance, liability, privacy, renewal, IP, and governing law checks evaluated', 'timestamp': timestamp},
+        {'event': 'Approval route generated', 'meta': 'Contract owner plus conditional Legal and Finance routing prepared', 'timestamp': timestamp},
+    ]
+
+
+def _msa_workspace_context(workflow):
+    values = _field_values_by_key(workflow)
+    risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
+    risk_codes = {signal.code for signal in risk_signals}
+    draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
+    template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
+    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    if current_step is None:
+        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+
+    if 'finance_approval_required' in risk_codes:
+        next_action = 'Review Finance approval route'
+    elif 'msa_dpa_review_required' in risk_codes:
+        next_action = 'Review privacy scope and linked DPA need'
+    elif risk_codes:
+        next_action = 'Review MSA risk signals'
+    else:
+        next_action = 'Review generated MSA draft'
+
+    return {
+        'values': values,
+        'current_stage': current_step.name if current_step else 'AI Draft',
+        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
+        'risk_level': _risk_level_for_signals(risk_signals),
+        'next_action': next_action,
+        'timeline': ['Intake', 'AI Draft', 'Commercial Review', 'Legal Review', 'Finance Approval', 'Signature', 'Repository'],
+        'active_timeline_index': 2 if risk_signals else 1,
+        'draft_document': draft_document,
+        'document_sections': _msa_document_sections(draft_document.content if draft_document else '', values),
+        'risk_cards': [_msa_risk_detail_for_signal(signal) for signal in risk_signals],
+        'approval_cards': _msa_approval_cards(workflow, values, risk_codes),
+        'finance_approval_triggered': 'finance_approval_required' in risk_codes,
+        'template_routes': template_routes,
+        'audit_preview': _msa_audit_preview(workflow),
+        'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+    }
+
+
+def _nda_risk_detail_for_signal(signal):
+    details = {
+        'confidentiality_period_nonstandard': {
+            'title': 'Long confidentiality period',
+            'source': 'AI Smart Questions · Confidentiality period',
+            'recommended_action': 'Review the confidentiality term against the approved NDA self-serve playbook.',
+            'approval_impact': 'Legal approval required before signature.',
+            'section_anchor': 'term',
+        },
+        'nda_privacy_review_required': {
+            'title': 'Privacy / DPA review signal',
+            'source': 'AI Smart Questions · Personal data involved',
+            'recommended_action': 'Review privacy scope and determine whether a linked DPA workflow is required.',
+            'approval_impact': 'Legal review required before signature.',
+            'section_anchor': 'personal-data',
+        },
+        'residual_knowledge_risk': {
+            'title': 'Residual knowledge risk',
+            'source': 'AI Smart Questions · Residual knowledge language',
+            'recommended_action': 'Confirm the approved fallback for residual knowledge language before signature.',
+            'approval_impact': 'Legal approval required before signature.',
+            'section_anchor': 'residual-knowledge',
+        },
+        'nonpreferred_governing_law': {
+            'title': 'Governing law escalation',
+            'source': 'AI Smart Questions · Preferred jurisdiction',
+            'recommended_action': 'Escalate non-preferred governing law to Legal for approval.',
+            'approval_impact': 'Legal approval required before signature.',
+            'section_anchor': 'governing-law',
+        },
+    }
+    data = details.get(signal.code, {
+        'title': signal.description,
+        'source': 'NDA risk checks',
+        'recommended_action': 'Review against the approved NDA self-serve playbook.',
+        'approval_impact': 'Legal review required before signature.',
+        'section_anchor': 'purpose',
+    })
+    return {
+        'title': data['title'],
+        'severity': signal.get_severity_display(),
+        'severity_code': signal.severity.lower(),
+        'reason': signal.description,
+        'source': data['source'],
+        'recommended_action': data['recommended_action'],
+        'approval_impact': data['approval_impact'],
+        'status': 'Open' if not signal.is_resolved else 'Resolved',
+        'section_anchor': data['section_anchor'],
+    }
+
+
+def _nda_approval_cards(workflow, risk_codes):
+    cards = [
+        {
+            'name': 'Contract owner',
+            'status': 'Active',
+            'reason': 'Owns self-serve completion, business context, and readiness to send the NDA for signature.',
+            'trigger': 'Workflow instance created',
+        },
+    ]
+    if risk_codes:
+        cards.append({
+            'name': 'Legal',
+            'status': 'Triggered',
+            'reason': 'Non-standard confidentiality, privacy, residual knowledge, or governing law requires legal control.',
+            'trigger': 'NDA risk rules',
+        })
+    else:
+        cards.append({
+            'name': 'Signature',
+            'status': 'Ready',
+            'reason': 'No NDA risk triggers were detected, so the workflow can remain self-serve.',
+            'trigger': 'Self-serve eligible',
+        })
+    return cards
+
+
+def _nda_document_sections(draft_content, values):
+    content = draft_content or ''
+    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+    sections = []
+    for index, paragraph in enumerate(paragraphs):
+        title = 'Generated NDA draft' if index == 0 else 'NDA clause'
+        source = 'Approved template'
+        source_detail = 'Mutual NDA · Netherlands · B2B'
+        tone = 'template'
+        if '1. Purpose' in paragraph:
+            title = 'Purpose'
+            source = 'AI-assisted suggestion'
+            source_detail = 'Field values mapped into approved confidentiality purpose language'
+            tone = 'ai'
+            fields = ['NDA type', 'Confidentiality purpose']
+            section_id = 'purpose'
+        elif '2. Confidential Information' in paragraph:
+            title = 'Confidential Information'
+            source = 'Approved template'
+            source_detail = 'Disclosure scope field mapping'
+            tone = 'template'
+            fields = ['Disclosure scope']
+            section_id = 'confidential-information'
+        elif '3. Confidentiality Obligations' in paragraph:
+            title = 'Confidentiality Obligations'
+            source = 'Approved clause library'
+            source_detail = 'Standard NDA protection obligations'
+            tone = 'library'
+            fields = []
+            section_id = 'confidentiality-obligations'
+        elif '4. Term' in paragraph:
+            title = 'Term'
+            source = 'Risk-triggered fallback' if str(values.get('confidentiality_period', '')).strip() and float(values.get('confidentiality_period') or 0) > 3 or values.get('confidentiality_period_nonstandard') else 'Approved template'
+            source_detail = 'Confidentiality period position'
+            tone = 'risk' if str(values.get('confidentiality_period', '')).strip() and float(values.get('confidentiality_period') or 0) > 3 or values.get('confidentiality_period_nonstandard') else 'template'
+            fields = ['Confidentiality period']
+            section_id = 'term'
+        elif '5. Permitted Recipients' in paragraph:
+            title = 'Permitted Recipients'
+            source = 'Approved template'
+            source_detail = 'Permitted recipients field mapping'
+            tone = 'template'
+            fields = ['Permitted recipients']
+            section_id = 'permitted-recipients'
+        elif '6. Personal Data' in paragraph:
+            title = 'Personal Data'
+            source = 'AI-assisted suggestion' if values.get('personal_data_involved') else 'Approved template'
+            source_detail = 'Privacy scope and linked DPA guidance'
+            tone = 'ai' if values.get('personal_data_involved') else 'template'
+            fields = ['Personal data involved']
+            section_id = 'personal-data'
+        elif '7. Governing Law' in paragraph:
+            title = 'Governing Law'
+            source = 'Risk-triggered fallback' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'Approved template'
+            source_detail = 'Governing law and jurisdiction position'
+            tone = 'risk' if values.get('governing_law_nonpreferred') or ('netherlands' not in str(values.get('governing_law', '')).lower() and values.get('governing_law')) else 'template'
+            fields = ['Governing law', 'Jurisdiction']
+            section_id = 'governing-law'
+        elif '8. Residual Knowledge' in paragraph:
+            title = 'Residual Knowledge'
+            source = 'Risk-triggered fallback' if values.get('residual_knowledge_included') or values.get('residual_knowledge_nonstandard') else 'Approved clause library'
+            source_detail = 'Residual knowledge fallback position'
+            tone = 'risk' if values.get('residual_knowledge_included') or values.get('residual_knowledge_nonstandard') else 'library'
+            fields = ['Residual knowledge clause included']
+            section_id = 'residual-knowledge'
+        elif '9. Injunctive Relief' in paragraph:
+            title = 'Injunctive Relief'
+            source = 'Approved clause library'
+            source_detail = 'Standard NDA enforcement position'
+            tone = 'library'
+            fields = ['Injunctive relief included']
+            section_id = 'injunctive-relief'
+        else:
+            fields = ['Counterparty name', 'Effective date'] if index == 0 else []
+            section_id = 'generated-nda-draft' if index == 0 else f'nda-clause-{index}'
+        sections.append({
+            'title': title,
+            'content': paragraph,
+            'source': source,
+            'source_detail': source_detail,
+            'tone': tone,
+            'fields': fields,
+            'section_id': section_id,
+        })
+    return sections
+
+
+def _nda_audit_preview(workflow):
+    timestamp = workflow.created_at
+    return [
+        {'event': 'Workflow created', 'meta': 'NDA Self-Serve Workflow instance opened', 'timestamp': timestamp},
+        {'event': 'Approved template applied', 'meta': 'Mutual NDA · Netherlands · B2B', 'timestamp': timestamp},
+        {'event': 'Field values captured', 'meta': 'Required NDA fields and self-serve questions stored', 'timestamp': timestamp},
+        {'event': 'Risk checks run', 'meta': 'Confidentiality, privacy, residual knowledge, and governing law checks evaluated', 'timestamp': timestamp},
+        {'event': 'Approval route generated', 'meta': 'Contract owner with conditional Legal routing prepared', 'timestamp': timestamp},
+    ]
+
+
+def _nda_workspace_context(workflow):
+    values = _field_values_by_key(workflow)
+    risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
+    risk_codes = {signal.code for signal in risk_signals}
+    draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
+    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    if current_step is None:
+        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+
+    if 'nda_privacy_review_required' in risk_codes:
+        next_action = 'Review privacy scope and linked DPA need'
+    elif risk_codes:
+        next_action = 'Review NDA legal risk signals'
+    else:
+        next_action = 'Send for signature'
+
+    risk_cards = [_nda_risk_detail_for_signal(signal) for signal in risk_signals]
+    if not risk_cards:
+        risk_cards = [{
+            'title': 'Self-serve eligible',
+            'severity': 'Low',
+            'severity_code': 'low',
+            'reason': 'No NDA risk triggers were detected from the approved self-serve playbook.',
+            'source': 'NDA self-serve rules',
+            'recommended_action': 'Proceed to signature from the governed workspace.',
+            'approval_impact': 'Legal review not required.',
+            'status': 'Ready',
+            'section_anchor': 'purpose',
+        }]
+
+    return {
+        'values': values,
+        'current_stage': current_step.name if current_step else 'AI Draft',
+        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
+        'risk_level': _risk_level_for_signals(risk_signals),
+        'next_action': next_action,
+        'timeline': ['Intake', 'AI Draft', 'Self-Serve Check', 'Legal Review', 'Signature', 'Repository'],
+        'active_timeline_index': 3 if risk_signals else 2,
+        'draft_document': draft_document,
+        'document_sections': _nda_document_sections(draft_document.content if draft_document else '', values),
+        'risk_cards': risk_cards,
+        'approval_cards': _nda_approval_cards(workflow, risk_codes),
+        'self_serve_eligible': not risk_codes,
+        'legal_review_triggered': bool(risk_codes),
+        'audit_preview': _nda_audit_preview(workflow),
+        'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+    }
+
+
 def _workflow_detail_context(workflow, add_step_form=None):
     organization = workflow.organization
     steps = WorkflowStep.objects.filter(workflow=workflow).order_by('order')
@@ -726,7 +1455,7 @@ def _workflow_detail_context(workflow, add_step_form=None):
     max_order = steps.aggregate(max_order=Max('order'))['max_order'] or 0
     form = add_step_form or WorkflowStepForm(initial={'order': max_order + 1})
     form = apply_form_queryset_scopes(form, organization, {'assigned_to': organization_user_queryset})
-    return {
+    context = {
         'workflow': workflow,
         'workflow_steps': steps,
         'add_step_form': form,
@@ -737,6 +1466,16 @@ def _workflow_detail_context(workflow, add_step_form=None):
         'workflow_audit_feed': get_workflow_audit_feed(workflow, limit=6),
         'workflow_activity_url': reverse_lazy('contracts:workflow_activity', kwargs={'pk': workflow.pk}),
     }
+    if _workflow_is_dpa(workflow):
+        context['is_dpa_workspace'] = True
+        context['dpa_workspace'] = _dpa_workspace_context(workflow)
+    elif _workflow_is_msa(workflow):
+        context['is_msa_workspace'] = True
+        context['msa_workspace'] = _msa_workspace_context(workflow)
+    elif _workflow_is_nda(workflow):
+        context['is_nda_workspace'] = True
+        context['nda_workspace'] = _nda_workspace_context(workflow)
+    return context
 
 
 def _workflow_template_detail_context(template, organization, step_form=None):

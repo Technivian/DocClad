@@ -160,8 +160,11 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, 'Needs Legal Review')
-        self.assertContains(dashboard_response, 'Priority Work Queue')
-        self.assertContains(dashboard_response, 'Waiting on Me')
+        # Command Center redesign renamed "Priority Work Queue" -> "Priority
+        # Queue" and replaced the "Waiting on Me" queue tab with filter pills
+        # (All / Needs Legal / High Risk / Overdue / Approvals).
+        self.assertContains(dashboard_response, 'Priority Queue')
+        self.assertContains(dashboard_response, 'Needs Legal')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)

@@ -1,0 +1,207 @@
+<style nonce="{{ csp_nonce }}">
+.msa-ws { padding: 10px 4px 28px 10px; }
+.msa-ws-header { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
+.msa-ws-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.msa-ws-title { color: var(--text-primary); font-size: 24px; line-height: 1.15; font-weight: 750; margin: 0; }
+.msa-ws-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 6px; }
+.msa-ws-meta-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.msa-ws-meta { border: 1px solid var(--card-border); border-radius: 6px; padding: 10px 11px; background: var(--surface-alt); min-width: 0; }
+.msa-ws-meta-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.msa-ws-meta-value { color: var(--text-primary); font-size: 12px; font-weight: 750; margin-top: 4px; overflow-wrap: anywhere; }
+.msa-ws-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border-radius: 7px; border: 1px solid rgba(181,80,46,.35); color: #fff; background: var(--btn-gradient); font-size: 12.5px; font-weight: 750; text-decoration: none; white-space: nowrap; }
+.msa-ws-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.msa-ws-action-secondary, .msa-ws-action-teal { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border-radius: 7px; text-decoration: none; font-size: 12px; font-weight: 750; cursor: pointer; }
+.msa-ws-action-secondary { border: 1px solid var(--card-border); color: var(--text-primary); background: var(--card-bg); }
+.msa-ws-action-teal { border: 1px solid rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.msa-ws-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 10.5px; font-weight: 800; border: 1px solid rgba(10,114,100,.18); }
+.msa-ws-timeline { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+.msa-ws-timeline-title { color: var(--text-primary); font-size: 13px; font-weight: 800; margin-bottom: 14px; }
+.msa-ws-track { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+.msa-ws-step { position: relative; text-align: center; color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.msa-ws-step:not(:last-child)::after { content: ""; position: absolute; top: 13px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--border); }
+.msa-ws-dot { width: 26px; height: 26px; border-radius: 999px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-muted); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; position: relative; z-index: 1; font-size: 11px; font-weight: 800; }
+.msa-ws-step.is-done .msa-ws-dot, .msa-ws-step.is-active .msa-ws-dot { border-color: var(--primary); color: var(--primary); background: var(--primary-subtle); }
+.msa-ws-step.is-active { color: var(--text-primary); }
+.msa-ws-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr); gap: 16px; align-items: start; }
+.msa-ws-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; }
+.msa-ws-card + .msa-ws-card { margin-top: 12px; }
+.msa-ws-card-head { padding: 13px 15px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.msa-ws-card-title { color: var(--text-primary); font-size: 13px; font-weight: 800; }
+.msa-ws-card-body { padding: 14px 15px; }
+.msa-doc { max-width: 78ch; margin: 0 auto; color: var(--text-primary); font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif; font-size: 13px; line-height: 1.72; }
+.msa-clause { border: 1px solid var(--card-border); border-radius: 7px; padding: 13px 14px; background: var(--surface-alt); margin-bottom: 11px; }
+.msa-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
+.msa-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+.msa-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.msa-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
+.msa-source.ai, .msa-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
+.msa-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
+.msa-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.msa-rail-item:last-child { border-bottom: none; }
+.msa-rail-dot { width: 21px; height: 21px; border-radius: 6px; flex: 0 0 auto; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
+.msa-rail-title { color: var(--text-primary); font-size: 11px; font-weight: 800; }
+.msa-rail-copy { color: var(--text-muted); font-size: 10.5px; line-height: 1.4; margin-top: 2px; }
+.msa-risk-card, .msa-approval-card, .msa-audit-row { border: 1px solid var(--card-border); border-radius: 7px; padding: 11px; background: var(--surface-alt); }
+.msa-risk-card + .msa-risk-card, .msa-approval-card + .msa-approval-card, .msa-audit-row + .msa-audit-row { margin-top: 9px; }
+.msa-risk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.msa-risk-title, .msa-approval-title, .msa-audit-title { color: var(--text-primary); font-size: 12px; font-weight: 800; }
+.msa-risk-sev { border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 850; text-transform: uppercase; background: var(--msg-warning-bg); color: var(--msg-warning-text); border: 1px solid var(--msg-warning-border); }
+.msa-risk-sev.high, .msa-risk-sev.critical { background: var(--msg-error-bg); color: var(--msg-error-text); border-color: var(--msg-error-border); }
+.msa-risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.msa-risk-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--primary); font-size: 11px; font-weight: 800; text-decoration: none; }
+.msa-kv-label { color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.msa-kv-value { color: var(--text-primary); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+.msa-status { color: var(--primary); font-weight: 800; }
+.msa-audit-meta { color: var(--text-muted); font-size: 11px; margin-top: 2px; line-height: 1.4; }
+.msa-field-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.msa-field-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; background: var(--primary-subtle); color: var(--primary); font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; }
+.msa-approval-trigger { margin-top: 8px; }
+@media (max-width: 1180px) {
+  .msa-ws-meta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .msa-ws-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="page-wrap page-wrap-fluid msa-ws">
+  <section class="msa-ws-header">
+    <div class="msa-ws-title-row">
+      <div>
+        <div class="msa-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
+        <h1 class="msa-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
+        <p class="msa-ws-subtitle">{{ workflow.title }} · Enterprise Services MSA · Netherlands · B2B</p>
+        <div class="msa-ws-actions">
+          <button type="button" class="msa-ws-cta">Send to Legal Review</button>
+          {% if msa_workspace.finance_approval_triggered %}<button type="button" class="msa-ws-action-secondary">Send to Finance</button>{% endif %}
+          <button type="button" class="msa-ws-action-teal">Generate MSA summary</button>
+          <button type="button" class="msa-ws-action-secondary">Export Word</button>
+        </div>
+      </div>
+      <a class="msa-ws-cta" href="#risk-signals">Review next action</a>
+    </div>
+    <div class="msa-ws-meta-grid">
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Contract type</div><div class="msa-ws-meta-value">MSA</div></div>
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Counterparty</div><div class="msa-ws-meta-value">{{ workflow.contract.counterparty|default:"Counterparty pending" }}</div></div>
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Current stage</div><div class="msa-ws-meta-value">{{ msa_workspace.current_stage }}</div></div>
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Owner</div><div class="msa-ws-meta-value">{{ msa_workspace.owner }}</div></div>
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Risk level</div><div class="msa-ws-meta-value">{{ msa_workspace.risk_level }}</div></div>
+      <div class="msa-ws-meta"><div class="msa-ws-meta-label">Primary next action</div><div class="msa-ws-meta-value">{{ msa_workspace.next_action }}</div></div>
+    </div>
+  </section>
+
+  <section class="msa-ws-timeline" aria-label="Workflow Timeline">
+    <div class="msa-ws-timeline-title">Workflow Timeline</div>
+    <div class="msa-ws-track">
+      {% for step in msa_workspace.timeline %}
+      <div class="msa-ws-step{% if forloop.counter0 < msa_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == msa_workspace.active_timeline_index %} is-active{% endif %}">
+        <div class="msa-ws-dot">{% if forloop.counter0 < msa_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
+        <div>{{ step }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="msa-ws-grid">
+    <main>
+      <section class="msa-ws-card">
+        <div class="msa-ws-card-head"><div class="msa-ws-card-title">Generated MSA Draft</div><span class="msa-ws-badge">Version {{ msa_workspace.draft_document.version|default:"1" }}</span></div>
+        <div class="msa-ws-card-body">
+          <div class="msa-doc">
+            {% for section in msa_workspace.document_sections %}
+            <article class="msa-clause" id="{{ section.section_id }}">
+              <div class="msa-clause-head">
+                <div class="msa-clause-title">{{ section.title }}</div>
+                <span class="msa-source {{ section.tone }}">{{ section.source }}</span>
+              </div>
+              <p>{{ section.content|linebreaksbr }}</p>
+              <div class="msa-rail-copy">{{ section.source_detail }}</div>
+              {% if section.fields %}
+              <div class="msa-field-chip-row">
+                {% for field in section.fields %}
+                <span class="msa-field-chip">{{ field }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="msa-ws-card" id="risk-signals">
+        <div class="msa-ws-card-head"><div class="msa-ws-card-title">Risk Signals</div><span class="msa-ws-badge">{{ msa_workspace.risk_cards|length }} active</span></div>
+        <div class="msa-ws-card-body">
+          {% for risk in msa_workspace.risk_cards %}
+          <article class="msa-risk-card">
+            <div class="msa-risk-top">
+              <div class="msa-risk-title">{{ risk.title }}</div>
+              <span class="msa-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span>
+            </div>
+            <div class="msa-risk-grid">
+              <div><div class="msa-kv-label">Reason</div><div class="msa-kv-value">{{ risk.reason }}</div></div>
+              <div><div class="msa-kv-label">Source</div><div class="msa-kv-value">{{ risk.source }}</div></div>
+              <div><div class="msa-kv-label">Recommended action</div><div class="msa-kv-value">{{ risk.recommended_action }}</div></div>
+              <div><div class="msa-kv-label">Approval impact</div><div class="msa-kv-value">{{ risk.approval_impact }}</div></div>
+              <div><div class="msa-kv-label">Status</div><div class="msa-kv-value msa-status">{{ risk.status }}</div></div>
+            </div>
+            <a class="msa-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="msa-ws-card">
+        <div class="msa-ws-card-head"><div class="msa-ws-card-title">Governance Rail</div></div>
+        <div class="msa-ws-card-body">
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Template selected</div><div class="msa-rail-copy">Enterprise Services MSA · Netherlands · B2B</div></div></div>
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Playbook applied</div><div class="msa-rail-copy">MSA Commercial Playbook</div></div></div>
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Clause library active</div><div class="msa-rail-copy">Approved liability, renewal, and data protection fallback clauses available</div></div></div>
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Risk checks active</div><div class="msa-rail-copy">Finance, liability, privacy, renewal, IP, and governing law checks ran</div></div></div>
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Approval route</div><div class="msa-rail-copy">{% for approval in msa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
+          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Audit trail enabled</div><div class="msa-rail-copy">{{ msa_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
+        </div>
+      </section>
+
+      <section class="msa-ws-card">
+        <div class="msa-ws-card-head"><div class="msa-ws-card-title">Approval Route</div></div>
+        <div class="msa-ws-card-body">
+          {% for approval in msa_workspace.approval_cards %}
+          <article class="msa-approval-card">
+            <div class="msa-risk-top"><div class="msa-approval-title">{{ approval.name }}</div><span class="msa-ws-badge">{{ approval.status }}</span></div>
+            <div class="msa-kv-label">Why triggered</div>
+            <div class="msa-kv-value">{{ approval.reason }}</div>
+            <div class="msa-kv-label msa-approval-trigger">Trigger</div>
+            <div class="msa-kv-value">{{ approval.trigger }}</div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="msa-ws-card">
+        <div class="msa-ws-card-head"><div class="msa-ws-card-title">Audit Trail Preview</div></div>
+        <div class="msa-ws-card-body">
+          {% for entry in msa_workspace.audit_preview %}
+          <div class="msa-audit-row">
+            <div class="msa-audit-title">{{ entry.event }}</div>
+            <div class="msa-audit-meta">{{ entry.meta }}</div>
+            <div class="msa-audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('click', function (event) {
+  var link = event.target.closest('[data-clause-link]');
+  if (!link) return;
+  var target = document.getElementById(link.getAttribute('data-clause-link'));
+  if (!target) return;
+  document.querySelectorAll('.msa-clause.is-linked').forEach(function (node) {
+    node.classList.remove('is-linked');
+  });
+  target.classList.add('is-linked');
+});
+</script>

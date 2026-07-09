@@ -8,10 +8,12 @@ from .models import (
     TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist,
     Workflow, WorkflowTemplate, WorkflowTemplateStep, WorkflowStep, ChecklistItem,
     DueDiligenceProcess, DueDiligenceTask, DueDiligenceRisk, Budget, BudgetExpense, Contract,
+    ContractTemplate,
     Counterparty, ClauseCategory, ClauseTemplate, SignatureRequest, DataInventoryRecord,
     DSARRequest, Subprocessor, TransferRecord, RetentionPolicy, LegalHold,
     ApprovalRule, ApprovalRequest, EthicalWall, SalesforceOrganizationConnection,
     OrganizationContractFieldMap, SalesforceSyncRun, WebhookEndpoint, WebhookDelivery,
+    CommandCenterSavedView, CommandCenterWorkItem, CommandCenterRailItem, ReviewMemo,
 )
 
 
@@ -347,6 +349,13 @@ class ClauseTemplateAdmin(OrganizationScopedAdmin):
     search_fields = ['title', 'content', 'tags']
 
 
+@admin.register(ContractTemplate)
+class ContractTemplateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'contract_type', 'is_active', 'created_at']
+    list_filter = ['contract_type', 'is_active']
+    search_fields = ['name', 'description', 'body']
+
+
 @admin.register(SignatureRequest)
 class SignatureRequestAdmin(OrganizationScopedAdmin):
     list_display = ['signer_email', 'organization', 'case_record', 'status', 'created_at']
@@ -421,6 +430,34 @@ class ApprovalRequestAdmin(OrganizationScopedAdmin):
     @admin.display(boolean=True, description='Overdue')
     def is_overdue(self, obj):
         return bool(obj.status == 'PENDING' and obj.due_date and obj.due_date < timezone.now())
+
+
+@admin.register(CommandCenterSavedView)
+class CommandCenterSavedViewAdmin(OrganizationScopedAdmin):
+    list_display = ['name', 'organization', 'key', 'is_default', 'sort_order', 'updated_at']
+    list_filter = ['organization', 'is_default']
+    search_fields = ['name', 'key', 'description']
+
+
+@admin.register(CommandCenterWorkItem)
+class CommandCenterWorkItemAdmin(OrganizationScopedAdmin):
+    list_display = ['title', 'organization', 'source_type', 'status', 'risk_level', 'priority', 'owner', 'due_at', 'updated_at']
+    list_filter = ['organization', 'source_type', 'status', 'risk_level', 'priority']
+    search_fields = ['title', 'subtitle', 'item_type', 'stage']
+
+
+@admin.register(CommandCenterRailItem)
+class CommandCenterRailItemAdmin(OrganizationScopedAdmin):
+    list_display = ['title', 'organization', 'kind', 'count', 'severity', 'is_active', 'sort_order', 'updated_at']
+    list_filter = ['organization', 'kind', 'severity', 'is_active']
+    search_fields = ['title', 'summary']
+
+
+@admin.register(ReviewMemo)
+class ReviewMemoAdmin(OrganizationScopedAdmin):
+    list_display = ['title', 'organization', 'memo_type', 'contract', 'dpa_review_pack', 'generated_at']
+    list_filter = ['organization', 'memo_type']
+    search_fields = ['title', 'body', 'source']
 
 
 @admin.register(EthicalWall)

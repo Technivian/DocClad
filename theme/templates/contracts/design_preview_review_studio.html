@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load docclad_format %}
+{% block title %}Contract Review Studio – DocClad{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .crs-shell {
+    display: flex; flex-direction: column; height: calc(100vh - 160px); min-height: 560px;
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden;
+  }
+  .crs-topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 12px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
+  }
+  .crs-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+  .crs-breadcrumb a { color: var(--text-muted); text-decoration: none; }
+  .crs-breadcrumb a:hover { color: var(--text-primary); }
+  .crs-breadcrumb .sep { color: var(--text-dim); }
+  .crs-breadcrumb .current { color: var(--text-primary); font-weight: 600; }
+  .crs-title-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+  .crs-title { font-size: 19px; font-weight: 650; color: var(--text-primary); letter-spacing: -0.01em; }
+  .crs-avatars { display: flex; align-items: center; }
+  .crs-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); border: 2px solid var(--card-bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-left: -8px; }
+  .crs-avatar:first-child { margin-left: 0; }
+
+  .crs-toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+  .crs-tool-btn { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); border: 1px solid var(--border); background: var(--card-bg); }
+  .crs-tool-btn svg { width: 15px; height: 15px; }
+  .crs-toolbar-sep { width: 1px; height: 20px; background: var(--border); }
+  .crs-zoom { font-size: 12.5px; color: var(--text-secondary); padding: 0 6px; }
+  .crs-toggle-label { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); margin-left: auto; }
+
+  .crs-body { display: grid; grid-template-columns: minmax(0, 1.3fr) 340px 340px; gap: 0; flex: 1; min-height: 0; }
+  @media (max-width: 1400px) { .crs-body { grid-template-columns: minmax(0, 1fr) 320px; } .crs-pane-intel { display: none; } }
+  .crs-pane { min-height: 0; overflow-y: auto; }
+  .crs-pane-doc { padding: 24px 32px; border-right: 1px solid var(--border); }
+  .crs-pane-clause { border-right: 1px solid var(--border); }
+  .crs-pane-intel {}
+  .crs-intelpanel { display: none; }
+  .crs-intelpanel.active { display: block; }
+
+  .crs-clause-num { font-size: 13px; font-weight: 700; color: var(--primary); float: left; margin-right: 10px; width: 30px; }
+  .crs-clause-block { margin-bottom: 26px; padding: 10px 12px; border-radius: 8px; }
+  .crs-clause-block.flagged { background: var(--primary-subtle); outline: 1px solid var(--primary); }
+  .crs-clause-heading { font-weight: 700; color: var(--text-primary); }
+  .crs-clause-body { font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); }
+  .crs-clause-body mark { background: rgba(198, 58, 43, 0.16); color: #A63A2B; font-weight: 600; padding: 0 2px; border-radius: 2px; }
+  [data-theme="dark"] .crs-clause-body mark { background: rgba(224,138,120,0.18); color: #E08A78; }
+
+  .crs-pane-head { padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+  .crs-pane-head-title { font-size: 14.5px; font-weight: 650; color: var(--text-primary); }
+  .crs-subtabs { display: flex; gap: 4px; padding: 10px 18px 0; border-bottom: 1px solid var(--border); }
+  .crs-subtab { font-size: 12.5px; font-weight: 600; color: var(--text-muted); padding: 6px 10px; border-radius: 6px 6px 0 0; border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; }
+  .crs-subtab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .crs-subpanel { display: none; padding: 14px 18px; }
+  .crs-subpanel.active { display: block; }
+  .crs-position-label { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .crs-position-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .crs-position-value { font-size: 13.5px; color: var(--text-primary); line-height: 1.5; }
+  .crs-section-block { padding: 14px 18px; border-top: 1px solid var(--border); }
+  .crs-section-title { font-size: 11.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .crs-guidance-text { font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+  .crs-risk-row { display: flex; align-items: center; justify-content: space-between; }
+  .crs-risk-value { font-size: 15px; font-weight: 700; }
+  .crs-impact-value { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+
+  .crs-intel-tabs { display: flex; gap: 2px; padding: 12px 18px 0; border-bottom: 1px solid var(--border); }
+  .crs-intel-tab { font-size: 12.5px; font-weight: 600; color: var(--text-muted); padding: 8px 4px; margin-right: 16px; border-bottom: 2px solid transparent; cursor: pointer; background: none; border-top: none; border-left: none; border-right: none; }
+  .crs-intel-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .crs-metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 18px; }
+  .crs-metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .crs-metric-value { font-size: 17px; font-weight: 700; margin-top: 4px; }
+  .crs-metric-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .crs-metric-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .crs-metric-bar-fill { height: 100%; background: var(--primary); }
+
+  .crs-fallback-text { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+  .crs-similar-stat { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .crs-similar-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .crs-approval-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+  .crs-approval-avatars { display: flex; align-items: center; gap: 8px; }
+
+  .crs-avatar-more { background: var(--sidebar-hover); color: var(--text-secondary); }
+  .crs-page-nav { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-muted); }
+  .crs-badge-inline { margin-left: 6px; }
+  .crs-section-title-flush { margin-bottom: 0; }
+  .crs-icon-sm { width: 13px; height: 13px; color: var(--text-muted); }
+  .crs-icon-xs-inline { width: 11px; height: 11px; display: inline; }
+  .crs-metric-bar-fill-computed { width: {{ review_intelligence.playbook_compliance_pct }}%; }
+  .crs-btn-spaced { margin-top: 10px; }
+  .crs-similar-contracts-label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+  .crs-view-examples-link { font-size: 12.5px; font-weight: 600; display: inline-block; margin-top: 8px; }
+  .crs-approval-teams-label { font-size: 12.5px; margin-left: 4px; }
+</style>
+
+<div class="page-wrap page-wrap-fluid">
+<div class="crs-shell">
+
+  <div class="crs-topbar">
+    <div>
+      <div class="crs-breadcrumb">
+        <a href="{% url 'contracts:contract_list' %}">Contracts</a>
+        <span class="sep">&rsaquo;</span>
+        <a href="{% url 'contracts:design_preview_relationship_detail' %}">{{ doc.org }}</a>
+        <span class="sep">&rsaquo;</span>
+        <span class="current">{{ doc.title }}</span>
+        <span class="badge-sm badge-blue">{{ doc.draft }}</span>
+      </div>
+      <div class="crs-title-row">
+        <span class="crs-title">Contract Review Studio</span>
+      </div>
+    </div>
+    <div class="arch-action-bar">
+      <div class="crs-avatars">
+        <span class="crs-avatar">O</span><span class="crs-avatar">J</span><span class="crs-avatar">P</span>
+        <span class="crs-avatar crs-avatar-more">+2</span>
+      </div>
+      <a href="#" class="btn-quiet">Share</a>
+      <a href="#" class="btn-quiet">Compare</a>
+      <a href="#" class="btn-cta">Finalize</a>
+    </div>
+  </div>
+
+  <div class="crs-toolbar">
+    <button class="crs-tool-btn" title="Search"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></button>
+    <button class="crs-tool-btn" title="Download"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg></button>
+    <button class="crs-tool-btn" title="Print"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg></button>
+    <button class="crs-tool-btn" title="Split view"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h16v16H4V4zm8 0v16"/></svg></button>
+    <div class="crs-toolbar-sep"></div>
+    <span class="crs-zoom">100%</span>
+    <div class="crs-toolbar-sep"></div>
+    <label class="crs-toggle-label">
+      Show changes
+      <input type="checkbox" checked>
+    </label>
+  </div>
+
+  <div class="crs-body">
+
+    {# ── Document pane ─────────────────────────────────────────── #}
+    <div class="crs-pane crs-pane-doc">
+      {% for clause in clauses %}
+      <div class="crs-clause-block {% if clause.highlighted %}flagged{% endif %}">
+        <span class="crs-clause-num">{{ clause.num }}</span>
+        <div class="crs-clause-body"><span class="crs-clause-heading">{{ clause.heading }}</span> {{ clause.body|safe }}</div>
+      </div>
+      {% endfor %}
+      <div class="crs-page-nav">
+        <button class="crs-tool-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+        Page {{ doc.page }} of {{ doc.total_pages }}
+        <button class="crs-tool-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+
+    {# ── Clause detail pane ────────────────────────────────────── #}
+    <div class="crs-pane crs-pane-clause">
+      <div class="crs-pane-head"><span class="crs-pane-head-title">{{ active_clause.ref }}</span></div>
+      <div class="crs-subtabs">
+        <button class="crs-subtab active" data-subtab="playbook">Playbook</button>
+        <button class="crs-subtab" data-subtab="counterparty">Counterparty</button>
+        <button class="crs-subtab" data-subtab="yourposition">Your Position</button>
+      </div>
+      <div id="subtab-playbook" class="crs-subpanel active">
+        <div class="crs-position-label">Your Position <span class="badge-sm badge-green crs-badge-inline">Preferred</span></div>
+        <div class="crs-position-value">{{ active_clause.your_position }}</div>
+      </div>
+      <div id="subtab-counterparty" class="crs-subpanel">
+        <div class="crs-position-label">Counterparty Position</div>
+        <div class="crs-position-value">{{ active_clause.counterparty_position }}</div>
+      </div>
+      <div id="subtab-yourposition" class="crs-subpanel">
+        <div class="crs-position-label">Your Position</div>
+        <div class="crs-position-value">{{ active_clause.your_position }}</div>
+      </div>
+
+      <div class="crs-section-block">
+        <div class="crs-section-title">Playbook Guidance</div>
+        <div class="crs-guidance-text">{{ active_clause.playbook_guidance }}</div>
+      </div>
+
+      <div class="crs-section-block">
+        <div class="crs-risk-row">
+          <span class="crs-section-title crs-section-title-flush">Risk if Accepted</span>
+          <svg class="crs-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="crs-risk-value c-danger">&#9679; {{ active_clause.risk_if_accepted }}</div>
+      </div>
+
+      <div class="crs-section-block">
+        <div class="crs-section-title">Estimated Impact</div>
+        <div class="crs-impact-value">{{ active_clause.estimated_impact }}</div>
+        <div class="crs-metric-sub">Est. impact <svg class="crs-icon-xs-inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+      </div>
+    </div>
+
+    {# ── Review Intelligence pane ──────────────────────────────── #}
+    <div class="crs-pane crs-pane-intel">
+      <div class="crs-intel-tabs">
+        <button class="crs-intel-tab active" data-inteltab="reviewintel">Review Intelligence</button>
+        <button class="crs-intel-tab" data-inteltab="negotiation">Negotiation History</button>
+        <button class="crs-intel-tab" data-inteltab="similar">Similar Contracts</button>
+      </div>
+
+      <div id="inteltab-reviewintel" class="crs-intelpanel active">
+        <div class="crs-metric-grid">
+          <div>
+            <div class="crs-metric-label">Risk</div>
+            <div class="crs-metric-value c-danger">{{ review_intelligence.risk }}</div>
+            <div class="crs-metric-sub">{{ review_intelligence.risk_issues }}</div>
+          </div>
+          <div>
+            <div class="crs-metric-label">Playbook Compliance</div>
+            <div class="crs-metric-value c-primary">{{ review_intelligence.playbook_compliance_pct }}%</div>
+            <div class="crs-metric-bar"><div class="crs-metric-bar-fill crs-metric-bar-fill-computed"></div></div>
+            <div class="crs-metric-sub">{{ review_intelligence.playbook_compliance_note }}</div>
+          </div>
+          <div>
+            <div class="crs-metric-label">Missing Clauses</div>
+            <div class="crs-metric-value">{{ review_intelligence.missing_clauses }}</div>
+            <div class="crs-metric-sub">{{ review_intelligence.missing_clauses_note }}</div>
+          </div>
+        </div>
+
+        <div class="crs-section-block">
+          <div class="crs-section-title">Suggested Fallback Language</div>
+          <div class="crs-fallback-text">{{ active_clause.fallback_language }}</div>
+          <button class="btn-quiet crs-btn-spaced">Insert</button>
+        </div>
+
+        <div class="crs-section-block">
+          <div class="crs-section-title">Similar Accepted Positions</div>
+          <div class="crs-similar-stat">{{ active_clause.similar_accepted_count }} <span class="crs-similar-contracts-label">similar contracts</span></div>
+          <div class="crs-similar-note">{{ active_clause.similar_accepted_pct }}% {{ active_clause.similar_accepted_note }}</div>
+          <a href="#" class="c-link crs-view-examples-link">View examples &rsaquo;</a>
+        </div>
+
+        <div class="crs-section-block">
+          <div class="crs-section-title">Approvals Required</div>
+          <div class="crs-approval-row">
+            <div class="crs-approval-avatars">
+              <span class="crs-avatar">L</span><span class="crs-avatar">F</span>
+              <span class="c-muted crs-approval-teams-label">{{ approvals_required.teams }}</span>
+            </div>
+            <span class="badge-sm badge-yellow">{{ approvals_required.pending }} pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="inteltab-negotiation" class="crs-intelpanel"><div class="ad-empty">Negotiation history will appear here.</div></div>
+      <div id="inteltab-similar" class="crs-intelpanel"><div class="ad-empty">Similar contract examples will appear here.</div></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    document.querySelectorAll('.crs-subtab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.crs-subtab').forEach(b => b.classList.toggle('active', b === btn));
+            document.querySelectorAll('.crs-subpanel').forEach(p => p.classList.toggle('active', p.id === 'subtab-' + btn.dataset.subtab));
+        });
+    });
+    document.querySelectorAll('.crs-intel-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.crs-intel-tab').forEach(b => b.classList.toggle('active', b === btn));
+            document.querySelectorAll('.crs-intelpanel').forEach(p => p.classList.toggle('active', p.id === 'inteltab-' + btn.dataset.inteltab));
+        });
+    });
+})();
+</script>
+{% endblock %}

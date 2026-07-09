@@ -356,6 +356,15 @@ class ContractForm(forms.ModelForm):
     def __init__(self, *args, organization=None, **kwargs):
         self.organization = organization
         super().__init__(*args, **kwargs)
+        # New Contract Request should default to an unselected placeholder,
+        # not silently pre-select "Other" — but only for a fresh create
+        # (no pk yet). An edit form already has a real saved type, and a
+        # create arriving with ?type=/?template= already has a real value
+        # in self.initial (set by the view's get_initial()), which still
+        # wins over this field-level fallback when the form renders.
+        self.fields['contract_type'].choices = [('', 'Select contract type')] + list(Contract.ContractType.choices)
+        if not self.instance.pk:
+            self.fields['contract_type'].initial = ''
         clause_queryset = scope_queryset_for_organization(ClauseTemplate.objects.select_related('category'), organization).order_by('title')
         self.fields['clause_templates'].queryset = clause_queryset
         self.fields['clause_templates'].label_from_instance = self._clause_template_label

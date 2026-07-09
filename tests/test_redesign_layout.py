@@ -49,7 +49,7 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, '/profile/')
 
     def test_dashboard_kpis_and_panels(self):
-        # The priority action strip and the workflow queue render on the
+        # The Command Center KPI strip and Priority Queue render on the
         # populated dashboard; empty workspaces get the onboarding checklist
         # instead. Seed a contract in the organization the login flow
         # auto-provisioned for this user.
@@ -62,18 +62,19 @@ class RedesignLayoutTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
+        # Command Center's four KPI cards (replaced the old Needs Legal
+        # Review / Awaiting Approval / Signature Pending / Expiring Soon set).
+        self.assertContains(response, 'DPA / MSA Conflicts')
         self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Awaiting Approval')
-        self.assertContains(response, 'Signature Pending')
-        self.assertContains(response, 'Expiring Soon')
-        self.assertContains(response, 'Waiting on Me')
-        self.assertContains(response, 'In Progress')
+        self.assertContains(response, 'Approvals in Your Queue')
+        self.assertContains(response, 'Renewals')
+        self.assertContains(response, 'Priority Queue')
         self.assertContains(response, 'Layout Contract')
 
     def test_dashboard_right_rail(self):
-        # The right rail (deadlines/risk/activity) only renders on the
-        # populated dashboard; an empty workspace gets the onboarding
-        # checklist instead.
+        # The right rail (risk intelligence/recommended actions) only
+        # renders on the populated dashboard; an empty workspace gets the
+        # onboarding checklist instead.
         organization = get_user_organization(self.user)
         Contract.objects.create(
             organization=organization,
@@ -84,9 +85,10 @@ class RedesignLayoutTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'Upcoming Deadlines')
-        self.assertContains(response, 'Risk Watch')
-        self.assertContains(response, 'Recent Activity')
+        # Command Center's right rail (replaced Upcoming Deadlines / Risk
+        # Watch / Recent Activity with Risk Intelligence + Recommended Actions).
+        self.assertContains(response, 'Risk Intelligence')
+        self.assertContains(response, 'Recommended Actions')
 
     def tearDown(self):
         if 'FEATURE_REDESIGN' in os.environ:

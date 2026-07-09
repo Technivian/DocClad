@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load docclad_format %}
+{% block title %}Command Center – DocClad{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .cc-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .cc-greeting { font-size: 22px; font-weight: 650; color: var(--text-primary); letter-spacing: -0.02em; margin: 0; }
+  .cc-greeting-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  .cc-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+  @media (max-width: 1024px) { .cc-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .cc-stat-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px 18px; }
+  .cc-stat-icon {
+    width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    background: var(--primary-subtle); color: var(--primary); margin-bottom: 12px;
+  }
+  .cc-stat-icon svg { width: 18px; height: 18px; }
+  .cc-stat-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+  .cc-stat-value { font-size: 26px; font-weight: 650; color: var(--text-primary); letter-spacing: -0.02em; margin-top: 4px; font-feature-settings: "tnum" 1; }
+  .cc-stat-delta { font-size: 12px; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+  .cc-stat-delta.up { color: #A63A2B; }
+  .cc-stat-delta.down { color: #0A7264; }
+  .cc-stat-delta.neutral { color: var(--text-muted); }
+  [data-theme="dark"] .cc-stat-delta.up { color: #E08A78; }
+  [data-theme="dark"] .cc-stat-delta.down { color: #55CDB7; }
+
+  .cc-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  @media (max-width: 1100px) { .cc-main-grid { grid-template-columns: 1fr; } }
+
+  .cc-queue-table { width: 100%; border-collapse: collapse; }
+  .cc-queue-table th {
+    text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); padding: 0 20px 10px; border-bottom: 1px solid var(--border);
+  }
+  .cc-queue-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .cc-queue-table tr:last-child td { border-bottom: none; }
+  .cc-queue-item-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+  .cc-queue-item-ref { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .cc-risk-dot-row { display: flex; align-items: center; gap: 3px; }
+  .cc-risk-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .cc-risk-dot.on.high { background: #A63A2B; }
+  .cc-risk-dot.on.medium { background: #C9911A; }
+  .cc-risk-dot.on.low { background: #0A7264; }
+  .cc-risk-label { font-size: 12.5px; font-weight: 600; margin-left: 6px; }
+  .cc-due { font-size: 13px; color: var(--text-primary); }
+  .cc-due.urgent { color: #A63A2B; font-weight: 600; }
+  [data-theme="dark"] .cc-due.urgent { color: #E08A78; }
+  .cc-age { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+  .cc-trend-card-body { padding: 16px 20px 18px; }
+  .cc-trend-legend { display: flex; flex-direction: column; gap: 10px; }
+  .cc-trend-row { display: flex; align-items: center; justify-content: space-between; }
+  .cc-trend-row-left { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); }
+  .cc-trend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cc-trend-dot.high { background: #A63A2B; } .cc-trend-dot.medium { background: #C9911A; } .cc-trend-dot.low { background: #0A7264; }
+  [data-theme="dark"] .cc-trend-dot.high { background: #E08A78; } [data-theme="dark"] .cc-trend-dot.medium { background: #D9A75B; } [data-theme="dark"] .cc-trend-dot.low { background: #55CDB7; }
+  .cc-trend-value { font-size: 15px; font-weight: 650; color: var(--text-primary); font-feature-settings: "tnum" 1; }
+  .cc-trend-delta { font-size: 11.5px; margin-left: 6px; }
+  .cc-sparkline { margin: 14px 0 4px; border-radius: 6px; overflow: hidden; }
+  .cc-table-scroll { overflow-x: auto; }
+  .cc-td-muted { font-size: 13px; }
+  .cc-trend-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted); }
+
+  .cc-action-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border);
+    text-decoration: none; transition: background 0.12s;
+  }
+  .cc-action-row:last-child { border-bottom: none; }
+  .cc-action-row:hover { background: var(--sidebar-hover); }
+  .cc-action-icon {
+    width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center;
+    background: var(--primary-subtle); color: var(--primary); flex-shrink: 0;
+  }
+  .cc-action-icon svg { width: 15px; height: 15px; }
+  .cc-action-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .cc-action-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+</style>
+
+<div class="page-wrap">
+
+  <div class="cc-page-head">
+    <div>
+      <h1 class="cc-greeting">Good morning, Olivia 👋</h1>
+      <div class="cc-greeting-sub">Here's what's happening across your contract portfolio.</div>
+    </div>
+    <div class="arch-action-bar">
+      <a href="{% url 'contracts:global_search' %}" class="btn-quiet">Search</a>
+      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New
+      </a>
+    </div>
+  </div>
+
+  {# ── Stat row ──────────────────────────────────────────────── #}
+  <div class="cc-stat-grid">
+    {% for stat in stats %}
+    <div class="cc-stat-card">
+      <div class="cc-stat-icon">
+        {% if stat.icon == 'scale' %}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m-7-9h14M5 6l-3 6a3 3 0 006 0l-3-6zm14 0l-3 6a3 3 0 006 0l-3-6z"/></svg>
+        {% elif stat.icon == 'dollar' %}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+        {% elif stat.icon == 'calendar' %}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        {% else %}
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        {% endif %}
+      </div>
+      <div class="cc-stat-label">{{ stat.label }}</div>
+      <div class="cc-stat-value">{{ stat.value }}</div>
+      <div class="cc-stat-delta {% if stat.delta_dir == 'up' %}up{% elif stat.delta_dir == 'down' %}down{% else %}neutral{% endif %}">
+        {% if stat.delta_dir == 'up' %}&uarr;{% elif stat.delta_dir == 'down' %}&darr;{% endif %} {{ stat.delta }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Main grid: priority queue + right rail ───────────────── #}
+  <div class="cc-main-grid">
+
+    <div class="ad-card">
+      <div class="ad-head">
+        <span class="ad-head-stack">
+          <span class="ad-head-title">Priority Queue</span>
+        </span>
+        <span class="ad-head-count">{{ priority_queue_count }}</span>
+      </div>
+      <div class="cc-table-scroll">
+        <table class="cc-queue-table">
+          <thead>
+            <tr>
+              <th>Item</th><th>Counterparty</th><th>Type</th><th>Status</th><th>Risk</th><th>Due / Age</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in priority_queue %}
+            <tr>
+              <td>
+                <div class="cc-queue-item-title">{{ item.title }}</div>
+                <div class="cc-queue-item-ref">{{ item.ref }}</div>
+              </td>
+              <td class="c-muted cc-td-muted">{{ item.counterparty }}</td>
+              <td class="c-muted cc-td-muted">{{ item.type }}</td>
+              <td><span class="badge-sm badge-blue">{{ item.status }}</span></td>
+              <td>
+                <div class="cc-risk-dot-row">
+                  <span class="cc-risk-dot {% if item.risk == 'High' %}on high{% endif %}"></span>
+                  <span class="cc-risk-dot {% if item.risk_dots >= 2 %}on {{ item.risk|lower }}{% endif %}"></span>
+                  <span class="cc-risk-label {% if item.risk == 'High' %}c-danger{% elif item.risk == 'Medium' %}c-primary{% else %}c-muted{% endif %}">{{ item.risk }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="cc-due {% if item.urgent %}urgent{% endif %}">{{ item.due }}</div>
+                <div class="cc-age">{{ item.age }}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="ad-view-all-footer"><a href="{% url 'contracts:contract_list' %}">View full queue</a></div>
+    </div>
+
+    <div class="arch-context-rail">
+
+      <div class="ad-card">
+        <div class="ad-head">
+          <span class="ad-head-title">Risk Trend (30 Days)</span>
+        </div>
+        <div class="cc-trend-card-body">
+          <div class="cc-trend-legend">
+            <div class="cc-trend-row">
+              <span class="cc-trend-row-left"><span class="cc-trend-dot high"></span>High</span>
+              <span><span class="cc-trend-value">{{ risk_trend.high.value }}</span><span class="cc-trend-delta {% if risk_trend.high.dir == 'up' %}c-danger{% else %}c-primary-brand{% endif %}">{% if risk_trend.high.dir == 'up' %}&uarr;{% else %}&darr;{% endif %}{{ risk_trend.high.delta }}</span></span>
+            </div>
+            <div class="cc-trend-row">
+              <span class="cc-trend-row-left"><span class="cc-trend-dot medium"></span>Medium</span>
+              <span><span class="cc-trend-value">{{ risk_trend.medium.value }}</span><span class="cc-trend-delta {% if risk_trend.medium.dir == 'up' %}c-danger{% else %}c-primary-brand{% endif %}">{% if risk_trend.medium.dir == 'up' %}&uarr;{% else %}&darr;{% endif %}{{ risk_trend.medium.delta }}</span></span>
+            </div>
+            <div class="cc-trend-row">
+              <span class="cc-trend-row-left"><span class="cc-trend-dot low"></span>Low</span>
+              <span><span class="cc-trend-value">{{ risk_trend.low.value }}</span><span class="cc-trend-delta {% if risk_trend.low.dir == 'up' %}c-danger{% else %}c-primary-brand{% endif %}">{% if risk_trend.low.dir == 'up' %}&uarr;{% else %}&darr;{% endif %}{{ risk_trend.low.delta }}</span></span>
+            </div>
+          </div>
+          <svg class="cc-sparkline" viewBox="0 0 300 80" width="100%" height="80" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#A63A2B" stroke-width="2" points="0,55 75,40 150,20 225,28 300,15" />
+            <polyline fill="none" stroke="#3F569B" stroke-width="2" points="0,30 75,45 150,50 225,42 300,48" />
+            <polyline fill="none" stroke="#0A7264" stroke-width="2" points="0,65 75,68 150,62 225,70 300,66" />
+          </svg>
+          <div class="cc-trend-labels">
+            {% for label in risk_trend.labels %}<span>{{ label }}</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="ad-card">
+        <div class="ad-head">
+          <span class="ad-head-title">Next Best Actions</span>
+        </div>
+        {% for action in next_best_actions %}
+        <a href="#" class="cc-action-row">
+          <span class="cc-action-icon">
+            {% if action.icon == 'bolt' %}
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            {% elif action.icon == 'check' %}
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            {% else %}
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            {% endif %}
+          </span>
+          <span>
+            <div class="cc-action-title">{{ action.title }}</div>
+            <div class="cc-action-sub">{{ action.sub }}</div>
+          </span>
+        </a>
+        {% endfor %}
+        <div class="ad-view-all-footer"><a href="#">View all actions</a></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

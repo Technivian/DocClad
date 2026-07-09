@@ -11,6 +11,13 @@
 .modal-overlay { background:rgba(0,0,0,0.6); }
 .divide-rows > * + * { border-top:1px solid var(--card-border); }
 </style>
+{% if is_dpa_workspace %}
+{% include "contracts/dpa_contract_workspace.html" %}
+{% elif is_msa_workspace %}
+{% include "contracts/msa_contract_workspace.html" %}
+{% elif is_nda_workspace %}
+{% include "contracts/nda_contract_workspace.html" %}
+{% else %}
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
         <div class="workspace-main-head">
@@ -377,4 +384,5 @@ document.addEventListener('click', function (e) {
     }
 });
 </script>
+{% endif %}
 {% endblock %}

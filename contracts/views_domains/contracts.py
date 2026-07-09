@@ -23,6 +23,7 @@ from contracts.models import (
     CaseMatter,
     Client,
     Contract,
+    ContractTemplate,
     Document,
     Invoice,
     LegalTask,
@@ -47,6 +48,15 @@ from contracts.models import (
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
+from contracts.services.command_center import (
+    get_command_center_rail_items,
+    get_command_center_saved_views,
+    get_persisted_command_center_rows,
+    get_recent_review_memos,
+    get_workflow_type_summary,
+)
+from contracts.services.contract_launch_setup import get_entry_cards, get_launch_setup_map
+from contracts.services.draft_cockpit import get_governance_panel
 from contracts.templatetags.docclad_format import status_badge_class
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
@@ -56,6 +66,7 @@ from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
+from contracts.services.contract_templates import render_merge_fields
 
 
 class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -211,6 +222,39 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         return ctx
 
 
+@login_required
+def contract_template_picker(request):
+    """Step 1 of contract creation: pick a contract type, then a template.
+
+    Templates are optional per type — types with none just show a "Start
+    blank" card, same as today's create form with that type preselected.
+
+    The no-type screen shows the curated entry-card grid (get_entry_cards)
+    for the six highest-traffic types; every type — including ones without
+    a card — stays reachable via the full dropdown once inside the form,
+    same as before this screen existed.
+    """
+    contract_type = request.GET.get('type')
+    context = {'contract_types': Contract.ContractType.choices}
+    if contract_type:
+        context['selected_type'] = contract_type
+        context['selected_type_label'] = dict(Contract.ContractType.choices).get(contract_type, contract_type)
+        context['templates'] = ContractTemplate.objects.filter(contract_type=contract_type, is_active=True)
+    else:
+        # DPA, MSA, and NDA are the governed drafting reference flows — their
+        # cards start dedicated workflow builders instead of the legacy
+        # generic intake form. Other curated cards stay unchanged.
+        context['entry_cards'] = get_entry_cards(
+            start_url_for=lambda ct: (
+                reverse('contracts:dpa_workflow_builder') if ct == Contract.ContractType.DPA
+                else reverse('contracts:msa_workflow_builder') if ct == Contract.ContractType.MSA
+                else reverse('contracts:nda_workflow_builder') if ct == Contract.ContractType.NDA
+                else f"{reverse('contracts:contract_create')}?type={ct}"
+            )
+        )
+    return render(request, 'contracts/contract_template_picker.html', context)
+
+
 class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView):
     model = Contract
     form_class = ContractForm
@@ -221,6 +265,32 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = get_user_organization(self.request.user)
         return kwargs
+
+    def _selected_template(self):
+        template_id = self.request.GET.get('template')
+        if not template_id:
+            return None
+        return ContractTemplate.objects.filter(pk=template_id, is_active=True).first()
+
+    def get_initial(self):
+        initial = super().get_initial()
+        template = self._selected_template()
+        if template:
+            initial['contract_type'] = template.contract_type
+            initial['content'] = template.body
+        elif self.request.GET.get('type'):
+            initial['contract_type'] = self.request.GET.get('type')
+        return initial
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        selected_template = self._selected_template()
+        contract_type = self.request.GET.get('type') or (selected_template.contract_type if selected_template else '')
+        org = get_user_organization(self.request.user)
+        ctx['selected_template'] = selected_template
+        ctx['launch_setup_map'] = get_launch_setup_map()
+        ctx['governance_panel'] = get_governance_panel(org, contract_type, selected_template)
+        return ctx
 
     @staticmethod
     def _build_preview_sections(form):
@@ -281,6 +351,10 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         # through ContractLifecycleService transitions (prevents create-as-ACTIVE
         # bypassing the approval prerequisite).
         form.instance.status = Contract.Status.DRAFT
+        # Resolve any {{merge_field}} tokens against the instance's own
+        # cleaned field values — harmless no-op if the content has none,
+        # so this runs whether or not a template was used to start the draft.
+        form.instance.content = render_merge_fields(form.instance.content, form.instance)
         response = super().form_valid(form)
         log_action(
             self.request.user,
@@ -314,6 +388,13 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = get_user_organization(self.request.user)
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        org = get_user_organization(self.request.user)
+        ctx['launch_setup_map'] = get_launch_setup_map()
+        ctx['governance_panel'] = get_governance_panel(org, self.object.contract_type, None, contract=self.object)
+        return ctx
 
     @staticmethod
     def _build_preview_sections(form):
@@ -892,6 +973,12 @@ def dashboard(request):
     ]
     dashboard_has_data = bool(total_documents) or any(tab['rows'] for tab in queue_tabs) or (case_stats['total'] or 0) > 0
 
+    risk_level_counts = case_qs.aggregate(
+        high=Count('id', filter=Q(risk_level__in=['HIGH', 'CRITICAL'])),
+        medium=Count('id', filter=Q(risk_level='MEDIUM')),
+        low=Count('id', filter=Q(risk_level='LOW')),
+    )
+
     # Lifecycle Status Overview — buckets every contract into one of 7
     # stages. EXPIRED/TERMINATED status overrides lifecycle_stage (a contract
     # can be EXECUTED but have gone EXPIRED); everything else buckets off
@@ -953,6 +1040,8 @@ def dashboard(request):
     clm_high_severity_count = 0
     clm_recent_memos = []
     clm_recent_matters = []
+    command_center_saved_views = get_command_center_saved_views(org)
+    persisted_command_center_rows = get_persisted_command_center_rows(org, current_user=request.user, today=today)
 
     if is_in_house_clm and org:
         # Aliased on import — this module already has `Case` bound to
@@ -1000,12 +1089,13 @@ def dashboard(request):
         )
         clm_high_severity_count = clm_high_risk_log_count + clm_high_dpa_risk_count
 
-        clm_recent_memos = list(
+        dpa_pack_recent_memos = list(
             DPAReviewPack.objects
             .filter(organization=org, review_memo_generated_at__isnull=False)
             .select_related('contract', 'counterparty')
             .order_by('-review_memo_generated_at')[:5]
         )
+        clm_recent_memos = get_recent_review_memos(org, fallback_packs=dpa_pack_recent_memos)
 
         clm_recent_matters = list(
             Matter.objects.filter(organization=org)
@@ -1015,7 +1105,51 @@ def dashboard(request):
 
     from django.shortcuts import render
 
+    # Built from the exact same four counts the metric cards below render
+    # (clm_conflict_count / clm_needs_review_count / clm_my_approvals_count /
+    # clm_renewals_count) so the banner can never disagree with the cards —
+    # it previously mixed in org-wide approval_stats/deadline_stats figures
+    # that don't back any visible card, which could show "no open items"
+    # while a card still read nonzero.
+    attention_parts = []
+    if clm_conflict_count:
+        n = clm_conflict_count
+        attention_parts.append(f"{n} DPA/MSA conflict{'s' if n != 1 else ''}")
+    if clm_needs_review_count:
+        n = clm_needs_review_count
+        attention_parts.append(f"{n} contract{'s' if n != 1 else ''} needing legal review")
+    if clm_my_approvals_count:
+        n = clm_my_approvals_count
+        attention_parts.append(f"{n} approval{'s' if n != 1 else ''} in your queue")
+    if clm_renewals_count:
+        n = clm_renewals_count
+        attention_parts.append(f"{n} renewal{'s' if n != 1 else ''}/deadline{'s' if n != 1 else ''} due soon")
+    attention_total = (clm_conflict_count or 0) + (clm_needs_review_count or 0) + (clm_my_approvals_count or 0) + (clm_renewals_count or 0)
+    if len(attention_parts) <= 1:
+        attention_summary = attention_parts[0] if attention_parts else ''
+    elif len(attention_parts) == 2:
+        attention_summary = f"{attention_parts[0]} and {attention_parts[1]}"
+    else:
+        attention_summary = f"{', '.join(attention_parts[:-1])}, and {attention_parts[-1]}"
+
+    priority_queue_rows = persisted_command_center_rows or queue_in_progress
+    workflow_type_summary = get_workflow_type_summary(persisted_command_center_rows)
+    command_center_rail_items = get_command_center_rail_items(org, {
+        'approvals': clm_my_approvals_count,
+        'deadlines': clm_renewals_count,
+        'dpa_conflicts': clm_conflict_count,
+        'review_memos': len(clm_recent_memos),
+    })
+
     return render(request, 'dashboard.html', {
+        'attention_total': attention_total,
+        'attention_summary': attention_summary,
+        'priority_queue_rows': priority_queue_rows,
+        'workflow_type_summary': workflow_type_summary,
+        'persisted_command_center_rows': persisted_command_center_rows,
+        'command_center_saved_views': command_center_saved_views,
+        'command_center_rail_items': command_center_rail_items,
+        'risk_level_counts': risk_level_counts,
         'case_stats': case_stats,
         'client_stats': client_stats,
         'case_matter_stats': case_matter_stats,

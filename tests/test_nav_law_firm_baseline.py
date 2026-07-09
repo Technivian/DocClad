@@ -20,7 +20,11 @@ User = get_user_model()
 # (label, url_name, section). Order matters — it is the current DOM order.
 LAW_FIRM_NAV_ITEMS = [
     ('Dashboard', 'dashboard', None),
-    ('New Contract', 'contracts:contract_create', 'EXECUTION'),
+    # Intentionally updated post-baseline: New Contract now routes through
+    # the Stage 1 contract-type picker (contracts/new/start/) instead of
+    # straight to the plain create form, so the sidebar's primary entry
+    # point actually surfaces the workflow-first flows (e.g. DPA).
+    ('New Contract', 'contracts:contract_template_picker', 'EXECUTION'),
     ('Contract Workspace', 'contracts:contract_list', 'EXECUTION'),
     ('Repository', 'contracts:repository', 'EXECUTION'),
     ('Tasks', 'contracts:legal_task_kanban', 'EXECUTION'),

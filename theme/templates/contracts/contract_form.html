@@ -7,6 +7,14 @@
 .arch-header .arch-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .arch-header { margin-bottom: 22px; }
 .page-wrap.contract-form-page { padding: 10px 4px 24px 10px; }
+.cform-template-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; margin-bottom: 16px;
+  border: 1px solid var(--card-border); border-radius: 8px;
+  background: var(--primary-subtle); color: var(--text-primary); font-size: 13px;
+}
+.cform-template-banner strong { font-weight: 700; }
+.cform-template-banner svg { width: 16px; height: 16px; color: var(--primary); flex-shrink: 0; }
 /* CLM command strip: workflow-first, restrained Ironclad-style density */
 .cform-stepper {
   background: var(--card-bg);
@@ -192,6 +200,26 @@
   font-weight: 800;
 }
 .cform-panel-body { padding: 14px 16px 16px; }
+/* Collapsible intake sections (Legal posture, Lifecycle control, Draft
+   brief) — collapsed by default, auto-expanded via JS only when the
+   selected contract type actually requires a field inside them, so the
+   page reads as a guided launcher rather than a flat metadata form. */
+.cform-collapsible { padding: 0; }
+.cform-collapsible > .cform-summary { cursor: pointer; list-style: none; }
+.cform-collapsible > .cform-summary::-webkit-details-marker { display: none; }
+.cform-collapsible[open] > .cform-summary { border-bottom: 1px solid var(--card-border); }
+.cform-collapsible .details-chevron { transition: transform 0.15s ease; }
+.cform-collapsible[open] .details-chevron { transform: rotate(90deg); }
+.cform-collapsible-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 .cform-section-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -283,10 +311,47 @@
   font-size: 10px;
   line-height: 1.3;
 }
+
+/* ── Governance badge row ─────────────────────────────────── */
+.cform-badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.cform-gov-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px;
+  background: var(--primary-subtle); color: var(--primary); font-size: 11px; font-weight: 650;
+}
+.cform-gov-badge svg { width: 12px; height: 12px; }
+
+/* ── AI Governance Panel rail items ───────────────────────── */
+.cform-gov-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.cform-gov-item:last-child { border-bottom: none; }
+.cform-gov-icon { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-subtle); color: var(--primary); }
+.cform-gov-icon svg { width: 12px; height: 12px; }
+.cform-gov-icon.tone-amber { background: rgba(196,145,51,0.16); color: #8A5A14; }
+[data-theme="dark"] .cform-gov-icon.tone-amber { color: #D9A75B; }
+.cform-gov-title { font-size: 11px; font-weight: 700; color: var(--text-primary); }
+.cform-gov-copy { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+/* ── Stage 3: Draft Readiness ─────────────────────────────── */
+.cform-readiness-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+.cform-check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--card-border); font-size: 12px; }
+.cform-check-row:last-child { border-bottom: none; }
+.cform-check-value { font-weight: 700; color: var(--text-primary); }
+.cform-risk-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: rgba(196,145,51,0.16); color: #8A5A14; font-size: 11.5px; font-weight: 750; }
+[data-theme="dark"] .cform-risk-pill { color: #D9A75B; }
+.cform-risk-pill.is-low { background: var(--primary-subtle); color: var(--primary); }
+.cform-route-track { display: flex; align-items: flex-start; gap: 0; margin-top: 8px; }
+.cform-route-step { flex: 1; text-align: center; position: relative; }
+.cform-route-step:not(:last-child)::after { content: ''; position: absolute; top: 11px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--border); }
+.cform-route-step-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--primary); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 750; margin: 0 auto 6px; position: relative; z-index: 1; }
+.cform-route-step.is-conditional .cform-route-step-dot { border-style: dashed; border-color: #8A5A14; color: #8A5A14; }
+[data-theme="dark"] .cform-route-step.is-conditional .cform-route-step-dot { border-color: #D9A75B; color: #D9A75B; }
+.cform-route-step-name { font-size: 10.5px; font-weight: 650; color: var(--text-primary); }
+.cform-route-step-note { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
+
 @media (max-width: 1200px) {
   .page-wrap.contract-form-page { min-width: 1120px; }
   .cform-stepper-head { grid-template-columns: 1fr; }
   .cform-command-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cform-readiness-grid { grid-template-columns: 1fr; }
 }
 /* Ironclad-like density overrides for this workspace */
 .contract-form-page .arch-workspace-main > * + * { margin-top: 12px !important; }
@@ -381,6 +446,16 @@
   font-size: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer;
 }
 .draft-add-btn:hover { background: var(--primary-hover); }
+
+/* Spacing/layout utilities — the CSP style-src policy has no
+   'unsafe-inline', so ad hoc style="" attributes are silently dropped by
+   the browser at parse time; these small classes replace them. */
+.cform-mt-18 { margin-top: 18px; }
+.cform-mt-16 { margin-top: 16px; }
+.cform-mb-8 { margin-bottom: 8px; }
+.cform-mt-8 { margin-top: 8px; }
+.cform-disclaimer-row { margin-top: 18px; display: flex; align-items: center; gap: 6px; }
+.cform-success-row { color: var(--msg-success-text); }
 </style>
 
 <div class="page-wrap page-wrap-fluid contract-form-page">
@@ -410,11 +485,18 @@
     <div class="arch-header-right">
       <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
       <button type="submit" name="preview_draft" value="1" class="btn-quiet">Preview draft</button>
-      <button type="submit" class="btn-cta">
+      <button type="submit" class="btn-cta" id="submit-contract-btn">
         {% if form.instance.pk %}Update Contract{% else %}Create Contract{% endif %}
       </button>
     </div>
   </div>
+
+  {% if selected_template %}
+  <div class="cform-template-banner">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l5 5v11a2 2 0 01-2 2z"/></svg>
+    <span>Starting from template: <strong>{{ selected_template.name }}</strong>. Fill in the fields below — the draft content updates automatically.</span>
+  </div>
+  {% endif %}
 
   {# ── Lifecycle stepper — real stages for edits, canonical path for new #}
   <div class="cform-stepper">
@@ -422,7 +504,6 @@
       <div>
         <div class="cform-kicker">Workflow</div>
         <div class="cform-command-title">Contract intake</div>
-        <div class="cform-command-copy">Ownership, review path, approval readiness, and lifecycle controls.</div>
       </div>
       <div class="cform-command-stats" aria-label="Contract request status">
         <div class="cform-command-stat">
@@ -489,7 +570,6 @@
             <div>
               <div class="arch-section-label">Request intake</div>
               <h2 id="contract-identity-heading" class="cform-panel-title">Contract identity</h2>
-              <p class="cform-panel-copy">Name the work, set the request type, and identify who this contract is with.</p>
             </div>
             <span class="cform-panel-meta">Required to create</span>
           </div>
@@ -550,23 +630,28 @@
           </div>
         </section>
 
-        <section class="cform-intake-panel" aria-labelledby="commercial-terms-heading">
-          <div class="cform-panel-head">
+        <details class="cform-intake-panel cform-collapsible" data-collapsible="legal-posture">
+          <summary class="cform-panel-head cform-summary">
             <div>
               <div class="arch-section-label">Legal posture</div>
               <h2 id="commercial-terms-heading" class="cform-panel-title">Commercial terms and jurisdiction</h2>
-              <p class="cform-panel-copy">Capture the economics and legal routing signals that determine review path.</p>
             </div>
-            <span class="cform-panel-meta">Routes review</span>
-          </div>
+            <span class="cform-panel-meta">
+              <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
+              <svg class="w-4 h-4 transition-transform details-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              Routes review
+            </span>
+          </summary>
           <div class="cform-panel-body">
             <div class="cform-section-grid">
               {% for field in form.visible_fields %}
               {% if field.name == 'value' or field.name == 'currency' or field.name == 'governing_law' or field.name == 'jurisdiction' or field.name == 'language' or field.name == 'risk_level' %}
-              <div class="cform-field {% if field.name == 'language' or field.name == 'risk_level' %}cform-field{% endif %}">
+              <div class="cform-field {% if field.name == 'language' or field.name == 'risk_level' %}cform-field{% endif %}" data-field-wrapper="{{ field.name }}">
                 <label class="form-label">
                   {{ field.label }}
-                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                  <span class="text-red-400 ml-0.5 dynamic-required-star" data-required-star="{{ field.name }}" aria-hidden="true" hidden>*</span>
                 </label>
                 {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
                 {{ field }}
@@ -576,14 +661,13 @@
               {% endfor %}
             </div>
           </div>
-        </section>
+        </details>
 
         <section class="cform-intake-panel" aria-labelledby="risk-signals-heading">
           <div class="cform-panel-head">
             <div>
               <div class="arch-section-label">Privacy & risk</div>
               <h2 id="risk-signals-heading" class="cform-panel-title">Review triggers</h2>
-              <p class="cform-panel-copy">Flag data-transfer, DPA, and SCC signals before the request enters legal review.</p>
             </div>
             <span class="cform-panel-meta">Controls routing</span>
           </div>
@@ -605,23 +689,28 @@
           </div>
         </section>
 
-        <section class="cform-intake-panel" aria-labelledby="lifecycle-timing-heading">
-          <div class="cform-panel-head">
+        <details class="cform-intake-panel cform-collapsible" data-collapsible="lifecycle-control">
+          <summary class="cform-panel-head cform-summary">
             <div>
               <div class="arch-section-label">Lifecycle control</div>
               <h2 id="lifecycle-timing-heading" class="cform-panel-title">Dates and lifecycle management</h2>
-              <p class="cform-panel-copy">Set the stage, term, renewal posture, and notice deadlines that drive reminders.</p>
             </div>
-            <span class="cform-panel-meta">Creates obligations</span>
-          </div>
+            <span class="cform-panel-meta">
+              <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
+              <svg class="w-4 h-4 transition-transform details-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              Creates obligations
+            </span>
+          </summary>
           <div class="cform-panel-body">
             <div class="cform-section-grid">
               {% for field in form.visible_fields %}
               {% if field.name == 'lifecycle_stage' or field.name == 'start_date' or field.name == 'end_date' or field.name == 'renewal_date' or field.name == 'notice_period_days' or field.name == 'termination_notice_date' %}
-              <div class="cform-field {% if field.name == 'lifecycle_stage' %}cform-field-full{% endif %}">
+              <div class="cform-field {% if field.name == 'lifecycle_stage' %}cform-field-full{% endif %}" data-field-wrapper="{{ field.name }}">
                 <label class="form-label">
                   {{ field.label }}
-                  {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                  <span class="text-red-400 ml-0.5 dynamic-required-star" data-required-star="{{ field.name }}" aria-hidden="true" hidden>*</span>
                 </label>
                 {% if field.help_text %}<p class="text-xs c-muted mb-1">{{ field.help_text }}</p>{% endif %}
                 {{ field }}
@@ -642,31 +731,36 @@
               {% endif %}{% endfor %}
             </div>
           </div>
-        </section>
+        </details>
 
-        {# Content textarea — full-width #}
+        {# Content textarea — full-width, optional, collapsed by default #}
         {% for field in form.visible_fields %}{% if field.name == 'content' %}
-        <section class="cform-intake-panel" aria-labelledby="draft-brief-heading">
-          <div class="cform-panel-head">
+        <details class="cform-intake-panel cform-collapsible" data-collapsible="draft-brief">
+          <summary class="cform-panel-head cform-summary">
             <div>
               <div class="arch-section-label">Draft brief</div>
               <h2 id="draft-brief-heading" class="cform-panel-title">Source text and drafting instructions</h2>
-              <p class="cform-panel-copy">Paste source language or leave this blank when clause templates should generate the first draft.</p>
             </div>
-            <span class="cform-panel-meta">Optional</span>
-          </div>
+            <span class="cform-panel-meta">
+              <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
+              <svg class="w-4 h-4 transition-transform details-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              Optional
+            </span>
+          </summary>
           <div class="cform-panel-body">
-            <div class="cform-field cform-field-full">
+            <div class="cform-field cform-field-full" data-field-wrapper="content">
               <label class="form-label">
                 {{ field.label }}
-                {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
+                <span class="text-red-400 ml-0.5 dynamic-required-star" data-required-star="content" aria-hidden="true" hidden>*</span>
               </label>
               {% if field.help_text %}<p class="text-xs c-muted mb-2">{{ field.help_text }}</p>{% endif %}
               {{ field }}
               {% if field.errors %}<p class="text-xs c-danger mt-1">{{ field.errors.0 }}</p>{% endif %}
             </div>
           </div>
-        </section>
+        </details>
         {% endif %}{% endfor %}
 
         {# Advanced options — collapsed by default #}
@@ -767,6 +861,29 @@
           </div>
         </div>
 
+        <div class="cform-rail-card" id="launch-setup-card" data-create-url="{% url 'contracts:contract_create' %}">
+          <div class="cform-rail-head">
+            <div class="arch-section-label">Selected setup</div>
+            <p class="text-xs c-muted mt-1" id="launch-setup-subtitle">Pick a contract type to see its recommended template and playbook.</p>
+          </div>
+          <div class="cform-rail-body">
+            <div class="cform-route-row is-active" data-route-row="template">
+              <span class="cform-route-dot" aria-hidden="true"></span>
+              <span>
+                <span class="cform-route-title" data-route-title="template">Recommended template</span>
+                <span class="cform-route-copy" data-route-copy="template" id="launch-setup-template-copy">Select a contract type above.</span>
+              </span>
+            </div>
+            <div class="cform-route-row" data-route-row="playbook">
+              <span class="cform-route-dot" aria-hidden="true"></span>
+              <span>
+                <span class="cform-route-title" data-route-title="playbook">Playbook</span>
+                <span class="cform-route-copy" data-route-copy="playbook" id="launch-setup-playbook-copy">—</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="cform-rail-card">
           <div class="cform-rail-head">
             <div class="arch-section-label">Route preview</div>
@@ -799,6 +916,38 @@
 
         <div class="cform-rail-card">
           <div class="cform-rail-head">
+            <div class="arch-section-label">AI Governance Panel</div>
+          </div>
+          <div class="cform-rail-body" id="cform-governance-body">
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span>
+              <div><div class="cform-gov-title">Template selected</div><div class="cform-gov-copy" id="cform-gov-template">Select a contract type above.</div></div>
+            </div>
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Z"/></svg></span>
+              <div><div class="cform-gov-title">Playbook applied</div><div class="cform-gov-copy" id="cform-gov-playbook">—</div></div>
+            </div>
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg></span>
+              <div><div class="cform-gov-title">Clause library source</div><div class="cform-gov-copy" id="cform-gov-clauses">{{ governance_panel.clause_library_count }} approved clause{{ governance_panel.clause_library_count|pluralize }} available for this type</div></div>
+            </div>
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon tone-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>
+              <div><div class="cform-gov-title">Risk checks</div><div class="cform-gov-copy">{% if governance_panel.risk_summary.has_data %}{{ governance_panel.risk_summary.open_count }} open risk{{ governance_panel.risk_summary.open_count|pluralize }} on this contract{% else %}No risk checks yet — signals appear once this draft is saved{% endif %}</div></div>
+            </div>
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M16 3.5a3 3 0 0 1 0 7"/><path d="M18 20a7 7 0 0 0-3-6"/></svg></span>
+              <div><div class="cform-gov-title">Approval route</div><div class="cform-gov-copy" id="cform-gov-route">{% for step in governance_panel.approval_route %}{{ step.name }}{% if not forloop.last %} &rarr; {% endif %}{% endfor %}</div></div>
+            </div>
+            <div class="cform-gov-item">
+              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
+              <div><div class="cform-gov-title">Audit trail</div><div class="cform-gov-copy">{% if form.instance.pk %}Active — every edit is logged and attributable{% else %}Every field edit will be logged once this draft is saved{% endif %}</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cform-rail-card">
+          <div class="cform-rail-head">
             <div class="arch-section-label">After create</div>
           </div>
           <div class="cform-rail-body space-y-3 text-sm">
@@ -819,6 +968,58 @@
       </div>
 
     </div>{# /arch-workspace-grid #}
+
+    {% if not form.instance.pk %}
+    {% comment %}
+       ── Stage 3: Draft Readiness ──────────────────────────────
+       Every number here is computed client-side from the same required-
+       fields tracker driving the Readiness card above (no duplicate
+       source of truth) or from real context data (governance_panel).
+    {% endcomment %}
+    <div class="cform-intake-panel cform-mt-18">
+      <div class="cform-panel-head">
+        <div>
+          <div class="arch-section-label">Draft Readiness</div>
+          <h2 class="cform-panel-title">Review &amp; Route</h2>
+        </div>
+      </div>
+      <div class="cform-panel-body">
+        <div class="cform-readiness-grid">
+          <div>
+            <div class="cform-check-row"><span>Required fields completed</span><span class="cform-check-value tabular" id="cform-readiness-fields">—</span></div>
+            <div class="cform-check-row"><span>Approved template applied</span><span class="cform-check-value" id="cform-readiness-template">—</span></div>
+            <div class="cform-check-row"><span>Clause library available</span><span class="cform-check-value tabular">{{ governance_panel.clause_library_count }}</span></div>
+            <div class="cform-check-row"><span>Blocking errors</span><span class="cform-check-value tabular" id="cform-readiness-errors">—</span></div>
+            <div class="cform-check-row"><span>Audit trail</span><span class="cform-check-value">Ready on save</span></div>
+
+            <div class="cform-mt-16">
+              <div class="arch-section-label cform-mb-8">Risk summary</div>
+              <span class="cform-risk-pill" id="cform-risk-pill">Risk level: Low</span>
+              <p class="text-xs c-muted cform-mt-8" id="cform-risk-copy">Set below Medium/High/Critical risk if this draft carries elevated liability, cross-border data transfer, or non-standard terms.</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="arch-section-label cform-mb-8">Approval route</div>
+            <div class="cform-route-track">
+              {% for step in governance_panel.approval_route %}
+              <div class="cform-route-step{% if step.is_conditional %} is-conditional{% endif %}">
+                <div class="cform-route-step-dot">{{ forloop.counter }}</div>
+                <div class="cform-route-step-name">{{ step.name }}</div>
+                <div class="cform-route-step-note">{{ step.note }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs c-muted cform-disclaimer-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg>
+          AI-assisted drafting from approved templates and playbooks.
+        </p>
+      </div>
+    </div>
+    {% endif %}
 
   </form>
 
@@ -915,6 +1116,14 @@
 </script>
 {% endif %}
 
+{% comment %}
+Contract Launch Setup data: recommended template, playbook, review/approval
+route, and required fields per contract type. Computed once server-side
+(contracts/services/contract_launch_setup.py) and read here on every
+contract_type change — no per-keystroke request needed.
+{% endcomment %}
+{{ launch_setup_map|json_script:"launch-setup-data" }}
+
 {# ── Completion tracker JS ─────────────────────────────────── #}
 <script nonce="{{ csp_nonce }}">
 (function () {
@@ -939,7 +1148,27 @@
         legal: document.querySelector('[data-route-copy="legal"]'),
         approval: document.querySelector('[data-route-copy="approval"]'),
     };
+    const submitBtn = document.getElementById('submit-contract-btn');
+    const launchSetupCard = document.getElementById('launch-setup-card');
+    const launchSetupSubtitleEl = document.getElementById('launch-setup-subtitle');
+    const launchSetupTemplateCopyEl = document.getElementById('launch-setup-template-copy');
+    const launchSetupPlaybookCopyEl = document.getElementById('launch-setup-playbook-copy');
+    const contractCreateUrl = launchSetupCard?.dataset.createUrl || '';
     if (!form || !countEl || !barEl || !listEl) return;
+
+    // Contract Launch Setup: recommended template, playbook, review/approval
+    // route, and required fields per contract type — computed server-side
+    // (contracts/services/contract_launch_setup.py) so this stays a thin
+    // renderer, not a second copy of the routing policy.
+    let LAUNCH_SETUP = {};
+    const launchSetupDataEl = document.getElementById('launch-setup-data');
+    if (launchSetupDataEl) {
+        try {
+            const parsed = JSON.parse(launchSetupDataEl.textContent);
+            if (parsed && typeof parsed === 'object') LAUNCH_SETUP = parsed;
+        } catch (e) { /* leave LAUNCH_SETUP empty — page still works, just without setup guidance */ }
+    }
+    const DYNAMIC_REQUIRED_FIELD_NAMES = ['counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date', 'content'];
 
     function field(name) {
         return form.querySelector('[name="' + name + '"]');
@@ -973,41 +1202,132 @@
         return el.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     }
 
-    function updateRouting(missing) {
-        const typeEl = field('contract_type');
+    function applyDynamicRequiredAttributes(setup) {
+        const requiredSet = new Set((setup && setup.required_fields) || []);
+        DYNAMIC_REQUIRED_FIELD_NAMES.forEach(function (name) {
+            const el = field(name);
+            if (!el) return;
+            if (requiredSet.has(name)) el.setAttribute('required', 'required');
+            else el.removeAttribute('required');
+        });
+    }
+
+    function updateLaunchSetupCard(type, setup) {
+        const playbookRow = document.querySelector('[data-route-row="playbook"]');
+        if (launchSetupSubtitleEl) {
+            launchSetupSubtitleEl.textContent = setup
+                ? setup.contract_type_label
+                : 'Pick a contract type to see its recommended template and playbook.';
+        }
+        // Custom drafting route: a type with no LAUNCH_SETUP_CONFIG entry at
+        // all reads as an intentional, calm default — one clear statement —
+        // rather than two separate "nothing found" lines (template + playbook).
+        if (setup && setup.is_custom_drafting_route) {
+            if (launchSetupTemplateCopyEl) {
+                const titleEl = document.querySelector('[data-route-title="template"]');
+                if (titleEl) titleEl.textContent = 'Custom drafting route';
+                launchSetupTemplateCopyEl.textContent = 'No approved template is mapped yet. DocClad will create a governed intake record and route it for legal review.';
+            }
+            if (playbookRow) playbookRow.hidden = true;
+            return;
+        }
+        if (playbookRow) playbookRow.hidden = false;
+        const templateTitleEl = document.querySelector('[data-route-title="template"]');
+        if (templateTitleEl) templateTitleEl.textContent = 'Recommended template';
+        if (launchSetupTemplateCopyEl) {
+            if (setup && setup.template) {
+                const link = document.createElement('a');
+                link.href = contractCreateUrl ? (contractCreateUrl + '?template=' + setup.template.id) : ('?template=' + setup.template.id);
+                link.className = 'c-link';
+                link.textContent = setup.template.name;
+                launchSetupTemplateCopyEl.replaceChildren(link);
+            } else if (!type) {
+                launchSetupTemplateCopyEl.textContent = 'Select a contract type above.';
+            } else if (type === 'OTHER') {
+                launchSetupTemplateCopyEl.textContent = 'No template auto-selected for "Other" — pick a more specific type above, or start blank.';
+            } else {
+                launchSetupTemplateCopyEl.textContent = 'No approved template yet for this type — starting blank.';
+            }
+        }
+        if (launchSetupPlaybookCopyEl) {
+            launchSetupPlaybookCopyEl.textContent = setup && setup.playbook ? setup.playbook : 'No playbook mapped yet for this type.';
+        }
+    }
+
+    // Sections that stay collapsed unless the selected type actually
+    // requires a field inside them — "guided launcher," not a flat form.
+    const COLLAPSIBLE_FIELD_GROUPS = {
+        'legal-posture': ['governing_law', 'jurisdiction'],
+        'lifecycle-control': ['start_date', 'end_date'],
+        'draft-brief': ['content'],
+    };
+    const collapsibleEls = Array.from(document.querySelectorAll('[data-collapsible]'));
+    // Track sections we opened automatically so a later contract_type
+    // change can close them again without fighting a user who opened one
+    // by hand — any manual toggle stops this element from being managed.
+    collapsibleEls.forEach(function (details) {
+        details.addEventListener('toggle', function () {
+            if (details.dataset.autoToggling !== 'true') delete details.dataset.autoOpened;
+        });
+    });
+
+    function updateCollapsibleSections(setup) {
+        const requiredSet = new Set((setup && setup.required_fields) || []);
+        collapsibleEls.forEach(function (details) {
+            const key = details.dataset.collapsible;
+            const governedFields = COLLAPSIBLE_FIELD_GROUPS[key] || [];
+            const isRequiredNow = governedFields.some(name => requiredSet.has(name));
+            const note = details.querySelector('[data-collapsible-note]');
+            if (note) note.hidden = !isRequiredNow;
+
+            details.dataset.autoToggling = 'true';
+            if (isRequiredNow && !details.open) {
+                details.open = true;
+                details.dataset.autoOpened = 'true';
+            } else if (!isRequiredNow && details.dataset.autoOpened === 'true') {
+                details.open = false;
+                delete details.dataset.autoOpened;
+            }
+            details.dataset.autoToggling = 'false';
+        });
+    }
+
+    function updateDynamicRequiredStars(setup) {
+        const requiredSet = new Set((setup && setup.required_fields) || []);
+        document.querySelectorAll('[data-required-star]').forEach(function (star) {
+            star.hidden = !requiredSet.has(star.dataset.requiredStar);
+        });
+    }
+
+    function updateRouting(missing, type, setup) {
         const riskEl = field('risk_level');
         const valueEl = field('value');
         const endDateEl = field('end_date');
         const renewalEl = field('renewal_date');
-        const type = typeEl?.value || 'OTHER';
         const risk = riskEl?.value || 'LOW';
         const value = Number(valueEl?.value || 0);
-        const privacyFlag = type === 'DPA' || isChecked('data_transfer_flag') || isChecked('dpa_attached') || isChecked('scc_attached');
         const highRisk = risk === 'HIGH' || risk === 'CRITICAL';
         const monetaryReview = value >= 100000;
         const hasLifecycleDates = Boolean(endDateEl?.value || renewalEl?.value);
+        // A DPA-flavored signal on a *non-DPA* type (e.g. a Vendor Agreement
+        // that also involves cross-border data transfer) still bumps to
+        // privacy-led review — DPA itself already gets that framing from
+        // LAUNCH_SETUP, so this only needs to handle the other types.
+        const privacyFlag = type !== 'DPA' && (isChecked('data_transfer_flag') || isChecked('dpa_attached') || isChecked('scc_attached'));
 
         let nextAction = missing.length ? 'Complete intake' : 'Create contract';
         let legalTitle = 'Legal review';
-        let legalCopy = 'Counsel queue is determined by type, jurisdiction, and risk.';
+        let legalCopy = setup ? setup.review_route : 'Counsel queue is determined by type, jurisdiction, and risk.';
         let approvalTitle = 'Approval and signature';
-        let approvalCopy = 'Approval owners and signature method are selected after review.';
+        let approvalCopy = setup ? setup.approval_route : 'Approval owners and signature method are selected after review.';
 
         if (type === 'NDA' && !highRisk && !privacyFlag) {
             legalTitle = 'Streamlined legal review';
-            legalCopy = 'NDA request can use a lighter counsel check unless terms or risk change.';
-            approvalCopy = 'Business approval is usually optional for low-risk NDA intake.';
         } else if (privacyFlag) {
             legalTitle = 'Privacy-led legal review';
             legalCopy = 'DPA, SCC, or data-transfer signals will prepare privacy review before standard routing.';
             approvalTitle = 'Privacy approval and signature';
             approvalCopy = 'Approval path should confirm data-transfer posture before signature launch.';
-        } else if (type === 'MSA' || type === 'SOW' || type === 'VENDOR') {
-            legalTitle = 'Commercial counsel review';
-            legalCopy = selectedLabel(typeEl) + ' will route through commercial terms, liability, and operational review.';
-        } else if (type === 'SETTLEMENT') {
-            legalTitle = 'Dispute counsel review';
-            legalCopy = 'Settlement intake should route to counsel for authority, release, and payment checks.';
         }
 
         if (highRisk) {
@@ -1033,14 +1353,66 @@
         Object.values(routeRows).forEach(row => row?.classList.remove('is-active'));
         if (missing.length) {
             routeRows.draft?.classList.add('is-active');
-        } else if (privacyFlag || highRisk || type !== 'OTHER') {
+        } else if (privacyFlag || highRisk || (type && type !== 'OTHER')) {
             routeRows.legal?.classList.add('is-active');
         } else {
             routeRows.approval?.classList.add('is-active');
         }
     }
 
+    function updateGovernancePanel(type, setup) {
+        const templateEl = document.getElementById('cform-gov-template');
+        const playbookEl = document.getElementById('cform-gov-playbook');
+        if (templateEl) {
+            templateEl.textContent = (setup && setup.template) ? setup.template.name
+                : (type ? 'No approved template for this type yet' : 'Select a contract type above.');
+        }
+        if (playbookEl) {
+            playbookEl.textContent = (setup && setup.playbook) ? setup.playbook : 'No playbook mapped yet for this type.';
+        }
+    }
+
+    function updateReadiness(filled, total, missing, type, setup) {
+        const fieldsEl = document.getElementById('cform-readiness-fields');
+        const templateEl = document.getElementById('cform-readiness-template');
+        const errorsEl = document.getElementById('cform-readiness-errors');
+        const riskPillEl = document.getElementById('cform-risk-pill');
+        const riskCopyEl = document.getElementById('cform-risk-copy');
+        if (fieldsEl) fieldsEl.textContent = filled + ' / ' + total;
+        if (templateEl) templateEl.textContent = (setup && setup.template) ? setup.template.name : 'None';
+        if (errorsEl) errorsEl.textContent = String(missing);
+
+        const riskEl = field('risk_level');
+        const risk = riskEl ? riskEl.value : 'LOW';
+        const riskLabel = riskEl && riskEl.tagName === 'SELECT' ? selectedLabel(riskEl) : risk;
+        if (riskPillEl) {
+            const isLow = risk === 'LOW' || !risk;
+            riskPillEl.classList.toggle('is-low', isLow);
+            riskPillEl.textContent = 'Risk level: ' + (riskLabel || 'Low');
+        }
+        if (riskCopyEl) {
+            const dataFlag = isChecked('data_transfer_flag');
+            const reasons = [];
+            if (risk === 'HIGH' || risk === 'CRITICAL') reasons.push('Risk level set to ' + riskLabel.toLowerCase() + ' above');
+            if (dataFlag) reasons.push('Cross-border data transfer flagged in Privacy & risk');
+            if (missing > 0) reasons.push(missing + ' required field' + (missing === 1 ? '' : 's') + ' still outstanding');
+            riskCopyEl.textContent = reasons.length
+                ? reasons.join(' · ')
+                : 'No elevated risk signals detected from the fields completed so far.';
+        }
+    }
+
     function update() {
+        const typeEl = field('contract_type');
+        const type = typeEl ? typeEl.value : '';
+        const setup = type ? LAUNCH_SETUP[type] : null;
+
+        applyDynamicRequiredAttributes(setup);
+        updateCollapsibleSections(setup);
+        updateDynamicRequiredStars(setup);
+        updateLaunchSetupCard(type, setup);
+        updateGovernancePanel(type, setup);
+
         const required = getRequiredFields();
         const total    = required.length;
         if (total === 0) {
@@ -1048,6 +1420,8 @@
             sublabelEl.textContent = 'No required fields detected';
             listEl.innerHTML = '';
             if (blockerEl) blockerEl.textContent = 'None';
+            if (submitBtn) submitBtn.disabled = false;
+            updateReadiness(0, 0, 0, type, setup);
             return;
         }
         const filled  = required.filter(isFilled);
@@ -1059,7 +1433,7 @@
         barEl.style.width      = pct + '%';
 
         if (missing.length === 0) {
-            listEl.innerHTML = '<div class="flex items-center gap-2 text-xs" style="color:var(--msg-success-text)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
+            listEl.innerHTML = '<div class="flex items-center gap-2 text-xs cform-success-row"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>All required fields complete</div>';
             if (blockerEl) blockerEl.textContent = 'None';
         } else {
             listEl.innerHTML = missing.map(el =>
@@ -1067,7 +1441,9 @@
             ).join('');
             if (blockerEl) blockerEl.textContent = getLabelFor(missing[0]) + ' required';
         }
-        updateRouting(missing);
+        if (submitBtn) submitBtn.disabled = missing.length > 0;
+        updateRouting(missing, type, setup);
+        updateReadiness(filled.length, total, missing.length, type, setup);
     }
 
     form.addEventListener('input', update);

@@ -63,8 +63,8 @@ _LAW_FIRM_NAV = [
      'active': lambda n: n == 'dashboard', 'visible': _always},
 
     {'kind': 'section', 'label': 'EXECUTION'},
-    {'kind': 'item', 'label': 'New Contract', 'url_name': 'contracts:contract_create', 'icon': _ICON_PLUS,
-     'active': lambda n: n == 'contract_create', 'visible': _always},
+    {'kind': 'item', 'label': 'New Contract', 'url_name': 'contracts:contract_template_picker', 'icon': _ICON_PLUS,
+     'active': lambda n: n in ('contract_template_picker', 'contract_create', 'dpa_workflow_builder', 'msa_workflow_builder', 'nda_workflow_builder'), 'visible': _always},
     {'kind': 'item', 'label': 'Contract Workspace', 'url_name': 'contracts:contract_list', 'icon': _ICON_FOLDER,
      'active': lambda n: n in ('contract_list', 'contract_detail', 'contract_update'), 'visible': _always},
     {'kind': 'item', 'label': 'Repository', 'url_name': 'contracts:repository', 'icon': _ICON_ARCHIVE,

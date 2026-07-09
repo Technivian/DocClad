@@ -152,8 +152,12 @@ from .views_domains.contracts import (
     ContractUpdateView,
     RepositoryView,
     contract_ai_assistant,
+    contract_template_picker,
     dashboard,
 )
+from .views_domains.dpa_workflow import DPAWorkflowBuilderView
+from .views_domains.msa_workflow import MSAWorkflowBuilderView
+from .views_domains.nda_workflow import NDAWorkflowBuilderView
 from .views_domains.dpa_review import (
     DPAPlaybookListView,
     DPAReviewMemoView,

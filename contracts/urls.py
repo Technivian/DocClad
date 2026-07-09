@@ -8,10 +8,18 @@ from .views_domains.subscription import (
     billing_success,
     stripe_webhook,
 )
+from .views_domains.design_preview import (
+    design_preview_command_center,
+    design_preview_relationship_detail,
+    design_preview_review_studio,
+)
 
 app_name = 'contracts'
 
 urlpatterns = [
+    path('design-preview/command-center/', design_preview_command_center, name='design_preview_command_center'),
+    path('design-preview/relationships/acme/', design_preview_relationship_detail, name='design_preview_relationship_detail'),
+    path('design-preview/review-studio/', design_preview_review_studio, name='design_preview_review_studio'),
     path('scim/v2/Users', api_views.scim_users_api, name='scim_users_api'),
     path('scim/v2/Users/<str:scim_id>', api_views.scim_user_api, name='scim_user_api'),
     path('scim/v2/Groups', api_views.scim_groups_api, name='scim_groups_api'),
@@ -393,6 +401,10 @@ urlpatterns = [
     # Contracts
     path('', views.ContractListView.as_view(), name='contract_list'),
     path('<int:pk>/', views.ContractDetailView.as_view(), name='contract_detail'),
+    path('new/start/', views.contract_template_picker, name='contract_template_picker'),
+    path('new/msa/', views.MSAWorkflowBuilderView.as_view(), name='msa_workflow_builder'),
+    path('new/nda/', views.NDAWorkflowBuilderView.as_view(), name='nda_workflow_builder'),
+    path('new/dpa/', views.DPAWorkflowBuilderView.as_view(), name='dpa_workflow_builder'),
     path('new/', views.ContractCreateView.as_view(), name='contract_create'),
     path('<int:pk>/edit/', views.ContractUpdateView.as_view(), name='contract_update'),
     path('<int:pk>/add_note/', views.AddNegotiationNoteView.as_view(), name='add_negotiation_note'),

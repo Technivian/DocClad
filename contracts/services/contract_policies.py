@@ -5,13 +5,18 @@ from contracts.models import Contract
 
 DEFAULT_CONTRACT_REQUIRED_FIELD_POLICIES = {
     Contract.ContractType.NDA: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.NON_COMPETE: ('counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date'),
     Contract.ContractType.MSA: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.SOW: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.SUBCONTRACTOR_SOW: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.CONSULTING: ('counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date'),
     Contract.ContractType.EMPLOYMENT: ('counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date'),
     Contract.ContractType.LEASE: ('counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date'),
     Contract.ContractType.LICENSE: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.VENDOR: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.PURCHASE_ORDER: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.PARTNERSHIP: ('counterparty', 'governing_law', 'jurisdiction'),
+    Contract.ContractType.RESELLER: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.SETTLEMENT: ('counterparty', 'governing_law', 'jurisdiction'),
     Contract.ContractType.AMENDMENT: ('counterparty', 'governing_law', 'jurisdiction', 'content'),
 }

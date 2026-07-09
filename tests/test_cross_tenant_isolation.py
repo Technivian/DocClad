@@ -421,6 +421,19 @@ class NullOrganizationAuditCommandTest(TestCase):
 
         self.assertIn('No NULL organization rows found.', stdout.getvalue())
 
+    def test_audit_ignores_global_clause_template_seed_rows(self):
+        category = ClauseCategory.objects.create(name='Shared Library Category')
+        ClauseTemplate.objects.create(
+            title='Shared Library Clause',
+            category=category,
+            content='Shared system clause',
+        )
+        stdout = StringIO()
+
+        call_command('audit_null_organizations', stdout=stdout)
+
+        self.assertIn('No NULL organization rows found.', stdout.getvalue())
+
     def test_audit_fails_when_tenant_owned_row_has_null_org(self):
         Workflow.objects.create(title='Orphan Workflow')
         stdout = StringIO()

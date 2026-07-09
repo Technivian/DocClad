@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load docclad_format %}
+{% block title %}{{ company.name }} – DocClad{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .rel-header-meta { display: grid; grid-template-columns: repeat(6, auto); gap: 28px; margin-top: 14px; }
+  @media (max-width: 1100px) { .rel-header-meta { grid-template-columns: repeat(3, auto); row-gap: 14px; } }
+  .rel-meta-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .rel-meta-value { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 3px; }
+  .rel-meta-value.with-avatar { display: flex; align-items: center; gap: 6px; }
+  .rel-avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+
+  .rel-body-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr) 300px; gap: 18px; align-items: start; margin-top: 20px; }
+  @media (max-width: 1300px) { .rel-body-grid { grid-template-columns: 240px minmax(0, 1fr); } .rel-ai-rail { grid-column: 1 / -1; } }
+  @media (max-width: 900px) { .rel-body-grid { grid-template-columns: 1fr; } }
+
+  .rel-spine-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px;
+    text-decoration: none; border: 1px solid transparent;
+  }
+  .rel-spine-item:hover { background: var(--sidebar-hover); }
+  .rel-spine-item.active { background: var(--primary-subtle); border-color: var(--primary); }
+  .rel-spine-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--sidebar-hover); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-secondary); }
+  .rel-spine-item.active .rel-spine-icon { background: var(--primary); color: #fff; }
+  .rel-spine-icon svg { width: 14px; height: 14px; }
+  .rel-spine-title { font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  .rel-spine-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .rel-overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px 32px; padding: 16px 20px; }
+  .rel-overview-item-label { font-size: 11.5px; color: var(--text-muted); }
+  .rel-overview-item-value { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 3px; }
+  .rel-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #0A7264; display: inline-block; margin-right: 6px; }
+  [data-theme="dark"] .rel-status-dot { background: #55CDB7; }
+
+  .rel-oblig-table { width: 100%; border-collapse: collapse; }
+  .rel-oblig-table th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); padding: 0 20px 10px; border-bottom: 1px solid var(--border); }
+  .rel-oblig-table td { padding: 11px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .rel-oblig-table tr:last-child td { border-bottom: none; }
+  .rel-oblig-name { font-weight: 600; color: var(--text-primary); }
+  .rel-oblig-section { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+  .rel-health-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .rel-health-dot.on-track { background: #0A7264; } .rel-health-dot.due-soon { background: #C9911A; }
+  [data-theme="dark"] .rel-health-dot.on-track { background: #55CDB7; } [data-theme="dark"] .rel-health-dot.due-soon { background: #D9A75B; }
+
+  .rel-ai-summary { font-size: 13px; line-height: 1.55; color: var(--text-secondary); padding: 14px 18px 4px; }
+  .rel-ai-metric-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; }
+  .rel-ai-metric-label { font-size: 12.5px; color: var(--text-secondary); }
+  .rel-ai-metric-value { font-size: 14px; font-weight: 700; }
+  .rel-fit-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; margin: 0 18px 14px; overflow: hidden; }
+  .rel-fit-bar { height: 100%; background: var(--primary); border-radius: 3px; }
+  .rel-risk-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 6px 18px; font-size: 12.5px; }
+  .rel-risk-item-label { color: var(--text-secondary); }
+  .rel-nba-box { margin: 12px 18px 16px; padding: 12px 14px; background: var(--sidebar-hover); border-radius: 8px; font-size: 12.5px; color: var(--text-primary); line-height: 1.4; }
+
+  .rel-spine-list { padding: 8px; }
+  .rel-spine-footer { padding: 8px 16px 16px; }
+  .rel-block-btn { width: 100%; justify-content: center; display: flex; }
+  .rel-overview-card { margin-bottom: 16px; }
+  .rel-table-scroll { overflow-x: auto; }
+  .rel-rail-section-label { margin: 14px 18px 8px; }
+  .rel-top-risks-block { padding: 12px 18px 4px; }
+  .rel-fit-bar-computed { width: {{ ai_brief.playbook_fit }}%; }
+  .rel-cta-icon { width: 14px; height: 14px; }
+</style>
+
+<div class="page-wrap">
+
+  <a href="#" class="arch-back">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Relationships
+  </a>
+
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">{{ company.name }}</h1>
+        <span class="badge-sm badge-blue">{{ company.tier }}</span>
+      </div>
+      <div class="rel-header-meta">
+        <div><div class="rel-meta-label">Industry</div><div class="rel-meta-value">{{ company.industry }}</div></div>
+        <div><div class="rel-meta-label">Location</div><div class="rel-meta-value">{{ company.location }}</div></div>
+        <div><div class="rel-meta-label">Customer Since</div><div class="rel-meta-value">{{ company.customer_since }}</div></div>
+        <div><div class="rel-meta-label">Owner</div><div class="rel-meta-value with-avatar"><span class="rel-avatar">{{ company.owner|slice:":1" }}</span>{{ company.owner }}</div></div>
+        <div><div class="rel-meta-label">Total Contract Value</div><div class="rel-meta-value">{{ company.total_contract_value }}</div></div>
+        <div><div class="rel-meta-label">Active Contracts</div><div class="rel-meta-value">{{ company.active_contracts }}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rel-body-grid">
+
+    {# ── Relationship Spine ───────────────────────────────────── #}
+    <div class="ad-card">
+      <div class="ad-head"><span class="ad-head-title">Relationship Spine</span></div>
+      <div class="rel-spine-list">
+        {% for doc in spine %}
+        <a href="#" class="rel-spine-item {% if doc.active %}active{% endif %}">
+          <span class="rel-spine-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          </span>
+          <span>
+            <div class="rel-spine-title">{{ doc.title }}</div>
+            <div class="rel-spine-sub">{{ doc.type }} &middot; {{ doc.effective }}</div>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      <div class="rel-spine-footer">
+        <a href="#" class="btn-quiet rel-block-btn">+ Add Document</a>
+      </div>
+    </div>
+
+    {# ── Main content: tabs ───────────────────────────────────── #}
+    <div>
+      <div class="arch-tabs" role="tablist">
+        <button class="arch-tab tab-active" role="tab" aria-selected="true" data-tab="overview">Overview</button>
+        <button class="arch-tab" role="tab" aria-selected="false" data-tab="approvals">Approvals</button>
+        <button class="arch-tab" role="tab" aria-selected="false" data-tab="negotiation">Negotiation</button>
+        <button class="arch-tab" role="tab" aria-selected="false" data-tab="documents">Documents</button>
+        <button class="arch-tab" role="tab" aria-selected="false" data-tab="obligations">Obligations</button>
+        <button class="arch-tab" role="tab" aria-selected="false" data-tab="activity">Activity</button>
+      </div>
+
+      <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel">
+        <div class="ad-card rel-overview-card">
+          <div class="ad-head"><span class="ad-head-title">Contract Overview</span></div>
+          <div class="rel-overview-grid">
+            <div><div class="rel-overview-item-label">Type</div><div class="rel-overview-item-value">{{ overview.type }}</div></div>
+            <div><div class="rel-overview-item-label">Governing Law</div><div class="rel-overview-item-value">{{ overview.governing_law }}</div></div>
+            <div><div class="rel-overview-item-label">Status</div><div class="rel-overview-item-value"><span class="rel-status-dot"></span>{{ overview.status }}</div></div>
+            <div><div class="rel-overview-item-label">Contract Value</div><div class="rel-overview-item-value">{{ overview.contract_value }}</div></div>
+            <div><div class="rel-overview-item-label">Effective Date</div><div class="rel-overview-item-value">{{ overview.effective_date }}</div></div>
+            <div><div class="rel-overview-item-label">Expiration Date</div><div class="rel-overview-item-value">{{ overview.expiration_date }}</div></div>
+            <div><div class="rel-overview-item-label">Auto-Renewal</div><div class="rel-overview-item-value">{{ overview.auto_renewal }}</div></div>
+            <div><div class="rel-overview-item-label">Owning Team</div><div class="rel-overview-item-value">{{ overview.owning_team }}</div></div>
+            <div><div class="rel-overview-item-label">Playbook</div><div class="rel-overview-item-value c-link">{{ overview.playbook }}</div></div>
+          </div>
+        </div>
+
+        <div class="ad-card">
+          <div class="ad-head"><span class="ad-head-title">Key Obligations</span></div>
+          <div class="rel-table-scroll">
+            <table class="rel-oblig-table">
+              <thead><tr><th>Obligation</th><th>Owner</th><th>Due Date</th><th>Health</th></tr></thead>
+              <tbody>
+                {% for o in obligations %}
+                <tr>
+                  <td><div class="rel-oblig-name">{{ o.name }}</div><div class="rel-oblig-section">{{ o.section }}</div></td>
+                  <td class="c-muted">{{ o.owner }}</td>
+                  <td class="c-muted">{{ o.due }}</td>
+                  <td><span class="rel-health-dot {% if o.health == 'On Track' %}on-track{% else %}due-soon{% endif %}"></span>{{ o.health }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="ad-view-all-footer"><a href="#">View all obligations ({{ obligations_total }})</a></div>
+        </div>
+      </div>
+
+      <div id="tab-approvals" class="arch-tab-panel" role="tabpanel"><div class="ad-empty">No pending approvals for this relationship.</div></div>
+      <div id="tab-negotiation" class="arch-tab-panel" role="tabpanel"><div class="ad-empty">Negotiation history will appear here.</div></div>
+      <div id="tab-documents" class="arch-tab-panel" role="tabpanel"><div class="ad-empty">All documents for this relationship, beyond the spine above.</div></div>
+      <div id="tab-obligations" class="arch-tab-panel" role="tabpanel"><div class="ad-empty">Full obligations workspace for this relationship.</div></div>
+      <div id="tab-activity" class="arch-tab-panel" role="tabpanel"><div class="ad-empty">Activity log will appear here.</div></div>
+    </div>
+
+    {# ── AI Brief rail ─────────────────────────────────────────── #}
+    <div class="rel-ai-rail arch-context-rail">
+      <div class="ad-card">
+        <div class="ad-head"><span class="ad-head-title">Acme MSA Intelligence</span></div>
+        <div class="rel-ai-summary">
+          <div class="arch-section-label rel-rail-section-label">AI Brief</div>
+          {{ ai_brief.summary }}
+        </div>
+        <div class="rel-ai-metric-row">
+          <span class="rel-ai-metric-label">Risk Level</span>
+          <span class="rel-ai-metric-value c-danger">{{ ai_brief.risk_level }}</span>
+        </div>
+        <div class="rel-ai-metric-row">
+          <span class="rel-ai-metric-label">Playbook Fit</span>
+          <span class="rel-ai-metric-value c-primary">{{ ai_brief.playbook_fit }}%</span>
+        </div>
+        <div class="rel-fit-bar-wrap"><div class="rel-fit-bar rel-fit-bar-computed"></div></div>
+        <div class="rel-ai-metric-row">
+          <span class="rel-ai-metric-label">Revenue Impact</span>
+          <span class="rel-ai-metric-value c-link">{{ ai_brief.revenue_impact }}</span>
+        </div>
+
+        <div class="rel-top-risks-block">
+          <div class="arch-section-label rel-rail-section-label">Top Risks</div>
+          {% for risk in ai_brief.top_risks %}
+          <div class="rel-risk-item">
+            <span class="rel-risk-item-label">&bull; {{ risk.label }}</span>
+            <span class="badge-sm {% if risk.severity == 'High' %}badge-red{% else %}badge-yellow{% endif %}">{{ risk.severity }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="arch-section-label rel-rail-section-label">Next Best Action</div>
+        <div class="rel-nba-box">{{ ai_brief.next_best_action }}</div>
+      </div>
+
+      <a href="{% url 'contracts:design_preview_review_studio' %}" class="btn-cta rel-block-btn">
+        Open in Review Studio
+        <svg class="rel-cta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    const tabs   = document.querySelectorAll('.arch-tab[data-tab]');
+    const panels = document.querySelectorAll('.arch-tab-panel');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => { t.classList.toggle('tab-active', t === tab); t.setAttribute('aria-selected', t === tab ? 'true' : 'false'); });
+            panels.forEach(p => p.classList.toggle('panel-active', p.id === 'tab-' + tab.dataset.tab));
+        });
+    });
+})();
+</script>
+{% endblock %}
