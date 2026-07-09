@@ -181,11 +181,10 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for text in (
             'New NDA Draft',
-            'Mutual NDA · Netherlands · B2B',
-            'NDA Terms',
-            'AI Smart Questions',
+            'AI-assisted drafting from approved templates and playbooks.',
+            'Purpose and confidentiality scope',
+            'Review triggers',
             'Generate governed draft',
-            'Self-serve eligible',
         ):
             self.assertContains(response, text)
 
@@ -197,7 +196,6 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         for text in (
             'Generated NDA Draft',
-            'Self-serve eligible',
             'Send for signature',
             'Generate NDA summary',
             'Export Word',

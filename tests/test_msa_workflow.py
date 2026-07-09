@@ -186,13 +186,17 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for text in (
             'New MSA Draft',
-            'Enterprise Services MSA · Netherlands · B2B',
-            'Commercial Terms',
-            'AI Smart Questions',
+            'AI-assisted drafting from approved templates and playbooks.',
+            'MSA Commercial Review Workflow',
+            'Drafting inputs',
+            'Draft workspace',
+            'Workflow controls',
+            'Value, term, and notice',
+            'Review triggers',
             'Generate governed draft',
         ):
             self.assertContains(response, text)
-        self.assertContains(response, 'Services &amp; Scope')
+        self.assertContains(response, 'Service definition controls')
 
     def test_post_valid_redirects_to_msa_workspace(self):
         response = self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())

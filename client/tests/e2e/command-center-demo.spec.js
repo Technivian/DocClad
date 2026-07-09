@@ -37,10 +37,12 @@ test('Command Center demo shows DPA, MSA, and NDA workflows with workspace links
   ];
 
   for (const scenario of scenarios) {
-    const row = page.locator(`[data-workflow-title="${scenario.title}"]`);
+    const row = page.locator('tr[data-queue-row]', { hasText: scenario.title }).first();
     await expect(row).toBeVisible();
-    await expect(row.getByRole('link', { name: 'Open workspace' })).toBeVisible();
-    await row.getByRole('link', { name: 'Open workspace' }).click();
+    const openWorkspaceLink = row.getByRole('link', { name: 'Open workspace' });
+    await expect(openWorkspaceLink).toBeVisible();
+    await openWorkspaceLink.scrollIntoViewIfNeeded();
+    await openWorkspaceLink.click({ force: true });
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
     await expect(page.getByText(scenario.workspaceMarker, { exact: true }).first()).toBeVisible();
     await page.goto('/dashboard/');

@@ -339,7 +339,7 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         for label in ('Processing purpose', 'Personal data categories', 'Data subjects',
                       'Data Protection Officer contact', 'Cross-border transfer mechanism', 'Breach notification window'):
             self.assertIn(label, content)
-        self.assertIn('AI-assisted drafting from approved templates and playbooks.', content)
+        self.assertIn('Generated from approved template: GDPR Processor DPA · Netherlands · B2B', content)
 
     def test_get_renders_ai_smart_questions_with_why_it_matters_copy(self):
         response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
@@ -415,7 +415,6 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         self.assertEqual(workspace.status_code, 200)
         self.assertContains(workspace, 'Generated DPA Draft')
         self.assertContains(workspace, 'Workflow Timeline')
-        self.assertContains(workspace, 'AI-assisted drafting from approved templates and playbooks.')
         self.assertContains(workspace, 'GDPR Processor DPA · Netherlands · B2B')
         self.assertContains(workspace, 'Review DPA risk signals')
 

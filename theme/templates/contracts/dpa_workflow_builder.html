@@ -76,9 +76,6 @@
 .cform-clause.is-linked { border-color: rgba(10,114,100,.35); box-shadow: 0 0 0 2px rgba(10,114,100,.14); background: rgba(10,114,100,.05); }
 .cform-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .cform-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 10.5px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.cform-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
-.cform-source.ai, .cform-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
-.cform-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
 .cform-clause p:last-child { margin-bottom: 0; }
 
 .cform-gov-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
@@ -290,10 +287,6 @@
           <div class="cform-doc" id="dpa-draft-doc"></div>
         </div>
 
-        <p class="text-xs c-muted cform-disclaimer-row">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg>
-          AI-assisted drafting from approved templates and playbooks. Source-backed suggestions only — clause changes require legal approval.
-        </p>
       </div>
 
       {# ── AI Governance Panel ─────────────────────────────────── #}
@@ -327,10 +320,6 @@
                 <div class="cform-gov-copy" id="dpa-gov-approval-route">{% for step in approval_route %}{{ step.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div>
                 <div class="cform-gov-reasons" id="dpa-gov-approval-reasons"></div>
               </div>
-            </div>
-            <div class="cform-gov-item">
-              <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span>
-              <div><div class="cform-gov-title">Audit trail enabled</div><div class="cform-gov-copy">Every field edit is logged once this workflow starts</div></div>
             </div>
           </div>
         </div>
@@ -453,29 +442,29 @@
     // used on the post-generation Contract Workspace page.
     function describeParagraph(text, index) {
         if (index === 1) {
-            return { id: 'generated-dpa-draft', title: 'Generated DPA Draft', source: 'Approved template', tone: 'template' };
+            return { id: 'generated-dpa-draft', title: 'Generated DPA Draft' };
         }
         if (/Subject Matter|Categories of Data/.test(text)) {
-            return { id: 'processing-details', title: 'Processing Details', source: 'AI-assisted suggestion', tone: 'ai' };
+            return { id: 'processing-details', title: 'Processing Details' };
         }
         if (/Sub-processors/.test(text)) {
             const library = boolValue('subprocessors_used');
-            return { id: 'subprocessors', title: 'Subprocessor Clause', source: library ? 'Approved clause library' : 'Approved template', tone: library ? 'library' : 'template' };
+            return { id: 'subprocessors', title: 'Subprocessor Clause' };
         }
         if (/International Transfers/.test(text)) {
             const risk = boolValue('cross_border_transfer');
-            return { id: 'international-transfers', title: 'Transfer Clause', source: risk ? 'Risk-triggered fallback' : 'Approved template', tone: risk ? 'risk' : 'template' };
+            return { id: 'international-transfers', title: 'Transfer Clause' };
         }
         if (/Security\./.test(text)) {
-            return { id: 'security', title: 'Security Clause', source: 'Approved clause library', tone: 'library' };
+            return { id: 'security', title: 'Security Clause' };
         }
         if (/Breach Notification/.test(text)) {
-            return { id: 'breach-notification', title: 'Breach Notice Clause', source: 'Approved template', tone: 'template' };
+            return { id: 'breach-notification', title: 'Breach Notice Clause' };
         }
         if (/Governing Law/.test(text)) {
-            return { id: 'governing-law', title: 'Governing Law', source: 'Approved template', tone: 'template' };
+            return { id: 'governing-law', title: 'Governing Law' };
         }
-        return { id: 'dpa-clause-' + index, title: 'DPA Clause', source: 'Approved template', tone: 'template' };
+        return { id: 'dpa-clause-' + index, title: 'DPA Clause' };
     }
 
     function renderLivePreview() {
@@ -500,8 +489,7 @@
             if (index === 0) return '<h2>' + text + '</h2>';
             const meta = describeParagraph(text, index);
             return '<article class="cform-clause" id="' + meta.id + '">'
-                + '<div class="cform-clause-head"><span class="cform-clause-title">' + escapeHtml(meta.title) + '</span>'
-                + '<span class="cform-source ' + meta.tone + '">' + escapeHtml(meta.source) + '</span></div>'
+                + '<div class="cform-clause-head"><span class="cform-clause-title">' + escapeHtml(meta.title) + '</span></div>'
                 + body + '</article>';
         }).join('');
     }

@@ -1,0 +1,11 @@
+<section class="dc-ds-surface{% if class_name %} {{ class_name }}{% endif %}"{% if labelledby %} aria-labelledby="{{ labelledby }}"{% endif %}>
+  {% if title or meta_template %}
+    <div class="dc-ds-surface__head">
+      {% if title %}<h2 class="dc-ds-surface__title"{% if labelledby %} id="{{ labelledby }}"{% endif %}>{{ title }}</h2>{% endif %}
+      {% if meta_template %}{% include meta_template %}{% endif %}
+    </div>
+  {% endif %}
+  <div class="dc-ds-surface__body">
+    {% if body_template %}{% include body_template %}{% endif %}
+  </div>
+</section>

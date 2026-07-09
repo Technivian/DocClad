@@ -1,0 +1,8 @@
+<div class="dc-ds-alert{% if tone %} dc-ds-alert--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}" role="{% if role %}{{ role }}{% else %}status{% endif %}">
+  {% if icon %}<span aria-hidden="true">{{ icon }}</span>{% endif %}
+  <div>
+    {% if title %}<strong>{{ title }}</strong>{% endif %}
+    {% if message %}<div>{{ message }}</div>{% endif %}
+    {% if body_template %}{% include body_template %}{% endif %}
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<div class="dc-ds-work-row{% if class_name %} {{ class_name }}{% endif %}">
+  <div>
+    <div class="dc-ds-work-row__title">{{ title }}</div>
+    {% if meta %}<div class="dc-ds-work-row__meta">{{ meta }}</div>{% endif %}
+  </div>
+  <div>{% if type_label %}{% include "design_system/status_badge.html" with label=type_label tone=type_tone %}{% endif %}</div>
+  <div>{% if stage_label %}{% include "design_system/workflow_phase_badge.html" with label=stage_label %}{% endif %}</div>
+  <div>{% if risk_label %}{% include "design_system/status_badge.html" with label=risk_label tone=risk_tone %}{% endif %}</div>
+  <div class="dc-ds-actions">
+    {% if href %}<a class="dc-ds-button" href="{{ href }}">{{ action_label|default:"Open" }}</a>{% endif %}
+  </div>
+</div>

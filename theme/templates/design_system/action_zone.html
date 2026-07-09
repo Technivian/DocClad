@@ -1,0 +1,5 @@
+<div class="dc-ds-action-zone{% if class_name %} {{ class_name }}{% endif %}">
+  {% if label %}<div class="dc-ds-action-zone__label">{{ label }}</div>{% endif %}
+  {% if title %}<div class="dc-ds-action-zone__title">{{ title }}</div>{% endif %}
+  {% if actions_template %}<div class="dc-ds-actions">{% include actions_template %}</div>{% endif %}
+</div>

@@ -34,9 +34,6 @@
 .nda-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
 .nda-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
 .nda-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.nda-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
-.nda-source.ai, .nda-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
-.nda-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
 .nda-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
 .nda-rail-item:last-child { border-bottom: none; }
 .nda-rail-dot { width: 21px; height: 21px; border-radius: 6px; flex: 0 0 auto; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
@@ -67,7 +64,6 @@
   <section class="nda-ws-header">
     <div class="nda-ws-title-row">
       <div>
-        <div class="nda-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
         <h1 class="nda-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
         <p class="nda-ws-subtitle">{{ workflow.title }} · Mutual NDA · Netherlands · B2B</p>
         <div class="nda-ws-actions">
@@ -104,17 +100,15 @@
   <div class="nda-ws-grid">
     <main>
       <section class="nda-ws-card">
-        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Generated NDA Draft</div><span class="nda-ws-badge light">{% if nda_workspace.self_serve_eligible %}Self-serve eligible{% else %}Governed review active{% endif %}</span></div>
+        <div class="nda-ws-card-head"><div class="nda-ws-card-title">Generated NDA Draft</div></div>
         <div class="nda-ws-card-body">
           <div class="nda-doc">
             {% for section in nda_workspace.document_sections %}
             <article class="nda-clause" id="{{ section.section_id }}">
               <div class="nda-clause-head">
                 <div class="nda-clause-title">{{ section.title }}</div>
-                <span class="nda-source {{ section.tone }}">{{ section.source }}</span>
               </div>
               <p>{{ section.content|linebreaksbr }}</p>
-              <div class="nda-rail-copy">{{ section.source_detail }}</div>
               {% if section.fields %}
               <div class="nda-field-chip-row">
                 {% for field in section.fields %}
@@ -160,7 +154,6 @@
           <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Clause library active</div><div class="nda-rail-copy">Approved confidentiality, privacy, and governing law fallback clauses available</div></div></div>
           <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Risk checks active</div><div class="nda-rail-copy">Confidentiality, privacy, residual knowledge, and governing law checks ran</div></div></div>
           <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Approval route</div><div class="nda-rail-copy">{% for approval in nda_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
-          <div class="nda-rail-item"><span class="nda-rail-dot">✓</span><div><div class="nda-rail-title">Audit trail enabled</div><div class="nda-rail-copy">{{ nda_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
         </div>
       </section>
 

@@ -1,0 +1,7 @@
+<form class="dc-ds-filterbar{% if class_name %} {{ class_name }}{% endif %}" method="{{ method|default:'get' }}"{% if action %} action="{{ action }}"{% endif %}>
+  <input class="dc-ds-filterbar__search" type="search" name="{{ search_name|default:'q' }}" value="{{ search_value|default:'' }}" placeholder="{{ placeholder|default:'Search' }}">
+  <div class="dc-ds-actions">
+    {% if filters_template %}{% include filters_template %}{% endif %}
+    <button class="dc-ds-button" type="submit">{{ submit_label|default:"Search" }}</button>
+  </div>
+</form>

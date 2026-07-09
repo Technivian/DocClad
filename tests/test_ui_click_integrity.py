@@ -65,6 +65,8 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             email='uiowner@example.com',
         )
         self.organization = Organization.objects.create(name='UI Test Org', slug='ui-test-org')
+        self.organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        self.organization.save(update_fields=['workspace_mode'])
         OrganizationMembership.objects.create(
             organization=self.organization,
             user=self.user,
@@ -160,16 +162,13 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
         self.assertContains(dashboard_response, 'Needs Legal Review')
-        # Command Center redesign renamed "Priority Work Queue" -> "Priority
-        # Queue" and replaced the "Waiting on Me" queue tab with filter pills
-        # (All / Needs Legal / High Risk / Overdue / Approvals).
-        self.assertContains(dashboard_response, 'Priority Queue')
-        self.assertContains(dashboard_response, 'Needs Legal')
+        self.assertContains(dashboard_response, 'Priority Legal Work Queue')
+        self.assertContains(dashboard_response, 'Top Review Blockers')
 
         list_response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(list_response.status_code, 200)
-        self.assertContains(list_response, 'Cases')
-        self.assertContains(list_response, 'Search contracts...')
+        self.assertContains(list_response, 'Contract Workspace')
+        self.assertContains(list_response, 'Search active contract work...')
         # The page header no longer duplicates the create CTA ("New Case"
         # pointed at the same route); the top bar carries the single
         # "New Contract" entry point on every page.

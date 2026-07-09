@@ -122,6 +122,54 @@ def _date_from_datetime(value):
     return value
 
 
+def _format_due_label(due_date, today):
+    if not due_date:
+        return 'No due date'
+    if due_date < today:
+        return 'Overdue'
+    if due_date == today:
+        return 'Today'
+    delta_days = (due_date - today).days
+    if delta_days <= 7:
+        return f'{delta_days} day' if delta_days == 1 else f'{delta_days} days'
+    return due_date.strftime('%d %b %Y')
+
+
+def _format_due_note(due_date, today):
+    if not due_date:
+        return 'No SLA'
+    if due_date < today:
+        return due_date.strftime('%d %b %Y')
+    if due_date == today:
+        return 'Requires action today'
+    delta_days = (due_date - today).days
+    if delta_days <= 7:
+        return 'Due this week'
+    if delta_days <= 30:
+        return 'Due this month'
+    return due_date.strftime('%d %b %Y')
+
+
+def _derive_work_type(item, contract_type, risk_personality):
+    if item.source_type == CommandCenterWorkItem.SourceType.WORKFLOW:
+        if contract_type == 'DPA':
+            return 'DPA review'
+        if contract_type == 'MSA':
+            return 'Legal review'
+        if contract_type == 'NDA' and risk_personality == 'Self-serve eligible':
+            return 'Signature'
+        return 'Workflow'
+    if item.source_type == CommandCenterWorkItem.SourceType.APPROVAL:
+        return 'Approval'
+    if item.source_type == CommandCenterWorkItem.SourceType.DEADLINE:
+        return 'Renewal'
+    if item.source_type == CommandCenterWorkItem.SourceType.DPA_CONFLICT:
+        return 'Privacy review'
+    if item.source_type == CommandCenterWorkItem.SourceType.RISK:
+        return 'Risk review'
+    return item.item_type or item.get_source_type_display()
+
+
 def _work_item_href(item):
     if item.action_path:
         return item.action_path
@@ -175,6 +223,8 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
     if not highest_risk_signal and risk_personality == 'Self-serve eligible':
         highest_risk_signal = 'No legal risk detected'
 
+    work_type = _derive_work_type(item, contract_type, risk_personality)
+
     return {
         'title': item.title,
         'href': _work_item_href(item),
@@ -195,16 +245,20 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
         'status_badge_class': 'badge-red' if item.status == CommandCenterWorkItem.Status.BLOCKED else 'badge-blue',
         'action_label': item.action_label,
         'item_type': item.item_type or item.get_source_type_display(),
+        'work_type': work_type,
         'contract_type': contract_type,
         'stage': stage,
         'current_stage': flags.get('current_stage', stage),
         'risk_level': item.risk_level,
+        'risk_label': item.get_risk_level_display() if item.risk_level else 'No legal risk detected',
         'risk_personality': risk_personality,
         'highest_risk_signal': highest_risk_signal,
         'blocking_issue': blocking_issue,
         'next_action': next_action,
         'approval_route': flags.get('approval_route', ''),
         'counterparty': counterparty,
+        'due_label': _format_due_label(due_date, today),
+        'due_note': _format_due_note(due_date, today),
         'is_workflow': item.source_type == CommandCenterWorkItem.SourceType.WORKFLOW,
         'filter_mine': bool(current_user and item.owner_id == current_user.id),
         'filter_dpa': item.source_type == CommandCenterWorkItem.SourceType.DPA_CONFLICT or (contract and contract.contract_type == 'DPA'),

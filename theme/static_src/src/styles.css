@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./base.css";
 @import "./components.css";
+@import "./design-system/index.css";
 
 /**
   * A catch-all path to Django template files, JavaScript, and Python files

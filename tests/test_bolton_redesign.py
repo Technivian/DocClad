@@ -26,6 +26,10 @@ class BoltonRedesignTestCase(TestCase):
         # Set feature flag
         os.environ['FEATURE_REDESIGN'] = 'true'
 
+    def _enable_clm_dashboard(self):
+        self.organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        self.organization.save(update_fields=['workspace_mode'])
+
     def _seed_contract(self):
         """The KPI strip and portfolio panels only render once the workspace
         has data; empty workspaces get the onboarding checklist instead."""
@@ -39,14 +43,15 @@ class BoltonRedesignTestCase(TestCase):
 
     def test_dashboard_kpi_cards(self):
         self._seed_contract()
+        self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Awaiting Approval')
-        self.assertContains(response, 'Signature Pending')
-        self.assertContains(response, 'Expiring Soon')
-        self.assertContains(response, 'ad-priority-card')
+        self.assertContains(response, 'Exposure Review')
+        self.assertContains(response, 'Blocked')
+        self.assertContains(response, 'Notice / Renewal Risk')
+        self.assertContains(response, 'Priority Legal Work Queue')
 
     def test_dashboard_empty_state_hides_kpis(self):
         response = self.client.get(reverse('dashboard'))
@@ -80,15 +85,15 @@ class BoltonRedesignTestCase(TestCase):
         # risk watch/activity). The old placeholder-only "Recent Contracts" /
         # "Case Portfolio" panels were removed as part of that conversion.
         self._seed_contract()
+        self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'In Progress')
-        self.assertContains(response, 'Waiting on Me')
-        self.assertContains(response, 'Needs Review')
-        self.assertContains(response, 'Renewals')
-        self.assertContains(response, 'Completed')
-        self.assertContains(response, 'Upcoming Deadlines')
-        self.assertContains(response, 'Recent Activity')
+        self.assertContains(response, 'Priority Legal Work Queue')
+        self.assertContains(response, 'Lifecycle Status Overview')
+        self.assertContains(response, 'Top Review Blockers')
+        self.assertContains(response, 'Queue Health')
+        self.assertContains(response, 'Upcoming Obligations')
+        self.assertContains(response, 'Recent Review Memos')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(
@@ -102,18 +107,18 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Title')
-        self.assertContains(response, 'Contract type')
-        self.assertContains(response, 'Stage')
-        self.assertContains(response, 'Complexity')
+        self.assertContains(response, 'Contract')
         self.assertContains(response, 'Counterparty')
+        self.assertContains(response, 'Stage')
+        self.assertContains(response, 'Last activity')
+        self.assertContains(response, 'Risk')
         self.assertContains(response, 'Test Contract')
 
     def test_contracts_list_filters_and_actions(self):
         response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Search contracts...')
-        self.assertContains(response, 'In progress')
+        self.assertContains(response, 'Search active contract work...')
+        self.assertContains(response, 'All')
         self.assertContains(response, 'Search')
         self.assertContains(response, 'New Contract')
 

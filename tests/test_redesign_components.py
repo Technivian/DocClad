@@ -26,6 +26,10 @@ class RedesignComponentsTestCase(TestCase):
         self.client.login(username='testuser', password='testpass123')
         os.environ['FEATURE_REDESIGN'] = 'true'
 
+    def _enable_clm_dashboard(self):
+        self.organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        self.organization.save(update_fields=['workspace_mode'])
+
     def test_dashboard_component_labels(self):
         # The priority action strip and the workflow queue render on the
         # populated dashboard; empty workspaces get the onboarding checklist
@@ -38,13 +42,14 @@ class RedesignComponentsTestCase(TestCase):
             status='ACTIVE',
             created_by=self.user,
         )
+        self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Needs Legal Review')
         self.assertContains(response, 'Component Label Contract')
-        self.assertContains(response, 'Needs Review')
-        self.assertContains(response, 'Renewals')
-        self.assertContains(response, 'Recent Activity')
+        self.assertContains(response, 'Priority Legal Work Queue')
+        self.assertContains(response, 'Lifecycle Status Overview')
+        self.assertContains(response, 'Recent Review Memos')
 
     def test_contracts_list_core_components(self):
         Contract.objects.create(
@@ -58,8 +63,8 @@ class RedesignComponentsTestCase(TestCase):
         response = self.client.get(reverse('contracts:contract_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Test Contract')
-        self.assertContains(response, 'Search contracts...')
-        self.assertContains(response, 'In progress')
+        self.assertContains(response, 'Search active contract work...')
+        self.assertContains(response, 'All')
         self.assertContains(response, 'New Contract')
 
     def test_navigation_structure(self):

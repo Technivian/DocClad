@@ -36,9 +36,6 @@
 .dpa-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
 .dpa-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
 .dpa-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.dpa-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
-.dpa-source.ai, .dpa-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
-.dpa-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
 .dpa-highlight { background: var(--primary-subtle); color: var(--primary); border-radius: 4px; padding: 1px 4px; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 750; }
 .dpa-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
 .dpa-rail-item:last-child { border-bottom: none; }
@@ -70,7 +67,6 @@
   <section class="dpa-ws-header">
     <div class="dpa-ws-title-row">
       <div>
-        <div class="dpa-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
         <h1 class="dpa-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
         <p class="dpa-ws-subtitle">{{ workflow.title }} · GDPR Processor DPA · Netherlands · B2B</p>
         <div class="dpa-ws-actions">
@@ -117,10 +113,8 @@
             <article class="dpa-clause" id="{{ section.section_id }}">
               <div class="dpa-clause-head">
                 <div class="dpa-clause-title">{{ section.title }}</div>
-                <span class="dpa-source {{ section.tone }}">{{ section.source }}</span>
               </div>
               <p>{{ section.content|linebreaksbr }}</p>
-              <div class="dpa-rail-copy">{{ section.source_detail }}</div>
               {% if section.fields %}
               <div class="dpa-field-chip-row" aria-label="Highlighted mapped fields">
                 {% for field in section.fields %}
@@ -169,7 +163,6 @@
           <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Clause library active</div><div class="dpa-rail-copy">Approved SCC and subprocessor fallback clauses available</div></div></div>
           <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Risk checks active</div><div class="dpa-rail-copy">Personal data, EEA/SCC, subprocessor, DPO, and breach-window checks ran</div></div></div>
           <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Approval route</div><div class="dpa-rail-copy">{% for approval in dpa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
-          <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Audit trail enabled</div><div class="dpa-rail-copy">{{ dpa_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
         </div>
       </section>
 

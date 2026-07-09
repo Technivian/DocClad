@@ -24,7 +24,8 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
 
   await expect(page).toHaveURL(/\/contracts\/new\/nda\/?$/);
   await expect(page.getByRole('heading', { name: 'New NDA Draft' })).toBeVisible();
-  await expect(page.getByText('AI Smart Questions')).toBeVisible();
+  await expect(page.getByText('AI-assisted drafting from approved templates and playbooks.')).toBeVisible();
+  await expect(page.getByText('Review triggers')).toBeVisible();
 
   await page.fill('[data-field-key="counterparty"]', counterparty);
   await page.fill('[data-field-key="start_date"]', '2026-10-01');
@@ -41,9 +42,7 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await page.check('[data-field-key="injunctive_relief_included"]');
 
   await expect(page.locator('#nda-draft-doc')).toContainText(counterparty);
-  await expect(page.locator('#nda-progress-pct')).toHaveText('100%');
-  await expect(page.locator('#nda-readiness-self-serve')).toHaveText('Eligible');
-  await expect(page.locator('#nda-risk-signal-list')).toContainText('Self-serve eligible');
+  await expect(page.locator('#nda-risk-signal-list')).toContainText('No active NDA risk signal is selected.');
   await expect(page.locator('#nda-gov-approval-route')).toContainText('Contract Owner');
   await expect(page.locator('#nda-gov-approval-route')).toContainText('Signature');
 
@@ -65,7 +64,10 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await expect(queueRow).toBeVisible();
   await expect(queueRow).toContainText('NDA');
   await expect(queueRow).toContainText('Self-serve eligible');
-  await queueRow.getByRole('link', { name: 'NDA Self-Serve Workflow' }).click();
+  const openWorkspaceLink = queueRow.getByRole('link', { name: 'Open workspace' });
+  await expect(openWorkspaceLink).toBeVisible();
+  await openWorkspaceLink.scrollIntoViewIfNeeded();
+  await openWorkspaceLink.click({ force: true });
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
 });

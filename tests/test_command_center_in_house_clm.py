@@ -34,7 +34,11 @@ User = get_user_model()
 
 class CommandCenterDashboardTests(TestCase):
     def setUp(self):
-        self.org = Organization.objects.create(name='Command Center Org', slug='command-center-org')
+        self.org = Organization.objects.create(
+            name='Command Center Org',
+            slug='command-center-org',
+            workspace_mode=Organization.WorkspaceMode.IN_HOUSE_CLM,
+        )
         self.user = User.objects.create_user(username='command_center_user', password='testpass123!')
         OrganizationMembership.objects.create(
             organization=self.org,
@@ -72,12 +76,12 @@ class CommandCenterDashboardTests(TestCase):
 
     def test_metric_cards_render(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Direct action')
-        self.assertContains(response, 'Exposure review')
+        self.assertContains(response, 'Needs Legal Review')
+        self.assertContains(response, 'Exposure Review')
         self.assertContains(response, 'Blocked')
-        self.assertContains(response, 'Notice risk')
-        self.assertContains(response, '€4.7M')
-        self.assertContains(response, 'Deadlines next 30 days')
+        self.assertContains(response, 'Notice / Renewal Risk')
+        self.assertContains(response, 'Commercial exposure under review')
+        self.assertContains(response, 'Deadlines in the next 30 days')
 
     def test_priority_queue_and_right_rail_render(self):
         # Priority Queue is wired to real in-progress contracts, not hardcoded
@@ -92,17 +96,15 @@ class CommandCenterDashboardTests(TestCase):
             created_by=self.user,
         )
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Priority Queue')
-        self.assertContains(response, 'Acme MSA Renewal')
+        self.assertContains(response, 'Priority Legal Work Queue')
         self.assertContains(response, 'My Queue')
         self.assertContains(response, 'DPA Conflicts')
-        self.assertContains(response, 'Kanban')
-        self.assertContains(response, 'Calendar')
-        self.assertContains(response, 'Risk Intelligence')
-        self.assertContains(response, 'Command Rail')
+        self.assertContains(response, 'Lifecycle Status Overview')
+        self.assertContains(response, 'Top Review Blockers')
+        self.assertContains(response, 'Queue Health')
         self.assertContains(response, 'Blocking approvals')
-        self.assertContains(response, 'Upcoming notice dates')
-        self.assertContains(response, 'Recommended Actions')
+        self.assertContains(response, 'Upcoming Obligations')
+        self.assertContains(response, 'Recent Review Memos')
 
     def test_dashboard_uses_persisted_command_center_model(self):
         CommandCenterSavedView.objects.create(
@@ -156,7 +158,7 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'MSA cap mismatch')
         self.assertContains(response, 'Counsel review')
         self.assertContains(response, 'Resolve')
-        self.assertContains(response, 'Persisted risk rail')
+        self.assertContains(response, 'Recent Review Memos')
 
     def test_refresh_projection_materializes_source_records(self):
         DPARiskItem.objects.create(

@@ -6,6 +6,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from contracts.models import Contract
+from contracts.models import Organization
 from contracts.tenancy import get_user_organization
 
 
@@ -19,6 +20,12 @@ class RedesignLayoutTests(TestCase):
         )
         os.environ['FEATURE_REDESIGN'] = 'true'
         self.client.login(username='testuser', password='testpass123')
+
+    def _enable_clm_dashboard(self):
+        organization = get_user_organization(self.user)
+        organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        organization.save(update_fields=['workspace_mode'])
+        return organization
 
     def test_base_shell_and_theme_controls(self):
         response = self.client.get(reverse('dashboard'))
@@ -53,7 +60,7 @@ class RedesignLayoutTests(TestCase):
         # populated dashboard; empty workspaces get the onboarding checklist
         # instead. Seed a contract in the organization the login flow
         # auto-provisioned for this user.
-        organization = get_user_organization(self.user)
+        organization = self._enable_clm_dashboard()
         Contract.objects.create(
             organization=organization,
             title='Layout Contract',
@@ -62,20 +69,18 @@ class RedesignLayoutTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
-        # Command Center's four KPI cards (replaced the old Needs Legal
-        # Review / Awaiting Approval / Signature Pending / Expiring Soon set).
-        self.assertContains(response, 'DPA / MSA Conflicts')
+        self.assertContains(response, 'Command Center')
         self.assertContains(response, 'Needs Legal Review')
-        self.assertContains(response, 'Approvals in Your Queue')
-        self.assertContains(response, 'Renewals')
-        self.assertContains(response, 'Priority Queue')
+        self.assertContains(response, 'Exposure Review')
+        self.assertContains(response, 'Notice / Renewal Risk')
+        self.assertContains(response, 'Priority Legal Work Queue')
         self.assertContains(response, 'Layout Contract')
 
     def test_dashboard_right_rail(self):
         # The right rail (risk intelligence/recommended actions) only
         # renders on the populated dashboard; an empty workspace gets the
         # onboarding checklist instead.
-        organization = get_user_organization(self.user)
+        organization = self._enable_clm_dashboard()
         Contract.objects.create(
             organization=organization,
             title='Right Rail Contract',
@@ -85,10 +90,9 @@ class RedesignLayoutTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'New Contract')
-        # Command Center's right rail (replaced Upcoming Deadlines / Risk
-        # Watch / Recent Activity with Risk Intelligence + Recommended Actions).
-        self.assertContains(response, 'Risk Intelligence')
-        self.assertContains(response, 'Recommended Actions')
+        self.assertContains(response, 'Upcoming Obligations')
+        self.assertContains(response, 'High-Attention Records')
+        self.assertContains(response, 'Recent Review Memos')
 
     def tearDown(self):
         if 'FEATURE_REDESIGN' in os.environ:

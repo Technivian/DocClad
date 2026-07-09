@@ -1,0 +1,58 @@
+/*
+  DocClad Django adapter tokens for the extracted Carelane design system.
+  Additive only: all tokens are --ds-* so they do not replace existing
+  DocClad --primary/--card/--border variables until pages opt in.
+*/
+:root {
+  --ds-color-shell: #0B1330;
+  --ds-color-shell-border: #1C2842;
+  --ds-color-canvas: #F3F5F7;
+  --ds-color-surface: #FFFFFF;
+  --ds-color-surface-muted: #EDF0F4;
+  --ds-color-surface-raised: #FFFFFF;
+  --ds-color-border: #DEE2EA;
+  --ds-color-border-strong: #C9CFDB;
+  --ds-color-text: #0B1330;
+  --ds-color-text-secondary: #5F6B85;
+  --ds-color-text-muted: #838DA3;
+  --ds-color-trust: #0A7264;
+  --ds-color-trust-hover: #085C51;
+  --ds-color-trust-soft: rgba(10, 114, 100, 0.08);
+  --ds-color-action: #B5502E;
+  --ds-color-action-hover: #964226;
+  --ds-color-action-soft: rgba(181, 80, 46, 0.08);
+  --ds-color-attention: #8A5A14;
+  --ds-color-attention-soft: #F6EDD8;
+  --ds-color-danger: #A63A2B;
+  --ds-color-danger-soft: #F8E8E3;
+  --ds-color-success: #0A7264;
+  --ds-color-success-soft: #DBF2EC;
+
+  --ds-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ds-font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --ds-text-xs: 11px;
+  --ds-text-sm: 12px;
+  --ds-text-md: 14px;
+  --ds-text-lg: 16px;
+  --ds-text-xl: 20px;
+  --ds-text-title: 30px;
+  --ds-line-tight: 1.2;
+  --ds-line-base: 1.45;
+
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 6px;
+  --ds-radius-lg: 8px;
+  --ds-radius-pill: 999px;
+
+  --ds-shadow-hairline: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --ds-focus-ring: 0 0 0 2px rgba(10, 114, 100, 0.18);
+}

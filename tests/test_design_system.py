@@ -18,6 +18,10 @@ class DesignSystemTests(TestCase):
             password='testpass123',
         )
 
+    def _enable_clm_dashboard(self, organization):
+        organization.workspace_mode = Organization.WorkspaceMode.IN_HOUSE_CLM
+        organization.save(update_fields=['workspace_mode'])
+
     def test_dashboard_loads_with_feature_flag_enabled(self):
         os.environ['FEATURE_REDESIGN'] = 'true'
         # The KPI strip only renders on a populated dashboard; empty
@@ -29,6 +33,7 @@ class DesignSystemTests(TestCase):
             role=OrganizationMembership.Role.OWNER,
             is_active=True,
         )
+        self._enable_clm_dashboard(organization)
         Contract.objects.create(
             organization=organization,
             title='DS Contract',

@@ -33,9 +33,6 @@
 .msa-clause.is-linked { border-color: rgba(10,114,100,.32); box-shadow: 0 0 0 2px rgba(10,114,100,.12); background: rgba(10,114,100,.05); }
 .msa-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
 .msa-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 11px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.msa-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; }
-.msa-source.ai, .msa-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
-.msa-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
 .msa-rail-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
 .msa-rail-item:last-child { border-bottom: none; }
 .msa-rail-dot { width: 21px; height: 21px; border-radius: 6px; flex: 0 0 auto; background: var(--primary-subtle); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
@@ -66,7 +63,6 @@
   <section class="msa-ws-header">
     <div class="msa-ws-title-row">
       <div>
-        <div class="msa-ws-badge">AI-assisted drafting from approved templates and playbooks.</div>
         <h1 class="msa-ws-title">{{ workflow.contract.title|default:workflow.title }}</h1>
         <p class="msa-ws-subtitle">{{ workflow.title }} · Enterprise Services MSA · Netherlands · B2B</p>
         <div class="msa-ws-actions">
@@ -110,10 +106,8 @@
             <article class="msa-clause" id="{{ section.section_id }}">
               <div class="msa-clause-head">
                 <div class="msa-clause-title">{{ section.title }}</div>
-                <span class="msa-source {{ section.tone }}">{{ section.source }}</span>
               </div>
               <p>{{ section.content|linebreaksbr }}</p>
-              <div class="msa-rail-copy">{{ section.source_detail }}</div>
               {% if section.fields %}
               <div class="msa-field-chip-row">
                 {% for field in section.fields %}
@@ -159,7 +153,6 @@
           <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Clause library active</div><div class="msa-rail-copy">Approved liability, renewal, and data protection fallback clauses available</div></div></div>
           <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Risk checks active</div><div class="msa-rail-copy">Finance, liability, privacy, renewal, IP, and governing law checks ran</div></div></div>
           <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Approval route</div><div class="msa-rail-copy">{% for approval in msa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
-          <div class="msa-rail-item"><span class="msa-rail-dot">✓</span><div><div class="msa-rail-title">Audit trail enabled</div><div class="msa-rail-copy">{{ msa_workspace.field_count }} field values captured with workflow activity preview</div></div></div>
         </div>
       </section>
 

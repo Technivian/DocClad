@@ -1,0 +1,9 @@
+<section class="dc-ds-settings-section{% if class_name %} {{ class_name }}{% endif %}">
+  <div>
+    <h2 class="dc-ds-settings-section__title">{{ title }}</h2>
+    {% if copy %}<p class="dc-ds-settings-section__copy">{{ copy }}</p>{% endif %}
+  </div>
+  <div>
+    {% if body_template %}{% include body_template %}{% endif %}
+  </div>
+</section>

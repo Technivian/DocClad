@@ -1,0 +1,5 @@
+<article class="dc-ds-metric{% if class_name %} {{ class_name }}{% endif %}">
+  {% if label %}<div class="dc-ds-metric__label">{{ label }}</div>{% endif %}
+  <div class="dc-ds-metric__value">{{ value|default:"0" }}</div>
+  {% if note %}<div class="dc-ds-metric__note">{{ note }}</div>{% endif %}
+</article>

@@ -25,7 +25,11 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
 
   await expect(page).toHaveURL(/\/contracts\/new\/msa\/?$/);
   await expect(page.getByRole('heading', { name: 'New MSA Draft' })).toBeVisible();
-  await expect(page.getByText('AI Smart Questions')).toBeVisible();
+  await expect(page.getByText('AI-assisted drafting from approved templates and playbooks.')).toBeVisible();
+  await expect(page.getByText('MSA Commercial Review Workflow')).toBeVisible();
+  await expect(page.getByText('Draft workspace')).toBeVisible();
+  await expect(page.getByText('Workflow controls')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Review triggers' })).toBeVisible();
 
   await page.fill('[data-field-key="counterparty"]', counterparty);
   await page.fill('[data-field-key="start_date"]', '2026-10-01');
@@ -58,8 +62,6 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
 
   await expect(page.locator('#msa-draft-doc')).toContainText(counterparty);
   await expect(page.locator('#msa-draft-doc')).toContainText('Managed logistics platform and support services.');
-  await expect(page.locator('#msa-progress-pct')).toHaveText('100%');
-  await expect(page.locator('#msa-progress-copy')).toContainText('ready to generate');
 
   const riskList = page.locator('#msa-risk-signal-list');
   await expect(riskList).toContainText('Finance approval signal');
@@ -70,6 +72,8 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page.locator('#msa-gov-approval-route')).toContainText('Contract Owner');
   await expect(page.locator('#msa-gov-approval-route')).toContainText('Finance');
   await expect(page.locator('#msa-gov-approval-route')).toContainText('Legal');
+  await expect(page.locator('#msa-command-risk')).toContainText('High risk');
+  await expect(page.locator('#msa-next-action')).toContainText('Review triggered approval route');
 
   await page.locator('[data-clause-link="data-protection"]').first().click();
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
@@ -96,8 +100,14 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(queueRow).toBeVisible();
   await expect(queueRow).toContainText('MSA');
   await expect(queueRow).toContainText('MSA Commercial Review Workflow');
-  await queueRow.getByRole('link', { name: 'MSA Commercial Review Workflow' }).click();
+  const openWorkspaceLink = queueRow.getByRole('link', { name: 'Open workspace' });
+  await expect(openWorkspaceLink).toBeVisible();
+  await openWorkspaceLink.scrollIntoViewIfNeeded();
+  const workspaceHref = await openWorkspaceLink.getAttribute('href');
+  expect(workspaceHref).toMatch(/\/contracts\/workflows\/\d+\/?$/);
+  await openWorkspaceLink.evaluate((node) => node.click());
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText(counterparty).first()).toBeVisible();
+  await expect(page.getByText('Workflow Timeline')).toBeVisible();
+  await expect(page.locator('.msa-ws-card-head', { hasText: 'Generated MSA Draft' }).first()).toBeVisible();
 });

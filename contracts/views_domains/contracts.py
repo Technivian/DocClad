@@ -1133,6 +1133,24 @@ def dashboard(request):
         attention_summary = f"{', '.join(attention_parts[:-1])}, and {attention_parts[-1]}"
 
     priority_queue_rows = persisted_command_center_rows or queue_in_progress
+    for row in priority_queue_rows:
+        row.setdefault('contract_type', getattr(row.get('contract'), 'contract_type', '') if row.get('contract') else '')
+        row.setdefault('item_type', 'Contract')
+        row.setdefault('work_type', 'Legal review')
+        row.setdefault('current_stage', row.get('stage', 'Review'))
+        row.setdefault('risk_level', getattr(row.get('contract'), 'risk_level', '') if row.get('contract') else '')
+        row.setdefault('risk_label', getattr(row.get('contract'), 'get_risk_level_display', lambda: 'Review required')() if row.get('contract') else 'Review required')
+        row.setdefault('risk_personality', 'Operational review')
+        row.setdefault('highest_risk_signal', row.get('risk_label', 'Review required'))
+        row.setdefault('blocking_issue', row.get('meta') or 'Open operational review item.')
+        row.setdefault('next_action', row.get('action_label', 'Open'))
+        row.setdefault('approval_route', '')
+        row.setdefault('counterparty', getattr(row.get('contract'), 'counterparty', '') if row.get('contract') else '')
+        row.setdefault('workspace_href', row.get('href'))
+        row.setdefault('is_workflow', False)
+        row.setdefault('owner_label', row.get('assignee').get_full_name() or row.get('assignee').username if row.get('assignee') else 'Unassigned')
+        row.setdefault('due_label', 'No due date' if not row.get('due_date') else row['due_date'].strftime('%d %b %Y'))
+        row.setdefault('due_note', 'No SLA' if not row.get('due_date') else 'Scheduled')
     workflow_type_summary = get_workflow_type_summary(persisted_command_center_rows)
     command_center_rail_items = get_command_center_rail_items(org, {
         'approvals': clm_my_approvals_count,
@@ -1140,6 +1158,207 @@ def dashboard(request):
         'dpa_conflicts': clm_conflict_count,
         'review_memos': len(clm_recent_memos),
     })
+    command_center_last_updated = timezone.localtime()
+
+    def _format_currency_eur(value):
+        if not value:
+            return '—'
+        if value >= Decimal('1000000'):
+            return f"EUR {value / Decimal('1000000'):.1f}M"
+        if value >= Decimal('1000'):
+            return f"EUR {value / Decimal('1000'):.0f}K"
+        return f"EUR {value:.0f}"
+
+    workflow_rows = [row for row in priority_queue_rows if row.get('is_workflow')]
+    blocked_rows = [row for row in priority_queue_rows if row.get('status_label') == 'Blocked']
+    contract_exposure_total = sum(
+        (row['contract'].value or Decimal('0'))
+        for row in workflow_rows
+        if row.get('contract') and row['contract'].value
+    )
+    clm_action_cards = [
+        {
+            'title': 'Needs Legal Review',
+            'value': clm_needs_review_count,
+            'supporting_text': 'Contracts awaiting legal action',
+            'href': reverse('contracts:contract_list'),
+            'tone': 'teal',
+        },
+        {
+            'title': 'Exposure Review',
+            'value': _format_currency_eur(contract_exposure_total),
+            'supporting_text': 'Commercial exposure under review',
+            'href': reverse('contracts:contract_list'),
+            'tone': 'neutral',
+        },
+        {
+            'title': 'Blocked',
+            'value': len(blocked_rows),
+            'supporting_text': 'Awaiting business owner',
+            'href': reverse('contracts:approval_request_list'),
+            'tone': 'amber',
+        },
+        {
+            'title': 'Notice / Renewal Risk',
+            'value': clm_renewals_count,
+            'supporting_text': 'Deadlines in the next 30 days',
+            'href': reverse('contracts:deadline_list'),
+            'tone': 'rose',
+        },
+    ]
+
+    lifecycle_counts = {
+        'Draft': 0,
+        'Legal Review': 0,
+        'DPA Review': 0,
+        'Approval': 0,
+        'Signature': 0,
+        'Renewal': 0,
+        'Active': case_stats['active'] or 0,
+    }
+    for row in workflow_rows:
+        stage_text = (row.get('current_stage') or row.get('stage') or '').lower()
+        if 'privacy' in stage_text or 'dpo' in stage_text or row.get('contract_type') == 'DPA':
+            lifecycle_counts['DPA Review'] += 1
+        elif 'approval' in stage_text:
+            lifecycle_counts['Approval'] += 1
+        elif 'signature' in stage_text:
+            lifecycle_counts['Signature'] += 1
+        elif 'renewal' in stage_text:
+            lifecycle_counts['Renewal'] += 1
+        elif 'draft' in stage_text or 'intake' in stage_text or 'ai draft' in stage_text:
+            lifecycle_counts['Draft'] += 1
+        elif stage_text:
+            lifecycle_counts['Legal Review'] += 1
+    clm_lifecycle_overview = [
+        {
+            'label': label,
+            'count': lifecycle_counts[label],
+            'tone': (
+                'navy' if label == 'Draft'
+                else 'teal' if label in ('Legal Review', 'DPA Review', 'Active')
+                else 'amber' if label in ('Approval', 'Renewal')
+                else 'gray'
+            ),
+        }
+        for label in ('Draft', 'Legal Review', 'DPA Review', 'Approval', 'Signature', 'Renewal', 'Active')
+    ]
+
+    blocker_map = {}
+    blocker_order = [
+        ('Business owner response overdue', 'Business owner response overdue', 'Attention'),
+        ('DPA fallback language missing', 'DPA fallback language missing', 'Critical'),
+        ('Liability position unresolved', 'Liability position unresolved', 'Attention'),
+        ('Signature package incomplete', 'Signature package incomplete', 'Attention'),
+    ]
+    for row in priority_queue_rows:
+        issue = (row.get('blocking_issue') or '').lower()
+        if not issue or issue.startswith('no legal risk detected'):
+            continue
+        if 'owner' in issue or 'business' in issue:
+            key = 'Business owner response overdue'
+        elif 'scc' in issue or ('fallback' in issue and row.get('contract_type') == 'DPA'):
+            key = 'DPA fallback language missing'
+        elif 'liability' in issue or 'fallback clause' in issue:
+            key = 'Liability position unresolved'
+        elif 'signature' in issue:
+            key = 'Signature package incomplete'
+        else:
+            key = row.get('blocking_issue')
+        blocker = blocker_map.setdefault(key, {
+            'label': key,
+            'count': 0,
+            'severity': 'Attention',
+            'href': row.get('workspace_href') or row.get('href'),
+        })
+        blocker['count'] += 1
+    clm_top_blockers = []
+    for key, label, severity in blocker_order:
+        blocker = blocker_map.pop(key, None)
+        if blocker:
+            blocker['label'] = label
+            blocker['severity'] = severity
+            clm_top_blockers.append(blocker)
+    clm_top_blockers.extend(
+        sorted(blocker_map.values(), key=lambda item: (-item['count'], item['label']))[: max(0, 4 - len(clm_top_blockers))]
+    )
+
+    overdue_count = sum(1 for row in priority_queue_rows if row.get('due_overdue'))
+    due_soon_count = sum(
+        1
+        for row in priority_queue_rows
+        if row.get('due_date') and not row.get('due_overdue') and (row['due_date'] - today).days <= 3
+    )
+    on_track_count = sum(
+        1
+        for row in priority_queue_rows
+        if row.get('due_date') and not row.get('due_overdue') and (row['due_date'] - today).days > 3
+    )
+    no_sla_count = sum(1 for row in priority_queue_rows if not row.get('due_date'))
+    clm_queue_health = [
+        {'label': 'Overdue', 'count': overdue_count, 'tone': 'rose'},
+        {'label': 'Due soon', 'count': due_soon_count, 'tone': 'amber'},
+        {'label': 'On track', 'count': on_track_count, 'tone': 'teal'},
+        {'label': 'No SLA', 'count': no_sla_count, 'tone': 'gray'},
+    ]
+
+    clm_upcoming_obligations = [
+        {
+            'title': deadline.title,
+            'counterparty': getattr(deadline.contract, 'counterparty', '') or 'No counterparty',
+            'due_label': 'Today' if deadline.due_date == today else f"{(deadline.due_date - today).days} days",
+            'href': reverse('contracts:deadline_update', kwargs={'pk': deadline.pk}),
+        }
+        for deadline in upcoming_deadlines[:3]
+    ]
+    if not clm_upcoming_obligations:
+        clm_upcoming_obligations = [
+            {
+                'title': row.get('title'),
+                'counterparty': row.get('counterparty') or 'No counterparty',
+                'due_label': row.get('due_label'),
+                'href': row.get('workspace_href') or row.get('href'),
+            }
+            for row in priority_queue_rows[:3]
+        ]
+
+    clm_missing_dpa_count = sum(
+        1
+        for row in priority_queue_rows
+        if 'missing dpa' in (row.get('highest_risk_signal') or '').lower()
+        or 'linked dpa' in (row.get('highest_risk_signal') or '').lower()
+    )
+    clm_missing_governing_law_count = case_qs.filter(
+        Q(governing_law__isnull=True) | Q(governing_law__exact='')
+    ).count()
+    clm_high_attention_records = [
+        {'label': 'High-risk contracts', 'count': sum(1 for row in priority_queue_rows if row.get('risk_level') in ('HIGH', 'CRITICAL'))},
+        {'label': 'Contracts missing DPA', 'count': clm_missing_dpa_count},
+        {'label': 'Contracts missing governing law', 'count': clm_missing_governing_law_count},
+    ]
+
+    clm_recent_review_items = []
+    for memo in clm_recent_memos[:4]:
+        if hasattr(memo, 'memo_type'):
+            title = memo.title
+            timestamp = memo.generated_at
+            href = reverse('contracts:dpa_review_pack_list')
+        else:
+            title = f"{memo.contract.title if memo.contract_id else 'Review memo'} opened"
+            timestamp = memo.review_memo_generated_at
+            href = reverse('contracts:dpa_review_pack_detail', kwargs={'pk': memo.pk})
+        clm_recent_review_items.append({
+            'title': title,
+            'timestamp': timestamp,
+            'href': href,
+        })
+
+    clm_repository_shortcuts = [
+        {'label': 'Templates Library', 'href': reverse('contracts:templates_list')},
+        {'label': 'Workflow Templates', 'href': reverse('contracts:workflow_template_list')},
+        {'label': 'Clause Library', 'href': reverse('contracts:clause_template_list')},
+        {'label': 'Counterparties', 'href': reverse('contracts:counterparty_list')},
+    ]
 
     return render(request, 'dashboard.html', {
         'attention_total': attention_total,
@@ -1192,4 +1411,13 @@ def dashboard(request):
         'clm_high_severity_count': clm_high_severity_count,
         'clm_recent_memos': clm_recent_memos,
         'clm_recent_matters': clm_recent_matters,
+        'clm_action_cards': clm_action_cards,
+        'clm_lifecycle_overview': clm_lifecycle_overview,
+        'clm_top_blockers': clm_top_blockers,
+        'clm_queue_health': clm_queue_health,
+        'clm_upcoming_obligations': clm_upcoming_obligations,
+        'clm_high_attention_records': clm_high_attention_records,
+        'clm_recent_review_items': clm_recent_review_items,
+        'clm_repository_shortcuts': clm_repository_shortcuts,
+        'command_center_last_updated': command_center_last_updated,
     })
