@@ -1,0 +1,5 @@
+{% with subtitle="Review active sessions for "|add:organization.name|add:" and revoke individual sessions when needed." %}
+  {% include "design_system/page_hero.html" with eyebrow="Organization security" title="Session Audit" subtitle=subtitle actions_template="contracts/organization_session_audit_actions.html" %}
+{% endwith %}
+
+{% include "design_system/surface_card.html" with title="Active sessions" labelledby="organization-session-audit-list" body_template="contracts/organization_session_audit_list.html" %}

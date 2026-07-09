@@ -2,38 +2,5 @@
 {% block title %}Session Audit – DocClad{% endblock %}
 
 {% block content %}
-<div class="page-wrap">
-    <div class="flex-between mb-6">
-        <div>
-            <h1 class="heading-xl">Session Audit</h1>
-            <p class="text-subtitle">Review active sessions for {{ organization.name }} and revoke individual sessions when needed.</p>
-        </div>
-        <a href="{% url 'organization_session_audit_export' %}" class="btn-ghost">Export session audit CSV</a>
-    </div>
-
-    <div class="settings-card-lg">
-        {% if sessions %}
-        <div class="section-grid">
-            {% for session in sessions %}
-            <div class="panel-item">
-                <div>
-                    <div class="text-sm font-bold c-primary">{{ session.username }}</div>
-                    <div class="text-xs c-secondary">{{ session.email }} · {{ session.role }}</div>
-                    <div class="text-xs c-muted">Session key: {{ session.session_key }}</div>
-                    <div class="text-xs c-muted">Last activity: {% if session.last_activity_at %}{{ session.last_activity_at|date:"Y-m-d H:i" }}{% else %}Unknown{% endif %} · Expires: {{ session.expire_date|date:"Y-m-d H:i" }}</div>
-                </div>
-                <form method="post" data-confirm="Revoke this session now?">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="revoke_session">
-                    <input type="hidden" name="session_key" value="{{ session.session_key }}">
-                    <button type="submit" class="btn-ghost">Revoke</button>
-                </form>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-sm c-secondary">No active sessions found for this organization.</p>
-        {% endif %}
-    </div>
-</div>
+{% include "design_system/page_scaffold.html" with main_template="contracts/organization_session_audit_content.html" wide=True %}
 {% endblock %}
