@@ -71,6 +71,7 @@ CARD_META = {
     Contract.ContractType.SOW: {'draft_minutes': 6, 'typical_approvals': 'Legal, Finance', 'icon': 'list'},
     Contract.ContractType.VENDOR: {'draft_minutes': 7, 'typical_approvals': 'Legal, Procurement', 'icon': 'briefcase'},
     Contract.ContractType.AMENDMENT: {'draft_minutes': 3, 'typical_approvals': 'Legal', 'icon': 'edit'},
+    Contract.ContractType.SAAS: {'draft_minutes': 6, 'typical_approvals': 'Legal, Security', 'icon': 'cloud'},
 }
 DEFAULT_CARD_META = {'draft_minutes': 5, 'typical_approvals': 'Legal', 'icon': 'file'}
 
@@ -85,6 +86,7 @@ ENTRY_CARD_TYPES = [
     Contract.ContractType.SOW,
     Contract.ContractType.VENDOR,
     Contract.ContractType.AMENDMENT,
+    Contract.ContractType.SAAS,
 ]
 
 # Shown in the "Selected setup" card's template/playbook rows in place of
@@ -233,6 +235,7 @@ CARD_DESCRIPTIONS = {
     Contract.ContractType.SOW: 'Draft scope, deliverables, milestones, pricing, and acceptance terms.',
     Contract.ContractType.VENDOR: 'Generate supplier terms with liability, renewal, and compliance controls.',
     Contract.ContractType.AMENDMENT: 'Amend an existing agreement with controlled clause changes.',
+    Contract.ContractType.SAAS: 'Draft subscription terms with data security, uptime, and processing checks.',
 }
 
 CARD_TITLES = {
@@ -242,6 +245,7 @@ CARD_TITLES = {
     Contract.ContractType.SOW: 'SOW',
     Contract.ContractType.VENDOR: 'Supplier Agreement',
     Contract.ContractType.AMENDMENT: 'Addendum',
+    Contract.ContractType.SAAS: 'SaaS Agreement',
 }
 
 

@@ -10,7 +10,7 @@
   margin: 0 auto;
   padding: 24px 28px 40px;
   font-family: 'Inter', sans-serif;
-  color: #0f172a;
+  color: var(--ink-900);
 }
 .dc-page-shell {
   display: flex;
@@ -58,17 +58,17 @@
 .dc-title,
 .dc-fallback-title {
   margin: 0;
-  color: #0b1736;
+  color: var(--ink-900);
   font-size: 30px;
   line-height: 1.06;
   font-weight: 760;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
 }
 .dc-subtitle,
 .dc-fallback-subtitle {
   margin: 0;
   max-width: 820px;
-  color: #5b667a;
+  color: var(--ink-500);
   font-size: 14px;
   line-height: 1.45;
 }
@@ -94,7 +94,7 @@
 .dc-obligation-due {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
@@ -103,18 +103,19 @@
   gap: 8px;
   height: 28px;
   padding: 0 12px;
-  border: 1px solid #b9ddd6;
-  background: #ebf8f5;
-  color: #0a6b61;
+  border: 1px solid var(--status-positive-fg);
+  background: var(--status-positive-bg);
+  color: var(--status-positive-fg);
+  opacity: 0.92;
 }
 .dc-live-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0d8b7a;
+  background: var(--seal);
 }
 .dc-last-updated {
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 12px;
   font-weight: 600;
 }
@@ -133,25 +134,30 @@
 .dc-btn {
   height: 36px;
   padding: 0 14px;
-  border: 1px solid #d4dbe5;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #10203d;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-900);
   font-size: 12px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 .dc-btn:hover {
-  border-color: #b7c1d0;
-  background: #fbfcfe;
+  border-color: var(--line-strong);
+  background: var(--well);
 }
 .dc-btn-primary {
-  border-color: #a24a14;
-  background: #b0561f;
+  border-color: var(--copper-800);
+  background: var(--copper-700);
   color: #ffffff;
+}
+.dc-btn-primary:hover {
+  border-color: var(--copper-800);
+  background: var(--copper-800);
 }
 .dc-btn-icon {
   width: 36px;
@@ -174,41 +180,70 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px 18px 16px;
-  border: 1px solid #d8e0ea;
-  border-radius: 14px;
-  background: #ffffff;
+  gap: 10px;
+  padding: 26px 26px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
   color: inherit;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
 }
+.dc-action-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+.dc-action-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--well);
+  color: var(--ink-500);
+  margin-bottom: 2px;
+}
+.dc-action-card-icon svg { width: 17px; height: 17px; }
+.dc-action-card.is-teal .dc-action-card-icon { background: var(--status-positive-fg); color: #fff; }
+.dc-action-card.is-amber .dc-action-card-icon { background: var(--status-pending-fg); color: #fff; }
+.dc-action-card.is-rose .dc-action-card-icon { background: var(--status-danger-fg); color: #fff; }
 .dc-action-card::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  border-radius: 14px 0 0 14px;
-  background: #0c7f72;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--seal);
 }
-.dc-action-card.is-neutral::before { background: #6b7280; }
-.dc-action-card.is-amber::before { background: #b7791f; }
-.dc-action-card.is-rose::before { background: #b45359; }
+.dc-action-card.is-neutral::before { background: var(--ink-300); }
+.dc-action-card.is-amber { background: var(--status-pending-bg); }
+.dc-action-card.is-amber::before { background: var(--status-pending-fg); }
+.dc-action-card.is-rose { background: var(--status-danger-bg); }
+.dc-action-card.is-rose::before { background: var(--status-danger-fg); }
+.dc-action-card.is-teal { background: var(--status-positive-bg); }
 .dc-action-card-title {
-  color: #475569;
-  font-size: 12px;
+  color: var(--ink-500);
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .dc-action-card-value {
-  color: #0b1736;
-  font-size: 30px;
+  color: var(--ink-900);
+  font-size: 44px;
   line-height: 1;
   font-weight: 760;
+  letter-spacing: -0.02em;
+  font-feature-settings: var(--money-font-feature);
 }
 .dc-action-card-note {
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 13px;
 }
+.dc-action-strip { gap: 16px; }
+.dc-card-head-icon-row { display: flex; align-items: flex-start; gap: 11px; }
+.dc-card-icon { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--seal-bg); color: var(--seal); }
+.dc-card-icon svg { width: 15px; height: 15px; }
 .dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.85fr);
@@ -227,26 +262,25 @@
 .dc-card,
 .dc-fallback-card,
 .dc-empty-state {
-  border: 1px solid #dbe3ec;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
 }
 .dc-card {
   padding: 20px;
 }
 .dc-card-title {
-  color: #0f172a;
-  font-size: 18px;
-  font-weight: 720;
+  color: var(--ink-900);
+  font-size: 17px;
+  font-weight: 650;
 }
 .dc-card-subtitle {
   margin-top: 4px;
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 13px;
 }
 .dc-card-link {
-  color: #0d7c70;
+  color: var(--seal);
   font-size: 12px;
   font-weight: 700;
 }
@@ -256,35 +290,114 @@
   margin-top: 16px;
 }
 .dc-filter-button {
-  border: 1px solid #d7deea;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink-600);
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }
 .dc-filter-button.is-active {
-  border-color: #a8d7d0;
-  background: #edf8f5;
-  color: #0a6b61;
+  border-color: var(--seal);
+  background: var(--seal-bg);
+  color: var(--seal);
 }
+.dc-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--well);
+  color: var(--ink-500);
+  font-size: 10px;
+  font-weight: 700;
+}
+.dc-filter-button.is-active .dc-filter-count {
+  background: rgba(10, 114, 100, 0.16);
+  color: var(--seal);
+}
+.dc-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dc-search-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dc-search-field svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--ink-400);
+  pointer-events: none;
+}
+.dc-search-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px 0 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--well);
+  color: var(--ink-900);
+  font-size: 13px;
+  font-family: inherit;
+}
+.dc-search-input::placeholder { color: var(--ink-400); }
+.dc-search-input:focus {
+  outline: none;
+  border-color: var(--seal);
+  background: var(--card);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.dc-filters-btn {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-600);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+}
+.dc-filters-btn svg { width: 14px; height: 14px; }
 .dc-summary-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 .dc-summary-pill {
   justify-content: space-between;
   padding: 10px 12px;
-  border: 1px solid #dde5ee;
-  background: #f8fafc;
-  color: #475569;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--well);
+  color: var(--ink-600);
 }
 .dc-summary-pill strong {
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 13px;
+  font-feature-settings: var(--money-font-feature);
 }
 .dc-table-wrap {
   overflow-x: auto;
@@ -300,20 +413,32 @@
 .dc-fallback-table th,
 .dc-fallback-table td {
   padding: 14px 10px;
-  border-bottom: 1px solid #e7edf4;
+  border-bottom: 1px solid var(--hairline);
   vertical-align: top;
 }
 .dc-work-table th,
 .dc-fallback-table th {
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 800;
+  color: var(--ink-500);
+  font-size: 10.5px;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom-color: var(--line-strong);
+}
+.dc-work-table tbody tr {
+  transition: background 0.12s;
+}
+.dc-work-table tbody tr:hover {
+  background: var(--well);
+}
+.dc-work-table td {
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 .dc-contract-title {
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 650;
 }
 .dc-contract-meta,
 .dc-muted,
@@ -323,7 +448,7 @@
 .dc-obligation-meta,
 .dc-record-meta,
 .dc-fallback-meta {
-  color: #6b7280;
+  color: var(--ink-500);
   font-size: 12px;
 }
 .dc-inline-meta {
@@ -332,16 +457,17 @@
   flex-wrap: wrap;
 }
 .dc-badge {
-  height: 22px;
-  padding: 0 8px;
-  border: 1px solid #cfe8e4;
-  background: #ecf8f5;
-  color: #0b6e62;
+  min-height: 22px;
+  padding: 3px 8px;
+  border: 1px solid var(--seal);
+  background: var(--seal-bg);
+  color: var(--seal);
+  opacity: 0.92;
 }
 .dc-badge.is-approved {
-  border-color: #d8dfea;
-  background: #f8fafc;
-  color: #475569;
+  border-color: var(--line);
+  background: var(--well);
+  color: var(--ink-600);
 }
 .dc-owner-block {
   display: flex;
@@ -349,21 +475,23 @@
   gap: 2px;
 }
 .dc-status {
-  height: 24px;
-  padding: 0 10px;
-  border: 1px solid #d7dee8;
-  background: #f8fafc;
-  color: #334155;
+  min-height: 24px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  background: var(--well);
+  color: var(--ink-700);
 }
 .dc-status.is-review {
-  border-color: #cfe8e4;
-  background: #ecf8f5;
-  color: #0b6e62;
+  border-color: var(--seal);
+  background: var(--seal-bg);
+  color: var(--seal);
+  opacity: 0.95;
 }
 .dc-status.is-attention {
-  border-color: #ead9b0;
-  background: #fff8e8;
-  color: #8a6114;
+  border-color: var(--status-pending-fg);
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+  opacity: 0.95;
 }
 .dc-risk-chip,
 .dc-health-chip,
@@ -371,43 +499,54 @@
 .dc-personality,
 .dc-obligation-due,
 .dc-record-count {
-  height: 24px;
-  padding: 0 10px;
-  border: 1px solid #d6dce6;
-  background: #f8fafc;
-  color: #475569;
+  min-height: 24px;
+  padding: 3px 10px;
+  line-height: 1.3;
+  text-align: center;
+  border: 1px solid var(--line);
+  background: var(--well);
+  color: var(--ink-600);
 }
 .dc-risk-chip.is-high,
 .dc-health-chip.is-rose,
 .dc-blocker-chip.is-critical,
 .dc-obligation-due.is-today {
-  border-color: #efc6cb;
-  background: #fff1f2;
-  color: #9f2f3b;
+  border-color: var(--status-danger-fg);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-fg);
+  opacity: 0.95;
 }
 .dc-risk-chip.is-medium,
 .dc-health-chip.is-amber,
 .dc-blocker-chip.is-attention {
-  border-color: #ecd6a9;
-  background: #fff8e8;
-  color: #8a6114;
+  border-color: var(--status-pending-fg);
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+  opacity: 0.95;
 }
 .dc-risk-chip.is-low,
 .dc-health-chip.is-teal,
 .dc-personality.is-self-serve,
 .dc-record-count.is-ok {
-  border-color: #cfe8e4;
-  background: #ecf8f5;
-  color: #0b6e62;
+  border-color: var(--status-positive-fg);
+  background: var(--status-positive-bg);
+  color: var(--status-positive-fg);
+  opacity: 0.95;
 }
 .dc-personality.is-commercial {
-  border-color: #dfe5ec;
-  background: #f8fafc;
-  color: #334155;
+  border-color: var(--line);
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-fg);
+}
+.dc-personality.is-privacy {
+  border-color: var(--status-progress-fg);
+  background: var(--status-progress-bg);
+  color: var(--status-progress-fg);
+  opacity: 0.95;
 }
 .dc-queue-link {
   gap: 6px;
-  color: #0d7c70;
+  color: var(--seal);
   font-size: 13px;
   font-weight: 700;
 }
@@ -433,36 +572,55 @@
   grid-template-columns: minmax(120px, 1fr) 1fr auto;
 }
 .dc-lifecycle-label,
-.dc-health-label {
-  color: #334155;
+.dc-health-label,
+.dc-blocker-label {
+  color: var(--ink-700);
   font-size: 13px;
   font-weight: 650;
 }
-.dc-lifecycle-track {
+.dc-lifecycle-track,
+.dc-blocker-track,
+.dc-health-track {
   position: relative;
-  height: 8px;
-  border-radius: 999px;
-  background: #eef2f7;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--well);
   overflow: hidden;
 }
-.dc-lifecycle-fill {
+.dc-lifecycle-fill,
+.dc-blocker-fill,
+.dc-health-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 999px;
-  background: #0d7c70;
+  border-radius: var(--radius-pill);
+  background: var(--seal);
 }
-.dc-lifecycle-fill.is-navy { background: #172554; }
-.dc-lifecycle-fill.is-amber { background: #b7791f; }
-.dc-lifecycle-fill.is-gray { background: #64748b; }
+.dc-lifecycle-fill.is-navy { background: var(--ink-900); }
+.dc-lifecycle-fill.is-amber { background: var(--status-pending-fg); }
+.dc-lifecycle-fill.is-gray { background: var(--ink-300); }
+.dc-blocker-fill.is-critical { background: var(--status-danger-fg); }
+.dc-blocker-fill.is-attention { background: var(--status-pending-fg); }
+.dc-health-fill.is-rose { background: var(--status-danger-fg); }
+.dc-health-fill.is-amber { background: var(--status-pending-fg); }
+.dc-health-fill.is-teal { background: var(--status-positive-fg); }
+.dc-health-fill.is-gray { background: var(--ink-300); }
 .dc-lifecycle-count {
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 13px;
-  font-weight: 760;
+  font-weight: 700;
+  font-feature-settings: var(--money-font-feature);
 }
 .dc-blocker-row {
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 12px 0;
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid var(--hairline);
+}
+.dc-blocker-row-main {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
 }
 .dc-blocker-row:first-child,
 .dc-review-row:first-child,
@@ -471,18 +629,13 @@
   border-top: 0;
   padding-top: 0;
 }
-.dc-blocker-label {
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 650;
-}
 .dc-blocker-link {
-  color: #0d7c70;
+  color: var(--seal);
   font-size: 12px;
   font-weight: 700;
 }
 .dc-health-row {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 1fr auto;
 }
 .dc-obligation-row,
 .dc-record-row,
@@ -490,22 +643,22 @@
 .dc-shortcut-link {
   grid-template-columns: minmax(0, 1fr) auto;
   padding: 12px 0;
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid var(--hairline);
   color: inherit;
 }
 .dc-shortcut-link {
-  color: #10203d;
+  color: var(--ink-900);
 }
 .dc-shortcut-link:hover,
 .dc-obligation-row:hover,
 .dc-review-row:hover {
-  color: #0d7c70;
+  color: var(--seal);
 }
 .dc-shortcut-label,
 .dc-record-label,
 .dc-obligation-title,
 .dc-review-title {
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 13px;
   font-weight: 650;
 }
@@ -523,19 +676,19 @@
 }
 .dc-fallback-stat {
   padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--well);
 }
 .dc-fallback-stat-label {
-  color: #64748b;
+  color: var(--ink-500);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
 }
 .dc-fallback-stat-value {
   margin-top: 6px;
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 26px;
   font-weight: 760;
 }
@@ -544,13 +697,13 @@
 }
 .dc-empty-title {
   margin: 0 0 8px;
-  color: #0f172a;
+  color: var(--ink-900);
   font-size: 20px;
   font-weight: 720;
 }
 .dc-empty-copy {
   margin: 0;
-  color: #64748b;
+  color: var(--ink-500);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -560,13 +713,217 @@
   margin-top: 18px;
   flex-wrap: wrap;
 }
+.dc-onboarding-band {
+  padding: 20px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--seal-bg);
+}
+.dc-onboarding-band .dc-empty-title { font-size: 16px; }
+.dc-onboarding-band .dc-empty-copy { max-width: 760px; font-size: 13px; }
+.dc-setup-list { display: flex; flex-direction: column; }
+.dc-setup-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border-top: 1px solid var(--hairline);
+  color: inherit;
+  text-decoration: none;
+}
+.dc-setup-row:first-child { border-top: 0; }
+.dc-setup-index {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--seal-bg);
+  color: var(--seal);
+  font-size: 12px;
+  font-weight: 700;
+}
+.dc-setup-title { display: block; color: var(--ink-900); font-size: 13px; font-weight: 650; }
+.dc-setup-meta { margin-top: 2px; color: var(--ink-500); font-size: 11px; line-height: 16px; }
+.dc-setup-action { color: var(--seal); font-size: 11px; font-weight: 650; }
+.dc-activation-head {
+  margin: 0 24px;
+  padding: 24px 0 16px;
+}
+.dc-activation-head h2 { margin: 0; color: var(--ink-900); font-size: 24px; line-height: 32px; font-weight: 650; }
+.dc-activation-head p { margin: 4px 0 0; color: var(--ink-500); font-size: 13px; line-height: 20px; }
+.dc-activation-progress {
+  margin: 0 24px 24px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(180px, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+.dc-activation-progress-title { color: var(--ink-900); font-size: 13px; font-weight: 650; }
+.dc-activation-progress-meta { margin-top: 2px; color: var(--ink-500); font-size: 11px; }
+.dc-activation-track { height: 6px; overflow: hidden; border-radius: 999px; background: var(--well); }
+.dc-activation-fill { width: 0; height: 100%; border-radius: inherit; background: var(--seal); }
+.dc-activation-count { color: var(--ink-500); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dc-activation-steps { display: flex; flex-direction: column; }
+.dc-activation-step {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+  border-top: 1px solid var(--hairline);
+}
+.dc-activation-step:first-child { border-top: 0; }
+.dc-activation-step-index {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--seal-bg);
+  color: var(--seal);
+  font-size: 12px;
+  font-weight: 700;
+}
+.dc-activation-step-title { color: var(--ink-900); font-size: 14px; font-weight: 650; }
+.dc-activation-step-copy { margin-top: 3px; max-width: 620px; color: var(--ink-500); font-size: 12px; line-height: 18px; }
+.dc-activation-step-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.dc-quick-list { display: flex; flex-direction: column; }
+.dc-quick-link {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border-top: 1px solid var(--hairline);
+  color: inherit;
+  text-decoration: none;
+}
+.dc-quick-link:first-child { border-top: 0; }
+.dc-quick-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; background: var(--well); color: var(--ink-600); }
+.dc-quick-icon svg { width: 16px; height: 16px; }
+.dc-quick-title { display: block; color: var(--ink-900); font-size: 13px; font-weight: 650; }
+.dc-quick-meta { display: block; margin-top: 2px; color: var(--ink-500); font-size: 11px; line-height: 16px; }
+.dc-quick-action { color: var(--seal); font-size: 11px; font-weight: 650; }
 .dc-license {
-  color: #94a3b8;
+  color: var(--ink-400);
   font-size: 11px;
   font-weight: 600;
 }
+
+/* Chartline-inspired light operations dashboard. */
+.main-area:has(.DocCladDashboard) > .top-bar { display: none; }
+.DocCladDashboard { max-width: none; padding: 0 0 36px; background: #F5F7F8; }
+.dc-page-shell { gap: 0; }
+.dc-page-head {
+  min-height: 112px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.dc-page-shell > .dc-fallback-head {
+  min-height: 112px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.dc-page-shell > .dc-fallback-subgrid {
+  margin: 24px 24px 0;
+}
+.dc-page-shell > .dc-fallback-card,
+.dc-page-shell > .dc-empty-state {
+  margin: 24px 24px 0;
+  box-shadow: var(--shadow-card);
+}
+.dc-page-shell > .dc-empty-state {
+  min-height: 196px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+.dc-title { color: #171A1F; font-size: 28px; font-weight: 650; }
+.dc-subtitle { color: var(--ink-500); font-size: 13px; }
+.dc-head-actions .dc-live-chip,
+.dc-head-actions .dc-btn:not(.dc-btn-icon) { display: none; }
+.dc-head-actions { gap: 12px; }
+.dc-last-updated { color: var(--ink-500); font-weight: 500; }
+.dc-overview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  padding: 24px 24px 16px;
+}
+.dc-overview-title { margin: 0; color: #171A1F; font-size: 24px; line-height: 32px; font-weight: 650; }
+.dc-overview-kicker { margin-bottom: 3px; color: var(--seal); font-size: 10px; line-height: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.dc-segmented { display: inline-flex; align-items: center; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--well); }
+.dc-segment { min-height: 32px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: 999px; color: var(--ink-500); font-size: 12px; font-weight: 600; }
+.dc-segment.is-active { border: 1px solid #E0E1E3; background: #fff; color: #171A1F; box-shadow: 0 1px 3px rgba(16,24,40,.08); }
+.dc-action-strip { margin: 0 24px 24px; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+.dc-action-card,
+.dc-action-card.is-teal,
+.dc-action-card.is-amber,
+.dc-action-card.is-rose {
+  min-height: 142px;
+  padding: 20px 22px;
+  gap: 6px;
+  border-color: var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+.dc-action-card::before { display: none; }
+.dc-action-card-icon { display: none; }
+.dc-action-card-title { order: 1; color: var(--ink-500); font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.dc-action-card-value { order: 2; margin-top: 9px; color: #171A1F; font-size: 34px; font-weight: 600; letter-spacing: 0; }
+.dc-action-card-note { order: 3; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--hairline); color: #76787D; font-size: 12px; }
+.dash-grid { margin: 0 24px; grid-template-columns: minmax(0, 2fr) minmax(290px, .72fr); gap: 24px; }
+.dc-card { padding: 0; border-radius: 10px; box-shadow: var(--shadow-card); overflow: hidden; }
+.dc-queue-head,
+.dc-card > .dc-card-head { min-height: 72px; padding: 16px 20px; border-bottom: 1px solid var(--hairline); }
+.dc-card-title { font-size: 16px; font-weight: 650; }
+.dc-filter-tabs { margin: 16px 16px 0; }
+.dc-filter-button { border-radius: 999px; background: #fff; font-weight: 600; }
+.dc-filter-button.is-active { border-color: var(--line-strong); background: var(--well); color: #171A1F; }
+.dc-search-row { margin: 8px 16px 0; }
+.dc-summary-strip { margin: 8px 16px 0; }
+.dc-summary-pill { background: #FAFAFB; }
+.dc-table-wrap { margin-top: 14px; }
+.dc-work-table th { padding: 12px 10px; background: #FAFAFB !important; color: var(--ink-500) !important; font-size: 10px; letter-spacing: 0; }
+.dc-work-table td { padding: 15px 10px; vertical-align: middle; }
+.dc-work-table th:nth-child(3),
+.dc-work-table td:nth-child(3),
+.dc-work-table th:nth-child(6),
+.dc-work-table td:nth-child(6) { display: none; }
+.dc-work-table tbody tr:hover { background: #FAFAFB !important; }
+.dc-status,
+.dc-badge,
+.dc-risk-chip,
+.dc-personality { border-width: 0; }
+.dc-side-stack { gap: 24px; }
+.dc-side-stack .dc-card { padding: 0; }
+.dc-attention-list { display: flex; flex-direction: column; }
+.dc-attention-row { display: grid; grid-template-columns: 40px minmax(0,1fr); gap: 12px; padding: 16px 18px; border-top: 1px solid var(--hairline); color: inherit; text-decoration: none; }
+.dc-attention-row:first-child { border-top: 0; }
+.dc-attention-icon { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 9px; color: #303236; background: #fff; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+.dc-attention-icon svg { width: 18px; height: 18px; }
+.dc-attention-title { color: #171A1F; font-size: 13px; line-height: 19px; font-weight: 650; }
+.dc-attention-meta { margin-top: 3px; color: var(--ink-500); font-size: 11px; line-height: 17px; }
+.dc-attention-action { margin-top: 7px; color: #1B7F5A; font-size: 11px; font-weight: 600; }
+.dc-secondary-grid { gap: 24px; }
+.dc-secondary-grid .dc-section-list { padding: 0 20px 18px; }
+.dc-side-list { margin-top: 0; }
+.dc-side-list > .dc-muted { padding: 16px 18px; }
+.dc-license { margin: 24px 24px 0; }
 @media (max-width: 1024px) {
-  .DocCladDashboard { padding: 20px 20px 32px; }
+  .DocCladDashboard { padding: 0 0 32px; }
   .dc-action-strip,
   .dc-summary-strip,
   .dc-fallback-subgrid,
@@ -575,7 +932,16 @@
   .dash-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .DocCladDashboard { padding: 16px 14px 28px; }
+  .DocCladDashboard { padding: 0 0 28px; }
+  .dc-page-head { padding: 18px 16px; }
+  .dc-page-shell > .dc-fallback-head { min-height: auto; padding: 18px 16px; }
+  .dc-page-shell > .dc-fallback-subgrid,
+  .dc-page-shell > .dc-fallback-card,
+  .dc-page-shell > .dc-empty-state { margin-left: 16px; margin-right: 16px; }
+  .dc-overview-head { padding: 20px 16px 14px; align-items: flex-start; }
+  .dc-overview-title { font-size: 21px; }
+  .dc-action-strip,
+  .dash-grid { margin-left: 16px; margin-right: 16px; }
   .dc-action-strip,
   .dc-summary-strip,
   .dc-secondary-grid,
@@ -585,12 +951,21 @@
   .dc-card-head,
   .dc-fallback-head { align-items: flex-start; }
   .dc-head-actions { justify-content: flex-start; }
-  .dc-lifecycle-row { grid-template-columns: 1fr; }
+  .dc-lifecycle-row,
+  .dc-health-row { grid-template-columns: 1fr; }
+  .dc-search-row { flex-direction: column; align-items: stretch; }
   .dc-blocker-row,
   .dc-obligation-row,
   .dc-record-row,
   .dc-review-row,
   .dc-shortcut-link { grid-template-columns: 1fr; }
+  .dc-setup-row { grid-template-columns: 28px minmax(0, 1fr); }
+  .dc-setup-action { grid-column: 2; }
+  .dc-activation-head { margin: 0 16px; padding-top: 20px; }
+  .dc-activation-head h2 { font-size: 21px; line-height: 28px; }
+  .dc-activation-progress { margin: 0 16px 16px; grid-template-columns: 1fr; gap: 12px; }
+  .dc-activation-step { grid-template-columns: 34px minmax(0, 1fr); padding: 16px; }
+  .dc-activation-step-actions { grid-column: 2; justify-content: flex-start; }
 }
 </style>
 
@@ -600,8 +975,8 @@
     <header class="dc-page-head">
       <div class="dc-head-main">
         <div class="dc-head-copy">
-          <h1 class="dc-title">Command Center</h1>
-          <p class="dc-subtitle">Operational view of contracts requiring legal review, approval, renewal action, or risk resolution.</p>
+          <h1 class="dc-title">{{ command_center_last_updated|date:"l, F j" }}</h1>
+          <p class="dc-subtitle">{{ total_contracts|default:0 }} contracts tracked · {{ priority_queue_rows|length }} items in review · {{ approval_stats.pending|default:0 }} approvals waiting</p>
         </div>
       </div>
       <div class="dc-head-actions">
@@ -610,16 +985,32 @@
           <span class="dc-last-updated">Last updated {{ command_center_last_updated|date:"M d, Y H:i" }}</span>
         </div>
         <button type="button" class="dc-btn dc-btn-icon" title="Refresh">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 9A8 8 0 006.3 4.7L4 10m16 4l-2.3 5.3A8 8 0 014 15"/></svg>
+          {% include "design_system/icon.html" with name="refresh-cw" %}
         </button>
         <a class="dc-btn" href="{% url 'contracts:repository' %}">View Repository</a>
+        <a class="dc-btn" href="{% url 'contracts:legal_front_door' %}">New Legal Work</a>
         <a class="dc-btn dc-btn-primary" href="{% url 'contracts:contract_template_picker' %}">+ New Contract</a>
       </div>
     </header>
 
+    <div class="dc-overview-head">
+      <h2 class="dc-overview-title">Portfolio at a glance</h2>
+      <div class="dc-segmented" aria-label="Dashboard period">
+        <span class="dc-segment is-active">Today</span>
+        <span class="dc-segment">This week</span>
+      </div>
+    </div>
+
     <section class="dc-action-strip" aria-label="Top action strip">
       {% for card in clm_action_cards %}
       <a class="dc-action-card is-{{ card.tone }}" href="{{ card.href }}">
+        <span class="dc-action-card-icon" aria-hidden="true">
+          {% if card.tone == 'teal' %}{% include "design_system/icon.html" with name="shield" %}
+          {% elif card.tone == 'amber' %}{% include "design_system/icon.html" with name="clock" %}
+          {% elif card.tone == 'rose' %}{% include "design_system/icon.html" with name="calendar" %}
+          {% else %}{% include "design_system/icon.html" with name="dollar-sign" %}
+          {% endif %}
+        </span>
         <span class="dc-action-card-title">{{ card.title }}</span>
         <strong class="dc-action-card-value">{{ card.value }}</strong>
         <span class="dc-action-card-note">{{ card.supporting_text }}</span>
@@ -640,8 +1031,19 @@
 
           <div class="dc-filter-tabs" aria-label="Queue filters">
             {% for view in command_center_saved_views %}
-            <button type="button" class="dc-filter-button{% if forloop.first or view.is_default %} is-active{% endif %}" data-queue-filter="{{ view.key }}">{{ view.name }}</button>
+            <button type="button" class="dc-filter-button{% if forloop.first or view.is_default %} is-active{% endif %}" data-queue-filter="{{ view.key }}">{{ view.name }}<span class="dc-filter-count" data-filter-count="{{ view.key }}">0</span></button>
             {% endfor %}
+          </div>
+
+          <div class="dc-search-row">
+            <label class="dc-search-field">
+              {% include "design_system/icon.html" with name="search" %}
+              <input type="text" class="dc-search-input" data-queue-search placeholder="Search in work queue..." aria-label="Search in work queue">
+            </label>
+            <button type="button" class="dc-filters-btn" title="Advanced filters — coming soon">
+              {% include "design_system/icon.html" with name="filter" %}
+              Filters
+            </button>
           </div>
 
           <div class="dc-summary-strip" aria-label="Workflow-type summary strip">
@@ -670,6 +1072,7 @@
                 <tr
                   data-queue-row
                   data-workflow-title="{{ row.title }}"
+                  data-search-text="{{ row.title|lower }} {{ row.counterparty|default:''|lower }}"
                   data-filter-all="true"
                   data-filter-mine="{% if row.filter_mine %}true{% else %}false{% endif %}"
                   data-filter-high-risk="{% if row.filter_high_risk %}true{% else %}false{% endif %}"
@@ -689,7 +1092,7 @@
                   </td>
                   <td>
                     <div class="dc-contract-title">{{ row.counterparty|default:"No counterparty" }}</div>
-                    <div class="dc-contract-meta">{{ row.risk_personality|default:"Review required" }}</div>
+                    <span class="dc-personality{% if row.risk_personality == 'Privacy risk' %} is-privacy{% elif row.risk_personality == 'Commercial risk' %} is-commercial{% elif row.risk_personality == 'Self-serve eligible' %} is-self-serve{% endif %}">{{ row.risk_personality|default:"Review required" }}</span>
                   </td>
                   <td>{% if row.work_type %}{{ row.work_type }}{% elif row.item_type %}{{ row.item_type }}{% else %}Contract review{% endif %}</td>
                   <td>
@@ -714,12 +1117,12 @@
                     {% if row.is_workflow %}
                     <a class="dc-queue-link" href="{{ row.workspace_href }}">
                       Open workspace
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                      {% include "design_system/icon.html" with name="chevron-right" %}
                     </a>
                     {% else %}
                     <a class="dc-queue-link" href="{{ row.href }}">
                       {{ row.action_label|default:"Open" }}
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                      {% include "design_system/icon.html" with name="chevron-right" %}
                     </a>
                     {% endif %}
                     <div class="dc-queue-note">{% if row.next_action %}{{ row.next_action }}{% elif row.action_label %}{{ row.action_label }}{% else %}Open{% endif %}</div>
@@ -764,9 +1167,12 @@
             <div class="dc-section-list">
               {% for blocker in clm_top_blockers %}
               <div class="dc-blocker-row">
-                <span class="dc-blocker-label">{{ blocker.label }}</span>
-                <span class="dc-blocker-chip{% if blocker.severity == 'Critical' %} is-critical{% else %} is-attention{% endif %}">{{ blocker.count }} affected</span>
-                <a class="dc-blocker-link" href="{{ blocker.href|default:'#' }}">View</a>
+                <div class="dc-blocker-row-main">
+                  <span class="dc-blocker-label">{{ blocker.label }}</span>
+                  <span class="dc-blocker-chip{% if blocker.severity == 'Critical' %} is-critical{% else %} is-attention{% endif %}">{{ blocker.count }} affected</span>
+                  <a class="dc-blocker-link" href="{{ blocker.href|default:'#' }}">View</a>
+                </div>
+                <span class="dc-blocker-track" style="grid-column: 1 / -1;"><span class="dc-blocker-fill{% if blocker.severity == 'Critical' %} is-critical{% else %} is-attention{% endif %}" style="width: {% widthratio blocker.count 8 100 %}%;"></span></span>
               </div>
               {% empty %}
               <div class="dc-muted">No blocker categories are currently open.</div>
@@ -785,6 +1191,7 @@
               {% for item in clm_queue_health %}
               <div class="dc-health-row">
                 <span class="dc-health-label">{{ item.label }}</span>
+                <span class="dc-health-track"><span class="dc-health-fill is-{{ item.tone }}" style="width: {% widthratio item.count priority_queue_rows|length 100 %}%;"></span></span>
                 <span class="dc-health-chip is-{{ item.tone }}">{{ item.count }}</span>
               </div>
               {% endfor %}
@@ -797,35 +1204,29 @@
         <section class="dc-card">
           <div class="dc-card-head">
             <div>
-              <div class="dc-card-title">Upcoming Obligations</div>
-              <div class="dc-card-subtitle">Renewals, review due dates, and notice windows.</div>
+              <div class="dc-card-title">Needs Your Attention</div>
+              <div class="dc-card-subtitle">Upcoming Obligations and priority actions across the legal workspace.</div>
             </div>
           </div>
-          <div class="dc-side-list">
+          <div class="dc-attention-list">
             {% for item in clm_upcoming_obligations %}
-            <a class="dc-obligation-row" href="{{ item.href }}">
+            <a class="dc-attention-row" href="{{ item.href }}">
+              <span class="dc-attention-icon" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span>
               <div>
-                <div class="dc-obligation-title">{{ item.title }}</div>
-                <div class="dc-obligation-meta">{{ item.counterparty }}</div>
+                <div class="dc-attention-title">{{ item.title }}</div>
+                <div class="dc-attention-meta">{{ item.counterparty }} · {{ item.due_label }}</div>
+                <div class="dc-attention-action">Review obligation</div>
               </div>
-              <span class="dc-obligation-due{% if item.due_label == 'Today' or item.due_label == 'Overdue' %} is-today{% endif %}">{{ item.due_label }}</span>
             </a>
             {% endfor %}
-          </div>
-        </section>
-
-        <section class="dc-card">
-          <div class="dc-card-head">
-            <div>
-              <div class="dc-card-title">High-Attention Records</div>
-              <div class="dc-card-subtitle">Records with risk, dependency, or data quality pressure.</div>
-            </div>
-          </div>
-          <div class="dc-side-list">
             {% for item in clm_high_attention_records %}
-            <div class="dc-record-row">
-              <span class="dc-record-label">{{ item.label }}</span>
-              <span class="dc-record-count{% if item.count == 0 %} is-ok{% endif %}">{{ item.count }}</span>
+            <div class="dc-attention-row">
+              <span class="dc-attention-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span>
+              <div>
+                <div class="dc-attention-title">{{ item.label }}</div>
+                <div class="dc-attention-meta">{{ item.count }} record{{ item.count|pluralize }} currently flagged</div>
+                <div class="dc-attention-action">Open review queue</div>
+              </div>
             </div>
             {% endfor %}
           </div>
@@ -833,9 +1234,12 @@
 
         <section class="dc-card">
           <div class="dc-card-head">
-            <div>
-              <div class="dc-card-title">Recent Review Memos</div>
-              <div class="dc-card-subtitle">Governed analysis and workflow review activity.</div>
+            <div class="dc-card-head-icon-row">
+              <span class="dc-card-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span>
+              <div>
+                <div class="dc-card-title">Recent Review Memos</div>
+                <div class="dc-card-subtitle">Latest governed reviews and memos.</div>
+              </div>
             </div>
           </div>
           <div class="dc-side-list">
@@ -853,22 +1257,6 @@
           </div>
         </section>
 
-        <section class="dc-card">
-          <div class="dc-card-head">
-            <div>
-              <div class="dc-card-title">Repository Shortcuts</div>
-              <div class="dc-card-subtitle">Reference records used by governed drafting and review.</div>
-            </div>
-          </div>
-          <div class="dc-side-list">
-            {% for item in clm_repository_shortcuts %}
-            <a class="dc-shortcut-link" href="{{ item.href }}">
-              <span class="dc-shortcut-label">{{ item.label }}</span>
-              <span class="dc-card-link">Open</span>
-            </a>
-            {% endfor %}
-          </div>
-        </section>
       </aside>
     </div>
 
@@ -876,86 +1264,222 @@
   </div>
   {% else %}
   <div class="dc-page-shell">
-    <header class="dc-fallback-head">
-      <div>
-        <h1 class="dc-fallback-title">Dashboard</h1>
-        <p class="dc-fallback-subtitle">Operational overview for matters, contracts, approvals, and upcoming deadlines.</p>
+    <header class="dc-page-head">
+      <div class="dc-head-main">
+        <div class="dc-head-copy">
+          <h1 class="dc-title">Dashboard</h1>
+          <p class="dc-subtitle">{{ total_contracts|default:0 }} contracts tracked · {{ active_contracts|default:0 }} active · {{ approval_stats.pending|default:0 }} approvals waiting</p>
+        </div>
       </div>
       <div class="dc-head-actions">
+        <div class="dc-chip-row">
+          <span class="dc-live-chip"><span class="dc-live-dot"></span>Workspace overview</span>
+          <span class="dc-last-updated">Updated today</span>
+        </div>
+        <button type="button" class="dc-btn dc-btn-icon" title="Refresh" data-dashboard-refresh>
+          {% include "design_system/icon.html" with name="refresh-cw" %}
+        </button>
         <a class="dc-btn" href="{% url 'contracts:repository' %}">View Repository</a>
+        <a class="dc-btn" href="{% url 'contracts:legal_front_door' %}">New Legal Work</a>
         <a class="dc-btn dc-btn-primary" href="{% url 'contracts:contract_template_picker' %}">New Contract</a>
       </div>
     </header>
 
-    {% if dashboard_has_data %}
-    <section class="dc-fallback-subgrid">
-      <div class="dc-fallback-stat">
-        <div class="dc-fallback-stat-label">Contracts</div>
-        <div class="dc-fallback-stat-value">{{ total_contracts|default:0 }}</div>
+    <div class="dc-overview-head">
+      <div>
+        <div class="dc-overview-kicker">Contract operations</div>
+        <h2 class="dc-overview-title">{% if dashboard_has_data %}Practice at a glance{% else %}Workspace at a glance{% endif %}</h2>
       </div>
-      <div class="dc-fallback-stat">
-        <div class="dc-fallback-stat-label">Active</div>
-        <div class="dc-fallback-stat-value">{{ active_contracts|default:0 }}</div>
+      <div class="dc-segmented" aria-label="Dashboard period">
+        <span class="dc-segment is-active">Today</span>
+        <span class="dc-segment">This week</span>
       </div>
-      <div class="dc-fallback-stat">
-        <div class="dc-fallback-stat-label">Expiring Soon</div>
-        <div class="dc-fallback-stat-value">{{ expiring_soon|default:0 }}</div>
-      </div>
-      <div class="dc-fallback-stat">
-        <div class="dc-fallback-stat-label">Pending Approvals</div>
-        <div class="dc-fallback-stat-value">{{ approval_stats.pending|default:0 }}</div>
-      </div>
+    </div>
+
+    <section class="dc-action-strip" aria-label="Practice summary">
+      <a class="dc-action-card is-teal" href="{% url 'contracts:contract_list' %}">
+        <span class="dc-action-card-title">Contracts</span>
+        <strong class="dc-action-card-value">{{ total_contracts|default:0 }}</strong>
+        <span class="dc-action-card-note">Across the legal workspace</span>
+      </a>
+      <a class="dc-action-card is-neutral" href="{% url 'contracts:matter_list' %}">
+        <span class="dc-action-card-title">Active matters</span>
+        <strong class="dc-action-card-value">{{ active_contracts|default:0 }}</strong>
+        <span class="dc-action-card-note">Open work requiring coordination</span>
+      </a>
+      <a class="dc-action-card is-amber" href="{% url 'contracts:deadline_list' %}">
+        <span class="dc-action-card-title">Expiring soon</span>
+        <strong class="dc-action-card-value">{{ expiring_soon|default:0 }}</strong>
+        <span class="dc-action-card-note">Upcoming notice and key dates</span>
+      </a>
+      <a class="dc-action-card is-rose" href="{% url 'contracts:approval_request_list' %}">
+        <span class="dc-action-card-title">Pending approvals</span>
+        <strong class="dc-action-card-value">{{ approval_stats.pending|default:0 }}</strong>
+        <span class="dc-action-card-note">Decisions waiting for review</span>
+      </a>
     </section>
 
-    <section class="dc-fallback-card">
-      <div class="dc-fallback-head">
-        <div>
-          <div class="dc-card-title">Priority Work Queue</div>
-          <div class="dc-card-subtitle">Contracts and deadlines needing follow-up.</div>
-        </div>
+    {% if not dashboard_has_data %}
+    <div class="dc-activation-head">
+      <h2>Set up contract operations</h2>
+      <p>Complete the operating foundation. Dashboard metrics will update as governed records enter the workspace.</p>
+    </div>
+    <section class="dc-activation-progress" aria-label="Workspace activation progress">
+      <div>
+        <div class="dc-activation-progress-title">Workspace activation</div>
+        <div class="dc-activation-progress-meta">Complete the operating foundation</div>
       </div>
-      <div class="dc-table-wrap">
-        <table class="dc-fallback-table">
-          <thead>
-            <tr>
-              <th>Contract</th>
-              <th>Stage</th>
-              <th>Owner</th>
-              <th>Due</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in queue_tabs.0.rows|slice:":6" %}
-            <tr>
-              <td>
-                <div class="dc-contract-title">{{ row.title }}</div>
-                <div class="dc-fallback-meta">{{ row.meta }}</div>
-              </td>
-              <td>{{ row.stage }}</td>
-              <td>{{ row.owner_label }}</td>
-              <td>{% if row.due_date %}{{ row.due_date|date:"M d, Y" }}{% else %}<span class="dc-muted">No due date</span>{% endif %}</td>
-              <td><a class="dc-queue-link" href="{{ row.href }}">{{ row.action_label }}</a></td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="dc-muted">No active contracts are currently in progress.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
-    {% else %}
-    <section class="dc-empty-state">
-      <h2 class="dc-empty-title">Start building your legal workspace</h2>
-      <p class="dc-empty-copy">Create a contract, add counterparties, and bring your first workflow into the repository to unlock the operational dashboard.</p>
-      <div class="dc-empty-actions">
-        <a class="dc-btn dc-btn-primary" href="{% url 'contracts:contract_template_picker' %}">New Contract</a>
-        <a class="dc-btn" href="{% url 'contracts:repository' %}">View Repository</a>
-      </div>
+      <div class="dc-activation-track" aria-hidden="true"><div class="dc-activation-fill"></div></div>
+      <div class="dc-activation-count">0 of 3 complete</div>
     </section>
     {% endif %}
+
+    <div class="dash-grid">
+      <div class="dc-main-stack">
+        <section class="dc-card">
+          <div class="dc-queue-head">
+            <div>
+              <div class="dc-card-title">{% if dashboard_has_data %}Priority Work Queue{% else %}Activate Contract Operations{% endif %}</div>
+              <div class="dc-card-subtitle">{% if dashboard_has_data %}In Progress · contracts, matters, and deadlines needing follow-up.{% else %}Bring in agreements, define governance, and establish ownership.{% endif %}</div>
+            </div>
+            {% if dashboard_has_data %}
+            <a class="dc-card-link" href="{% url 'contracts:contract_list' %}">View all</a>
+            {% endif %}
+          </div>
+
+          {% if dashboard_has_data %}
+          <div class="dc-table-wrap">
+            <table class="dc-fallback-table">
+              <thead>
+                <tr>
+                  <th>Contract</th>
+                  <th>Stage</th>
+                  <th>Owner</th>
+                  <th>Due</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in queue_tabs.0.rows|slice:":6" %}
+                <tr>
+                  <td>
+                    <div class="dc-contract-title">{{ row.title }}</div>
+                    <div class="dc-fallback-meta">{{ row.meta }}</div>
+                  </td>
+                  <td>{% if row.work_type == 'Legal review' %}Legal Review{% elif row.current_stage %}{{ row.current_stage }}{% elif row.stage %}{{ row.stage }}{% else %}In Progress{% endif %}</td>
+                  <td>{{ row.owner_label }}</td>
+                  <td>{% if row.due_date %}{{ row.due_date|date:"M d, Y" }}{% else %}<span class="dc-muted">No due date</span>{% endif %}</td>
+                  <td><a class="dc-queue-link" href="{{ row.href }}">{{ row.action_label }}</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="dc-muted">No active contracts are currently in progress.</td>
+                </tr>
+                {% endfor %}
+                {% for deadline in upcoming_deadlines|slice:":6" %}
+                <tr>
+                  <td>
+                    <div class="dc-contract-title">{{ deadline.title }}</div>
+                    <div class="dc-fallback-meta">{% if deadline.contract %}{{ deadline.contract.title }}{% elif deadline.matter %}{{ deadline.matter.title }}{% else %}Unlinked deadline{% endif %}</div>
+                  </td>
+                  <td>Deadline</td>
+                  <td>{% if deadline.assigned_to %}{{ deadline.assigned_to.get_full_name|default:deadline.assigned_to.username }}{% else %}Unassigned{% endif %}</td>
+                  <td>{{ deadline.due_date|date:"M d, Y" }}</td>
+                  <td><a class="dc-queue-link" href="{% url 'contracts:deadline_update' deadline.pk %}">Review</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="dc-activation-steps">
+            <div class="dc-activation-step">
+              <span class="dc-activation-step-index">1</span>
+              <div>
+                <div class="dc-activation-step-title">Bring in your first contract</div>
+                <div class="dc-activation-step-copy">Import existing paper or create a governed agreement from an approved template.</div>
+              </div>
+              <div class="dc-activation-step-actions">
+                <a class="dc-btn dc-btn-primary" href="{% url 'contracts:document_create' %}">Import Document</a>
+                <a class="dc-btn" href="{% url 'contracts:contract_template_picker' %}">Use Template</a>
+              </div>
+            </div>
+            <div class="dc-activation-step">
+              <span class="dc-activation-step-index">2</span>
+              <div>
+                <div class="dc-activation-step-title">Configure review and approval routing</div>
+                <div class="dc-activation-step-copy">Set the governed path for legal review, business approval, and signature.</div>
+              </div>
+              <div class="dc-activation-step-actions">
+                <a class="dc-btn" href="{% url 'contracts:workflow_dashboard' %}">Open Workflows</a>
+              </div>
+            </div>
+            <div class="dc-activation-step">
+              <span class="dc-activation-step-index">3</span>
+              <div>
+                <div class="dc-activation-step-title">Establish owners and key dates</div>
+                <div class="dc-activation-step-copy">Add the team members responsible for contracts, obligations, and deadlines.</div>
+              </div>
+              <div class="dc-activation-step-actions">
+                <a class="dc-btn" href="{% url 'contracts:organization_team' %}">Manage Team</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </section>
+      </div>
+
+      <aside class="dc-side-stack">
+        {% if not dashboard_has_data %}
+        <section class="dc-card">
+          <div class="dc-card-head">
+            <div>
+              <div class="dc-card-title">Quick Start</div>
+              <div class="dc-card-subtitle">Choose the fastest route into the workspace.</div>
+            </div>
+          </div>
+          <div class="dc-quick-list">
+            <a class="dc-quick-link" href="{% url 'contracts:document_create' %}">
+              <span class="dc-quick-icon" aria-hidden="true">{% include "design_system/icon.html" with name="upload" %}</span>
+              <span><span class="dc-quick-title">Import existing paper</span><span class="dc-quick-meta">Upload an executed or draft agreement.</span></span>
+              <span class="dc-quick-action">Import</span>
+            </a>
+            <a class="dc-quick-link" href="{% url 'contracts:contract_template_picker' %}">
+              <span class="dc-quick-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span>
+              <span><span class="dc-quick-title">Use an approved template</span><span class="dc-quick-meta">Start a governed MSA, DPA, or NDA.</span></span>
+              <span class="dc-quick-action">Create</span>
+            </a>
+            <a class="dc-quick-link" href="{% url 'contracts:organization_team' %}">
+              <span class="dc-quick-icon" aria-hidden="true">{% include "design_system/icon.html" with name="user-plus" %}</span>
+              <span><span class="dc-quick-title">Add workspace members</span><span class="dc-quick-meta">Prepare ownership and approval assignments.</span></span>
+              <span class="dc-quick-action">Manage</span>
+            </a>
+          </div>
+        </section>
+        {% endif %}
+
+        {% if dashboard_has_data %}
+        <section class="dc-card">
+          <div class="dc-card-head">
+            <div>
+              <div class="dc-card-title">Upcoming Deadlines</div>
+              <div class="dc-card-subtitle">Priority dates across matters and contracts.</div>
+            </div>
+          </div>
+          <div class="dc-side-list">
+            {% for deadline in upcoming_deadlines|slice:":4" %}
+            <a class="dc-obligation-row" href="{% url 'contracts:deadline_update' deadline.pk %}">
+              <span><span class="dc-obligation-title">{{ deadline.title }}</span><span class="dc-review-meta">{{ deadline.due_date|date:"M d, Y" }}</span></span>
+              <span class="dc-obligation-due">Review</span>
+            </a>
+            {% empty %}
+            <div class="dc-muted">No upcoming deadlines. New dates will appear here automatically.</div>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+      </aside>
+    </div>
   </div>
   {% endif %}
 </div>
@@ -964,18 +1488,53 @@
 (function () {
   var queueTabs = document.querySelectorAll('[data-queue-filter]');
   var queueRows = document.querySelectorAll('[data-queue-row]');
+  var searchInput = document.querySelector('[data-queue-search]');
+  var refreshButton = document.querySelector('[data-dashboard-refresh]');
+  var activeFilter = 'all';
+
+  function applyVisibility() {
+    var term = (searchInput && searchInput.value || '').trim().toLowerCase();
+    queueRows.forEach(function (row) {
+      var matchesFilter = activeFilter === 'all' || row.getAttribute('data-filter-' + activeFilter) === 'true';
+      var matchesSearch = !term || (row.getAttribute('data-search-text') || '').indexOf(term) !== -1;
+      row.style.display = (matchesFilter && matchesSearch) ? '' : 'none';
+    });
+  }
+
+  function updateCounts() {
+    document.querySelectorAll('[data-filter-count]').forEach(function (badge) {
+      var key = badge.getAttribute('data-filter-count');
+      var count = 0;
+      queueRows.forEach(function (row) {
+        var visible = key === 'all' || row.getAttribute('data-filter-' + key) === 'true';
+        if (visible) count += 1;
+      });
+      badge.textContent = String(count);
+    });
+  }
+
   queueTabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
-      var filter = tab.getAttribute('data-queue-filter') || 'all';
+      activeFilter = tab.getAttribute('data-queue-filter') || 'all';
       queueTabs.forEach(function (item) {
         item.classList.toggle('is-active', item === tab);
       });
-      queueRows.forEach(function (row) {
-        var visible = filter === 'all' || row.getAttribute('data-filter-' + filter) === 'true';
-        row.style.display = visible ? '' : 'none';
-      });
+      applyVisibility();
     });
   });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applyVisibility);
+  }
+
+  if (refreshButton) {
+    refreshButton.addEventListener('click', function () {
+      window.location.reload();
+    });
+  }
+
+  updateCounts();
+  applyVisibility();
 })();
 </script>
 {% endblock %}

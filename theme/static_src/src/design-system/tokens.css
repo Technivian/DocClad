@@ -1,32 +1,32 @@
-/*
-  DocClad Django adapter tokens for the extracted Carelane design system.
-  Additive only: all tokens are --ds-* so they do not replace existing
-  DocClad --primary/--card/--border variables until pages opt in.
-*/
+/* DocClad Casefile tokens. The 4px base supports an explicit 8px layout grid. */
 :root {
-  --ds-color-shell: #0B1330;
-  --ds-color-shell-border: #1C2842;
-  --ds-color-canvas: #F3F5F7;
+  --ds-color-shell: #FAFBFB;
+  --ds-color-shell-border: #DFE3E7;
+  --ds-color-canvas: #F5F7F8;
   --ds-color-surface: #FFFFFF;
-  --ds-color-surface-muted: #EDF0F4;
+  --ds-color-surface-muted: #F0F2F3;
   --ds-color-surface-raised: #FFFFFF;
-  --ds-color-border: #DEE2EA;
-  --ds-color-border-strong: #C9CFDB;
-  --ds-color-text: #0B1330;
-  --ds-color-text-secondary: #5F6B85;
-  --ds-color-text-muted: #838DA3;
-  --ds-color-trust: #0A7264;
-  --ds-color-trust-hover: #085C51;
-  --ds-color-trust-soft: rgba(10, 114, 100, 0.08);
-  --ds-color-action: #B5502E;
-  --ds-color-action-hover: #964226;
-  --ds-color-action-soft: rgba(181, 80, 46, 0.08);
-  --ds-color-attention: #8A5A14;
-  --ds-color-attention-soft: #F6EDD8;
-  --ds-color-danger: #A63A2B;
-  --ds-color-danger-soft: #F8E8E3;
-  --ds-color-success: #0A7264;
-  --ds-color-success-soft: #DBF2EC;
+  --ds-color-border: #DFE3E7;
+  --ds-color-border-strong: #CDD2D8;
+  --ds-color-text: #171A1F;
+  --ds-color-text-secondary: #69717C;
+  --ds-color-text-muted: #8B929C;
+  --ds-color-trust: #1B7F5A;
+  --ds-color-trust-hover: #176B4D;
+  --ds-color-trust-soft: #EFF9F4;
+  --ds-color-action: #1B7F5A;
+  --ds-color-action-hover: #176B4D;
+  --ds-color-action-soft: #EFF9F4;
+  --ds-color-progress: #34548A;
+  --ds-color-progress-soft: #EEF3FA;
+  --ds-color-attention: #85540F;
+  --ds-color-attention-soft: #FBF3E3;
+  --ds-color-danger: #913A35;
+  --ds-color-danger-soft: #FBECEA;
+  --ds-color-special: #654978;
+  --ds-color-special-soft: #F3EFF7;
+  --ds-color-success: #176B4D;
+  --ds-color-success-soft: #EFF9F4;
 
   --ds-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ds-font-serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
@@ -35,7 +35,7 @@
   --ds-text-md: 14px;
   --ds-text-lg: 16px;
   --ds-text-xl: 20px;
-  --ds-text-title: 30px;
+  --ds-text-title: 28px;
   --ds-line-tight: 1.2;
   --ds-line-base: 1.45;
 
@@ -47,12 +47,33 @@
   --ds-space-6: 24px;
   --ds-space-8: 32px;
   --ds-space-10: 40px;
+  --ds-space-16: 64px;
+  --ds-space-20: 80px;
+  --ds-space-24: 96px;
+  --ds-space-30: 120px;
+
+  --ds-grid-columns: 12;
+  --ds-grid-margin: 24px;
+  --ds-grid-gutter: 24px;
 
   --ds-radius-sm: 4px;
-  --ds-radius-md: 6px;
-  --ds-radius-lg: 8px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 10px;
   --ds-radius-pill: 999px;
 
-  --ds-shadow-hairline: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --ds-focus-ring: 0 0 0 2px rgba(10, 114, 100, 0.18);
+  --ds-shadow-hairline: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 12px rgba(16, 24, 40, 0.035);
+  --ds-focus-ring: 0 0 0 3px rgba(27, 127, 90, 0.16);
+
+  --ds-motion-fast: 120ms;
+  --ds-motion-base: 180ms;
+  --ds-motion-slow: 240ms;
+  --ds-ease-standard: cubic-bezier(.2, 0, 0, 1);
+
+  --ds-chart-1: #1B7F5A;
+  --ds-chart-2: #4568A6;
+  --ds-chart-3: #9A6517;
+  --ds-chart-4: #765B8C;
+  --ds-chart-5: #A7463F;
+  --ds-chart-grid: #DFE3E7;
+  --ds-chart-axis: #69717C;
 }

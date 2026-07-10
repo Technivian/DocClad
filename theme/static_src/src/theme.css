@@ -1,18 +1,18 @@
 
 :root {
   /* Design Tokens */
-  --bg: #FFFFFF;
-  --ink: #0B0B0C;
-  --muted: #6B7280;
-  --stroke: #E5E7EB;
-  --accent: #0E9F6E;
-  --warn: #F59E0B;
-  --danger: #DC2626;
+  --bg: #F5F7F8;
+  --ink: #171A1F;
+  --muted: #69717C;
+  --stroke: #DFE3E7;
+  --accent: #1B7F5A;
+  --warn: #9A6517;
+  --danger: #A7463F;
   --card: #FFFFFF;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px rgb(23 26 31 / 0.05);
+  --shadow: 0 1px 2px rgb(23 26 31 / 0.05), 0 5px 14px rgb(23 26 31 / 0.035);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   
@@ -22,15 +22,16 @@
   --radius-full: 9999px;
   
   /* Spacing scale (8px base) */
-  --space-1: 0.5rem;   /* 8px */
-  --space-2: 1rem;     /* 16px */
-  --space-3: 1.5rem;   /* 24px */
-  --space-4: 2rem;     /* 32px */
-  --space-5: 2.5rem;   /* 40px */
-  --space-6: 3rem;     /* 48px */
-  --space-8: 4rem;     /* 64px */
-  --space-10: 5rem;    /* 80px */
-  --space-12: 6rem;    /* 96px */
+  --space-half: 0.25rem; /* 4px */
+  --space-1: 0.5rem;     /* 8px */
+  --space-2: 1rem;       /* 16px */
+  --space-3: 1.5rem;     /* 24px */
+  --space-4: 2rem;       /* 32px */
+  --space-5: 2.5rem;     /* 40px */
+  --space-8: 4rem;       /* 64px */
+  --space-10: 5rem;      /* 80px */
+  --space-12: 6rem;      /* 96px */
+  --space-15: 7.5rem;    /* 120px */
 }
 
 /* Typography - Inter Font */
@@ -46,9 +47,9 @@ body {
 
 .text-base { font-size: 14px; line-height: 16px; }
 .text-lg { font-size: 16px; line-height: 20px; }
-.text-xl { font-size: 18px; line-height: 22px; }
+.text-xl { font-size: 20px; line-height: 28px; }
 .text-2xl { font-size: 24px; line-height: 28px; }
-.text-3xl { font-size: 32px; line-height: 36px; }
+.text-3xl { font-size: 28px; line-height: 36px; }
 
 .font-medium { font-weight: 500; }
 .font-semibold { font-weight: 600; }
@@ -61,4 +62,4 @@ body {
 }
 
 /* Container max-width */
-.container-max { max-width: 1200px; margin: 0 auto; }
+.container-max { max-width: 1600px; margin: 0 auto; padding-inline: 24px; }

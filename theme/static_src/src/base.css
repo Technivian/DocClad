@@ -1,15 +1,14 @@
 /* Design System Foundation */
 :root {
-  /* Colors */
-  --ink: #0B0B0C;
-  --bg: #FFFFFF;
-  --stroke: #E5E7EB;
-  --accent: #0E9F6E;
-  --warn: #F59E0B;
-  --danger: #DC2626;
-  --muted: #6B7280;
-  --surface: #F9FAFB;
-  --border: #E5E7EB;
+  --ink: #171A1F;
+  --bg: #F5F7F8;
+  --stroke: #DFE3E7;
+  --accent: #1B7F5A;
+  --warn: #9A6517;
+  --danger: #A7463F;
+  --muted: #69717C;
+  --surface: #F0F2F3;
+  --border: #DFE3E7;
 
   /* Typography */
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -17,16 +16,18 @@
   --line-height-base: 20px;
   --font-size-lg: 16px;
   --line-height-lg: 24px;
-  --font-size-xl: 18px;
+  --font-size-xl: 20px;
   --line-height-xl: 28px;
   --font-size-2xl: 24px;
   --line-height-2xl: 32px;
-  --font-size-3xl: 32px;
-  --line-height-3xl: 40px;
+  --font-size-3xl: 28px;
+  --line-height-3xl: 36px;
 
   /* Spacing */
   --spacing-unit: 8px;
-  --container-max-width: 1200px;
+  --container-max-width: 1600px;
+  --grid-margin: 24px;
+  --grid-gutter: 24px;
 }
 
 /* Global Styles */
@@ -50,11 +51,13 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid #1B7F5A;
   outline-offset: 2px;
 }
 
 /* Smooth Transitions */
-* {
-  transition: colors 150ms ease, background-color 150ms ease, border-color 150ms ease;
-}
+button,
+a,
+input,
+select,
+textarea { transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }

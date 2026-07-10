@@ -2,7 +2,7 @@
 
 Converted from `DocClad UI Redesign Blueprint v1.docx` so agents and contributors can diff, cite, update, and follow it without parsing a Word file. This is the standard — the `.docx` (archived alongside this file) is not a source of truth.
 
-This document is the product/UX blueprint: North Star, core objects, user types, navigation, flagship screens, component system, and directional rules. For exact color tokens, hex values, and the most current button/badge decisions, defer to the actively-maintained [`/DOCCLAD_DESIGN_SYSTEM.md`](../../DOCCLAD_DESIGN_SYSTEM.md) — §9 below reflects this blueprint's original color *roles*, which that doc has since refined at the token level. For the implementation pattern (routes, records, risk signal codes) behind the workflow-first cockpits described here, see [`WORKFLOW_COCKPIT_REFERENCE_PATTERN.md`](./WORKFLOW_COCKPIT_REFERENCE_PATTERN.md).
+This document is historical product/UX blueprint context: North Star, core objects, user types, navigation, flagship screens, and directional rules. The authoritative current standard is [Casefile](README.md), including its foundations, component contracts, domain patterns, interactions, page archetypes, content language, and engineering rules. Where this blueprint differs from Casefile or production tokens, Casefile wins. For the implementation pattern behind workflow-first cockpits, see [`WORKFLOW_COCKPIT_REFERENCE_PATTERN.md`](../WORKFLOW_COCKPIT_REFERENCE_PATTERN.md).
 
 ## 1. North Star
 

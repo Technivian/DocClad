@@ -166,7 +166,7 @@
 .cform-intake-panel {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
 }
 .cform-panel-head {
@@ -174,15 +174,15 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  padding: 12px 16px;
+  padding: 15px 18px;
   border-bottom: 1px solid var(--card-border);
   background: var(--card-bg);
 }
 .cform-panel-title {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 1.25;
-  font-weight: 800;
+  font-weight: 750;
 }
 .cform-panel-copy {
   margin-top: 3px;
@@ -199,7 +199,7 @@
   font-size: 11px;
   font-weight: 800;
 }
-.cform-panel-body { padding: 14px 16px 16px; }
+.cform-panel-body { padding: 16px 18px 18px; }
 /* Collapsible intake sections (Legal posture, Lifecycle control, Draft
    brief) — collapsed by default, auto-expanded via JS only when the
    selected contract type actually requires a field inside them, so the
@@ -223,8 +223,8 @@
 .cform-section-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: 14px;
-  row-gap: 12px;
+  column-gap: 16px;
+  row-gap: 14px;
 }
 .cform-field { grid-column: span 6; min-width: 0; }
 .cform-field-full { grid-column: 1 / -1; }
@@ -268,15 +268,15 @@
 .cform-rail-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 6px;
+  border-radius: 10px;
   box-shadow: none;
 }
-.cform-rail-card + .cform-rail-card { margin-top: 10px; }
+.cform-rail-card + .cform-rail-card { margin-top: 14px; }
 .cform-rail-head {
-  padding: 12px 14px 10px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid var(--card-border);
 }
-.cform-rail-body { padding: 11px 14px 14px; }
+.cform-rail-body { padding: 13px 16px 16px; }
 .cform-route-row {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr);
@@ -321,14 +321,25 @@
 .cform-gov-badge svg { width: 12px; height: 12px; }
 
 /* ── AI Governance Panel rail items ───────────────────────── */
-.cform-gov-item { display: flex; gap: 9px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.cform-gov-group-label { padding: 12px 0 7px; color: var(--text-muted); font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; border-top: 1px solid var(--card-border); margin-top: 6px; }
+.cform-gov-group-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+.cform-gov-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
 .cform-gov-item:last-child { border-bottom: none; }
-.cform-gov-icon { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-subtle); color: var(--primary); }
-.cform-gov-icon svg { width: 12px; height: 12px; }
+.cform-gov-icon { width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-subtle); color: var(--primary); }
+.cform-gov-icon svg { width: 13px; height: 13px; }
 .cform-gov-icon.tone-amber { background: rgba(196,145,51,0.16); color: #8A5A14; }
 [data-theme="dark"] .cform-gov-icon.tone-amber { color: #D9A75B; }
 .cform-gov-title { font-size: 11px; font-weight: 700; color: var(--text-primary); }
 .cform-gov-copy { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+/* ── Numbered section badges (matches cockpit clause numbering) ──── */
+.cform-panel-head-title-row { display: flex; align-items: center; gap: 10px; }
+.cform-panel-num {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--primary-subtle); color: var(--primary);
+  font-size: 11px; font-weight: 800;
+}
 
 /* ── Stage 3: Draft Readiness ─────────────────────────────── */
 .cform-readiness-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
@@ -354,20 +365,22 @@
   .cform-readiness-grid { grid-template-columns: 1fr; }
 }
 /* Ironclad-like density overrides for this workspace */
-.contract-form-page .arch-workspace-main > * + * { margin-top: 12px !important; }
-.contract-form-page .arch-workspace-grid { gap: 18px; }
+.contract-form-page .arch-workspace-main > * + * { margin-top: 14px !important; }
+.contract-form-page .arch-workspace-grid { gap: 20px; }
 .contract-form-page .arch-section-label,
 .contract-form-page .arch-completion-label {
   font-size: 10px;
   letter-spacing: 0.08em;
 }
 .contract-form-page .arch-completion-count {
-  font-size: 24px;
+  font-size: 32px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
   line-height: 1.05;
 }
 .contract-form-page .arch-completion-track {
-  height: 4px;
-  border-radius: 0;
+  height: 5px;
+  border-radius: 999px;
 }
 @media (max-width: 760px) {
   .cform-command-stats,
@@ -567,9 +580,12 @@
         {# Contract identity: the minimum useful request record #}
         <section class="cform-intake-panel" aria-labelledby="contract-identity-heading">
           <div class="cform-panel-head">
-            <div>
-              <div class="arch-section-label">Request intake</div>
-              <h2 id="contract-identity-heading" class="cform-panel-title">Contract identity</h2>
+            <div class="cform-panel-head-title-row">
+              <span class="cform-panel-num" aria-hidden="true">1</span>
+              <div>
+                <div class="arch-section-label">Request intake</div>
+                <h2 id="contract-identity-heading" class="cform-panel-title">Contract identity</h2>
+              </div>
             </div>
             <span class="cform-panel-meta">Required to create</span>
           </div>
@@ -632,9 +648,12 @@
 
         <details class="cform-intake-panel cform-collapsible" data-collapsible="legal-posture">
           <summary class="cform-panel-head cform-summary">
-            <div>
-              <div class="arch-section-label">Legal posture</div>
-              <h2 id="commercial-terms-heading" class="cform-panel-title">Commercial terms and jurisdiction</h2>
+            <div class="cform-panel-head-title-row">
+              <span class="cform-panel-num" aria-hidden="true">2</span>
+              <div>
+                <div class="arch-section-label">Legal posture</div>
+                <h2 id="commercial-terms-heading" class="cform-panel-title">Commercial terms and jurisdiction</h2>
+              </div>
             </div>
             <span class="cform-panel-meta">
               <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
@@ -665,9 +684,12 @@
 
         <section class="cform-intake-panel" aria-labelledby="risk-signals-heading">
           <div class="cform-panel-head">
-            <div>
-              <div class="arch-section-label">Privacy & risk</div>
-              <h2 id="risk-signals-heading" class="cform-panel-title">Review triggers</h2>
+            <div class="cform-panel-head-title-row">
+              <span class="cform-panel-num" aria-hidden="true">3</span>
+              <div>
+                <div class="arch-section-label">Privacy & risk</div>
+                <h2 id="risk-signals-heading" class="cform-panel-title">Review triggers</h2>
+              </div>
             </div>
             <span class="cform-panel-meta">Controls routing</span>
           </div>
@@ -691,9 +713,12 @@
 
         <details class="cform-intake-panel cform-collapsible" data-collapsible="lifecycle-control">
           <summary class="cform-panel-head cform-summary">
-            <div>
-              <div class="arch-section-label">Lifecycle control</div>
-              <h2 id="lifecycle-timing-heading" class="cform-panel-title">Dates and lifecycle management</h2>
+            <div class="cform-panel-head-title-row">
+              <span class="cform-panel-num" aria-hidden="true">4</span>
+              <div>
+                <div class="arch-section-label">Lifecycle control</div>
+                <h2 id="lifecycle-timing-heading" class="cform-panel-title">Dates and lifecycle management</h2>
+              </div>
             </div>
             <span class="cform-panel-meta">
               <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
@@ -737,9 +762,12 @@
         {% for field in form.visible_fields %}{% if field.name == 'content' %}
         <details class="cform-intake-panel cform-collapsible" data-collapsible="draft-brief">
           <summary class="cform-panel-head cform-summary">
-            <div>
-              <div class="arch-section-label">Draft brief</div>
-              <h2 id="draft-brief-heading" class="cform-panel-title">Source text and drafting instructions</h2>
+            <div class="cform-panel-head-title-row">
+              <span class="cform-panel-num" aria-hidden="true">5</span>
+              <div>
+                <div class="arch-section-label">Draft brief</div>
+                <h2 id="draft-brief-heading" class="cform-panel-title">Source text and drafting instructions</h2>
+              </div>
             </div>
             <span class="cform-panel-meta">
               <span class="cform-collapsible-note" data-collapsible-note hidden>Required for this type</span>
@@ -919,6 +947,7 @@
             <div class="arch-section-label">AI Governance Panel</div>
           </div>
           <div class="cform-rail-body" id="cform-governance-body">
+            <div class="cform-gov-group-label">Template &amp; playbook</div>
             <div class="cform-gov-item">
               <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span>
               <div><div class="cform-gov-title">Template selected</div><div class="cform-gov-copy" id="cform-gov-template">Select a contract type above.</div></div>
@@ -931,10 +960,14 @@
               <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg></span>
               <div><div class="cform-gov-title">Clause library source</div><div class="cform-gov-copy" id="cform-gov-clauses">{{ governance_panel.clause_library_count }} approved clause{{ governance_panel.clause_library_count|pluralize }} available for this type</div></div>
             </div>
+
+            <div class="cform-gov-group-label">Risk &amp; compliance</div>
             <div class="cform-gov-item">
               <span class="cform-gov-icon tone-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>
               <div><div class="cform-gov-title">Risk checks</div><div class="cform-gov-copy">{% if governance_panel.risk_summary.has_data %}{{ governance_panel.risk_summary.open_count }} open risk{{ governance_panel.risk_summary.open_count|pluralize }} on this contract{% else %}No risk checks yet — signals appear once this draft is saved{% endif %}</div></div>
             </div>
+
+            <div class="cform-gov-group-label">Approval &amp; audit</div>
             <div class="cform-gov-item">
               <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M16 3.5a3 3 0 0 1 0 7"/><path d="M18 20a7 7 0 0 0-3-6"/></svg></span>
               <div><div class="cform-gov-title">Approval route</div><div class="cform-gov-copy" id="cform-gov-route">{% for step in governance_panel.approval_route %}{{ step.name }}{% if not forloop.last %} &rarr; {% endif %}{% endfor %}</div></div>
@@ -978,9 +1011,12 @@
     {% endcomment %}
     <div class="cform-intake-panel cform-mt-18">
       <div class="cform-panel-head">
-        <div>
-          <div class="arch-section-label">Draft Readiness</div>
-          <h2 class="cform-panel-title">Review &amp; Route</h2>
+        <div class="cform-panel-head-title-row">
+          <span class="cform-panel-num" aria-hidden="true">6</span>
+          <div>
+            <div class="arch-section-label">Draft Readiness</div>
+            <h2 class="cform-panel-title">Review &amp; Route</h2>
+          </div>
         </div>
       </div>
       <div class="cform-panel-body">

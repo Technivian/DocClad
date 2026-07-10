@@ -223,6 +223,80 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 
 
 @login_required
+def legal_front_door(request):
+    """The Legal Front Door: "What legal work do you need?" — the entry
+    point ahead of the contract-type picker. Every option below routes to
+    an existing, already-governed DocClad destination; this view adds no
+    new domain model and no new permission surface, it only assembles
+    links. Shared/mode-neutral per docs/WORKSPACE_MODE_CONTAINMENT.md —
+    every option applies equally to law_firm_ops and in_house_clm tenants,
+    so this view does not branch on workspace_mode."""
+    options = [
+        {
+            'key': 'create',
+            'title': 'Create a contract',
+            'description': 'Select a contract type. DocClad applies the right approved template, playbook, and approval route.',
+            'icon': 'document',
+            'href': reverse('contracts:contract_template_picker'),
+        },
+        {
+            'key': 'review',
+            'title': 'Review a contract',
+            'description': 'Open an existing contract to review its terms, status, and risk position.',
+            'icon': 'search',
+            'href': reverse('contracts:contract_list'),
+        },
+        {
+            'key': 'upload',
+            'title': 'Upload signed contract',
+            'description': 'Ingest an already-signed agreement into the repository for tracking and obligations.',
+            'icon': 'upload',
+            'href': reverse('contracts:upload_signed_contract'),
+        },
+        {
+            'key': 'dpa_review',
+            'title': 'Start DPA review',
+            'description': 'Assess an existing contract for privacy risk — SCC position, subprocessors, data transfers.',
+            'icon': 'shield',
+            'href': reverse('contracts:dpa_review_pack_list'),
+        },
+        {
+            'key': 'legal_question',
+            'title': 'Ask a legal question',
+            'description': 'Route a question to the Legal team.',
+            'icon': 'question',
+            'href': None,
+            'coming_soon': True,
+        },
+        {
+            'key': 'approval',
+            'title': 'Request approval',
+            'description': 'Send a contract or decision through the approval routing engine.',
+            'icon': 'approval',
+            'href': reverse('contracts:approval_request_list'),
+        },
+        {
+            'key': 'renewal',
+            'title': 'Start renewal / amendment',
+            'description': 'Draft an amendment or renewal against an existing agreement.',
+            'icon': 'edit',
+            'href': f"{reverse('contracts:contract_create')}?type={Contract.ContractType.AMENDMENT}",
+        },
+    ]
+    return render(request, 'legal_front_door.html', {'legal_work_options': options})
+
+
+@login_required
+def upload_signed_contract(request):
+    """GET-only screen for the signed-contract ingest flow. The actual
+    upload POST goes directly to the existing document_upload_api (already
+    login_required, org-scoped, CSRF-protected — no changes made to it)
+    via fetch() from this template's script; this view only renders the
+    form shell."""
+    return render(request, 'contracts/upload_signed_contract.html', {})
+
+
+@login_required
 def contract_template_picker(request):
     """Step 1 of contract creation: pick a contract type, then a template.
 
@@ -906,14 +980,15 @@ def dashboard(request):
         rows = []
         for contract in contracts:
             due = getattr(contract, due_field, None)
+            assignee = assignee_map.get(contract.pk)
             rows.append({
                 'title': contract.title,
                 'href': reverse('contracts:contract_detail', kwargs={'pk': contract.pk}),
                 'edit_href': reverse('contracts:contract_update', kwargs={'pk': contract.pk}),
                 'meta': contract.client.name if contract.client_id else None,
                 'contract': contract,
-                'assignee': assignee_map.get(contract.pk),
-                'owner_role': _role_for_user(assignee_map.get(contract.pk)),
+                'assignee': assignee,
+                'owner_role': _role_for_user(assignee),
                 'activity': activity_map.get(contract.pk),
                 'due_date': due,
                 'due_overdue': bool(due and due < today and contract.status not in TERMINAL_STATUSES),
@@ -921,6 +996,20 @@ def dashboard(request):
                 'status_label': contract.get_status_display(),
                 'status_badge_class': status_badge_class(contract.status),
                 'action_label': _QUEUE_ACTION_LABELS.get(contract.lifecycle_stage, 'View'),
+                # Fallback-path filter flags: the persisted CommandCenterWorkItem
+                # path (command_center_work_item_to_row) sets these from richer
+                # workflow/flags data; this queryset-built path only has Contract
+                # fields to work with, so these are best-effort equivalents, not
+                # exact parity — kept so no saved-view tab silently hides every
+                # row when there are no persisted work items yet (previously
+                # these keys were absent entirely, and every tab but "All"
+                # rendered empty).
+                'filter_all': True,
+                'filter_mine': bool(assignee and assignee.pk == request.user.pk),
+                'filter_dpa': contract.contract_type == 'DPA',
+                'filter_high_risk': contract.risk_level in ('HIGH', 'CRITICAL'),
+                'filter_renewals': bool(due),
+                'filter_waiting': contract.status in ('PENDING', 'IN_REVIEW'),
             })
         return rows
 

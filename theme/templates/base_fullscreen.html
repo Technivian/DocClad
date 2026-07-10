@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
-    <meta name="theme-color" content="#0B1330">
+    <meta name="theme-color" content="#F5F7F8">
     <meta property="og:title" content="DocClad">
     <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
     <meta name="twitter:card" content="summary_large_image">
@@ -23,89 +23,55 @@
     <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
+    <script src="{% static 'js/docclad-ui.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">
-        // Apply persisted theme before paint to avoid a flash.
+        // Public and authenticated surfaces share the same light theme.
         (function() {
-            var t = localStorage.getItem('docclad-theme') || localStorage.getItem('cms-aegis-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('docclad-theme', 'light');
+            document.documentElement.setAttribute('data-theme', 'light');
         })();
     </script>
     <style nonce="{{ csp_nonce }}">
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
 
         :root, [data-theme="light"] {
-            --bg: #F3F5F7;
-            --surface: #EDF0F4;
+            --bg: #F5F7F8;
+            --surface: #F0F2F3;
             --surface-alt: #FFFFFF;
-            --primary: #0A7264;
-            --primary-hover: #085C51;
-            --primary-light: #11A08D;
-            --accent: #0A7264;
-            --cta: #B5502E;
-            --cta-hover: #8A3A1E;
-            --cta-glow: rgba(181,80,46,0.16);
-            --text-primary: #0B1330;
-            --text-secondary: #5F6B85;
-            --text-muted: #838DA3;
-            --text-dim: #AAB2C2;
-            --border: #DEE2EA;
+            --primary: #1B7F5A;
+            --primary-hover: #176B4D;
+            --primary-light: #26966B;
+            --accent: #1B7F5A;
+            --cta: #1B7F5A;
+            --cta-hover: #176B4D;
+            --cta-glow: rgba(27,127,90,0.16);
+            --text-primary: #171A1F;
+            --text-secondary: #69717C;
+            --text-muted: #8B929C;
+            --text-dim: #B4BAC1;
+            --border: #DFE3E7;
             --nav-bg: rgba(255,255,255,0.92);
-            --primary-glow: rgba(10,114,100,0.16);
-            --primary-subtle: rgba(10,114,100,0.08);
-            --primary-bg: rgba(10,114,100,0.12);
-            --primary-bg-light: rgba(10,114,100,0.05);
-            --accent-bg: rgba(10,114,100,0.10);
-            --accent-bg-light: rgba(10,114,100,0.05);
-            --amber-color: #8A5A14;
-            --amber-bg: #F6EDD8;
-            --error: #A63A2B;
-            --error-bg: #F8E8E3;
-            --error-border: #EFCCC1;
+            --primary-glow: rgba(27,127,90,0.16);
+            --primary-subtle: rgba(27,127,90,0.08);
+            --primary-bg: rgba(27,127,90,0.12);
+            --primary-bg-light: rgba(27,127,90,0.05);
+            --accent-bg: rgba(27,127,90,0.10);
+            --accent-bg-light: rgba(27,127,90,0.05);
+            --amber-color: #85540F;
+            --amber-bg: #FBF3E3;
+            --error: #913A35;
+            --error-bg: #FBECEA;
+            --error-border: #EACAC7;
             --input-bg: #FFFFFF;
             --hover-overlay: rgba(11,19,48,0.03);
         }
 
-        [data-theme="dark"] {
-            --bg: #070D20;
-            --surface: #101A38;
-            --surface-alt: #0B1330;
-            --primary: #17BFA5;
-            --primary-hover: #55CDB7;
-            --primary-light: #55CDB7;
-            --accent: #17BFA5;
-            --cta: #CF7248;
-            --cta-hover: #E29368;
-            --cta-glow: rgba(207,114,72,0.22);
-            --text-primary: #EDF0F6;
-            --text-secondary: #A9B2C8;
-            --text-muted: #78839E;
-            --text-dim: #4E5A78;
-            --border: #1C2842;
-            --nav-bg: rgba(7,13,32,0.92);
-            --primary-glow: rgba(23,191,165,0.22);
-            --primary-subtle: rgba(23,191,165,0.12);
-            --primary-bg: rgba(23,191,165,0.16);
-            --primary-bg-light: rgba(23,191,165,0.07);
-            --accent-bg: rgba(23,191,165,0.14);
-            --accent-bg-light: rgba(23,191,165,0.07);
-            --amber-color: #D9A75B;
-            --amber-bg: rgba(196,145,51,0.15);
-            --error: #E08A78;
-            --error-bg: rgba(196,82,61,0.14);
-            --error-border: rgba(196,82,61,0.3);
-            --input-bg: #070D20;
-            --hover-overlay: rgba(255,255,255,0.05);
-        }
-
         .theme-toggle { cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem; color: var(--text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .theme-toggle:hover { color: var(--text-primary); border-color: var(--primary); }
-        [data-theme="dark"] .icon-sun { display: block; }
-        [data-theme="dark"] .icon-moon { display: none; }
         [data-theme="light"] .icon-sun { display: none; }
         [data-theme="light"] .icon-moon { display: block; }
 
         /* ── Brand logo theme switching ────────────────────────────────────── */
-        [data-theme="dark"]  .brand-logo-light { display: none; }
         [data-theme="light"] .brand-logo-dark  { display: none; }
 
         /* ── Brand logo sizing (SVGs have transparent backgrounds — no crop needed) ── */
@@ -163,7 +129,7 @@
         .btn-quiet-surface { border-color: var(--border); color: var(--text-primary); background: var(--surface); }
     </style>
 </head>
-    <body class="bg-page login-title">
+    <body class="bg-page login-title" data-design-system="casefile">
     {% block body %}
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="w-full max-w-md">
@@ -171,6 +137,8 @@
         </div>
     </div>
     {% endblock %}
+
+    {% include "design_system/toast_region.html" %}
 
 </body>
 </html>

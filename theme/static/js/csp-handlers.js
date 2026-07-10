@@ -10,33 +10,14 @@
 (function () {
   'use strict';
 
-  function applyTheme(next) {
-    document.documentElement.setAttribute('data-theme', next);
-    try {
-      localStorage.setItem('docclad-theme', next);
-      localStorage.removeItem('cms-aegis-theme');
-    } catch (e) {
-      /* storage unavailable; theme still applies for this page */
-    }
-  }
-
-  // Kept on window so any remaining/legacy caller resolves during transition.
-  window.toggleTheme = function () {
-    var current = document.documentElement.getAttribute('data-theme');
-    applyTheme(current === 'dark' ? 'light' : 'dark');
-  };
-
-  // data-action="toggle-theme" | "demo-alert" (data-message)
+  // data-action="demo-alert" (data-message)
   document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-action]');
     if (!el) {
       return;
     }
     var action = el.getAttribute('data-action');
-    if (action === 'toggle-theme') {
-      e.preventDefault();
-      window.toggleTheme();
-    } else if (action === 'demo-alert') {
+    if (action === 'demo-alert') {
       window.alert(el.getAttribute('data-message') || '');
     }
   });

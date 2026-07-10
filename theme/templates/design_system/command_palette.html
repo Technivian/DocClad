@@ -1,0 +1,31 @@
+<dialog class="dc-command" id="docclad-command-palette" aria-labelledby="docclad-command-title">
+  <div class="dc-command__panel">
+    <div class="dc-command__head">
+      <div>
+        <div class="dc-command__title" id="docclad-command-title">Go to</div>
+        <div class="dc-command__meta">Navigate or search the legal workspace</div>
+      </div>
+      <button type="button" class="dc-command__close" data-command-close aria-label="Close command palette" title="Close">
+        {% include "design_system/icon.html" with name="x" %}
+      </button>
+    </div>
+    <form class="dc-command__search" method="get" action="{% url 'contracts:global_search' %}">
+      {% include "design_system/icon.html" with name="search" %}
+      <input type="search" name="q" data-command-input autocomplete="off" placeholder="Search commands and workspace records" aria-label="Search commands and workspace records">
+      <kbd>Esc</kbd>
+    </form>
+    <div class="dc-command__results" data-command-results>
+      {% for entry in SIDEBAR_NAV %}
+        {% if entry.kind == 'section' %}
+          <div class="dc-command__group-label">{{ entry.label }}</div>
+        {% else %}
+          <a class="dc-command__item" href="{% url entry.url_name %}" data-command-item data-command-search="{{ entry.label|lower }}">
+            <span>{{ entry.label }}</span>
+            {% include "design_system/icon.html" with name="arrow-right" %}
+          </a>
+        {% endif %}
+      {% endfor %}
+      <div class="dc-command__empty" data-command-empty hidden>No matching commands. Press Enter to search all records.</div>
+    </div>
+  </div>
+</dialog>

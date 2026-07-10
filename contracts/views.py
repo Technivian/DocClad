@@ -154,6 +154,8 @@ from .views_domains.contracts import (
     contract_ai_assistant,
     contract_template_picker,
     dashboard,
+    legal_front_door,
+    upload_signed_contract,
 )
 from .views_domains.dpa_workflow import DPAWorkflowBuilderView
 from .views_domains.msa_workflow import MSAWorkflowBuilderView

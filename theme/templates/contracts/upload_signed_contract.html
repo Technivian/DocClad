@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Upload Signed Contract – DocClad{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .usc-panel {
+    max-width: 640px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px; margin-top: 20px;
+  }
+  .usc-field { margin-bottom: 18px; }
+  .usc-field label { display: block; font-size: 12.5px; font-weight: 650; color: var(--text-primary); margin-bottom: 6px; }
+  .usc-field input[type="text"] {
+    width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-primary); font-size: 13.5px;
+  }
+  .usc-dropzone {
+    border: 1.5px dashed var(--border); border-radius: 10px; padding: 28px 18px; text-align: center;
+    background: var(--sidebar-hover); cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .usc-dropzone:hover, .usc-dropzone.is-dragover { border-color: var(--primary); background: var(--primary-subtle); }
+  .usc-dropzone svg { width: 28px; height: 28px; color: var(--primary); margin-bottom: 8px; }
+  .usc-dropzone-title { font-size: 13.5px; font-weight: 650; color: var(--text-primary); }
+  .usc-dropzone-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+  .usc-filename { margin-top: 10px; font-size: 12.5px; color: var(--primary); font-weight: 650; }
+  .usc-actions { margin-top: 22px; display: flex; align-items: center; gap: 10px; }
+  .usc-submit {
+    padding: 10px 16px; border-radius: 8px; border: 1px solid var(--primary-hover); font-size: 13px; font-weight: 700;
+    color: #FFFFFF; background: var(--btn-gradient); cursor: pointer;
+  }
+  .usc-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+  .usc-status { margin-top: 16px; font-size: 12.5px; padding: 10px 12px; border-radius: 8px; display: none; }
+  .usc-status.is-success { display: block; background: var(--primary-subtle); color: var(--primary); }
+  .usc-status.is-error { display: block; background: rgba(196,60,60,0.12); color: #C43C3C; }
+  .usc-status a { color: inherit; text-decoration: underline; font-weight: 650; }
+</style>
+
+<div class="page-wrap">
+  <a href="{% url 'contracts:legal_front_door' %}" class="arch-back">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    New legal work
+  </a>
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <h1 class="arch-title">Upload Signed Contract</h1>
+      <p class="arch-subtitle">Ingest an already-executed agreement — DocClad hashes, queues OCR, and stores it in the repository.</p>
+    </div>
+  </div>
+
+  <div class="usc-panel">
+    <form id="usc-form">
+      <div class="usc-field">
+        <label for="usc-title">Title <span style="color: var(--text-muted); font-weight: 500;">(optional — defaults to filename)</span></label>
+        <input type="text" id="usc-title" name="title" placeholder="e.g. Acme Corp Master Services Agreement — signed">
+      </div>
+      <div class="usc-field">
+        <label>Document</label>
+        <div class="usc-dropzone" id="usc-dropzone" tabindex="0" role="button" aria-label="Choose a file to upload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <div class="usc-dropzone-title">Click to choose a file, or drag it here</div>
+          <div class="usc-dropzone-sub">PDF, DOCX, TXT, MD, CSV, HTML, XML, JSON — up to 50MB</div>
+          <div class="usc-filename" id="usc-filename"></div>
+        </div>
+        <input type="file" id="usc-file-input" name="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" style="display:none;">
+      </div>
+      <div class="usc-actions">
+        <button type="submit" class="usc-submit" id="usc-submit" disabled>Upload contract</button>
+      </div>
+      <div class="usc-status" id="usc-status"></div>
+    </form>
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+    function getCsrfToken() {
+        return document.cookie.split('; ').find(function (row) { return row.startsWith('csrftoken='); })?.split('=')[1] || '';
+    }
+    var form = document.getElementById('usc-form');
+    var dropzone = document.getElementById('usc-dropzone');
+    var fileInput = document.getElementById('usc-file-input');
+    var filenameEl = document.getElementById('usc-filename');
+    var submitBtn = document.getElementById('usc-submit');
+    var statusEl = document.getElementById('usc-status');
+    var titleInput = document.getElementById('usc-title');
+    if (!form || !dropzone || !fileInput) return;
+
+    function setFile(file) {
+        if (!file) return;
+        filenameEl.textContent = file.name;
+        submitBtn.disabled = false;
+    }
+
+    dropzone.addEventListener('click', function () { fileInput.click(); });
+    dropzone.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener('change', function () { setFile(fileInput.files[0]); });
+    dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('is-dragover'); });
+    dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('is-dragover'); });
+    dropzone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropzone.classList.remove('is-dragover');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            setFile(fileInput.files[0]);
+        }
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!fileInput.files.length) return;
+        statusEl.className = 'usc-status';
+        statusEl.textContent = '';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading…';
+
+        var body = new FormData();
+        body.append('file', fileInput.files[0]);
+        body.append('document_type', 'CONTRACT');
+        if (titleInput.value.trim()) body.append('title', titleInput.value.trim());
+
+        fetch('{% url "contracts:document_upload_api" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: body,
+        })
+            .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+            .then(function (result) {
+                if (result.ok && result.data.ok) {
+                    statusEl.className = 'usc-status is-success';
+                    statusEl.innerHTML = 'Uploaded "' + result.data.title + '". <a href="{% url "contracts:repository" %}">Open Repository</a>';
+                    submitBtn.textContent = 'Upload another';
+                    submitBtn.disabled = true;
+                    form.reset();
+                    filenameEl.textContent = '';
+                } else {
+                    statusEl.className = 'usc-status is-error';
+                    statusEl.textContent = (result.data && result.data.error) || 'Upload failed. Please try again.';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Upload contract';
+                }
+            })
+            .catch(function () {
+                statusEl.className = 'usc-status is-error';
+                statusEl.textContent = 'Upload failed. Please check your connection and try again.';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Upload contract';
+            });
+    });
+})();
+</script>
+{% endblock %}

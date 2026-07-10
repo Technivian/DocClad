@@ -267,12 +267,15 @@
     <div class="arch-header-right">
       <a href="{% url 'contracts:repository' %}" class="btn-quiet">Repository</a>
       <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"/>
-        </svg>
+        {% include "design_system/icon.html" with name="plus" class_name="w-4 h-4" %}
         New Contract
       </a>
     </div>
+  </div>
+
+  <div class="dc-ds-alert dc-ds-alert--attention mb-4" role="status">
+    <span>Repository is now the canonical contract list. This workspace remains available for active contract operations.</span>
+    <a href="{% url 'contracts:repository' %}" class="c-link">Open Repository</a>
   </div>
 
   <div class="cw-toolbar">
@@ -288,9 +291,7 @@
     </nav>
     <div class="cw-tools">
       <form method="get" class="cw-search" role="search">
-        <svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-        </svg>
+        {% include "design_system/icon.html" with name="search" %}
         <input type="text" name="q" value="{{ search_query }}" placeholder="Search active contract work..." aria-label="Search contracts">
         {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
         <input type="hidden" name="sort" value="{{ sort }}">
@@ -393,9 +394,7 @@
                 <td colspan="8" class="px-5 py-20 text-center">
                   <div class="flex flex-col items-center gap-3">
                     <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                      <svg class="w-6 h-6 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
+                      {% include "design_system/icon.html" with name="file-text" class_name="w-6 h-6 c-muted" %}
                     </div>
                     <div>
                       <p class="font-medium c-primary">No contract work found</p>

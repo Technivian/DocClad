@@ -264,6 +264,7 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
                 'highest_risk_signal': top_signal.description if top_signal else 'No active risk signal',
                 'blocking_issue': blocking_issue,
                 'next_action': next_action,
+                'self_serve_eligible': contract.risk_level == Contract.RiskLevel.LOW if contract else False,
             },
             'last_source_synced_at': timezone.now(),
         },

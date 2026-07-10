@@ -12,6 +12,12 @@ from django.shortcuts import render
 
 
 @login_required
+def design_system_catalog(request):
+    """Living Casefile catalogue backed by production templates and tokens."""
+    return render(request, 'design_system/catalog.html')
+
+
+@login_required
 def design_preview_command_center(request):
     context = {
         'stats': [

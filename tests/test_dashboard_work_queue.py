@@ -82,7 +82,8 @@ class DashboardEmptyStateTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         body = dashboard_body(response.content.decode())
-        self.assertIn('Start building your legal workspace', body)
+        self.assertIn('Workspace at a glance', body)
+        self.assertIn('Set up contract operations', body)
         self.assertNotIn('Priority Work Queue', body)
         self.assertNotIn('In Progress', body)
 
@@ -96,7 +97,7 @@ class DashboardEmptyStateTests(TestCase):
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
-        self.assertNotContains(response, 'Start building your legal workspace')
+        self.assertNotContains(response, 'Set up contract operations')
         self.assertContains(response, 'Priority Work Queue')
         self.assertContains(response, 'In Progress')
 

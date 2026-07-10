@@ -144,20 +144,6 @@
 .modal-close-btn:hover {
     color: var(--text-primary);
 }
-/* Toast */
-.toast-success { background: var(--msg-success-bg); border: 1px solid var(--msg-success-border); color: var(--msg-success-text); }
-.toast-error   { background: var(--msg-error-bg);  border: 1px solid var(--msg-error-border);  color: var(--msg-error-text); }
-.toast-info    { background: var(--primary-subtle);  border: 1px solid var(--primary-bg);    color: var(--primary-light); }
-.toast-base {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 9999;
-}
 /* Empty state icon */
 .empty-state-icon { color: var(--text-dim); }
 .empty-state-title { color: var(--text-primary); }
@@ -498,15 +484,8 @@ function debounce(func, wait) {
 }
 
 function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast-base toast-${type}`;
-    toast.textContent = message;
-
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
+    const tone = type === 'error' ? 'danger' : type;
+    window.DocClad.toast(message, { tone: tone });
 }
 
 // Keyboard shortcuts

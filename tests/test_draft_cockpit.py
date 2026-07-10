@@ -32,12 +32,13 @@ User = get_user_model()
 
 
 class EntryCardsTests(TestCase):
-    def test_returns_the_six_curated_types_in_order(self):
+    def test_returns_the_curated_types_in_order(self):
         cards = get_entry_cards()
         self.assertEqual(
             [c.contract_type for c in cards],
             [Contract.ContractType.MSA, Contract.ContractType.DPA, Contract.ContractType.NDA,
-             Contract.ContractType.SOW, Contract.ContractType.VENDOR, Contract.ContractType.AMENDMENT],
+             Contract.ContractType.SOW, Contract.ContractType.VENDOR, Contract.ContractType.AMENDMENT,
+             Contract.ContractType.SAAS],
         )
 
     def test_card_shows_real_recommended_template_name(self):

@@ -56,7 +56,8 @@ class BoltonRedesignTestCase(TestCase):
     def test_dashboard_empty_state_hides_kpis(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Start building your legal workspace')
+        self.assertContains(response, 'Workspace at a glance')
+        self.assertContains(response, 'Set up contract operations')
         # The CSS definitions always mention the priority-strip classes;
         # assert on the rendered markup instead: no priority card labels in
         # the onboarding state.

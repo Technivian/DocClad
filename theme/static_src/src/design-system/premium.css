@@ -1,0 +1,242 @@
+/* Casefile premium compatibility layer.
+   Gives legacy Django pages the same spatial and surface system while they
+   migrate to dc-ds primitives. Full-bleed workspaces keep their own frames. */
+
+:root {
+  --ds-page-max: 1480px;
+  --ds-page-x: 32px;
+  --ds-page-top: 32px;
+  --ds-page-bottom: 56px;
+  --ds-control-height: 38px;
+  --ds-surface-shadow: 0 1px 2px rgba(23, 26, 31, .045), 0 8px 24px rgba(23, 26, 31, .035);
+  --ds-surface-shadow-hover: 0 2px 4px rgba(23, 26, 31, .055), 0 14px 34px rgba(23, 26, 31, .055);
+}
+
+html { background: var(--ds-color-canvas); }
+
+body[data-design-system="casefile"] {
+  color: var(--ds-color-text);
+  font-family: var(--ds-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body[data-design-system="casefile"] .main-area {
+  background: var(--ds-color-canvas);
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar {
+  border-bottom-color: var(--ds-color-border);
+  background: rgba(255, 255, 255, .97);
+  box-shadow: 0 1px 0 rgba(23, 26, 31, .02);
+  backdrop-filter: blur(12px);
+}
+
+body[data-design-system="casefile"] .main-content-pad {
+  min-width: 0;
+}
+
+body[data-design-system="casefile"] .page-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--ds-page-max);
+  margin-inline: auto;
+  padding: var(--ds-page-top) var(--ds-page-x) var(--ds-page-bottom);
+}
+
+body[data-design-system="casefile"] .page-wrap.page-wrap-fluid {
+  max-width: none;
+}
+
+body[data-design-system="casefile"] .dc-ds-page {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--ds-page-top) var(--ds-page-x) var(--ds-page-bottom);
+}
+
+body[data-design-system="casefile"] .page-wrap:is(.contract-form-page, .dpa-workflow-page, .msa-workflow-page, .nda-workflow-page) {
+  padding: 24px 24px 48px;
+}
+
+body[data-design-system="casefile"] :is(.arch-header, .page-header) {
+  gap: 16px 24px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ds-color-border);
+}
+
+body[data-design-system="casefile"] :is(.arch-title, .page-title) {
+  color: var(--ds-color-text);
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+body[data-design-system="casefile"] :is(.arch-subtitle, .page-subtitle) {
+  max-width: 840px;
+  color: var(--ds-color-text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+body[data-design-system="casefile"] :is(.panel, .card-l1, .card-l2, .dc-ds-surface) {
+  border-color: var(--ds-color-border);
+  background: var(--ds-color-surface);
+  box-shadow: var(--ds-surface-shadow);
+}
+
+body[data-design-system="casefile"] :is(.panel-head, .card-header, .dc-ds-surface__head) {
+  border-bottom-color: var(--ds-color-border);
+}
+
+body[data-design-system="casefile"] :is(.btn-cta, .btn-quiet, .btn-primary-grad, .dc-ds-button) {
+  min-height: var(--ds-control-height);
+  border-radius: var(--ds-radius-md);
+  font-weight: 650;
+  transition: color var(--ds-motion-fast) var(--ds-ease-standard), background-color var(--ds-motion-fast) var(--ds-ease-standard), border-color var(--ds-motion-fast) var(--ds-ease-standard), box-shadow var(--ds-motion-fast) var(--ds-ease-standard), transform var(--ds-motion-fast) var(--ds-ease-standard);
+}
+
+body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary) {
+  box-shadow: 0 1px 2px rgba(23, 107, 77, .18);
+}
+
+body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary):hover {
+  box-shadow: 0 4px 12px rgba(23, 107, 77, .16);
+  transform: translateY(-1px);
+}
+
+body[data-design-system="casefile"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+  border-radius: var(--ds-radius-md);
+  transition: border-color var(--ds-motion-fast) var(--ds-ease-standard), box-shadow var(--ds-motion-fast) var(--ds-ease-standard), background-color var(--ds-motion-fast) var(--ds-ease-standard);
+}
+
+body[data-design-system="casefile"] :is(input, select):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
+  min-height: var(--ds-control-height);
+}
+
+body[data-design-system="casefile"] :is(table, .dc-ds-table) {
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-design-system="casefile"] :is(th, .dc-ds-table th) {
+  height: 42px;
+  background: #FAFBFB;
+  color: var(--ds-color-text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+body[data-design-system="casefile"] :is(tbody tr, .dc-ds-table tbody tr) {
+  transition: background-color var(--ds-motion-fast) var(--ds-ease-standard);
+}
+
+body[data-design-system="casefile"] .ctp-page {
+  max-width: 1440px;
+}
+
+body[data-design-system="casefile"] .ctp-page .arch-header {
+  margin-bottom: 0;
+  padding-bottom: 16px;
+}
+
+body[data-design-system="casefile"] .ctp-page .ctp-badge-row {
+  margin: 12px 0 16px;
+}
+
+body[data-design-system="casefile"] .ctp-entry-grid {
+  gap: 16px;
+}
+
+body[data-design-system="casefile"] .ctp-entry-card {
+  gap: 12px;
+  padding: 16px;
+  border-top-width: 1px;
+  border-color: var(--ds-color-border);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-surface-shadow);
+}
+
+body[data-design-system="casefile"] .ctp-entry-card:hover {
+  border-color: #B9DFCE;
+  background: #FFFFFF;
+  box-shadow: var(--ds-surface-shadow-hover);
+  transform: translateY(-2px);
+}
+
+body[data-design-system="casefile"] .ctp-entry-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-action-soft);
+}
+
+body[data-design-system="casefile"] .ctp-entry-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body[data-design-system="casefile"] .ctp-entry-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+body[data-design-system="casefile"] .ctp-entry-desc {
+  min-height: 0;
+  color: var(--ds-color-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+body[data-design-system="casefile"] .ctp-entry-meta {
+  gap: 6px;
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--ds-color-border);
+  background: var(--ds-color-surface-muted);
+}
+
+body[data-design-system="casefile"] .ctp-entry-cta {
+  min-height: 36px;
+  margin-top: 0;
+  padding-inline: 12px;
+  box-shadow: 0 1px 2px rgba(23, 107, 77, .16);
+}
+
+@media (max-width: 1024px) {
+  :root { --ds-page-x: 24px; --ds-page-top: 24px; --ds-page-bottom: 48px; }
+}
+
+@media (max-width: 640px) {
+  :root { --ds-page-x: 16px; --ds-page-top: 24px; --ds-page-bottom: 40px; }
+
+  body[data-design-system="casefile"] :is(.arch-header, .page-header) {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+
+  body[data-design-system="casefile"] :is(.arch-title, .page-title) {
+    font-size: 24px;
+    line-height: 31px;
+  }
+
+  body[data-design-system="casefile"] .topbar-new-contract {
+    width: 38px;
+    min-width: 38px;
+    padding: 0;
+    gap: 0;
+  }
+
+  body[data-design-system="casefile"] .topbar-new-contract .topbar-new-label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary, .ctp-entry-card, .dc-ds-action-zone):hover {
+    transform: none;
+  }
+}

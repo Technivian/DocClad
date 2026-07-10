@@ -93,6 +93,14 @@
   /* KPI numbers: ink unless the color carries meaning (amber = expiring) */
   .repo-page .kpi-value.c-accent,
   .repo-page .kpi-value.c-primary-brand { color: var(--text-primary); }
+
+  @media (max-width: 700px) {
+    .repo-page .workspace-main { order: 1; }
+    .repo-page .views-rail { order: 2; }
+    .repo-page .workspace-main-head { align-items: stretch; flex-direction: column; gap: 16px; }
+    .repo-page .workspace-tools { width: 100%; }
+    .repo-page .workspace-tools .btn-primary-grad { width: 100%; justify-content: center; }
+  }
 </style>
 <div class="page-wrap page-wrap-fluid repo-page">
     <div class="workspace-split">
@@ -137,7 +145,7 @@
                 </div>
                 <div class="workspace-tools">
                     <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        {% include "design_system/icon.html" with name="upload" class_name="w-4 h-4" %}
                         Upload Document
                     </a>
                 </div>
@@ -174,7 +182,7 @@
                 <div class="rounded-xl border p-4 mb-4 u-panel-canvas">
                     <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
                         <div class="xl:col-span-7 relative min-w-0">
-                            <svg aria-hidden="true" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                            {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
                             <input type="search" id="search-input" placeholder="Search repository documents" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
                         </div>
                         <div class="xl:col-span-3">
@@ -206,7 +214,7 @@
                 </div>
 
                 <div class="panel overflow-hidden table-sticky">
-                    <table id="contracts-table" class="w-full text-sm">
+                    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server">
                         <thead class="tbl-head">
                             <tr>
                                 <th class="tbl-th px-5 py-3 text-left"><input type="checkbox" id="select-all" aria-label="Select all"></th>

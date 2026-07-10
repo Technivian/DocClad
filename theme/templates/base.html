@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
-    <meta name="theme-color" content="#0B1330">
+    <meta name="theme-color" content="#F5F7F8">
     <meta property="og:title" content="DocClad">
     <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
     <meta name="twitter:card" content="summary_large_image">
@@ -23,13 +23,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
     <script nonce="{{ csp_nonce }}">
-        // Apply persisted theme before paint to avoid a flash.
+        // DocClad is intentionally light-only to keep the operating surface consistent.
         (function() {
-            var t = localStorage.getItem('docclad-theme') || localStorage.getItem('cms-aegis-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('docclad-theme', 'light');
+            document.documentElement.setAttribute('data-theme', 'light');
         })();
     </script>
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
+    <script src="{% static 'js/docclad-ui.js' %}" defer></script>
     <style nonce="{{ csp_nonce }}">
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         /* Token-backed utilities replacing former inline style="" attributes (CSP). */
@@ -45,130 +46,76 @@
         .metric-md,
         .kpi-card .kpi-value {
             font-weight: 650;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
         }
 
-        /* ── Ledger design language — see DOCCLAD_DESIGN_SYSTEM.md v1.2 ──
-              Accent is teal (the seal color): active nav, links, progress/
-              lifecycle, focus rings, "trusted/verified" status. Copper/
-              burnt-orange (--btn-gradient) is reserved for primary
-              creation/action CTAs only ("New Contract", "New Risk"). ── */
+        /* Casefile light system: graphite structure, forest actions, and
+           semantic blue, amber, oxide, and plum workflow states. */
         :root, [data-theme="light"] {
-            --bg: #F3F5F7;
-            --surface: #EDF0F4;
+            --bg: #F5F7F8;
+            --surface: #F0F2F3;
             --surface-alt: #FFFFFF;
-            --primary: #0A7264;
-            --primary-hover: #085C51;
-            --primary-light: #11A08D;
-            --accent: #0A7264;
-            --text-primary: #0B1330;
-            --text-secondary: #5F6B85;
-            --text-muted: #838DA3;
-            --text-dim: #AAB2C2;
-            --border: #DEE2EA;
-            --primary-glow: rgba(10,114,100,0.16);
-            --primary-subtle: rgba(10,114,100,0.08);
-            --primary-bg: rgba(10,114,100,0.12);
-            --accent-bg: rgba(10,114,100,0.10);
-            --seal: #0A7264;
-            --seal-bg: #DFF4EE;
+            --primary: #1B7F5A;
+            --primary-hover: #176B4D;
+            --primary-light: #26966B;
+            --accent: #1B7F5A;
+            --text-primary: #171A1F;
+            --text-secondary: #69717C;
+            --text-muted: #8B929C;
+            --text-dim: #B4BAC1;
+            --border: #DFE3E7;
+            --primary-glow: rgba(27,127,90,0.16);
+            --primary-subtle: rgba(27,127,90,0.08);
+            --primary-bg: rgba(27,127,90,0.12);
+            --accent-bg: rgba(27,127,90,0.10);
+            --seal: #1B7F5A;
+            --seal-bg: #EFF9F4;
             --sidebar-bg: #FFFFFF;
-            --sidebar-hover: #EDF0F4;
-            --sidebar-active-bg: #DFF4EE;
-            --sidebar-active-border: #0A7264;
-            --sidebar-active-text: #0A7264;
+            --sidebar-hover: #F0F2F3;
+            --sidebar-active-bg: #EFF9F4;
+            --sidebar-active-border: #1B7F5A;
+            --sidebar-active-text: #1B7F5A;
             --topbar-bg: #FFFFFF;
-            --topbar-border: #DEE2EA;
-            --content-bg: #F3F5F7;
+            --topbar-border: #DFE3E7;
+            --content-bg: #F5F7F8;
             --card-bg: #FFFFFF;
-            --card-border: #DEE2EA;
+            --card-border: #DFE3E7;
             --input-bg: #FFFFFF;
-            --badge-bg: #A63A2B;
-            --msg-success-bg: #DBF2EC;
-            --msg-success-text: #0A7264;
-            --msg-success-border: #BCE5DA;
-            --msg-error-bg: #F8E8E3;
-            --msg-error-text: #A63A2B;
-            --msg-error-border: #EFCCC1;
-            --msg-warning-bg: #F6EDD8;
-            --msg-warning-text: #8A5A14;
-            --msg-warning-border: #EAD9AE;
-            --avatar-gradient: #B5502E;
-            --btn-gradient: #B5502E;
-            --logo-gradient: #B5502E;
+            --badge-bg: #913A35;
+            --msg-success-bg: #EFF9F4;
+            --msg-success-text: #1B7F5A;
+            --msg-success-border: #B9DFCE;
+            --msg-error-bg: #FBECEA;
+            --msg-error-text: #913A35;
+            --msg-error-border: #EACAC7;
+            --msg-warning-bg: #FBF3E3;
+            --msg-warning-text: #85540F;
+            --msg-warning-border: #ECD8B3;
+            --avatar-gradient: #232428;
+            --btn-gradient: #1B7F5A;
+            --logo-gradient: #1B7F5A;
             --row-unread-bg: #F3DACB;
-            --row-overdue-bg: #F8E8E3;
+            --row-overdue-bg: #FBECEA;
         }
 
-        /* ── Sidebar shell — fixed deep navy, independent of light/dark
-              content theme. A permanent dark rail is the "legal operating
-              system" signature; it must not follow --sidebar-bg (which
-              other components like list rows / views-rail / profile menu
-              also key off) or it would break those on the light theme. ── */
-        :root, [data-theme="light"], [data-theme="dark"] {
-            --sidebar-fixed-bg: #0B1330;
-            --sidebar-fixed-border: #1C2842;
-            --sidebar-fixed-text: #A9B2C8;
-            --sidebar-fixed-text-active: #FFFFFF;
-            --sidebar-fixed-icon: #8A94AD;
-            --sidebar-fixed-hover: rgba(255,255,255,0.06);
-            --sidebar-fixed-active-bg: rgba(23,191,165,0.16);
-            --sidebar-fixed-active-border: #17BFA5;
-            --sidebar-fixed-section-label: #6C7893;
-        }
-
-        [data-theme="dark"] {
-            --bg: #070D20;
-            --surface: #101A38;
-            --surface-alt: #0B1330;
-            --primary: #17BFA5;
-            --primary-hover: #55CDB7;
-            --primary-light: #55CDB7;
-            --accent: #17BFA5;
-            --text-primary: #EDF0F6;
-            --text-secondary: #A9B2C8;
-            --text-muted: #78839E;
-            --text-dim: #4E5A78;
-            --border: #1C2842;
-            --primary-glow: rgba(17,191,165,0.22);
-            --primary-subtle: rgba(17,191,165,0.12);
-            --primary-bg: rgba(17,191,165,0.16);
-            --accent-bg: rgba(17,191,165,0.14);
-            --seal: #17BFA5;
-            --seal-bg: rgba(17,179,154,0.14);
-            --sidebar-bg: #0B1330;
-            --sidebar-hover: rgba(255,255,255,0.06);
-            --sidebar-active-bg: rgba(17,191,165,0.16);
-            --sidebar-active-border: #17BFA5;
-            --sidebar-active-text: #FFFFFF;
-            --topbar-bg: #0B1330;
-            --topbar-border: #1C2842;
-            --content-bg: #070D20;
-            --card-bg: #0B1330;
-            --card-border: #1C2842;
-            --input-bg: #070D20;
-            --badge-bg: #C24B3A;
-            --msg-success-bg: rgba(17,179,154,0.14);
-            --msg-success-text: #55CDB7;
-            --msg-success-border: rgba(17,179,154,0.28);
-            --msg-error-bg: rgba(196,82,61,0.16);
-            --msg-error-text: #E08A78;
-            --msg-error-border: rgba(196,82,61,0.3);
-            --msg-warning-bg: rgba(196,145,51,0.16);
-            --msg-warning-text: #D9A75B;
-            --msg-warning-border: rgba(196,145,51,0.3);
-            --avatar-gradient: #CF7248;
-            --btn-gradient: #CF7248;
-            --logo-gradient: #CF7248;
-            --row-unread-bg: rgba(207,114,72,0.14);
-            --row-overdue-bg: rgba(196,82,61,0.14);
+        /* Light operational shell, shared by every authenticated workspace. */
+        :root, [data-theme="light"] {
+            --sidebar-fixed-bg: #FAFAFB;
+            --sidebar-fixed-border: #DFE3E7;
+            --sidebar-fixed-text: #5F6166;
+            --sidebar-fixed-text-active: #1B7F5A;
+            --sidebar-fixed-icon: #69717C;
+            --sidebar-fixed-hover: #F0F2F3;
+            --sidebar-fixed-active-bg: #FFFFFF;
+            --sidebar-fixed-active-border: #CDD2D8;
+            --sidebar-fixed-section-label: #69717C;
         }
 
         /* Panels and the top bar stay flat — hairline borders carry separation, no ambient shadows. */
 
         /* KPI cards stay flat — hairline border only, no ambient shadow */
         [data-theme="light"] .kpi-card:hover {
-            border-color: #C9CFDB;
+            border-color: #CDD2D8;
         }
 
         [data-theme="light"] .bg-white {
@@ -176,53 +123,53 @@
         }
         [data-theme="light"] .bg-slate-50,
         [data-theme="light"] .bg-gray-50 {
-            background-color: #EDF0F4 !important;
+            background-color: #F0F2F3 !important;
         }
         [data-theme="light"] .bg-gray-100 {
             background-color: #E5E9F0 !important;
         }
         [data-theme="light"] .hover\:bg-gray-50:hover,
         [data-theme="light"] .hover\:bg-slate-50:hover {
-            background-color: #EDF0F4 !important;
+            background-color: #F0F2F3 !important;
         }
 
         [data-theme="light"] .text-gray-900,
         [data-theme="light"] .text-slate-900 {
-            color: #0B1330 !important;
+            color: #171A1F !important;
         }
         [data-theme="light"] .text-gray-800,
         [data-theme="light"] .text-slate-800 {
-            color: #2E3A57 !important;
+            color: #343A42 !important;
         }
         [data-theme="light"] .text-gray-700,
         [data-theme="light"] .text-slate-700 {
-            color: #2E3A57 !important;
+            color: #343A42 !important;
         }
         [data-theme="light"] .text-gray-600,
         [data-theme="light"] .text-slate-600 {
-            color: #46536F !important;
+            color: #505863 !important;
         }
         [data-theme="light"] .text-gray-500,
         [data-theme="light"] .text-slate-500 {
-            color: #5F6B85 !important;
+            color: #69717C !important;
         }
         [data-theme="light"] .text-gray-400,
         [data-theme="light"] .text-slate-400 {
-            color: #838DA3 !important;
+            color: #8B929C !important;
         }
 
         [data-theme="light"] .border-gray-200,
         [data-theme="light"] .border-slate-200,
         [data-theme="light"] .border-gray-100,
         [data-theme="light"] .border-slate-100 {
-            border-color: #DEE2EA !important;
+            border-color: #DFE3E7 !important;
         }
         [data-theme="light"] .border-gray-300 {
-            border-color: #C9CFDB !important;
+            border-color: #CDD2D8 !important;
         }
         [data-theme="light"] .divide-gray-100 > * + *,
         [data-theme="light"] .divide-gray-200 > * + * {
-            border-color: #DEE2EA !important;
+            border-color: #DFE3E7 !important;
         }
 
         [data-theme="light"] .shadow-sm,
@@ -234,12 +181,12 @@
         [data-theme="light"] select,
         [data-theme="light"] textarea {
             background-color: #FFFFFF !important;
-            color: #0B1330 !important;
-            border-color: #DEE2EA !important;
+            color: #171A1F !important;
+            border-color: #DFE3E7 !important;
         }
         [data-theme="light"] input::placeholder,
         [data-theme="light"] textarea::placeholder {
-            color: #838DA3 !important;
+            color: #8B929C !important;
         }
         [data-theme="light"] input:focus,
         [data-theme="light"] select:focus,
@@ -249,44 +196,44 @@
         }
 
         [data-theme="light"] table {
-            color: #0B1330;
+            color: #171A1F;
         }
         [data-theme="light"] th {
-            color: #5F6B85 !important;
-            border-color: #C9CFDB !important;
-            background-color: #EDF0F4;
+            color: #69717C !important;
+            border-color: #CDD2D8 !important;
+            background-color: #F0F2F3;
         }
         [data-theme="light"] td {
-            border-color: #DEE2EA !important;
+            border-color: #DFE3E7 !important;
         }
         [data-theme="light"] tbody tr:hover {
-            background-color: #EDF0F4 !important;
+            background-color: #F0F2F3 !important;
         }
 
-        [data-theme="light"] .badge-green  { background: #DBF2EC; color: #0A7264; }
-        [data-theme="light"] .badge-blue   { background: #E8EDF8; color: #3F569B; }
-        [data-theme="light"] .badge-yellow { background: #F6EDD8; color: #8A5A14; }
-        [data-theme="light"] .badge-red    { background: #F8E8E3; color: #A63A2B; }
-        [data-theme="light"] .badge-purple { background: #F0EAF7; color: #6D4E8E; }
-        [data-theme="light"] .badge-gray   { background: #ECEFF4; color: #5F6B85; }
+        [data-theme="light"] .badge-green  { background: #EFF9F4; color: #1B7F5A; }
+        [data-theme="light"] .badge-blue   { background: #EEF3FA; color: #34548A; }
+        [data-theme="light"] .badge-yellow { background: #FBF3E3; color: #85540F; }
+        [data-theme="light"] .badge-red    { background: #FBECEA; color: #913A35; }
+        [data-theme="light"] .badge-purple { background: #F3EFF7; color: #654978; }
+        [data-theme="light"] .badge-gray   { background: #EEF0F2; color: #69717C; }
 
-        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-fixed-section-label); padding: 14px 20px 8px; margin-top: 6px; }
-        .nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: var(--sidebar-fixed-text); border-radius: 0; margin: 0; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-fixed-section-label); padding: 16px 5px 8px; margin: 0; }
+        .nav-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 0 11px; font-size: 13px; color: var(--sidebar-fixed-text); border-radius: 8px; margin: 2px 0; transition: all 0.15s; text-decoration: none; border: 1px solid transparent; }
         .nav-link:hover { background: var(--sidebar-fixed-hover); color: var(--sidebar-fixed-text-active); }
-        .nav-link.active { background: var(--sidebar-fixed-active-bg); color: var(--sidebar-fixed-text-active); font-weight: 600; border-left-color: var(--sidebar-fixed-active-border); }
+        .nav-link.active { background: var(--sidebar-fixed-active-bg); color: var(--sidebar-fixed-text-active); font-weight: 600; border-color: var(--sidebar-fixed-active-border); box-shadow: 0 1px 2px rgba(16,24,40,.04); }
         .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; color: var(--sidebar-fixed-icon); }
         .nav-link.active svg { opacity: 1; color: var(--sidebar-fixed-text-active); }
         .nav-badge { font-size: 10px; background: var(--badge-bg); color: white; border-radius: 9999px; padding: 0 6px; margin-left: auto; min-width: 18px; text-align: center; line-height: 18px; font-weight: 600; }
         .sidebar-brand {
-            height: 78px;
+            height: 82px;
             display: flex;
             align-items: center;
-            padding: 0 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 0 18px;
+            border-bottom: 1px solid var(--sidebar-fixed-border);
         }
         .sidebar-brand .logo-wordmark {
             display: block;
-            height: 42px;
+            height: 36px;
             width: auto;
             object-fit: contain;
         }
@@ -299,8 +246,10 @@
         }
 
         .sidebar-container {
-            width: 248px;
+            width: 280px;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             border-right: 1px solid var(--sidebar-fixed-border);
             background: var(--sidebar-fixed-bg);
             overflow-y: auto;
@@ -310,6 +259,7 @@
             flex-shrink: 0;
             transition: width 0.2s ease;
         }
+        .sidebar-container > .sidebar-padding { flex: 1 1 auto; }
         body.nav-collapsed .sidebar-container { width: 72px; }
         body.nav-collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; border-left-width: 0; border-bottom: 2px solid transparent; }
         body.nav-collapsed .nav-link.active { border-bottom-color: var(--sidebar-fixed-active-border); }
@@ -321,8 +271,8 @@
         body.nav-collapsed .sidebar-brand .logo-wordmark { display: none; }
         body.nav-collapsed .sidebar-brand .logo-mark { display: block; height: 34px; width: 34px; }
         .sidebar-brand .logo-mark { display: none; }
-        .sidebar-footer { padding: 14px 20px 16px; border-top: 1px solid var(--sidebar-fixed-border); margin-top: 8px; }
-        .sidebar-footer-org { font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text-active); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
+        .sidebar-footer { padding: 12px; border-top: 1px solid var(--sidebar-fixed-border); margin-top: auto; }
+        .sidebar-footer-org { font-size: 12px; font-weight: 600; color: #303236; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
         .sidebar-footer-collapse { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text); cursor: pointer; }
         .sidebar-footer-collapse:hover { color: var(--sidebar-fixed-text-active); }
         .sidebar-footer-collapse svg { width: 14px; height: 14px; }
@@ -335,6 +285,8 @@
         }
         .main-area {
             flex: 1;
+            display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow-y: auto;
             overflow-x: hidden;
@@ -346,7 +298,7 @@
             background: var(--topbar-bg);
             border-bottom: 1px solid var(--topbar-border);
             padding: 0 18px;
-            height: 78px;
+            height: 72px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -356,11 +308,15 @@
             z-index: 60;
         }
         .main-area > .top-bar {
-            padding-left: 34px;
+            padding-left: 24px;
             padding-right: max(18px, calc(100% - 1394px));
         }
         .main-area > .top-bar .global-search-form {
             max-width: 528px;
+        }
+        .main-area > .top-bar > .topbar-flex:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
         }
         .messages-container { padding: 16px 24px; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
@@ -375,51 +331,9 @@
 
         .theme-toggle-btn { cursor: pointer; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 0.5rem; padding: 6px; color: var(--text-secondary); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .theme-toggle-btn:hover { color: var(--text-primary); border-color: var(--primary); }
-        [data-theme="dark"] .icon-sun { display: block; }
-        [data-theme="dark"] .icon-moon { display: none; }
         [data-theme="light"] .icon-sun { display: none; }
         [data-theme="light"] .icon-moon { display: block; }
 
-        [data-theme="dark"] .bg-white { background-color: #0B1330 !important; }
-        [data-theme="dark"] .bg-slate-50, [data-theme="dark"] .bg-gray-50 { background-color: #070D20 !important; }
-        [data-theme="dark"] .bg-gray-100 { background-color: #1C2842 !important; }
-        [data-theme="dark"] .hover\:bg-gray-50:hover, [data-theme="dark"] .hover\:bg-slate-50:hover { background-color: #1C2842 !important; }
-        [data-theme="dark"] .text-gray-900, [data-theme="dark"] .text-slate-900 { color: #EDF0F6 !important; }
-        [data-theme="dark"] .text-gray-800, [data-theme="dark"] .text-slate-800 { color: #C6CDDD !important; }
-        [data-theme="dark"] .text-gray-700, [data-theme="dark"] .text-slate-700 { color: #A9B2C8 !important; }
-        [data-theme="dark"] .text-gray-600, [data-theme="dark"] .text-slate-600 { color: #A9B2C8 !important; }
-        [data-theme="dark"] .text-gray-500, [data-theme="dark"] .text-slate-500 { color: #78839E !important; }
-        [data-theme="dark"] .text-gray-400, [data-theme="dark"] .text-slate-400 { color: #78839E !important; }
-        [data-theme="dark"] .text-gray-300, [data-theme="dark"] .text-slate-300 { color: #4E5A78 !important; }
-        [data-theme="dark"] .border-gray-200, [data-theme="dark"] .border-slate-200 { border-color: #1C2842 !important; }
-        [data-theme="dark"] .border-gray-100, [data-theme="dark"] .border-slate-100 { border-color: #1C2842 !important; }
-        [data-theme="dark"] .border-gray-300 { border-color: #33415F !important; }
-        [data-theme="dark"] .divide-gray-100 > * + *, [data-theme="dark"] .divide-gray-200 > * + * { border-color: #1C2842 !important; }
-        [data-theme="dark"] .ring-gray-300 { --tw-ring-color: #33415F !important; }
-        [data-theme="dark"] .bg-green-100 { background-color: rgba(17,179,154,0.15) !important; }
-        [data-theme="dark"] .text-green-800, [data-theme="dark"] .text-green-700 { color: #55CDB7 !important; }
-        [data-theme="dark"] .text-green-600 { color: #11B39A !important; }
-        [data-theme="dark"] .bg-yellow-100 { background-color: rgba(196,145,51,0.15) !important; }
-        [data-theme="dark"] .text-yellow-800, [data-theme="dark"] .text-yellow-700 { color: #D9A75B !important; }
-        [data-theme="dark"] .bg-red-100 { background-color: rgba(196,82,61,0.15) !important; }
-        [data-theme="dark"] .text-red-800, [data-theme="dark"] .text-red-700 { color: #E08A78 !important; }
-        [data-theme="dark"] .text-red-600 { color: #E08A78 !important; }
-        [data-theme="dark"] .text-orange-600 { color: #D9A75B !important; }
-        [data-theme="dark"] .bg-blue-100 { background-color: rgba(96,125,204,0.15) !important; }
-        [data-theme="dark"] .text-blue-800, [data-theme="dark"] .text-blue-700 { color: #8FA6E3 !important; }
-        [data-theme="dark"] .text-blue-600 { color: #8FA6E3 !important; }
-        [data-theme="dark"] .bg-purple-100, [data-theme="dark"] .bg-indigo-100 { background-color: rgba(148,111,190,0.15) !important; }
-        [data-theme="dark"] .text-purple-800, [data-theme="dark"] .text-indigo-800 { color: #B79BD8 !important; }
-        [data-theme="dark"] .bg-orange-100 { background-color: rgba(196,145,51,0.15) !important; }
-        [data-theme="dark"] .text-orange-800 { color: #D9A75B !important; }
-        [data-theme="dark"] .bg-emerald-100, [data-theme="dark"] .bg-teal-100 { background-color: rgba(17,179,154,0.15) !important; }
-        [data-theme="dark"] .text-emerald-800, [data-theme="dark"] .text-teal-800 { color: #55CDB7 !important; }
-        [data-theme="dark"] .shadow-sm, [data-theme="dark"] .shadow { box-shadow: none !important; }
-        [data-theme="dark"] table { color: #EDF0F6; }
-        [data-theme="dark"] th { color: #78839E !important; border-color: #1C2842 !important; }
-        [data-theme="dark"] td { border-color: #1C2842 !important; }
-        [data-theme="dark"] tbody tr:hover { background-color: #1C2842 !important; }
-        [data-theme="dark"] .p-6 { color: #EDF0F6; }
 
         /*
          * Compatibility utility layer:
@@ -476,7 +390,7 @@
          * ──────────────────────────────────────────────────────────────────── */
 
         /* Dashboard grid layouts */
-        .dash-grid { display: grid; gap: 20px; }
+        .dash-grid { display: grid; gap: 24px; }
         .dash-grid-4 { grid-template-columns: repeat(4, 1fr); }
         .dash-grid-3 { grid-template-columns: repeat(3, 1fr); }
         .dash-grid-2 { grid-template-columns: repeat(2, 1fr); }
@@ -494,19 +408,19 @@
         .kpi-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 16px 18px;
+            border-radius: 10px;
+            padding: 16px;
             position: relative;
             overflow: hidden;
             transition: all 0.25s ease;
         }
         .kpi-card:hover { border-color: var(--primary-bg); }
         .kpi-card .kpi-icon {
-            width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
             margin-bottom: 16px; position: relative; z-index: 1;
         }
         .kpi-card .kpi-icon svg { width: 20px; height: 20px; }
-        .kpi-card .kpi-value { font-size: 24px; font-weight: 750; letter-spacing: -0.02em; line-height: 1; color: var(--text-primary); }
+        .kpi-card .kpi-value { font-size: 24px; font-weight: 750; letter-spacing: 0; line-height: 1; color: var(--text-primary); }
         .kpi-card .kpi-label { font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-weight: 550; }
         .kpi-card .kpi-sub { font-size: 11px; margin-top: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; }
         .kpi-card .kpi-glow {
@@ -538,7 +452,7 @@
             border-bottom: 1px solid var(--card-border);
             display: flex; align-items: center; justify-content: space-between;
         }
-        .panel-title { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+        .panel-title { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0; }
         .panel-link {
             font-size: 12px; color: var(--primary-light); font-weight: 600; text-decoration: none;
             display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;
@@ -557,33 +471,22 @@
 
         /* Status indicator dots */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .status-dot.green { background: #0A7264; }
-        .status-dot.blue  { background: #3F569B; }
-        .status-dot.yellow{ background: #8A5A14; }
-        .status-dot.red   { background: #A63A2B; }
-        .status-dot.gray  { background: #5F6B85; }
-        [data-theme="dark"] .status-dot.green { background: #11B39A; }
-        [data-theme="dark"] .status-dot.blue  { background: #8FA6E3; }
-        [data-theme="dark"] .status-dot.yellow{ background: #D9A75B; }
-        [data-theme="dark"] .status-dot.red   { background: #E08A78; }
-        [data-theme="dark"] .status-dot.gray  { background: #78839E; }
+        .status-dot.green { background: #1B7F5A; }
+        .status-dot.blue  { background: #34548A; }
+        .status-dot.yellow{ background: #85540F; }
+        .status-dot.red   { background: #913A35; }
+        .status-dot.gray  { background: #69717C; }
 
         /* Badge chips — fully rounded pills, tinted background + same-hue text.
            Six archival pairs (see DOCCLAD_DESIGN_SYSTEM.md §4): green=positive,
            blue=in-progress, yellow=pending, red=danger, purple=special, gray=neutral. */
         .badge-sm { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; white-space: nowrap; letter-spacing: 0.01em; }
-        .badge-green  { background: #DBF2EC; color: #0A7264; }
-        .badge-blue   { background: #E8EDF8; color: #3F569B; }
-        .badge-yellow { background: #F6EDD8; color: #8A5A14; }
-        .badge-red    { background: #F8E8E3; color: #A63A2B; }
-        .badge-purple { background: #F0EAF7; color: #6D4E8E; }
-        .badge-gray   { background: #ECEFF4; color: #5F6B85; }
-        [data-theme="dark"] .badge-green  { background: rgba(17,179,154,0.14);  color: #55CDB7; }
-        [data-theme="dark"] .badge-blue   { background: rgba(96,125,204,0.16); color: #8FA6E3; }
-        [data-theme="dark"] .badge-yellow { background: rgba(196,145,51,0.16); color: #D9A75B; }
-        [data-theme="dark"] .badge-red    { background: rgba(196,82,61,0.16);  color: #E08A78; }
-        [data-theme="dark"] .badge-purple { background: rgba(148,111,190,0.16); color: #B79BD8; }
-        [data-theme="dark"] .badge-gray   { background: rgba(120,131,158,0.16); color: #A9B2C8; }
+        .badge-green  { background: #EFF9F4; color: #1B7F5A; }
+        .badge-blue   { background: #EEF3FA; color: #34548A; }
+        .badge-yellow { background: #FBF3E3; color: #85540F; }
+        .badge-red    { background: #FBECEA; color: #913A35; }
+        .badge-purple { background: #F3EFF7; color: #654978; }
+        .badge-gray   { background: #EEF0F2; color: #69717C; }
 
         /* Lifecycle stepper (contract detail process path) */
         .lc-track { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 0; }
@@ -651,13 +554,11 @@
         /* Alert banners */
         .alert-banner {
             display: flex; align-items: center; gap: 12px;
-            padding: 14px 20px; border-radius: 12px; font-size: 13px; font-weight: 500;
+            padding: 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
         }
         .alert-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
-        .alert-banner-red    { background: #F8E8E3; border: 1px solid #EFCCC1; color: #A63A2B; }
-        .alert-banner-yellow { background: #F6EDD8; border: 1px solid #EAD9AE; color: #8A5A14; }
-        [data-theme="dark"] .alert-banner-red    { background: rgba(196,82,61,0.12);  border-color: rgba(196,82,61,0.28);  color: #E08A78; }
-        [data-theme="dark"] .alert-banner-yellow { background: rgba(196,145,51,0.12); border-color: rgba(196,145,51,0.28); color: #D9A75B; }
+        .alert-banner-red    { background: #FBECEA; border: 1px solid #EACAC7; color: #913A35; }
+        .alert-banner-yellow { background: #FBF3E3; border: 1px solid #ECD8B3; color: #85540F; }
 
         /* Audit log action labels */
         .audit-action { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 4px; }
@@ -714,29 +615,19 @@
             border: 0; cursor: pointer;
         }
 
-            /* ── Page layout ─────────────────────────────────────────────────────────
-             * .page-wrap sits inside .main-content-pad (24px on every side, see
-             * below), which already supplies the shell's inset. Its own padding
-             * used to add a second 28px/32px gutter on top of that — doubling the
-             * distance between the app shell and page content on every page that
-             * uses it (~100 templates). Matched to .DocCladDashboard's recipe
-             * (0 4px 24px) so Dashboard/Repository/Privacy/legacy pages share one
-             * rhythm instead of three. max-width stays 1400px by default (safe for
-             * forms/detail reading width); operational pages that should use the
-             * full viewport (tables, saved-view rails) opt in via .page-wrap-fluid. */
-            .page-wrap    { padding: 0 4px 24px; max-width: 1400px; margin: 0 auto; }
+            /* Canonical 12-column content frame. The shell supplies the top offset;
+               page-wrap owns the 24px grid margin used by all application views. */
+            .page-wrap    { padding: 0 24px 40px; max-width: 1600px; margin: 0 auto; }
             .page-wrap-fluid { max-width: none; }
-            .page-header  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+            .page-header  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
             .page-actions { display: flex; gap: 8px; }
-            .page-title   { font-size: 24px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.03em; margin: 0; }
+            .page-title   { font-size: 28px; line-height: 36px; font-weight: 700; color: var(--text-primary); letter-spacing: 0; margin: 0; }
             .page-subtitle { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
 
             /* ── Stat / table surface ─────────────────────────────────────────────── */
             .stat-card       { background: var(--card-bg); border-color: var(--card-border); }
-            .stat-card-amber { background: #F6EDD8; border-color: #EAD9AE; }
-            .stat-card-red   { background: #F8E8E3; border-color: #EFCCC1; }
-            [data-theme="dark"] .stat-card-amber { background: rgba(196,145,51,0.1); border-color: rgba(196,145,51,0.3); }
-            [data-theme="dark"] .stat-card-red   { background: rgba(196,82,61,0.12); border-color: rgba(196,82,61,0.28); }
+            .stat-card-amber { background: #FBF3E3; border-color: #ECD8B3; }
+            .stat-card-red   { background: #FBECEA; border-color: #EACAC7; }
 
             /* ── Table utilities ──────────────────────────────────────────────────── */
             .tbl-head { background: var(--surface); border-bottom: 1px solid var(--border); }
@@ -773,29 +664,18 @@
             .c-link      { color: var(--primary-light); }
             .c-accent    { color: var(--accent); }
             .c-primary-brand { color: var(--primary); }
-            .c-amber     { color: #8A5A14; }
+            .c-amber     { color: #85540F; }
             .c-amber-soft { color: rgba(138,90,20,0.85); }
-            .c-red       { color: #A63A2B; }
+            .c-red       { color: #913A35; }
             .c-red-soft  { color: rgba(166,58,43,0.75); }
-            .c-purple    { color: #6D4E8E; }
+            .c-purple    { color: #654978; }
             .c-purple-soft { color: rgba(109,78,142,0.75); }
-            .c-danger    { color: #A63A2B; }
-            .c-warning   { color: #8A5A14; }
-            .c-info      { color: #3F569B; }
-            .c-success      { color: #0A7264; }
+            .c-danger    { color: #913A35; }
+            .c-warning   { color: #85540F; }
+            .c-info      { color: #34548A; }
+            .c-success      { color: #1B7F5A; }
             .c-success-soft { color: rgba(10,114,100,0.75); }
             .bg-accent-dot { background: var(--accent); }
-            [data-theme="dark"] .c-amber     { color: #D9A75B; }
-            [data-theme="dark"] .c-amber-soft { color: rgba(217,167,91,0.85); }
-            [data-theme="dark"] .c-red       { color: #E08A78; }
-            [data-theme="dark"] .c-red-soft  { color: rgba(224,138,120,0.85); }
-            [data-theme="dark"] .c-purple    { color: #B79BD8; }
-            [data-theme="dark"] .c-purple-soft { color: rgba(183,155,216,0.85); }
-            [data-theme="dark"] .c-danger    { color: #E08A78; }
-            [data-theme="dark"] .c-warning   { color: #D9A75B; }
-            [data-theme="dark"] .c-info      { color: #8FA6E3; }
-            [data-theme="dark"] .c-success      { color: #55CDB7; }
-            [data-theme="dark"] .c-success-soft { color: rgba(85,205,183,0.85); }
 
             /* ── KPI card color variants ──────────────────────────────────────────── */
             .kpi-icon-blue   { background: rgba(63,86,155,0.12); }
@@ -803,59 +683,36 @@
             .kpi-icon-amber  { background: rgba(138,90,20,0.12); }
             .kpi-icon-red    { background: rgba(166,58,43,0.12); }
             .kpi-icon-purple { background: rgba(109,78,142,0.12); }
-            .kpi-glow-blue   { background: #3F569B; }
-            .kpi-glow-green  { background: #0A7264; }
-            .kpi-glow-amber  { background: #8A5A14; }
-            .kpi-glow-purple { background: #6D4E8E; }
-            .kpi-sub-amber   { background: #F6EDD8; color: #8A5A14; }
-            .kpi-sub-green   { background: #DBF2EC; color: #0A7264; }
-            .kpi-sub-red     { background: #F8E8E3; color: #A63A2B; }
-            .kpi-sub-blue    { background: #E8EDF8; color: #3F569B; }
+            .kpi-glow-blue   { background: #34548A; }
+            .kpi-glow-green  { background: #1B7F5A; }
+            .kpi-glow-amber  { background: #85540F; }
+            .kpi-glow-purple { background: #654978; }
+            .kpi-sub-amber   { background: #FBF3E3; color: #85540F; }
+            .kpi-sub-green   { background: #EFF9F4; color: #1B7F5A; }
+            .kpi-sub-red     { background: #FBECEA; color: #913A35; }
+            .kpi-sub-blue    { background: #EEF3FA; color: #34548A; }
             .kpi-card-link   { text-decoration: none; }
             .kpi-row         { display: flex; align-items: center; gap: 14px; }
             .kpi-row-label   { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
-            [data-theme="dark"] .kpi-icon-blue   { background: rgba(143,166,227,0.14); }
-            [data-theme="dark"] .kpi-icon-green  { background: rgba(17,179,154,0.14); }
-            [data-theme="dark"] .kpi-icon-amber  { background: rgba(217,167,91,0.14); }
-            [data-theme="dark"] .kpi-icon-red    { background: rgba(224,138,120,0.14); }
-            [data-theme="dark"] .kpi-icon-purple { background: rgba(183,155,216,0.14); }
-            [data-theme="dark"] .kpi-glow-blue   { background: #8FA6E3; }
-            [data-theme="dark"] .kpi-glow-green  { background: #11B39A; }
-            [data-theme="dark"] .kpi-glow-amber  { background: #D9A75B; }
-            [data-theme="dark"] .kpi-glow-purple { background: #B79BD8; }
-            [data-theme="dark"] .kpi-sub-amber   { background: rgba(196,145,51,0.15); color: #D9A75B; }
-            [data-theme="dark"] .kpi-sub-green   { background: rgba(17,179,154,0.14); color: #55CDB7; }
-            [data-theme="dark"] .kpi-sub-red     { background: rgba(196,82,61,0.15); color: #E08A78; }
-            [data-theme="dark"] .kpi-sub-blue    { background: rgba(96,125,204,0.15); color: #8FA6E3; }
 
             /* ── Icon color / size shorthands ─────────────────────────────────────── */
-            .ic-blue   { color: #3F569B; }
-            .ic-green  { color: #0A7264; }
-            .ic-amber  { color: #8A5A14; }
-            .ic-red    { color: #A63A2B; }
-            .ic-purple { color: #6D4E8E; }
+            .ic-blue   { color: #34548A; }
+            .ic-green  { color: #1B7F5A; }
+            .ic-amber  { color: #85540F; }
+            .ic-red    { color: #913A35; }
+            .ic-purple { color: #654978; }
             .ic-muted  { color: var(--text-muted); }
             .ic-link   { color: var(--primary-light); }
             .ic-sm     { width: 14px; height: 14px; }
             .ic-xs     { width: 12px; height: 12px; }
-            [data-theme="dark"] .ic-blue   { color: #8FA6E3; }
-            [data-theme="dark"] .ic-green  { color: #55CDB7; }
-            [data-theme="dark"] .ic-amber  { color: #D9A75B; }
-            [data-theme="dark"] .ic-red    { color: #E08A78; }
-            [data-theme="dark"] .ic-purple { color: #B79BD8; }
 
             /* ── Color dot indicators ─────────────────────────────────────────────── */
             .dot        { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-            .dot-blue   { background: #3F569B; }
-            .dot-green  { background: #0A7264; }
-            .dot-amber  { background: #8A5A14; }
-            .dot-red    { background: #A63A2B; }
-            .dot-purple { background: #6D4E8E; }
-            [data-theme="dark"] .dot-blue   { background: #8FA6E3; }
-            [data-theme="dark"] .dot-green  { background: #11B39A; }
-            [data-theme="dark"] .dot-amber  { background: #D9A75B; }
-            [data-theme="dark"] .dot-red    { background: #E08A78; }
-            [data-theme="dark"] .dot-purple { background: #B79BD8; }
+            .dot-blue   { background: #34548A; }
+            .dot-green  { background: #1B7F5A; }
+            .dot-amber  { background: #85540F; }
+            .dot-red    { background: #913A35; }
+            .dot-purple { background: #654978; }
 
             /* ── Panel inner structure ────────────────────────────────────────────── */
             .panel-head-inner { display: flex; align-items: center; gap: 8px; }
@@ -882,7 +739,7 @@
 
             /* ── Metric display ───────────────────────────────────────────────────── */
             .metric-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-            .metric-xl    { font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.03em; }
+            .metric-xl    { font-size: 26px; font-weight: 800; color: var(--text-primary); letter-spacing: 0; }
             .metric-lg    { font-size: 20px; font-weight: 800; color: var(--text-primary); }
             .metric-md    { font-size: 18px; font-weight: 800; color: var(--text-primary); }
             .metric-unit  { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-left: 4px; }
@@ -979,7 +836,7 @@
             .wq-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
             .wq-empty { text-align: center; padding: 28px 16px; color: var(--text-muted); font-size: 13px; }
             .wq-due-overdue { color: var(--msg-error-text); font-weight: 600; }
-            .wq-due-today { color: var(--status-pending-fg, #8A5A14); font-weight: 600; }
+            .wq-due-today { color: var(--status-pending-fg, #85540F); font-weight: 600; }
             /* Numeric/date columns (Due, Key date, Value) read as a table,
                not a form, when right-aligned — matches Ironclad/Mochadocs
                column conventions. */
@@ -1038,18 +895,15 @@
             .wq-edit-link { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
             .wq-edit-link:hover { color: var(--primary); text-decoration: underline; }
 
-            .metric-trust { color: #0A7264; letter-spacing: -0.02em; }
-            .row-expiring { border-left: 3px solid #8A5A14; }
+            .metric-trust { color: #1B7F5A; letter-spacing: 0; }
+            .row-expiring { border-left: 3px solid #85540F; }
             .row-unread  { background: var(--row-unread-bg); }
             .row-overdue { background: var(--row-overdue-bg); }
             .badge-expiring {
-                background: #F6EDD8;
-                color: #8A5A14;
-                border: 1px solid #EAD9AE;
+                background: #FBF3E3;
+                color: #85540F;
+                border: 1px solid #ECD8B3;
             }
-            [data-theme="dark"] .metric-trust { color: #55CDB7; }
-            [data-theme="dark"] .row-expiring { border-left-color: #D9A75B; }
-            [data-theme="dark"] .badge-expiring {
                 background: rgba(196,145,51,0.14);
                 color: #D9A75B;
                 border: 1px solid rgba(196,145,51,0.3);
@@ -1060,16 +914,11 @@
             }
             .tab-pill-idle { color: var(--text-secondary); }
             .portfolio-item { margin-bottom: 16px; }
-            .pf-active { background: #0A7264; }
-            .pf-draft { background: #5F6B85; }
-            .pf-review { background: #8A5A14; }
-            .pf-expired { background: #A63A2B; }
-            .pf-other { background: #6D4E8E; }
-            [data-theme="dark"] .pf-active { background: #11B39A; }
-            [data-theme="dark"] .pf-draft { background: #78839E; }
-            [data-theme="dark"] .pf-review { background: #D9A75B; }
-            [data-theme="dark"] .pf-expired { background: #E08A78; }
-            [data-theme="dark"] .pf-other { background: #B79BD8; }
+            .pf-active { background: #1B7F5A; }
+            .pf-draft { background: #69717C; }
+            .pf-review { background: #85540F; }
+            .pf-expired { background: #913A35; }
+            .pf-other { background: #654978; }
             /* ── Settings hub / repository helpers ─────────────────────────── */
             .page-container      { max-width: 1100px; margin: 0 auto; }
             .settings-grid       { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
@@ -1129,13 +978,12 @@
 
             /* ── Landing/marketing utilities ──────────────────────────────── */
             .icon-bg-blue   { background: var(--primary-subtle); border: 1px solid var(--primary-bg); }
-            .icon-bg-amber  { background: #F6EDD8; border: 1px solid #EAD9AE; }
+            .icon-bg-amber  { background: #FBF3E3; border: 1px solid #ECD8B3; }
             .icon-bg-green  { background: var(--primary-subtle); border: 1px solid var(--primary-bg); }
             .icon-color-blue { color: var(--primary); }
-            .icon-color-amber { color: #8A5A14; }
+            .icon-color-amber { color: #85540F; }
             .icon-color-green { color: var(--primary); }
             .icon-color-cyan { color: var(--primary-light); }
-            [data-theme="dark"] .icon-color-amber { color: #D9A75B; }
             .btn-primary-grad  { background: var(--btn-gradient); }
             .btn-primary-grad-lg { background: var(--btn-gradient); border-radius: 8px; font-weight: 600; }
             .gradient-text-primary { color: var(--primary); }
@@ -1229,7 +1077,7 @@
                 font-size: 20px;
                 font-weight: 800;
                 color: var(--text-primary);
-                letter-spacing: -0.03em;
+                letter-spacing: 0;
             }
             .summary-meta { margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
             .detail-stack { display: grid; gap: 12px; }
@@ -1343,7 +1191,6 @@
             body.nav-collapsed .logo-mark     { display: block; }
             /* Topbar follows the page theme; swap in the matching logo variant
                regardless of collapsed state (see DOCCLAD_DESIGN_SYSTEM.md §6). */
-            [data-theme="dark"]  .logo-light { display: none !important; }
             [data-theme="light"] .logo-dark  { display: none !important; }
             .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
             /* Search icon fallback: shown only when the inline search input is hidden (narrow screens). */
@@ -1377,16 +1224,106 @@
                 background: none; border: none; cursor: pointer; font-family: inherit; box-sizing: border-box;
             }
             .profile-menu-item:hover { background: var(--sidebar-hover); }
-            .profile-menu-danger { color: #A63A2B; }
-            [data-theme="dark"] .profile-menu-danger { color: #E08A78; }
+            .profile-menu-danger { color: #913A35; }
             .profile-menu-sep { height: 1px; background: var(--card-border); margin: 4px 2px; }
             .logout-form    { display: block; }
             .auth-link     { font-size: 14px; color: var(--text-secondary); padding: 8px 16px; font-weight: 500; transition: all 0.2s; text-decoration: none; }
             .btn-primary-grad { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: white; font-size: 13px; font-weight: 600; border-radius: 8px; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient); }
             .btn-primary-grad svg { width: 14px; height: 14px; }
-            .sidebar-padding { padding: 12px 0; }
-            .main-content-pad { padding: 24px; }
-            .app-footer { text-align: center; padding: 20px 24px 28px; font-size: 12px; color: var(--text-muted); }
+            .sidebar-padding { padding: 10px 12px 16px; overflow-y: auto; }
+            .main-content-pad { padding: 0; flex: 1 0 auto; }
+            .sidebar-workspace {
+                margin: 12px 12px 8px;
+                padding: 10px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                border: 1px solid var(--sidebar-fixed-border);
+                border-radius: 10px;
+                background: #fff;
+                color: #171A1F;
+                box-shadow: 0 1px 2px rgba(16,24,40,.04);
+            }
+            .sidebar-workspace-icon {
+                width: 34px;
+                height: 34px;
+                border-radius: 8px;
+                display: grid;
+                place-items: center;
+                flex: 0 0 auto;
+                background: #EFF9F4;
+                color: #1B7F5A;
+            }
+            .sidebar-workspace-icon svg { width: 18px; height: 18px; }
+            .sidebar-workspace-copy { min-width: 0; flex: 1; }
+            .sidebar-workspace-name { font-size: 13px; line-height: 18px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .sidebar-workspace-meta { color: #69717C; font-size: 11px; line-height: 16px; }
+            .sidebar-workspace-chevron { width: 16px; height: 16px; color: #69717C; }
+            .sidebar-search-form { margin: 10px 12px 6px; }
+            .sidebar-search-wrap { position: relative; }
+            .sidebar-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: #71747A; }
+            .sidebar-search-input {
+                width: 100%;
+                height: 40px;
+                padding: 0 46px 0 36px;
+                border: 0 !important;
+                border-radius: 8px;
+                background: #F1F2F3 !important;
+                color: #343A42 !important;
+                font-size: 13px;
+                box-shadow: none !important;
+            }
+            .sidebar-search-key {
+                position: absolute;
+                right: 6px;
+                top: 6px;
+                height: 28px;
+                min-width: 34px;
+                padding: 0 6px;
+                display: grid;
+                place-items: center;
+                border-radius: 6px;
+                background: #fff;
+                color: #505863;
+                font-size: 11px;
+                font-weight: 650;
+                box-shadow: 0 1px 3px rgba(16,24,40,.06);
+            }
+            .sidebar-utility {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-height: 40px;
+                padding: 0 4px;
+                color: #505863;
+                font-size: 12px;
+            }
+            .sidebar-utility svg { width: 18px; height: 18px; }
+            .sidebar-sync { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: #1B7F5A; font-size: 11px; font-weight: 600; }
+            .sidebar-sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #26966B; }
+            .sidebar-profile {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+                padding: 9px;
+                border: 1px solid var(--sidebar-fixed-border);
+                border-radius: 9px;
+                background: #fff;
+                color: #171A1F;
+                text-decoration: none;
+            }
+            .sidebar-profile-avatar { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; background: #232428; color: #fff; font-size: 13px; font-weight: 650; }
+            .sidebar-profile-copy { min-width: 0; flex: 1; }
+            .sidebar-profile-name { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .sidebar-profile-role { margin-top: 2px; color: #69717C; font-size: 11px; }
+            .sidebar-profile svg { width: 16px; height: 16px; color: #69717C; }
+            body.nav-collapsed .sidebar-workspace,
+            body.nav-collapsed .sidebar-search-form,
+            body.nav-collapsed .sidebar-profile,
+            body.nav-collapsed .sidebar-utility { display: none; }
+            body.nav-collapsed .sidebar-padding { padding-left: 10px; padding-right: 10px; }
+            .app-footer { flex: 0 0 auto; text-align: center; padding: 20px 24px 28px; font-size: 12px; color: var(--text-muted); }
             .app-footer a { color: var(--text-muted); text-decoration: none; margin: 0 4px; }
             .app-footer a:hover { color: var(--primary-light); text-decoration: underline; }
 
@@ -1396,21 +1333,42 @@
                 .ops-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
                 .summary-grid { grid-template-columns: 1fr; }
             }
+            @media (max-width: 1320px) {
+                .main-area > .top-bar .global-search-form { width: 100%; min-width: 0; max-width: 360px; }
+                .main-area > .top-bar .org-label,
+                .main-area > .top-bar .username-text,
+                .main-area > .top-bar .profile-caret { display: none; }
+                .main-area > .top-bar .profile-trigger { padding-left: 2px; padding-right: 2px; }
+            }
             @media (max-width: 640px) {
+                .page-wrap { padding: 0 16px 32px; }
                 .ops-strip { grid-template-columns: 1fr; }
                 .workspace-kicker-row { gap: 6px; }
                 .global-search-form { display: none; }
                 .nav-icon-search { display: inline-flex; align-items: center; }
+                .sidebar-container { width: 64px; }
+                .sidebar-brand { height: 64px; justify-content: center; padding: 0; }
+                .sidebar-brand .logo-wordmark { display: none; }
+                .sidebar-brand .logo-mark { display: block; width: 32px; height: 32px; }
+                .sidebar-workspace,
+                .sidebar-search-form,
+                .sidebar-footer { display: none; }
+                .sidebar-padding { padding: 8px; }
+                .nav-section { display: none; }
+                .nav-link { justify-content: center; min-height: 42px; padding: 0; font-size: 0; border-radius: 8px; }
+                .nav-link svg { width: 19px; height: 19px; }
+                .nav-link.active { border-color: var(--sidebar-fixed-active-border); }
+                .main-area { min-width: 0; }
             }
         </style>
 </head>
-<body class="c-primary-text">
+<body class="c-primary-text" data-design-system="casefile">
     {% if not user.is_authenticated %}
     <div class="top-bar">
         <div class="topbar-flex topbar-gap-lg">
             {% if user.is_authenticated %}
             <button type="button" id="rail-toggle" class="rail-toggle-btn" aria-label="Toggle workspace rail" title="Toggle workspace rail">
-                <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                {% include "design_system/icon.html" with name="menu" class_name="nav-icon-svg" %}
             </button>
             {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link" aria-label="DocClad — go to dashboard">
@@ -1422,7 +1380,7 @@
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                 <div class="global-search-wrap">
-                    <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
                     <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties" value="{{ request.GET.q|default:'' }}">
                 </div>
             </form>
@@ -1443,27 +1401,23 @@
                     <span class="org-label">{{ CURRENT_ORGANIZATION.name }}</span>
                 {% endif %}
                 <a href="{% url 'contracts:global_search' %}" class="nav-icon-link nav-icon-search" title="Search">
-                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    {% include "design_system/icon.html" with name="search" class_name="nav-icon-svg" %}
                 </a>
                 <a href="{% url 'contracts:organization_team' %}" class="nav-icon-link" title="Team">
-                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    {% include "design_system/icon.html" with name="users" class_name="nav-icon-svg" %}
                 </a>
                 <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Settings">
-                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                    {% include "design_system/icon.html" with name="settings" class_name="nav-icon-svg" %}
                 </a>
-                <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Toggle theme">
-                    <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                </button>
                 <a href="{% url 'contracts:notification_list' %}" class="nav-icon-link" title="Notifications">
-                    <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    {% include "design_system/icon.html" with name="bell" class_name="nav-icon-svg" %}
                     {% if UNREAD_NOTIFICATIONS %}
                     <span class="navbar-badge">{{ UNREAD_NOTIFICATIONS }}</span>
                     {% endif %}
                 </a>
-                <a href="{% url 'contracts:contract_template_picker' %}" class="btn-primary-grad">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    New Contract
+                <a href="{% url 'contracts:contract_template_picker' %}" class="btn-primary-grad topbar-new-contract" aria-label="New Contract" title="New Contract">
+                    {% include "design_system/icon.html" with name="plus" %}
+                    <span class="topbar-new-label">New Contract</span>
                 </a>
                 <div class="nav-separator"></div>
                 <div class="profile-box" id="profileBox">
@@ -1472,7 +1426,7 @@
                             {{ user.first_name|default:user.username|slice:":1"|upper }}
                         </div>
                         <span class="username-text">{{ user.first_name|default:user.username }}</span>
-                        <svg class="profile-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        {% include "design_system/icon.html" with name="chevron-down" class_name="profile-caret" %}
                     </button>
                     <div class="profile-menu" id="profileMenu" role="menu">
                         <a href="{% url 'profile' %}" class="profile-menu-item" role="menuitem">Profile</a>
@@ -1484,10 +1438,6 @@
                     </div>
                 </div>
             {% else %}
-                <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Toggle theme">
-                    <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                </button>
                 <a href="{% url 'login' %}" class="auth-link">Sign in</a>
                 <a href="{% url 'register' %}" class="btn-primary-grad">Get Started</a>
             {% endif %}
@@ -1499,9 +1449,28 @@
     <div class="main-layout">
         <nav class="sidebar-container" id="sidebar">
             <a href="{% url 'dashboard' %}" class="sidebar-brand" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="logo-wordmark">
-                <img src="{% static 'img/brand/docclad-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark">
+                <img src="{% static 'img/brand/docclad-logo-black.svg' %}" alt="DocClad" class="logo-wordmark">
+                <img src="{% static 'img/brand/docclad-mark-black.svg' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
+            {% if CURRENT_ORGANIZATION %}
+            <div class="sidebar-workspace">
+                <span class="sidebar-workspace-icon" aria-hidden="true">
+                    {% include "design_system/icon.html" with name="building" %}
+                </span>
+                <span class="sidebar-workspace-copy">
+                    <span class="sidebar-workspace-name">{{ CURRENT_ORGANIZATION.name }}</span>
+                    <span class="sidebar-workspace-meta">Legal workspace</span>
+                </span>
+                {% include "design_system/icon.html" with name="chevrons-up-down" class_name="sidebar-workspace-chevron" %}
+            </div>
+            {% endif %}
+            <form method="get" action="{% url 'contracts:global_search' %}" class="sidebar-search-form">
+                <div class="sidebar-search-wrap">
+                    {% include "design_system/icon.html" with name="search" class_name="sidebar-search-icon" %}
+                    <input type="search" name="q" class="sidebar-search-input" placeholder="Search..." value="{{ request.GET.q|default:'' }}" readonly data-command-trigger aria-label="Open command palette">
+                    <span class="sidebar-search-key">⌘ K</span>
+                </div>
+            </form>
             <div class="sidebar-padding">
                 {% for entry in SIDEBAR_NAV %}
                 {% if entry.kind == 'section' %}
@@ -1514,15 +1483,21 @@
                 {% endif %}
                 {% endfor %}
             </div>
-            {% if CURRENT_ORGANIZATION %}
             <div class="sidebar-footer">
-                <div class="sidebar-footer-org">{{ CURRENT_ORGANIZATION.name }}</div>
-                <button type="button" id="rail-toggle-footer" class="sidebar-footer-collapse">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
-                    <span>Collapse</span>
-                </button>
+                <div class="sidebar-utility">
+                    {% include "design_system/icon.html" with name="refresh-cw" %}
+                    <span>Settings &amp; data sync</span>
+                    <span class="sidebar-sync">Synced</span>
+                </div>
+                <a href="{% url 'profile' %}" class="sidebar-profile">
+                    <span class="sidebar-profile-avatar">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+                    <span class="sidebar-profile-copy">
+                        <span class="sidebar-profile-name">{{ user.get_full_name|default:user.username }}</span>
+                        <span class="sidebar-profile-role">Workspace member</span>
+                    </span>
+                    {% include "design_system/icon.html" with name="chevron-right" %}
+                </a>
             </div>
-            {% endif %}
         </nav>
 
         <div class="main-area">
@@ -1530,7 +1505,7 @@
                 <div class="topbar-flex topbar-gap-lg">
                     <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                         <div class="global-search-wrap">
-                            <svg class="global-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
                             <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties..." value="{{ request.GET.q|default:'' }}">
                         </div>
                     </form>
@@ -1549,27 +1524,23 @@
                         <span class="org-label">{{ CURRENT_ORGANIZATION.name }}</span>
                     {% endif %}
                     <a href="{% url 'contracts:global_search' %}" class="nav-icon-link nav-icon-search" title="Search">
-                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        {% include "design_system/icon.html" with name="search" class_name="nav-icon-svg" %}
                     </a>
                     <a href="{% url 'contracts:organization_team' %}" class="nav-icon-link" title="Team">
-                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        {% include "design_system/icon.html" with name="users" class_name="nav-icon-svg" %}
                     </a>
                     <a href="{% url 'contracts:notification_list' %}" class="nav-icon-link" title="Notifications">
-                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        {% include "design_system/icon.html" with name="bell" class_name="nav-icon-svg" %}
                         {% if UNREAD_NOTIFICATIONS %}
                         <span class="navbar-badge">{{ UNREAD_NOTIFICATIONS }}</span>
                         {% endif %}
                     </a>
                     <a href="{% url 'settings_hub' %}" class="nav-icon-link" title="Settings">
-                        <svg class="nav-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                        {% include "design_system/icon.html" with name="settings" class_name="nav-icon-svg" %}
                     </a>
-                    <button type="button" data-action="toggle-theme" class="theme-toggle-btn" title="Toggle theme">
-                        <svg class="icon-sun nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                        <svg class="icon-moon nav-icon-svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                    </button>
-                    <a href="{% url 'contracts:contract_template_picker' %}" class="btn-primary-grad">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        New Contract
+                    <a href="{% url 'contracts:contract_template_picker' %}" class="btn-primary-grad topbar-new-contract" aria-label="New Contract" title="New Contract">
+                        {% include "design_system/icon.html" with name="plus" %}
+                        <span class="topbar-new-label">New Contract</span>
                     </a>
                     <div class="profile-box" id="profileBox">
                         <button type="button" class="profile-trigger" id="profileTrigger" aria-haspopup="true" aria-expanded="false">
@@ -1577,7 +1548,7 @@
                                 {{ user.first_name|default:user.username|slice:":1"|upper }}
                             </div>
                             <span class="username-text">{{ user.first_name|default:user.username }}</span>
-                            <svg class="profile-caret" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            {% include "design_system/icon.html" with name="chevron-down" class_name="profile-caret" %}
                         </button>
                         <div class="profile-menu" id="profileMenu" role="menu">
                             <a href="{% url 'profile' %}" class="profile-menu-item" role="menuitem">Profile</a>
@@ -1591,13 +1562,9 @@
                 </div>
             </div>
             {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                <div class="msg {% if message.tags == 'success' %}msg-success{% elif message.tags == 'error' %}msg-error{% else %}msg-warning{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
+              {% for message in messages %}
+              <span hidden data-server-toast data-toast-message="{{ message }}" data-toast-tone="{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}danger{% elif message.tags == 'warning' %}attention{% else %}info{% endif %}"></span>
+              {% endfor %}
             {% endif %}
 
             <div class="main-content-pad">
@@ -1615,6 +1582,11 @@
     <main>
         {% block content_public %}{% endblock content_public %}
     </main>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+      {% include "design_system/command_palette.html" %}
+      {% include "design_system/toast_region.html" %}
     {% endif %}
 
     <script nonce="{{ csp_nonce }}">

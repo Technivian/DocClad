@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Casefile Design System - DocClad{% endblock %}
+{% block content %}
+<div class="dc-ds-page dc-ds-catalog">
+  {% include "design_system/page_hero.html" with eyebrow="Casefile" title="DocClad Design System" subtitle="The executable standard for calm, confident, actionable contract operations." %}
+
+  <nav class="dc-ds-catalog__nav" aria-label="Catalogue sections">
+    <a href="#foundations">Foundations</a>
+    <a href="#actions">Actions</a>
+    <a href="#status">Status</a>
+    <a href="#forms">Forms</a>
+    <a href="#tables">Tables</a>
+    <a href="#charts">Charts</a>
+    <a href="#states">States</a>
+  </nav>
+
+  <section class="dc-ds-catalog__section" id="foundations">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Foundations</p>
+      <h2>Semantic color and type</h2>
+      <p>Color communicates structure, workflow state, and consequence.</p>
+    </div>
+    <div class="dc-ds-swatches" aria-label="Casefile semantic colors">
+      <div class="dc-ds-swatch"><span class="is-ink"></span><strong>Graphite</strong><small>Primary content</small></div>
+      <div class="dc-ds-swatch"><span class="is-forest"></span><strong>Forest</strong><small>Action and trust</small></div>
+      <div class="dc-ds-swatch"><span class="is-blue"></span><strong>Docket blue</strong><small>Active review</small></div>
+      <div class="dc-ds-swatch"><span class="is-amber"></span><strong>Renewal amber</strong><small>Attention</small></div>
+      <div class="dc-ds-swatch"><span class="is-red"></span><strong>Exception red</strong><small>Block and danger</small></div>
+      <div class="dc-ds-swatch"><span class="is-plum"></span><strong>Specialist plum</strong><small>Special review</small></div>
+    </div>
+    <div class="dc-ds-type-sample">
+      <div class="dc-ds-title">Display - Contract operations</div>
+      <div class="dc-ds-surface__title">Heading - Priority work queue</div>
+      <p>Body - Review governed agreements, ownership, deadlines, and risk.</p>
+      <small>Metadata - Updated Jul 10, 2026 at 08:30</small>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="actions">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Actions</p>
+      <h2>Buttons and commands</h2>
+      <p>One primary action per group; labels state the legal operation.</p>
+    </div>
+    <div class="dc-ds-demo-row">
+      {% include "design_system/button.html" with label="Import document" tone="primary" icon="upload" href="#actions" %}
+      {% include "design_system/button.html" with label="Open workflow" icon="workflow" href="#actions" %}
+      {% include "design_system/button.html" with label="Delete draft" tone="danger" icon="x" %}
+      {% include "design_system/button.html" with label="Unavailable" disabled=True %}
+      {% include "design_system/button.html" with label="Open command palette" icon="command" command_trigger=True %}
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="status">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Domain state</p>
+      <h2>Contract status vocabulary</h2>
+      <p>State is expressed with text and semantic color.</p>
+    </div>
+    <div class="dc-ds-demo-row">
+      {% include "design_system/status_badge.html" with label="Draft" %}
+      {% include "design_system/status_badge.html" with label="Approved" tone="success" %}
+      {% include "design_system/status_badge.html" with label="Legal review" tone="progress" %}
+      {% include "design_system/status_badge.html" with label="Due soon" tone="attention" %}
+      {% include "design_system/status_badge.html" with label="Blocked" tone="danger" %}
+      {% include "design_system/status_badge.html" with label="DPO review" tone="special" %}
+    </div>
+    <div class="dc-ds-catalog__stack">
+      {% include "design_system/attention_banner.html" with title="Approval route updated" message="Finance approval is now required because contract value exceeds EUR 250,000." tone="attention" %}
+      {% include "design_system/attention_banner.html" with title="Draft saved" message="The governed draft and audit history are current." tone="success" %}
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="forms">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Forms</p>
+      <h2>Labels, help, and validation</h2>
+      <p>Controls remain explicit and errors stay next to the affected decision.</p>
+    </div>
+    <div class="dc-ds-catalog__form">
+      <label class="dc-ds-form-field">
+        <span class="dc-ds-form-field__label">Contract title</span>
+        <input type="text" value="Northwind Data Processing Agreement">
+        <span class="dc-ds-form-field__help">Use the name shown in the agreement.</span>
+      </label>
+      <label class="dc-ds-form-field dc-ds-form-field--error">
+        <span class="dc-ds-form-field__label">Effective date</span>
+        <input type="date" aria-invalid="true">
+        <span class="dc-ds-form-field__errors">Effective date is required before approval.</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="tables">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Data tables</p>
+      <h2>Dense operational comparison</h2>
+      <p>Casefile owns presentation even when a headless table engine supplies behavior.</p>
+    </div>
+    <div class="dc-ds-table-wrap">
+      <table class="dc-ds-table" data-table-core="server">
+        <thead><tr><th>Contract</th><th>Stage</th><th>Owner</th><th>Risk</th><th>Due</th></tr></thead>
+        <tbody>
+          <tr><td>Northwind DPA</td><td>{% include "design_system/status_badge.html" with label="DPO review" tone="special" %}</td><td>Riya Shah</td><td>{% include "design_system/status_badge.html" with label="Medium" tone="attention" %}</td><td>Jul 18, 2026</td></tr>
+          <tr><td>Acme MSA</td><td>{% include "design_system/status_badge.html" with label="Legal review" tone="progress" %}</td><td>Alex Morgan</td><td>{% include "design_system/status_badge.html" with label="High" tone="danger" %}</td><td>Jul 12, 2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="charts">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Charts</p>
+      <h2>Operational data palette</h2>
+      <p>Chart engines consume Casefile colors, type, axes, and grid rules through <code>DocClad.chartTheme</code>.</p>
+    </div>
+    <div class="dc-ds-surface dc-ds-surface__body dc-ds-chart" aria-label="Chart palette reference">
+      <div class="dc-ds-chart__legend">
+        <span class="dc-ds-chart__key"><i class="dc-ds-chart__swatch"></i>Contract volume</span>
+        <span class="dc-ds-chart__key"><i class="dc-ds-chart__swatch dc-ds-chart-swatch-2"></i>Review activity</span>
+        <span class="dc-ds-chart__key"><i class="dc-ds-chart__swatch dc-ds-chart-swatch-3"></i>Renewal attention</span>
+        <span class="dc-ds-chart__key"><i class="dc-ds-chart__swatch dc-ds-chart-swatch-4"></i>Specialist review</span>
+        <span class="dc-ds-chart__key"><i class="dc-ds-chart__swatch dc-ds-chart-swatch-5"></i>Exceptions</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="dc-ds-catalog__section" id="states">
+    <div class="dc-ds-catalog__intro">
+      <p class="dc-ds-eyebrow">Interaction states</p>
+      <h2>Feedback and empty conditions</h2>
+      <p>Transient feedback never replaces required inline information.</p>
+    </div>
+    <div class="dc-ds-demo-row">
+      {% include "design_system/button.html" with label="Success toast" toast_message="The governed draft was saved." toast_tone="success" %}
+      {% include "design_system/button.html" with label="Attention toast" toast_message="Finance approval is still required." toast_tone="attention" %}
+      {% include "design_system/button.html" with label="Error toast" toast_message="The approval could not be submitted." toast_tone="danger" %}
+    </div>
+    {% include "design_system/empty_state.html" with title="No contracts match this view" copy="Clear the active filters or import a contract to continue." %}
+  </section>
+</div>
+{% endblock %}

@@ -9,6 +9,7 @@ from .views_domains.subscription import (
     stripe_webhook,
 )
 from .views_domains.design_preview import (
+    design_system_catalog,
     design_preview_command_center,
     design_preview_relationship_detail,
     design_preview_review_studio,
@@ -17,6 +18,7 @@ from .views_domains.design_preview import (
 app_name = 'contracts'
 
 urlpatterns = [
+    path('design-system/', design_system_catalog, name='design_system_catalog'),
     path('design-preview/command-center/', design_preview_command_center, name='design_preview_command_center'),
     path('design-preview/relationships/acme/', design_preview_relationship_detail, name='design_preview_relationship_detail'),
     path('design-preview/review-studio/', design_preview_review_studio, name='design_preview_review_studio'),
@@ -401,6 +403,8 @@ urlpatterns = [
     # Contracts
     path('', views.ContractListView.as_view(), name='contract_list'),
     path('<int:pk>/', views.ContractDetailView.as_view(), name='contract_detail'),
+    path('start/', views.legal_front_door, name='legal_front_door'),
+    path('new/upload/', views.upload_signed_contract, name='upload_signed_contract'),
     path('new/start/', views.contract_template_picker, name='contract_template_picker'),
     path('new/msa/', views.MSAWorkflowBuilderView.as_view(), name='msa_workflow_builder'),
     path('new/nda/', views.NDAWorkflowBuilderView.as_view(), name='nda_workflow_builder'),

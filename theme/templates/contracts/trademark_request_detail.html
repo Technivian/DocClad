@@ -17,7 +17,17 @@ Trademark Request: {{ trademark_request.region }} - Class {{ trademark_request.c
   .detail-link  { color: var(--primary-light); text-decoration: none; }
   .detail-link:hover { text-decoration: underline; }
 </style>
-<div class="panel p-8">
+<div class="page-wrap">
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <h1 class="arch-title">Trademark Request</h1>
+      <p class="arch-subtitle">{{ trademark_request.region }} · Class {{ trademark_request.class_number }}</p>
+    </div>
+    <div class="arch-header-right">
+      <a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="btn-cta">Edit Request</a>
+    </div>
+  </div>
+  <div class="panel p-8">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <h3 class="detail-label">Region:</h3>
@@ -50,5 +60,6 @@ Trademark Request: {{ trademark_request.region }} - Class {{ trademark_request.c
         </div>
         {% endif %}
     </div>
+  </div>
 </div>
 {% endblock %}

@@ -266,6 +266,7 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
                 'highest_risk_signal': top_signal.description if top_signal else 'No active risk signal',
                 'blocking_issue': blocking_issue,
                 'next_action': next_action,
+                'self_serve_eligible': contract.risk_level == Contract.RiskLevel.LOW if contract else False,
             },
             'last_source_synced_at': timezone.now(),
         },
@@ -290,6 +291,7 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
         contract_type=Contract.ContractType.DPA,
         status=Contract.Status.DRAFT,
         created_by=user,
+        risk_level=Contract.RiskLevel.LOW,
     )
     set_organization_on_instance(contract, organization)
     for field in field_defs:
@@ -319,7 +321,13 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
         workflow=workflow, contract=contract, content=preview_content, version=1, is_current=True, created_by=user,
     )
 
-    detect_dpa_risk_signals(workflow, cleaned_values)
+    risk_signals = detect_dpa_risk_signals(workflow, cleaned_values)
+    if any(signal.severity in {RiskSignal.Severity.HIGH, RiskSignal.Severity.CRITICAL} for signal in risk_signals):
+        contract.risk_level = Contract.RiskLevel.HIGH
+    elif risk_signals:
+        contract.risk_level = Contract.RiskLevel.MEDIUM
+    contract.save(update_fields=['risk_level', 'updated_at'])
+
     sync_command_center_work_item_for_workflow(workflow)
 
     log_action(

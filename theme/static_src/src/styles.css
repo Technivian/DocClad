@@ -13,49 +13,46 @@
 @source "../../../**/*.{html,py,js}";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --color-primary-400: #3a73e8;
-  --color-primary-500: #1e5bdc;
-  --color-primary-600: #174cbc;
-  --color-primary-700: #123e9e;
-  --color-primary-800: #0f347f;
-  --color-primary-100: #e8f0ff;
-  --color-primary: #1e5bdc;
+  --color-primary-400: #48A984;
+  --color-primary-500: #26966B;
+  --color-primary-600: #1B7F5A;
+  --color-primary-700: #176B4D;
+  --color-primary-800: #12573E;
+  --color-primary-100: #DDF3E9;
+  --color-primary: #1B7F5A;
 
-  --color-accent-500: #f2c100;
-  --color-accent: #f2c100;
+  --color-accent-500: #26966B;
+  --color-accent: #1B7F5A;
 
-  --color-ink: #0b0b0c;
-  --color-stroke: #e5e7eb;
-  --color-bg: #f4f7fb;
+  --color-ink: #171A1F;
+  --color-stroke: #DFE3E7;
+  --color-bg: #F5F7F8;
   --color-card: #ffffff;
-  --color-border: #e6eaf1;
-  --color-muted: #6b7280;
+  --color-border: #DFE3E7;
+  --color-muted: #69717C;
 
   --color-secondary: #6b7280;
-  --color-success: #10B981;
-  --color-warning: #f59e0b;
-  --color-danger: #DC2626;
+  --color-success: #1B7F5A;
+  --color-warning: #9A6517;
+  --color-danger: #A7463F;
 
-  --color-surface: #f4f7fb;
-  --color-surface-contrast: #123e9e;
+  --color-surface: #F0F2F3;
+  --color-surface-contrast: #242830;
 
-  --radius-xl: 16px;
+  --radius-xl: 10px;
 }
 
-/* Flat, hairline-bordered surfaces — borders over shadows (IRONCLAD_DESIGN_AUDIT.md).
-   The legacy btn-primary/btn-secondary/btn-accent pill utilities were removed:
-   no template used them, and the product's primary buttons are the flat
-   copper .btn-primary-grad / .btn-cta classes in base.html/components.css. */
+/* Casefile utilities: compact controls, hairline surfaces, and semantic states. */
 @utility card { @apply bg-card rounded-xl; }
 @utility btn-ghost { @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-primary-700 hover:bg-border focus:outline-none focus:ring-2 focus:ring-primary-700/40 transition font-medium; }
 
 /* Bolton CLM UI helpers */
 @utility input { @apply w-full rounded-lg border border-border bg-card px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 focus:outline-none; }
 @utility badge { @apply inline-flex items-center rounded-xl px-2 py-1 text-xs font-semibold whitespace-nowrap; }
-@utility badge-success { @apply bg-green-100 text-green-700; }
-@utility badge-warning { @apply bg-yellow-100 text-yellow-700; }
+@utility badge-success { background: #EFF9F4; color: #176B4D; }
+@utility badge-warning { background: #FBF3E3; color: #85540F; }
 @utility badge-neutral { @apply bg-primary-100 text-primary-700; }
 @utility card-section { @apply card p-6; }
 @utility table-base { @apply w-full text-sm text-left text-primary-700; }
@@ -76,4 +73,4 @@
 @utility status-active { @apply bg-primary-100 text-primary-700; }
 @utility status-draft { @apply bg-border text-muted; }
 @utility status-inactive { @apply bg-border text-muted; }
-@utility status-unverified { @apply bg-yellow-100 text-yellow-700; }
+@utility status-unverified { background: #FBF3E3; color: #85540F; }

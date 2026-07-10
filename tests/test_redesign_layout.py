@@ -27,13 +27,13 @@ class RedesignLayoutTests(TestCase):
         organization.save(update_fields=['workspace_mode'])
         return organization
 
-    def test_base_shell_and_theme_controls(self):
+    def test_base_shell_uses_casefile_light_mode(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'DocClad')
-        self.assertContains(response, 'data-theme="dark"')
-        # Theme toggle is wired via a delegated handler (CSP: no inline onclick).
-        self.assertContains(response, 'data-action="toggle-theme"')
+        self.assertContains(response, 'data-theme="light"')
+        self.assertContains(response, 'data-design-system="casefile"')
+        self.assertNotContains(response, 'data-action="toggle-theme"')
         self.assertContains(response, 'js/csp-handlers.js')
         self.assertContains(response, 'title="Search"')
 
@@ -90,8 +90,7 @@ class RedesignLayoutTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'New Contract')
-        self.assertContains(response, 'Upcoming Obligations')
-        self.assertContains(response, 'High-Attention Records')
+        self.assertContains(response, 'Needs Your Attention')
         self.assertContains(response, 'Recent Review Memos')
 
     def tearDown(self):

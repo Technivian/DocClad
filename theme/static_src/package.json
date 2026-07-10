@@ -1,6 +1,7 @@
 {
   "name": "theme",
   "version": "4.2.0",
+  "type": "module",
   "description": "",
   "scripts": {
     "start": "npm run dev",

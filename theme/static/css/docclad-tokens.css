@@ -1,29 +1,34 @@
-/* ═══════════════════════════════════════════════════════════════════
-   DOCCLAD DESIGN TOKENS — "Ledger" design language, v1.2
-   ───────────────────────────────────────────────────────────────────
-   Authority: docclad_agent_brand_kit/docs/docclad-approved-brand-board.png
-   Spec + rationale: DOCCLAD_DESIGN_SYSTEM.md (see v1.2 changelog)
-   Governance: DESIGN_CONSTITUTION.md §14
-
-   Identity in one line: cool paper, navy ink, teal accent, copper CTA,
-   ledger precision. Teal (--copper-tint's counterpart, the seal color)
-   is the general accent — active nav, links, focus, progress — and also
-   carries the fiduciary/trust signal on client-funds surfaces. Copper is
-   rationed to primary creation/action CTA buttons only. Every color below
-   derives from the approved brand palette (Deep Navy #0B1330 · Teal
-   #11B39A · White · Light Gray #F3F5F7) or is a desaturated archival
-   status hue tuned to sit beside navy ink. No raw Tailwind palette
-   values. Inter is the only product typeface.
-   ═══════════════════════════════════════════════════════════════════ */
+/* DocClad "Casefile" design system. Light, precise, and optimized for
+   contract operations: graphite neutrals, forest trust, docket blue,
+   renewal amber, exception red, and specialist plum. */
 
 :root {
-  /* ── Brand primitives (approved brand board — do not alter) ──── */
-  --docclad-deep-navy: #0B1330;
-  --docclad-navy: #0B1330;
-  --docclad-teal: #11B39A;
+  /* Brand and semantic primitives. */
+  --docclad-deep-navy: #171A1F;
+  --docclad-navy: #242830;
+  --docclad-teal: #1B7F5A;
   --docclad-white: #FFFFFF;
-  --docclad-light-gray: #F3F5F7;
+  --docclad-light-gray: #F5F7F8;
   --docclad-font: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --casefile-forest-700: #176B4D;
+  --casefile-forest-600: #1B7F5A;
+  --casefile-forest-500: #26966B;
+  --casefile-forest-100: #DDF3E9;
+  --casefile-forest-50: #EFF9F4;
+  --casefile-blue-700: #34548A;
+  --casefile-blue-600: #4568A6;
+  --casefile-blue-100: #DCE6F4;
+  --casefile-blue-50: #EEF3FA;
+  --casefile-amber-700: #85540F;
+  --casefile-amber-600: #9A6517;
+  --casefile-amber-50: #FBF3E3;
+  --casefile-red-700: #913A35;
+  --casefile-red-600: #A7463F;
+  --casefile-red-50: #FBECEA;
+  --casefile-plum-700: #654978;
+  --casefile-plum-600: #765B8C;
+  --casefile-plum-50: #F3EFF7;
 
   /* Logo sizing (existing, unchanged) */
   --docclad-logo-header-height: 40px;
@@ -32,59 +37,51 @@
 
   /* ── Ink ramp — navy-undertoned text & line colors.
         Replaces every gray-* / slate-* usage. ─────────────────────── */
-  --ink-900: #0B1330;  /* headings, primary text (the brand navy IS the ink) */
-  --ink-700: #2E3A57;  /* strong body, active nav text */
-  --ink-600: #46536F;  /* body on paper */
-  --ink-500: #5F6B85;  /* secondary text */
-  --ink-400: #838DA3;  /* metadata, placeholders */
-  --ink-300: #AAB2C2;  /* disabled text, faint icons */
-  --line-strong: #C9CFDB; /* emphasized rules (table header underline) */
-  --line: #DEE2EA;        /* standard borders */
-  --hairline: #EBEEF3;    /* row separators, dividers */
-  --paper: #F3F5F7;       /* app canvas (brand light gray) */
+  --ink-900: #171A1F;
+  --ink-700: #353A42;
+  --ink-600: #4B525C;
+  --ink-500: #69717C;
+  --ink-400: #8B929C;
+  --ink-300: #B4BAC1;
+  --line-strong: #CDD2D8;
+  --line: #DFE3E7;
+  --hairline: #ECEEF0;
+  --paper: #F5F7F8;
   --card: #FFFFFF;        /* raised working surfaces */
-  --well: #EDF0F4;        /* inset surfaces: input wells, code, table heads */
+  --well: #F0F2F3;
 
-  /* ── Copper ramp — CTA-only (v1.2). Rationed to primary creation/action
-        buttons ("New Contract", "New Risk") via --btn-gradient. Never used
-        for links, active/selected states, or focus rings — those are teal
-        now. See DOCCLAD_DESIGN_SYSTEM.md v1.2 changelog. ───────────────── */
-  --copper-600: #C96A3E;
-  --copper-700: #B5502E;  /* default CTA, light theme (5.1:1 on white) */
-  --copper-800: #8A3A1E;  /* pressed, light theme */
-  --copper-500: #CF7248;  /* default CTA, dark theme (5.4:1 on navy card) */
-  --copper-400: #E29368;  /* hover, dark theme */
-  --copper-tint: #F3DACB;       /* CTA hover/pressed tint only */
-  --copper-tint-dark: rgba(207,114,72,0.14);
+  /* Legacy CTA aliases retained for template compatibility. */
+  --copper-600: var(--casefile-forest-500);
+  --copper-700: var(--casefile-forest-600);
+  --copper-800: var(--casefile-forest-700);
+  --copper-500: var(--casefile-forest-500);
+  --copper-400: #48A984;
+  --copper-tint: var(--casefile-forest-50);
+  --copper-tint-dark: rgba(27,127,90,0.14);
 
-  /* ── Seal — brand teal, the general accent (v1.2): links, active/
-        selected states, focus rings, active nav, lifecycle/progress —
-        plus the trust/verification signal on any surface showing or
-        moving client funds (fiduciary surfaces layer on extra grammar,
-        see DOCCLAD_DESIGN_SYSTEM.md §5.2, rather than relying on teal
-        being exclusive to them). ───────────────────────────────────── */
-  --seal: #0A7264;            /* light theme */
-  --seal-dark: #17BFA5;       /* dark theme */
-  --seal-bg: #DFF4EE;         /* fiduciary surface wash, light theme */
-  --focus-ring: rgba(10, 114, 100, 0.35);
+  /* Forest is the primary action, selection, progress, and trust signal. */
+  --seal: var(--casefile-forest-600);
+  --seal-dark: var(--casefile-forest-500);
+  --seal-bg: var(--casefile-forest-50);
+  --focus-ring: rgba(27, 127, 90, 0.22);
   --seal-bg-dark: rgba(17,179,154,0.14);
 
   /* ── Status vocabulary — archival, desaturated, tinted-pill pairs.
         (bg = tint, fg = text) Never raw saturated hues. ───────────── */
-  --status-positive-fg: #0A7264;  /* active / executed / paid — seal family */
-  --status-positive-bg: #DBF2EC;
-  --status-pending-fg: #8A5A14;   /* waiting on someone — manila amber */
-  --status-pending-bg: #F6EDD8;
-  --status-progress-fg: #3F569B;  /* in-flight process — docket slate */
-  --status-progress-bg: #E8EDF8;
-  --status-danger-fg: #A63A2B;    /* overdue / expired / debit — oxide red */
-  --status-danger-bg: #F8E8E3;
-  --status-neutral-fg: #5F6B85;   /* draft / inactive / archived */
-  --status-neutral-bg: #ECEFF4;
-  --status-special-fg: #6D4E8E;   /* rare: matching/escalated — archival plum */
-  --status-special-bg: #F0EAF7;
+  --status-positive-fg: var(--casefile-forest-700);
+  --status-positive-bg: var(--casefile-forest-50);
+  --status-pending-fg: var(--casefile-amber-700);
+  --status-pending-bg: var(--casefile-amber-50);
+  --status-progress-fg: var(--casefile-blue-700);
+  --status-progress-bg: var(--casefile-blue-50);
+  --status-danger-fg: var(--casefile-red-700);
+  --status-danger-bg: var(--casefile-red-50);
+  --status-neutral-fg: var(--ink-500);
+  --status-neutral-bg: #EEF0F2;
+  --status-special-fg: var(--casefile-plum-700);
+  --status-special-bg: var(--casefile-plum-50);
 
-  /* ── Ledger layer — the signature. Fiduciary-grade numerics. ────── */
+  /* Numeric and tabular content uses stable, comparable figures. */
   --money-font-feature: "tnum" 1, "lnum" 1;    /* tabular numerals, always */
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --ledger-rule: var(--ink-300);        /* single rule above totals */
@@ -96,8 +93,9 @@
         No 700+ in product chrome; authority comes from spacing and
         ink, not boldness. ─────────────────────────────────────────── */
   --font-sans: var(--docclad-font);
-  --text-display: 600 28px/34px var(--font-sans);   /* letter-spacing -0.02em */
-  --text-title: 600 22px/28px var(--font-sans);     /* page titles, -0.02em */
+  --text-display: 650 28px/36px var(--font-sans);
+  --text-title: 650 24px/32px var(--font-sans);
+  --text-section: 650 20px/28px var(--font-sans);
   --text-heading: 600 16px/24px var(--font-sans);   /* panel titles */
   --text-subheading: 600 14px/20px var(--font-sans);
   --text-body: 400 14px/22px var(--font-sans);
@@ -106,60 +104,35 @@
   --text-eyebrow: 600 11px/16px var(--mono);        /* uppercase, +0.14em */
   --text-data: 400 13px/20px var(--font-sans);      /* table cells, tnum */
 
+  /* Canonical spacing scale from the CMS case-study foundation. */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-64: 64px;
+  --space-80: 80px;
+  --space-96: 96px;
+  --space-120: 120px;
+
+  --grid-columns: 12;
+  --grid-margin: 24px;
+  --grid-gutter: 24px;
+
   /* ── Shape — borders over shadows; precision over softness. ─────── */
-  --radius-control: 6px;   /* buttons, inputs, selects */
-  --radius-card: 10px;     /* cards, panels */
-  --radius-panel: 12px;    /* modals, drawers */
+  --radius-control: 8px;   /* buttons, inputs, selects */
+  --radius-card: 10px;
+  --radius-panel: 12px;
   --radius-pill: 999px;    /* status pills and people chips ONLY */
 
   /* ── Elevation — ink-tinted, overlays only. Working surfaces use
         1px borders, never drop shadows. ──────────────────────────── */
-  --shadow-overlay: 0 12px 32px rgba(11, 19, 48, 0.14), 0 2px 8px rgba(11, 19, 48, 0.08);
+  --shadow-card: 0 1px 2px rgba(23, 26, 31, 0.05), 0 5px 14px rgba(23, 26, 31, 0.035);
+  --shadow-overlay: 0 12px 32px rgba(23, 26, 31, 0.12), 0 2px 8px rgba(23, 26, 31, 0.06);
   --shadow-drawer: -16px 0 40px rgba(11, 19, 48, 0.12);
 
   /* ── Motion ──────────────────────────────────────────────────── */
   --transition-fast: 120ms ease;
   --transition-base: 180ms ease;
-}
-
-/* ═══ Dark theme — "navy night". The brand navy becomes the surface;
-       teal carries. Secondary theme: the product is light-first. ═══ */
-[data-theme="dark"] {
-  --ink-900: #EDF0F6;
-  --ink-700: #C6CDDD;
-  --ink-600: #A9B2C8;
-  --ink-500: #8A94AD;
-  --ink-400: #6C7893;
-  --ink-300: #4E5A78;
-  --line-strong: #33415F;
-  --line: #26334F;
-  --hairline: #1C2842;
-  --paper: #070D20;
-  --card: #0B1330;      /* brand navy as the card surface */
-  --well: #101A38;
-
-  --copper-700: #CF7248;  /* default CTA, dark theme */
-  --copper-800: #E29368;  /* hover — brighten on dark, per convention */
-  --copper-tint: rgba(207, 114, 72, 0.16);
-  --seal: #17BFA5;
-  --seal-bg: rgba(17, 179, 154, 0.14);
-  --focus-ring: rgba(23, 191, 165, 0.35);
-
-  --status-positive-fg: #55CDB7;
-  --status-positive-bg: rgba(17, 179, 154, 0.14);
-  --status-pending-fg: #D9A75B;
-  --status-pending-bg: rgba(196, 145, 51, 0.14);
-  --status-progress-fg: #8FA6E3;
-  --status-progress-bg: rgba(96, 125, 204, 0.16);
-  --status-danger-fg: #E08A78;
-  --status-danger-bg: rgba(196, 82, 61, 0.15);
-  --status-neutral-fg: #8A94AD;
-  --status-neutral-bg: rgba(138, 148, 173, 0.13);
-  --status-special-fg: #B79BD8;
-  --status-special-bg: rgba(148, 111, 190, 0.15);
-
-  --debit: #E08A78;
-  --credit: #55CDB7;
-  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-drawer: -16px 0 40px rgba(0, 0, 0, 0.45);
 }

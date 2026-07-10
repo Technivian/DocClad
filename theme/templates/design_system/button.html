@@ -1,0 +1,11 @@
+{% if href %}
+<a class="dc-ds-button{% if tone %} dc-ds-button--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}" href="{{ href }}"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}>
+  {% if icon %}{% include "design_system/icon.html" with name=icon %}{% endif %}
+  {% if label %}<span>{{ label }}</span>{% endif %}
+</a>
+{% else %}
+<button class="dc-ds-button{% if tone %} dc-ds-button--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}" type="{{ type|default:'button' }}"{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if action %} data-action="{{ action }}"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}{% if toast_message %} data-toast-message="{{ toast_message }}" data-toast-tone="{{ toast_tone|default:'info' }}"{% endif %}>
+  {% if icon %}{% include "design_system/icon.html" with name=icon %}{% endif %}
+  {% if label %}<span>{{ label }}</span>{% endif %}
+</button>
+{% endif %}

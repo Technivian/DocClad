@@ -295,6 +295,35 @@ class CreateDpaWorkflowInstanceTests(TestCase):
         self.assertEqual(item.contract, workflow.contract)
         self.assertEqual(item.action_path, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
 
+    def test_risk_level_high_when_high_severity_signal_detected(self):
+        # cross_border_transfer with no transfer_mechanism is a HIGH signal.
+        workflow = create_dpa_workflow_instance(
+            organization=self.org, user=self.user,
+            cleaned_values=self._cleaned_values(cross_border_transfer=True, transfer_mechanism=''),
+        )
+        self.assertEqual(workflow.contract.risk_level, Contract.RiskLevel.HIGH)
+
+    def test_risk_level_medium_when_only_medium_signals_detected(self):
+        # personal_data_involved (default True) alone is a MEDIUM signal with no HIGH signals present.
+        workflow = create_dpa_workflow_instance(
+            organization=self.org, user=self.user,
+            cleaned_values=self._cleaned_values(
+                cross_border_transfer=False, subprocessors_used=False,
+                dpo_contact='privacy@acme.com', breach_notification_hours=48,
+            ),
+        )
+        self.assertEqual(workflow.contract.risk_level, Contract.RiskLevel.MEDIUM)
+
+    def test_risk_level_stays_low_when_no_signals_detected(self):
+        workflow = create_dpa_workflow_instance(
+            organization=self.org, user=self.user,
+            cleaned_values=self._cleaned_values(
+                personal_data_involved=False, cross_border_transfer=False, subprocessors_used=False,
+                dpo_contact='privacy@acme.com', breach_notification_hours=48,
+            ),
+        )
+        self.assertEqual(workflow.contract.risk_level, Contract.RiskLevel.LOW)
+
     def test_special_categories_and_scc_fallback_field_values_and_signals_created(self):
         workflow = create_dpa_workflow_instance(
             organization=self.org, user=self.user,
