@@ -1,9 +1,0 @@
-===== Phase 5B clean-install validation =====
-settings: config.settings_production  | DB: PostgreSQL 14.20 (empty docclad_cleaninstall)
-check_exit=0 | migrate_from_zero=OK (87 tables) | append_only_triggers=2
-org_created=True | OrgPolicy(MFA init)=True | clause_templates=5 | counterparties=3
-audit_genesis: seq=1 prev_hash_empty=True | verify_chain=valid
-collectstatic_exit=0 (15 copied, 681 post-processed)
-worker run_worker --max-cycles=1 exit=0 | queue_exit=0 | process_exit=0
-expiration/lifecycle/retention (dry-run) exit=0 each | verify_audit_chain exit=0
-gunicorn --check-config exit=0 | gunicorn boot OK | GET /_health/?format=json -> 200 status=ok db=healthy
