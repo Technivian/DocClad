@@ -217,6 +217,15 @@ _DPA_SEVERITY_BADGES = {
     'LOW': 'badge-green',
 }
 
+# DPARiskItem.severity -> canonical .dc-ds-badge--* tone suffix, for pages
+# migrated onto design_system/status_badge.html (Phase 4).
+_DPA_SEVERITY_BADGE_TONE = {
+    'CRITICAL': 'danger',
+    'HIGH': 'danger',
+    'MEDIUM': 'attention',
+    'LOW': 'success',
+}
+
 # DPAReviewPack.approval_status -> badge variant.
 _DPA_APPROVAL_BADGES = {
     'DRAFT': 'badge-gray',
@@ -224,6 +233,19 @@ _DPA_APPROVAL_BADGES = {
     'ESCALATED': 'badge-purple',
     'APPROVED': 'badge-green',
     'REJECTED': 'badge-red',
+}
+
+# DPAReviewPack.approval_status -> canonical .dc-ds-badge--* tone suffix.
+# ESCALATED deliberately uses --special rather than --danger, mirroring
+# approval_status_badge_tone's treatment of ApprovalRequest.ESCALATED —
+# ARCHITECTURE.md's Phase 2 audit notes reserve --special for exactly this
+# "rare/escalated" consumer, distinct from a plain blocking/danger state.
+_DPA_APPROVAL_BADGE_TONE = {
+    'DRAFT': 'neutral',
+    'UNDER_REVIEW': 'progress',
+    'ESCALATED': 'special',
+    'APPROVED': 'success',
+    'REJECTED': 'danger',
 }
 
 # DPARiskItem.owners is a comma-separated list of Owner codes (a risk can be
@@ -530,9 +552,21 @@ def dpa_severity_badge_class(severity):
 
 
 @register.filter
+def dpa_severity_badge_tone(severity):
+    """DPARiskItem severity key -> canonical .dc-ds-badge--* tone suffix."""
+    return _DPA_SEVERITY_BADGE_TONE.get(severity, 'neutral')
+
+
+@register.filter
 def dpa_approval_badge_class(status):
     """DPAReviewPack approval_status key -> canonical badge class."""
     return _DPA_APPROVAL_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def dpa_approval_badge_tone(status):
+    """DPAReviewPack approval_status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _DPA_APPROVAL_BADGE_TONE.get(status, 'neutral')
 
 
 @register.filter

@@ -14,26 +14,26 @@
         </div>
     </div>
 
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table w-full text-sm">
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Topic</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Our Position</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Fallback Language</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
+                    <th scope="col">Topic</th>
+                    <th scope="col">Our Position</th>
+                    <th scope="col">Fallback Language</th>
+                    <th scope="col">Owner</th>
                 </tr>
             </thead>
             <tbody>
                 {% for position in positions %}
-                <tr class="border-b transition-colors tbl-row">
-                    <td class="px-5 py-3.5 font-medium c-primary">{{ position.get_topic_display }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ position.our_position }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ position.fallback_language|default:"—" }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ position.get_owner_display|default:"—" }}</td>
+                <tr>
+                    <td class="font-medium c-primary">{{ position.get_topic_display }}</td>
+                    <td>{{ position.our_position }}</td>
+                    <td>{{ position.fallback_language|default:"—" }}</td>
+                    <td>{{ position.get_owner_display|default:"—" }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="px-5 py-16 text-center c-muted">No playbook positions configured yet.</td></tr>
+                <tr><td colspan="4">{% include "design_system/empty_state.html" with title="No playbook positions configured yet." %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>

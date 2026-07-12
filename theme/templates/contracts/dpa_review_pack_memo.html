@@ -15,14 +15,14 @@
         </div>
     </div>
 
-    <div class="panel">
-        <div class="panel-inner">
+    <section class="dc-ds-surface">
+        <div class="dc-ds-surface__body">
             {% if review_pack.review_memo %}
-            <pre class="text-sm c-primary whitespace-pre-wrap">{{ review_pack.review_memo }}</pre>
+            <pre class="pre-output c-primary" aria-label="DPA review memo text">{{ review_pack.review_memo }}</pre>
             {% else %}
-            <p class="text-sm c-muted">No memo generated yet. Generate the memo from the DPA Review Pack detail page.</p>
+            {% include "design_system/empty_state.html" with title="No memo generated yet" copy="Generate the memo from the DPA Review Pack detail page." %}
             {% endif %}
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}
