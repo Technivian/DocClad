@@ -677,6 +677,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         from contracts.services.queue_rows import latest_activity_map
         from contracts.templatetags.docclad_format import (
             approval_status_badge_class,
+            approval_status_badge_tone,
             approval_step_label,
             money,
         )
@@ -732,6 +733,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'due_overdue': overdue,
                     'status_label': approval.get_status_display(),
                     'status_badge_class': approval_status_badge_class(approval.status),
+                    'status_badge_tone': approval_status_badge_tone(approval.status),
                     # actor_can_decide() checks authorization only; a decision on an
                     # already-APPROVED/REJECTED row would still be rejected by the
                     # API's own status guard (ApprovalWorkflowService._decide), but

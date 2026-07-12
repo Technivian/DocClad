@@ -10,10 +10,13 @@
   Privacy, instead of a fourth private recipe.
   {% endcomment %}
   .approvals-header-row { margin-bottom: 16px; }
-  .approvals-queue-card {
-    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
-    overflow: hidden; box-sizing: border-box;
-  }
+  /* .dc-ds-surface doesn't clip its own corners (no overflow:hidden by
+     default) — the tabs/table need to respect the card's rounded corners. */
+  .approvals-page .approvals-queue-card { overflow: hidden; }
+  /* Flat card, no ambient shadow — the same deliberate choice Repository
+     made for its rail/table surfaces, preserved through this migration
+     rather than switched to .dc-ds-surface's default shadow. */
+  .approvals-page .dc-ds-surface { box-shadow: none; }
   .approvals-tabs-wrap { padding: 6px 12px 0; }
   .approvals-queue-body { overflow-x: auto; }
 </style>
@@ -30,22 +33,24 @@
     </div>
     <div class="arch-header-right">
       <a href="{% url 'contracts:approval_request_create' %}" class="btn-primary-grad">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        {% include "design_system/icon.html" with name="plus" class_name="w-4 h-4" %}
         New Approval Request
       </a>
     </div>
   </div>
 
   {# ── Workflow queue (primary object) ───────────────────── #}
-  <div class="approvals-queue-card">
+  <div class="approvals-queue-card dc-ds-surface">
     <div class="approvals-tabs-wrap">
       <nav class="wq-tabs" role="tablist" aria-label="Approval queue views">
         {% for tab in queue_tabs %}
         <button type="button"
                 class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
                 data-queue-tab="{{ tab.key }}"
+                id="approvals-tab-{{ tab.key }}"
                 role="tab"
-                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                aria-controls="approvals-panel-{{ tab.key }}">
           {{ tab.label }} <span class="wq-tab-count">{{ tab.rows|length }}</span>
         </button>
         {% endfor %}

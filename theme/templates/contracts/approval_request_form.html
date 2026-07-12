@@ -6,19 +6,15 @@
     <h1 class="page-title">{{ object|yesno:"Edit,New" }} Approval Request</h1>
   </div>
   <div class="max-w-3xl">
-    <form method="post" enctype="multipart/form-data" class="panel panel-inner space-y-4">
+    <form method="post" enctype="multipart/form-data" class="dc-ds-surface">
       {% csrf_token %}
-      {% for field in form %}
-      <div>
-        <label for="{{ field.id_for_label }}" class="form-label block mb-1">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
-      </div>
-      {% endfor %}
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Save</button>
-        <a href="{% url 'contracts:approval_request_list' %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm border btn-ghost">Cancel</a>
+      <div class="dc-ds-surface__body space-y-4">
+        {% include "design_system/form_errors.html" %}
+        {% for field in form %}
+          {% include "design_system/form_field.html" with field=field %}
+        {% endfor %}
+        {% url 'contracts:approval_request_list' as approval_list_url %}
+        {% include "design_system/form_actions.html" with submit_label="Save" cancel_href=approval_list_url cancel_label="Cancel" %}
       </div>
     </form>
   </div>

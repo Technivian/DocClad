@@ -1,16 +1,16 @@
 {% load docclad_components %}
 {% load docclad_format %}
-<table class="dc-ds-table wq-table" data-table-core="server" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %}>
+<table class="dc-ds-table wq-table" data-table-core="server" data-queue-panel="{{ panel_key }}" id="approvals-panel-{{ panel_key }}" role="tabpanel" aria-labelledby="approvals-tab-{{ panel_key }}"{% if not is_active %} hidden{% endif %}>
   <thead>
     <tr>
-      <th>Approval / Contract</th>
-      <th>Stage</th>
-      <th>Requested by</th>
-      <th>Assigned to</th>
-      <th>Latest activity</th>
-      <th class="wq-col-num">Due</th>
-      <th>Status</th>
-      <th>Actions</th>
+      <th scope="col">Approval / Contract</th>
+      <th scope="col">Stage</th>
+      <th scope="col">Requested by</th>
+      <th scope="col">Assigned to</th>
+      <th scope="col">Latest activity</th>
+      <th scope="col" class="wq-col-num">Due</th>
+      <th scope="col">Status</th>
+      <th scope="col">Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -25,18 +25,18 @@
       <td>{% assignee_chip row.assignee %}</td>
       <td>{% activity_line row.activity %}</td>
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}">{% if row.due_date %}{{ row.due_date|date:"d M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
-      <td><span class="badge-sm {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
+      <td>{% include "design_system/status_badge.html" with tone=row.status_badge_tone label=row.status_label %}</td>
       <td class="wq-approval-actions">
         {% if row.can_decide %}
-        <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
-        <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>
+        <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}" aria-label="Approve {{ row.title|truncatechars:44 }}">Approve</button>
+        <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}" aria-label="Reject {{ row.title|truncatechars:44 }}">Reject</button>
         {% endif %}
-        <a href="{{ row.edit_url }}" class="wq-edit-link">Edit</a>
-        <div class="wq-action-error" hidden></div>
+        <a href="{{ row.edit_url }}" class="wq-edit-link">Edit<span class="sr-only"> {{ row.title|truncatechars:44 }}</span></a>
+        <div class="wq-action-error" role="alert" hidden></div>
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="8" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>
+    <tr><td colspan="8">{% include "design_system/empty_state.html" with title=empty_message|default:"Nothing here right now." %}</td></tr>
     {% endfor %}
   </tbody>
 </table>

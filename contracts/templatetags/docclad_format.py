@@ -159,6 +159,22 @@ _APPROVAL_STATUS_BADGES = {
     'ESCALATED': 'badge-purple',
 }
 
+# ApprovalRequest.status -> canonical .dc-ds-badge--* tone, for pages
+# migrated onto design_system/status_badge.html (Phase 4). PENDING/APPROVED/
+# REJECTED map onto the 8-name semantic vocabulary (attention/success/
+# danger); ESCALATED deliberately uses --special rather than --danger —
+# ARCHITECTURE.md's Phase 2 audit notes reserve --special for exactly this
+# "rare/escalated" consumer, distinct from a plain blocking/danger state.
+# Kept separate from CANONICAL_BADGE_TONE (which only covers the 8-name
+# vocabulary) rather than folding ESCALATED into 'danger' and losing that
+# distinction.
+_APPROVAL_STATUS_BADGE_TONE = {
+    'PENDING': 'attention',
+    'APPROVED': 'success',
+    'REJECTED': 'danger',
+    'ESCALATED': 'special',
+}
+
 # Document.status -> badge variant.
 _DOCUMENT_STATUS_BADGES = {
     'DRAFT': 'badge-gray',
@@ -416,6 +432,12 @@ def client_status_badge_class(status):
 def approval_status_badge_class(status):
     """ApprovalRequest status key -> canonical badge class."""
     return _APPROVAL_STATUS_BADGES.get(status, 'badge-gray')
+
+
+@register.filter
+def approval_status_badge_tone(status):
+    """ApprovalRequest status key -> canonical .dc-ds-badge--* tone suffix."""
+    return _APPROVAL_STATUS_BADGE_TONE.get(status, 'neutral')
 
 
 @register.filter
