@@ -1,4 +1,4 @@
-# Render Blueprint for CMS Aegis.
+# Render Blueprint for DocClad.
 #
 # Phase 2 (production-backed automation): the platform now runs FOUR services
 # that all share one database via the `docclad-shared` env group:
