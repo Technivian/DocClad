@@ -84,7 +84,14 @@ class CrossTenantFixtureMixin:
 
     def setUp(self):
         # ---- Org A ----
-        self.org_a = Organization.objects.create(name='Firm Alpha', slug='firm-alpha')
+        # Pin this route-isolation fixture to the legacy operations surface.
+        # The product default is now in-house CLM, whose /risks/ route renders
+        # legal signals instead of the RiskLog queryset exercised below.
+        self.org_a = Organization.objects.create(
+            name='Firm Alpha',
+            slug='firm-alpha',
+            workspace_mode=Organization.WorkspaceMode.LAW_FIRM_OPS,
+        )
         self.user_a = User.objects.create_user(username='user_a', password='passA1234!')
         OrganizationMembership.objects.create(
             organization=self.org_a, user=self.user_a,
@@ -92,7 +99,11 @@ class CrossTenantFixtureMixin:
         )
 
         # ---- Org B ----
-        self.org_b = Organization.objects.create(name='Firm Beta', slug='firm-beta')
+        self.org_b = Organization.objects.create(
+            name='Firm Beta',
+            slug='firm-beta',
+            workspace_mode=Organization.WorkspaceMode.LAW_FIRM_OPS,
+        )
         self.user_b = User.objects.create_user(username='user_b', password='passB1234!')
         OrganizationMembership.objects.create(
             organization=self.org_b, user=self.user_b,
