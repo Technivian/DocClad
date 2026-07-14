@@ -48,7 +48,7 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
     {
       path: '/dashboard/',
       title: /^Command Center$/,
-      summaryText: /Overview of contracts, approvals, and governance\./,
+      summaryText: /Governance controls/,
       marker: '.cc-v3-kpis',
       shell: '.command-center.cc-v3',
     },

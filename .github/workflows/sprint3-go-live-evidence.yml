@@ -45,7 +45,7 @@ jobs:
 
     env:
       DJANGO_ENV: production
-      DJANGO_SECRET_KEY: this-is-only-for-ci-not-production-change-me-1234567890
+      DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
       DATABASE_URL: postgresql://docclad:docclad@localhost:5432/docclad
       ALLOWED_HOSTS: localhost,127.0.0.1
       CSRF_TRUSTED_ORIGINS: http://localhost
