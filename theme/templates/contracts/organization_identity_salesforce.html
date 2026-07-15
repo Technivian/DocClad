@@ -34,7 +34,10 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7">{% include "design_system/empty_state.html" with title="No Salesforce sync runs yet." %}</td>
+        <td colspan="7">
+          {% url 'organization_identity_settings' as identity_settings_url %}
+          {% include "design_system/empty_state.html" with icon="refresh-cw" title="No Salesforce sync runs yet" reason="Salesforce has not completed a reconciliation run for this workspace." how="Run history appears here after an active connection performs its first manual or scheduled sync." action_url=identity_settings_url action_label="Review Salesforce connection" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>

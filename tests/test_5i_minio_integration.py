@@ -3,7 +3,7 @@
 Topology
 --------
 Docker-based MinIO server (RELEASE.2025-09-07T16-13-09Z) started as a
-subprocess fixture for this module.  All DocClad HTTP paths run against
+subprocess fixture for this module.  All CLM One HTTP paths run against
 production settings (config.settings_production) with the storage backend
 pointed at the local MinIO instance.
 
@@ -18,6 +18,7 @@ Evidence labels
 """
 from __future__ import annotations
 
+import atexit
 import io
 import json
 import os
@@ -26,10 +27,10 @@ import sys
 import time
 import urllib.request
 from urllib.error import URLError
+from unittest import skipIf
 from unittest.mock import patch, MagicMock
 
 import boto3
-import pytest
 from botocore.exceptions import ClientError
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -58,10 +59,10 @@ PW = 'StrongPw!123'
 MINIO_HOST = '127.0.0.1'
 MINIO_PORT = 9100            # Non-standard port to avoid conflicts with dev stacks
 MINIO_ENDPOINT = f'http://{MINIO_HOST}:{MINIO_PORT}'
-MINIO_ACCESS_KEY = 'docclad5itest'
-MINIO_SECRET_KEY = 'docclad5isecret'
-MINIO_BUCKET = 'docclad-5i-minio'
-MINIO_CONTAINER = 'docclad-5i-minio-test'
+MINIO_ACCESS_KEY = 'clmone5itest'
+MINIO_SECRET_KEY = 'clmone5isecret'
+MINIO_BUCKET = 'clmone-5i-minio'
+MINIO_CONTAINER = 'clmone-5i-minio-test'
 MINIO_VERSION = 'minio/minio:latest'   # pinned by digest in CI
 
 
@@ -127,15 +128,11 @@ if _docker_available():
     _ok, _msg = _start_minio()
     if _ok:
         _MINIO_AVAILABLE = True
+        atexit.register(_stop_minio)
     else:
         _MINIO_SKIP_REASON = f'MinIO failed to start: {_msg}'
 else:
     _MINIO_SKIP_REASON = 'Docker is not available; MinIO cannot be started'
-
-
-def pytest_sessionfinish(session, exitstatus):
-    if _MINIO_AVAILABLE:
-        _stop_minio()
 
 
 # ─── Django storage settings pointing at local MinIO ─────────────────────────
@@ -244,7 +241,7 @@ def _doc(org, *, title='MinioDoc', uploaded_by=None, with_file=False,
 
 # ─── Skip decorator ───────────────────────────────────────────────────────────
 
-_SKIP = pytest.mark.skipif(not _MINIO_AVAILABLE, reason=_MINIO_SKIP_REASON or 'MinIO unavailable')
+_SKIP = skipIf(not _MINIO_AVAILABLE, _MINIO_SKIP_REASON or 'MinIO unavailable')
 
 
 # ─── MinIO version evidence ───────────────────────────────────────────────────
@@ -291,7 +288,7 @@ class MinIOStorageTests(TestCase):
     # ── Upload ────────────────────────────────────────────────────────────
 
     def test_upload_via_api_creates_db_record(self):
-        """Upload through DocClad API creates a Document row with S3 key.
+        """Upload through CLM One API creates a Document row with S3 key.
 
         Commands:
           POST /contracts/api/documents/upload/

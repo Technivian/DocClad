@@ -55,10 +55,10 @@ Set on the web + worker + cron services (shared env group — see render.yaml):
 - **Encryption at rest:** enable SSE (SSE-S3 or SSE-KMS) on the bucket.
 - **Private access:** block all public access; no public bucket policy/ACLs.
 - **Versioning:** enable object versioning so an overwrite/delete is recoverable
-  (DocClad sets `file_overwrite=False`, but versioning protects against
+  (CLM One sets `file_overwrite=False`, but versioning protects against
   out-of-band changes).
 - **Lifecycle/retention:** configure object-lock or lifecycle rules consistent
-  with the organization's contract retention period; coordinate with DocClad
+  with the organization's contract retention period; coordinate with CLM One
   retention policies (legal hold prevents application-level deletion — see 4E).
 - **Backups:** enable cross-region replication or periodic backup of the bucket.
 - **Restore validation:** after any restore, confirm a sample of object keys

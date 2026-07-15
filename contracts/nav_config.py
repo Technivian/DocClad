@@ -1,4 +1,4 @@
-"""Centralized sidebar nav registry for the standard DocClad shell.
+"""Centralized sidebar nav registry for the standard CLM One shell.
 
 This module is the single source of truth for what the sidebar renders. It
 maps to existing URL names ONLY — it introduces zero new routes and changes
@@ -32,8 +32,11 @@ _STANDARD_NAV = [
     {'kind': 'item', 'label': 'New Contract', 'url_name': 'contracts:contract_template_picker', 'icon': _ICON_PLUS,
      'variant': 'action',
      'active': lambda n: n in ('contract_template_picker', 'contract_create', 'dpa_workflow_builder', 'msa_workflow_builder', 'nda_workflow_builder'), 'visible': _always},
-    {'kind': 'item', 'label': 'Contracts', 'url_name': 'contracts:contract_list', 'icon': _ICON_FOLDER,
-     'active': lambda n: n in ('contract_list', 'contract_detail', 'contract_update', 'contract_create'), 'visible': _always},
+    # Repository is the canonical contract list. The former Contract
+    # Workspace remains available by direct URL for active legacy work, but
+    # primary navigation must not send people back into that screen family.
+    {'kind': 'item', 'label': 'Contracts', 'url_name': 'contracts:repository', 'icon': _ICON_FOLDER,
+     'active': lambda n: n in ('repository', 'contract_list', 'contract_detail', 'contract_update', 'contract_create'), 'visible': _always},
     {'kind': 'item', 'label': 'DPA Reviews', 'url_name': 'contracts:dpa_review_pack_list', 'icon': _ICON_FOLDER,
      'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _always},
     {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:obligations_workspace', 'icon': _ICON_TASK,

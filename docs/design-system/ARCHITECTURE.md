@@ -1,15 +1,15 @@
-# DocClad Frontend Architecture
+# CLM One Frontend Architecture
 
-Status: canonical Phase 1 foundation; Phase 2 (badges/status/empty states) and
-Phase 3 (settings and administration) complete — see the phase audit notes
-below. Phase 3 landed before Phase 2 in build order; both are done now.
-Authority: `DESIGN_CONSTITUTION.md` (the DocClad Governance Charter)
+Status: Command Center visual standard adopted application-wide. Shared
+foundations, shell, primitives, and the legacy compatibility bridge all resolve
+to the same production contract.
+Authority: `DESIGN_CONSTITUTION.md` (the CLM One Governance Charter)
 
 ## Authority and ownership
 
 1. The Governance Charter is authoritative when code, screenshots, audits, or
    older documentation conflict with it.
-2. `theme/static/css/docclad-tokens.css` is the single source of truth for
+2. `theme/static/css/clmone-tokens.css` is the single source of truth for
    brand and semantic colours, type, spacing, grid, radii, shadows, surfaces,
    focus rings, motion, and chart colours.
 3. `theme/static_src/src/design-system/components.css` and the Django
@@ -18,15 +18,17 @@ Authority: `DESIGN_CONSTITUTION.md` (the DocClad Governance Charter)
 4. `theme/static_src/src/design-system/premium.css` is a temporary
    compatibility bridge. It may adapt legacy markup but is not an API for new
    frontend work.
-5. `theme/static/css/command-center.css` and `.cc-v3-*` are dashboard-route
-   implementation details. They must not be copied into unrelated pages or
-   promoted into shared primitives. The approved in-house Command Center is
-   frozen unless a task explicitly authorizes a redesign.
+5. The production Command Center is the visual and layout reference for the
+   application: cool canvas, deep-navy shell, calm teal actions, restrained
+   elevation, 14px primary surfaces, 10px inner actions, and semantic status
+   colour. `theme/static/css/command-center.css` and `.cc-v3-*` remain
+   route-scoped implementation details; reusable decisions are promoted into
+   canonical tokens and `.dc-ds-*` primitives instead of copying selectors.
 
 ## Compatibility policy
 
 The `--ds-*` custom properties are deprecated compatibility aliases. Their
-definitions live beside their replacements in `docclad-tokens.css`; every
+definitions live beside their replacements in `clmone-tokens.css`; every
 alias comment names the canonical replacement. Existing consumers continue to
 work, but new code must use canonical tokens directly. An alias may be deleted
 only after a repository-wide search confirms zero consumers.
@@ -93,7 +95,7 @@ page migration.
 Repository verification found two parallel legacy badge systems, not one:
 `base.html`'s inline `.badge-{green,blue,yellow,red,purple,gray}` (388
 occurrences across 52 templates, driven almost entirely by the 14
-`*_badge_class` filters in `contracts/templatetags/docclad_format.py`), and a
+`*_badge_class` filters in `contracts/templatetags/clmone_format.py`), and a
 near-unused second set (`.badge-{success,warning,danger,info,neutral}` in
 `theme/static_src/src/components.css`, ~6 occurrences, demo-page only).
 `.dc-ds-badge--*` was already the more complete canonical API design-wise
@@ -115,7 +117,7 @@ Canonical semantic vocabulary (8 names, mapped onto the 6 existing
 | not applicable | `--status-neutral-*` | `--neutral` (shared with neutral) | `badge-gray` |
 
 This lives in code as `LEGACY_BADGE_CLASS` / `CANONICAL_BADGE_TONE` in
-`contracts/templatetags/docclad_format.py`, plus the `semantic_badge_tone`
+`contracts/templatetags/clmone_format.py`, plus the `semantic_badge_tone`
 filter for future migrations. `.dc-ds-badge--special` and `--phase` are
 retained outside this 8-name vocabulary for existing rare/escalated and
 brand-teal lifecycle consumers respectively — `--phase` resolves to `--seal`
@@ -139,9 +141,10 @@ three — cataloged as a migration target, not touched, since fixing them means
 editing major list pages (Contract List, Matter List, Client List, Document
 List, and others) that later phases own.
 
-`.cc-v3-*` does not exist in the current tree (the Command Center redesign
-referencing it is uncommitted, stashed work) — this phase made no changes to
-Command Center CSS or markup.
+`.cc-v3-*` is the route-scoped implementation layer for the production
+Command Center. Its reusable visual decisions now live in semantic tokens and
+`.dc-ds-*` components; other pages inherit those decisions without copying the
+dashboard's private selectors or composition.
 
 ## Migration order
 
@@ -153,10 +156,15 @@ Command Center CSS or markup.
    audit notes above.
 3. **Phase 3 — settings and administration:** migrate lower-risk pages already
    close to `.dc-ds-*`. Complete (landed before Phase 2).
-4. **Phase 4 — Repository, Approvals, and DPA Reviews:** migrate shared queue
-   and table patterns after they are proven.
-5. **Phase 5 — core contract workflows:** migrate Contract List, Contract
-   Detail, workflow builders, and review surfaces incrementally and last.
+4. **Phase 4 — primary operating surfaces:** Repository, Approvals, DPA
+   Reviews, Obligations, and the new-contract entry point use the shared shell
+   and canonical surface primitives. Complete.
+5. **Phase 5 — repository-wide visual contract:** legacy contract workflows,
+   builders, and specialist review surfaces inherit the canonical canvas,
+   typography, surfaces, controls, tables, focus states, spacing, and semantic
+   colours through the compatibility layer. Complete for visual consistency;
+   direct markup conversion to `.dc-ds-*` remains incremental maintenance.
 
-The approved Command Center is a visual-quality reference, not a component
-source to generalize.
+The approved Command Center is the source of truth for visual quality and
+layout rules. Generalize its decisions through tokens and `.dc-ds-*`
+components; never reuse `.cc-v3-*` markup outside the dashboard route.

@@ -37,11 +37,38 @@ class RepositoryRailMarkupTests(TestCase):
         self.assertIn('id="repo-bulk-assign"', html)
         self.assertIn('disabled', html.split('id="repo-bulk-assign"')[1].split('>')[0])
 
-        js_path = 'theme/static/js/docclad-repository.js'
+        js_path = 'theme/static/js/clmone-repository.js'
         with open(js_path) as f:
             js = f.read()
         self.assertNotIn('Bulk assignment will follow the status update path', js)
         self.assertNotIn("getElementById('repo-bulk-assign')", js)
+
+    def test_repository_empty_states_explain_cause_population_and_next_action(self):
+        with open('theme/static/js/clmone-repository.js') as source:
+            js = source.read()
+
+        for copy in (
+            'The current search or filters exclude every contract',
+            'Contracts appear here as soon as they match',
+            'Clear filters',
+            'No governed agreements have been added',
+            'Uploaded agreements and governed drafts appear here automatically',
+            'Upload first contract',
+            'No views have been saved in this browser',
+            'Saved views appear here after you preserve',
+            'Save current view',
+        ):
+            self.assertIn(copy, js)
+
+    def test_repository_selected_controls_use_accessible_pressed_state(self):
+        response = self.client.get(reverse('contracts:repository'))
+        html = response.content.decode()
+        self.assertIn('data-rail-view="all" aria-pressed="true"', html)
+        self.assertIn('data-status-filter="" aria-pressed="true"', html)
+
+        with open('theme/static/js/clmone-repository.js') as source:
+            js = source.read()
+        self.assertIn("setAttribute('aria-pressed'", js)
 
 
 class RepositoryExpiringFilterTests(TestCase):

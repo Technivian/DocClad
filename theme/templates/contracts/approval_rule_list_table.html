@@ -36,5 +36,6 @@
   </table>
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with title="No approval rules found" %}
+  {% url 'contracts:approval_rule_create' as create_approval_rule_url %}
+  {% include "design_system/empty_state.html" with icon="check" title="No approval rules configured" reason="This workspace has no routing conditions for legal, finance, privacy, or executive approval." how="Rules appear here after an administrator defines the trigger, approval step, and response target." action_url=create_approval_rule_url action_label="Create approval rule" %}
 {% endif %}

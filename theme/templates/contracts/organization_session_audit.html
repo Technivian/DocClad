@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Session Audit – DocClad{% endblock %}
+{% block title %}Session Audit – CLM One{% endblock %}
+{% block authenticated_page_title %}Session Audit{% endblock %}
+{% block authenticated_page_subtitle %}Inspect active and historical enterprise access sessions.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/organization_session_audit_content.html" wide=True %}

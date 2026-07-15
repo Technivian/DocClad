@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ account.account_name }} – DocClad{% endblock %}
+{% block title %}{{ account.account_name }} – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .ta-heading { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
@@ -17,7 +17,7 @@
   .ta-btn:hover     { background: var(--primary-hover); }
   /* Client funds carry the trust/verification signal (teal "seal") plus the
      top-rule + mono-eyebrow fiduciary grammar, so they still read as distinct
-     from the general teal accent used elsewhere — see DOCCLAD_DESIGN_SYSTEM.md
+     from the general teal accent used elsewhere — see CLMONE_DESIGN_SYSTEM.md
      §5.2. */
   .ta-seal-panel    { border-top: 2px solid var(--seal); background: var(--seal-bg); border-radius: 0 0 12px 12px; padding: 16px 20px; margin-bottom: 24px; }
   .ta-seal-eyebrow  { font: 600 11px/16px ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--seal); display: block; margin-bottom: 10px; }

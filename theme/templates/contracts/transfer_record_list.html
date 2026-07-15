@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Data Transfer Records – DocClad{% endblock %}
+{% block title %}Data Transfer Records – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
   <div class="page-header">
@@ -39,7 +39,8 @@
           <td class="tbl-td text-right"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
         </tr>
         {% empty %}
-        <tr><td colspan="7"><div class="empty-state">No data transfer records found</div></td></tr>
+        {% url 'contracts:transfer_record_create' as transfer_record_create_url %}
+        <tr><td colspan="7">{% include "design_system/empty_state.html" with icon="shield" title="No transfer records in this view" reason="No international or cross-entity data transfer has been registered." how="Transfers appear here after privacy operations records the parties, destination, mechanism, and assessment." action_url=transfer_record_create_url action_label="Add first transfer" class_name="dc-ds-empty--compact" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

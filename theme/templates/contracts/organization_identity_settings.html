@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Identity Provider – DocClad{% endblock %}
+{% block title %}Identity Provider – CLM One{% endblock %}
+{% block authenticated_page_title %}Identity Provider{% endblock %}
+{% block authenticated_page_subtitle %}Configure enterprise SAML and SCIM provisioning.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/organization_identity_settings_content.html" wide=True %}

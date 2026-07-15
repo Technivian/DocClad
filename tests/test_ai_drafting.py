@@ -209,9 +209,9 @@ class TestAIClauseDraftingService(SimpleTestCase):
         svc.accept_clause(1, 1, MagicMock(), org)
         rec.save.assert_not_called()
 
-    def test_uses_gemini_flash_model(self):
+    def test_uses_current_stable_gemini_flash_model(self):
         from contracts.services.ai_drafting import _MODEL
-        self.assertEqual(_MODEL, "gemini-2.0-flash")
+        self.assertEqual(_MODEL, "gemini-3.5-flash")
 
 
 # ---------------------------------------------------------------------------
@@ -231,8 +231,10 @@ class TestAIClauseApi(SimpleTestCase):
 
     @patch("contracts.api.views.get_user_organization")
     @patch("contracts.api.views.get_ai_drafting_service")
-    def test_suggest_clauses_returns_201(self, mock_svc_factory, mock_org):
+    @patch("contracts.api.documents_ai._resolve_ai_contract")
+    def test_suggest_clauses_returns_201(self, mock_resolve, mock_svc_factory, mock_org):
         mock_org.return_value = MagicMock()
+        mock_resolve.return_value = (mock_org.return_value, MagicMock(), None)
         rec = _make_rec(created_at=None, accepted_by=None, accepted_at=None)
         mock_svc = MagicMock()
         mock_svc.suggest_clauses.return_value = [rec]
@@ -245,8 +247,10 @@ class TestAIClauseApi(SimpleTestCase):
 
     @patch("contracts.api.views.get_user_organization")
     @patch("contracts.api.views.get_ai_drafting_service")
-    def test_list_recommendations(self, mock_svc_factory, mock_org):
+    @patch("contracts.api.documents_ai._resolve_ai_contract")
+    def test_list_recommendations(self, mock_resolve, mock_svc_factory, mock_org):
         mock_org.return_value = MagicMock()
+        mock_resolve.return_value = (mock_org.return_value, MagicMock(), None)
         rec = _make_rec(created_at=None, accepted_by=None, accepted_at=None)
         mock_svc = MagicMock()
         mock_svc.list_recommendations.return_value = [rec]
@@ -260,8 +264,10 @@ class TestAIClauseApi(SimpleTestCase):
     @patch("contracts.api.views.get_user_organization")
     @patch("contracts.api.views.get_ai_drafting_service")
     @patch("contracts.api.views.ClauseRecommendation")
-    def test_accept_clause(self, MockRec, mock_svc_factory, mock_org):
+    @patch("contracts.api.documents_ai._resolve_ai_contract")
+    def test_accept_clause(self, mock_resolve, MockRec, mock_svc_factory, mock_org):
         mock_org.return_value = MagicMock()
+        mock_resolve.return_value = (mock_org.return_value, MagicMock(), None)
         rec = _make_rec(id=1, accepted=True, created_at=None, accepted_by=None, accepted_at=None)
         mock_svc = MagicMock()
         mock_svc.accept_clause.return_value = rec
@@ -275,8 +281,10 @@ class TestAIClauseApi(SimpleTestCase):
 
     @patch("contracts.api.views.get_user_organization")
     @patch("contracts.api.views.get_ai_drafting_service")
-    def test_draft_section(self, mock_svc_factory, mock_org):
+    @patch("contracts.api.documents_ai._resolve_ai_contract")
+    def test_draft_section(self, mock_resolve, mock_svc_factory, mock_org):
         mock_org.return_value = MagicMock()
+        mock_resolve.return_value = (mock_org.return_value, MagicMock(), None)
         mock_svc = MagicMock()
         mock_svc.generate_draft_section.return_value = {
             "contract_id": 1, "section": "recitals",

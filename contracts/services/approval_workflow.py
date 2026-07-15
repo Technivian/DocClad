@@ -116,11 +116,11 @@ def authorize_approval_actor(ar: ApprovalRequest, actor: User, *, action: str) -
 
     # Segregation of duties: nobody (not even an org admin/owner) may decide on
     # an approval for a contract they themselves created.
-    if action in ('approve', 'reject') and ar.contract_id:
-        creator_id = ar.contract.created_by_id
-        if creator_id is not None and creator_id == actor.id:
+    if action in ('approve', 'reject', 'request_changes') and ar.contract_id:
+        accountable_user_id = ar.contract.owner_id or ar.contract.created_by_id
+        if accountable_user_id is not None and accountable_user_id == actor.id:
             raise ApprovalAccessDenied(
-                'You cannot decide on an approval for a contract you created.',
+                'You cannot decide on an approval for a contract you own.',
                 status_code=403,
             )
 
@@ -134,7 +134,15 @@ def actor_can_decide(ar: ApprovalRequest, actor: User, action: str) -> bool:
         return False
 
 
-def _audit_approval_decision(ar: ApprovalRequest, actor: User, action: str, *, allowed: bool, comments: str = '') -> None:
+def _audit_approval_decision(
+    ar: ApprovalRequest,
+    actor: User,
+    action: str,
+    *,
+    allowed: bool,
+    previous_status: str = '',
+    comments: str = '',
+) -> None:
     """Audit successful and blocked approve/reject decisions (no sensitive data).
 
     Audit writes must never break the decision itself, so failures are logged and
@@ -144,7 +152,11 @@ def _audit_approval_decision(ar: ApprovalRequest, actor: User, action: str, *, a
         from contracts.middleware import log_action
         from contracts.models import AuditLog
 
-        action_map = {'approve': AuditLog.Action.APPROVE, 'reject': AuditLog.Action.REJECT}
+        action_map = {
+            'approve': AuditLog.Action.APPROVE,
+            'reject': AuditLog.Action.REJECT,
+            'request_changes': AuditLog.Action.UPDATE,
+        }
         log_action(
             actor if getattr(actor, 'is_authenticated', False) else None,
             action_map.get(action, AuditLog.Action.UPDATE),
@@ -154,7 +166,9 @@ def _audit_approval_decision(ar: ApprovalRequest, actor: User, action: str, *, a
             changes={
                 'event': f'approval_{action}_{"succeeded" if allowed else "blocked"}',
                 'contract_id': ar.contract_id,
-                'has_comment': bool(comments),
+                'previous_state': previous_status,
+                'new_state': ar.status if allowed else previous_status,
+                'comment': comments,
             },
         )
     except Exception:
@@ -162,12 +176,16 @@ def _audit_approval_decision(ar: ApprovalRequest, actor: User, action: str, *, a
 
 
 class ApprovalWorkflowService:
-    def initiate_approval_workflow(self, contract: Contract) -> list[ApprovalRequestDTO]:
+    def initiate_approval_workflow(self, contract: Contract, actor: User | None = None) -> list[ApprovalRequestDTO]:
         """Evaluate all matching rules and create ApprovalRequest rows for the contract."""
         plan = build_approval_request_plan_for_contract(contract)
         if not plan:
             return []
         created = []
+        if actor is not None:
+            from contracts.permissions import ContractAction, can_access_contract_action
+            if not can_access_contract_action(actor, contract, ContractAction.EDIT):
+                raise ApprovalAccessDenied('Only the contract owner or a workspace admin can submit it.', 403)
         with transaction.atomic():
             for step_data in plan:
                 if ApprovalRequest.objects.filter(
@@ -177,12 +195,103 @@ class ApprovalWorkflowService:
                 ).exists():
                     continue
                 ar = ApprovalRequest.objects.create(**step_data)
+                if actor is not None:
+                    from contracts.middleware import log_action
+                    log_action(
+                        actor, AuditLog.Action.CREATE, 'ApprovalRequest',
+                        object_id=ar.pk, object_repr=str(ar), organization=contract.organization,
+                        event_type='approval.created',
+                        changes={
+                            'event': 'approval.created',
+                            'contract_id': contract.pk,
+                            'from': None,
+                            'to': ApprovalRequest.Status.PENDING,
+                            'assigned_to_id': ar.assigned_to_id,
+                        },
+                    )
                 # Eager-load related fields for DTO
                 ar.contract = contract
                 if ar.rule_id:
                     ar.rule = step_data.get('rule')
                 created.append(_to_dto(ar))
+            if actor is not None and created and contract.status == Contract.Status.DRAFT:
+                from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+                get_contract_lifecycle_service().transition(
+                    contract,
+                    Contract.Status.PENDING,
+                    actor,
+                    reason='Approval workflow initiated',
+                )
         return created
+
+    def submit_for_review(
+        self,
+        contract: Contract,
+        actor: User,
+        reviewer: User,
+        *,
+        comment: str = '',
+        request=None,
+    ) -> ApprovalRequestDTO:
+        """Submit or resubmit a draft into one accountable review step."""
+        from contracts.middleware import log_action
+        from contracts.models import OrganizationMembership
+        from contracts.permissions import ContractAction, can_access_contract_action
+        from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+
+        if not can_access_contract_action(actor, contract, ContractAction.EDIT):
+            raise ApprovalAccessDenied('Only the contract owner or a workspace admin can submit it.', 403)
+        if contract.status != Contract.Status.DRAFT:
+            raise ValueError(f'Only a draft can be submitted; current status is {contract.status}.')
+        if reviewer.pk == (contract.owner_id or contract.created_by_id):
+            raise ApprovalAccessDenied('The reviewer must be different from the contract owner.', 400)
+        if not OrganizationMembership.objects.filter(
+            organization=contract.organization,
+            user=reviewer,
+            is_active=True,
+        ).exists():
+            raise ApprovalAccessDenied('Reviewer must be an active member of this workspace.', 400)
+
+        with transaction.atomic():
+            locked_contract = Contract.objects.select_for_update().get(pk=contract.pk)
+            if locked_contract.status != Contract.Status.DRAFT:
+                raise ValueError(f'Only a draft can be submitted; current status is {locked_contract.status}.')
+            approval = ApprovalRequest.objects.create(
+                organization=locked_contract.organization,
+                contract=locked_contract,
+                approval_step='LEGAL',
+                status=ApprovalRequest.Status.PENDING,
+                assigned_to=reviewer,
+                comments=comment.strip(),
+            )
+            dpa_pack = locked_contract.dpa_review_packs.order_by('-created_at').first()
+            if dpa_pack and not dpa_pack.reviewer_id:
+                dpa_pack.reviewer = reviewer
+                dpa_pack.save(update_fields=['reviewer', 'updated_at'])
+            log_action(
+                actor, AuditLog.Action.CREATE, 'ApprovalRequest',
+                object_id=approval.pk, object_repr=str(approval),
+                organization=locked_contract.organization, request=request,
+                event_type='approval.submitted',
+                changes={
+                    'event': 'approval.submitted',
+                    'contract_id': locked_contract.pk,
+                    'previous_state': None,
+                    'new_state': ApprovalRequest.Status.PENDING,
+                    'assigned_to_id': reviewer.pk,
+                    'comment': comment.strip(),
+                },
+            )
+            get_contract_lifecycle_service().transition(
+                locked_contract,
+                Contract.Status.PENDING,
+                actor,
+                reason='Submitted for approval',
+                request=request,
+            )
+        return _to_dto(
+            ApprovalRequest.objects.select_related('contract', 'assigned_to', 'rule').get(pk=approval.pk)
+        )
 
     def get_contract_approvals(self, contract: Contract) -> WorkflowSummary:
         requests_qs = (
@@ -222,12 +331,56 @@ class ApprovalWorkflowService:
                 self._authorize_actor(ar, actor, action=action)
                 if ar.status not in ('PENDING', 'ESCALATED'):
                     raise ValueError(f'Cannot {action} from status {ar.status}')
+                previous_status = ar.status
+                if action in ('reject', 'request_changes') and not comments.strip():
+                    raise ValueError('A comment is required for this decision.')
                 ar.status = new_status
                 ar.comments = comments
                 ar.decided_at = timezone.now()
                 ar.decided_by = actor
                 ar.save(update_fields=['status', 'comments', 'decided_at', 'decided_by'])
-                _audit_approval_decision(ar, actor, action, allowed=True, comments=comments)
+                target_contract_status = {
+                    'approve': Contract.Status.APPROVED,
+                    'reject': Contract.Status.CANCELLED,
+                    'request_changes': Contract.Status.DRAFT,
+                }[action]
+                if isinstance(ar.contract, Contract):
+                    from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+                    lifecycle = get_contract_lifecycle_service()
+                    # Older/manual approval requests can exist while their
+                    # contract is still DRAFT. Normalize that persisted state
+                    # through the same lifecycle graph before applying the
+                    # decision; never jump DRAFT -> APPROVED directly.
+                    if ar.contract.status == Contract.Status.DRAFT and action == 'approve':
+                        ar.contract = lifecycle.transition(
+                            ar.contract,
+                            Contract.Status.PENDING,
+                            actor,
+                            system=True,
+                            actor_type=AuditLog.ActorType.HUMAN,
+                            reason='Normalized legacy approval submission',
+                        )
+                    lifecycle.transition(
+                        ar.contract,
+                        target_contract_status,
+                        actor,
+                        system=True,
+                        actor_type=AuditLog.ActorType.HUMAN,
+                        reason=comments,
+                    )
+                    if action == 'approve':
+                        Contract.objects.filter(pk=ar.contract_id).update(
+                            approved_by=actor,
+                            approved_at=timezone.now(),
+                        )
+                _audit_approval_decision(
+                    ar,
+                    actor,
+                    action,
+                    allowed=True,
+                    previous_status=previous_status,
+                    comments=comments,
+                )
             return _to_dto(ar)
         except ApprovalAccessDenied:
             # The transaction rolled back; record the blocked attempt separately.
@@ -243,6 +396,15 @@ class ApprovalWorkflowService:
 
     def reject(self, approval_id: int, actor: User, comments: str = '') -> ApprovalRequestDTO:
         return self._decide(approval_id, actor, action='reject', new_status='REJECTED', comments=comments)
+
+    def request_changes(self, approval_id: int, actor: User, comments: str = '') -> ApprovalRequestDTO:
+        return self._decide(
+            approval_id,
+            actor,
+            action='request_changes',
+            new_status=ApprovalRequest.Status.CHANGES_REQUESTED,
+            comments=comments,
+        )
 
     def delegate(self, approval_id: int, to_user: User, actor: User) -> ApprovalRequestDTO:
         from contracts.models import OrganizationMembership

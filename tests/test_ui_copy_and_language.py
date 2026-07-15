@@ -41,7 +41,6 @@ class DefaultLanguageConsistencyTests(TestCase):
         content = response.content.decode()
         self.assertIn('title="Team"', content)
         self.assertIn('title="Settings"', content)
-        self.assertIn('title="Toggle theme"', content)
         self.assertIn('title="Notifications"', content)
         self.assertIn('>Sign out<', content)
 

@@ -1,6 +1,6 @@
 
 """
-API views for DocClad repository functionality.
+API views for CLM One repository functionality.
 """
 import hashlib
 import json
@@ -370,7 +370,12 @@ def approval_initiate_api(request, contract_id):
         pk=contract_id,
     )
     svc = get_approval_workflow_service()
-    requests_created = svc.initiate_approval_workflow(contract)
+    try:
+        requests_created = svc.initiate_approval_workflow(contract, actor=request.user)
+    except ApprovalAccessDenied as exc:
+        return JsonResponse({'error': str(exc)}, status=exc.status_code)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
     return JsonResponse({
         'ok': True,
         'created': len(requests_created),
@@ -419,6 +424,22 @@ def approval_reject_api(request, approval_id):
     svc = get_approval_workflow_service()
     try:
         dto = svc.reject(approval_id, request.user, comments=data.get('comments', ''))
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ApprovalAccessDenied as e:
+        return JsonResponse({'error': str(e)}, status=e.status_code)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_request_changes_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.request_changes(approval_id, request.user, comments=data.get('comments', ''))
     except ApprovalRequest.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
     except ApprovalAccessDenied as e:
@@ -596,5 +617,3 @@ def api_restore_drill_summary(request):
     org = get_user_organization(request.user)
     svc = get_restore_drill_service()
     return JsonResponse(svc.get_drill_summary(org))
-
-

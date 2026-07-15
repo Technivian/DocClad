@@ -296,6 +296,12 @@ class DeadlineForm(forms.ModelForm):
             'assigned_to': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('contract') and not cleaned_data.get('matter'):
+            raise forms.ValidationError('Choose a contract or matter so this obligation belongs to the workspace.')
+        return cleaned_data
+
 
 class ConflictCheckForm(forms.ModelForm):
     class Meta:
@@ -322,7 +328,7 @@ class ContractForm(forms.ModelForm):
 
     class Meta:
         model = Contract
-        fields = ['title', 'contract_type', 'content', 'status', 'counterparty', 'value', 'currency',
+        fields = ['title', 'contract_type', 'content', 'status', 'counterparty', 'owner', 'value', 'currency',
                   'governing_law', 'jurisdiction', 'language', 'risk_level',
                   'data_transfer_flag', 'dpa_attached', 'scc_attached', 'lifecycle_stage',
                   'start_date', 'end_date', 'renewal_date', 'auto_renew', 'notice_period_days',
@@ -333,6 +339,7 @@ class ContractForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 10}),
             'status': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'counterparty': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+            'owner': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'value': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'step': '0.01'}),
             'currency': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'governing_law': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'e.g. State of Delaware, England & Wales'}),
@@ -375,6 +382,28 @@ class ContractForm(forms.ModelForm):
         # forged cross-org id server-side).
         self.fields['client'].queryset = scope_queryset_for_organization(Client.objects.all(), organization).order_by('name')
         self.fields['matter'].queryset = scope_queryset_for_organization(Matter.objects.all(), organization).order_by('title')
+        self.fields['owner'].queryset = User.objects.filter(
+            organization_memberships__organization=organization,
+            organization_memberships__is_active=True,
+        ).distinct().order_by('first_name', 'last_name', 'username') if organization else User.objects.none()
+        for field_name in ('title', 'contract_type', 'counterparty', 'governing_law'):
+            self.fields[field_name].required = True
+        # New MVP records must be complete. Historical records created before
+        # these fields existed remain editable, while any value they already
+        # carry cannot be cleared on a later edit.
+        for field_name in ('owner', 'start_date', 'end_date'):
+            value = getattr(self.instance, field_name, None)
+            self.fields[field_name].required = not self.instance.pk or bool(value)
+        self.fields['start_date'].label = 'Effective date'
+        self.fields['end_date'].label = 'Expiry date'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        if start_date and end_date and end_date < start_date:
+            self.add_error('end_date', 'Expiry date must be on or after the effective date.')
+        return cleaned_data
 
     @staticmethod
     def _clause_template_label(clause_template):
@@ -1304,6 +1333,7 @@ class ApprovalRequestForm(forms.ModelForm):
             action = {
                 ApprovalRequest.Status.APPROVED: 'approve',
                 ApprovalRequest.Status.REJECTED: 'reject',
+                ApprovalRequest.Status.CHANGES_REQUESTED: 'request_changes',
             }.get(new_status, 'delegate')
             try:
                 authorize_approval_actor(self.instance, self.actor, action=action)

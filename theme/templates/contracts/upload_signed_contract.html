@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Upload Signed Contract – DocClad{% endblock %}
+{% block title %}Upload Existing Agreement – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .usc-panel {
@@ -8,7 +8,7 @@
   }
   .usc-field { margin-bottom: 18px; }
   .usc-field label { display: block; font-size: 12.5px; font-weight: 650; color: var(--text-primary); margin-bottom: 6px; }
-  .usc-field input[type="text"] {
+  .usc-field input[type="text"], .usc-field input[type="date"], .usc-field input[type="number"], .usc-field select {
     width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--surface); color: var(--text-primary); font-size: 13.5px;
   }
@@ -40,16 +40,55 @@
   </a>
   <div class="arch-header">
     <div class="arch-header-left">
-      <h1 class="arch-title">Upload Signed Contract</h1>
-      <p class="arch-subtitle">Ingest an already-executed agreement — DocClad hashes, queues OCR, and stores it in the repository.</p>
+      <h1 class="arch-title">Upload Existing Agreement</h1>
+      <p class="arch-subtitle">Create a draft contract record from an existing file. CLM One stores the document and metadata together in the repository.</p>
     </div>
   </div>
 
   <div class="usc-panel">
     <form id="usc-form">
       <div class="usc-field">
-        <label for="usc-title">Title <span style="color: var(--text-muted); font-weight: 500;">(optional — defaults to filename)</span></label>
-        <input type="text" id="usc-title" name="title" placeholder="e.g. Acme Corp Master Services Agreement — signed">
+        <label for="usc-title">Title</label>
+        <input type="text" id="usc-title" name="title" required placeholder="e.g. Acme Corp Master Services Agreement — signed">
+      </div>
+      <div class="usc-field">
+        <label for="usc-contract-type">Contract type</label>
+        <select id="usc-contract-type" required>
+          <option value="">Select contract type</option>
+          {% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="usc-field">
+        <label for="usc-counterparty">Counterparty</label>
+        <input type="text" id="usc-counterparty" required>
+      </div>
+      <div class="usc-field">
+        <label for="usc-owner">Contract owner</label>
+        <select id="usc-owner" required>
+          {% for owner in owners %}<option value="{{ owner.pk }}"{% if owner == request.user %} selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="usc-field">
+        <label for="usc-value">Contract value</label>
+        <input type="number" id="usc-value" min="0" step="0.01">
+        <select id="usc-currency">
+          {% for value, label in currencies %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="usc-field">
+        <label for="usc-effective-date">Effective date</label>
+        <input type="date" id="usc-effective-date" required>
+      </div>
+      <div class="usc-field">
+        <label for="usc-expiry-date">Expiry date</label>
+        <input type="date" id="usc-expiry-date" required>
+      </div>
+      <div class="usc-field">
+        <label for="usc-governing-law">Governing law</label>
+        <input type="text" id="usc-governing-law" required placeholder="e.g. England & Wales">
+      </div>
+      <div class="usc-field">
+        <label><input type="checkbox" id="usc-dpa-attached"> Contains a DPA</label>
       </div>
       <div class="usc-field">
         <label>Document</label>
@@ -114,7 +153,17 @@
         var body = new FormData();
         body.append('file', fileInput.files[0]);
         body.append('document_type', 'CONTRACT');
-        if (titleInput.value.trim()) body.append('title', titleInput.value.trim());
+        body.append('create_contract', '1');
+        body.append('title', titleInput.value.trim());
+        body.append('contract_type', document.getElementById('usc-contract-type').value);
+        body.append('counterparty', document.getElementById('usc-counterparty').value.trim());
+        body.append('owner_id', document.getElementById('usc-owner').value);
+        body.append('value', document.getElementById('usc-value').value);
+        body.append('currency', document.getElementById('usc-currency').value);
+        body.append('start_date', document.getElementById('usc-effective-date').value);
+        body.append('end_date', document.getElementById('usc-expiry-date').value);
+        body.append('governing_law', document.getElementById('usc-governing-law').value.trim());
+        if (document.getElementById('usc-dpa-attached').checked) body.append('dpa_attached', '1');
 
         fetch('{% url "contracts:document_upload_api" %}', {
             method: 'POST',
@@ -125,7 +174,7 @@
             .then(function (result) {
                 if (result.ok && result.data.ok) {
                     statusEl.className = 'usc-status is-success';
-                    statusEl.innerHTML = 'Uploaded "' + result.data.title + '". <a href="{% url "contracts:repository" %}">Open Repository</a>';
+                    statusEl.innerHTML = 'Uploaded "' + result.data.title + '". <a href="' + result.data.contract_url + '">Open contract</a>';
                     submitBtn.textContent = 'Upload another';
                     submitBtn.disabled = true;
                     form.reset();

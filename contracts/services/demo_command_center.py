@@ -90,7 +90,7 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
             'subprocessors_used': True,
             'transfer_mechanism': 'SCC',
             'breach_notification_hours': 48,
-            'dpo_contact': 'dpo@docclad.example',
+            'dpo_contact': 'dpo@clmone.example',
             'include_scc_fallback': True,
         },
     )

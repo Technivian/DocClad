@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# db_backup.sh — dump the DocClad PostgreSQL database to a timestamped file,
+# db_backup.sh — dump the CLM One PostgreSQL database to a timestamped file,
 # VERIFY it is non-empty and restorable, and optionally upload it offsite.
 #
 # Usage:  ./scripts/db_backup.sh [output_dir]
@@ -49,7 +49,7 @@ OUTPUT_DIR="${1:-$ROOT_DIR/backups}"
 mkdir -p "$OUTPUT_DIR"
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-OUTFILE="$OUTPUT_DIR/docclad_${TIMESTAMP}.dump"
+OUTFILE="$OUTPUT_DIR/clmone_${TIMESTAMP}.dump"
 
 # Delete a partial/failed dump on any error so we never leave a misleading file.
 cleanup_on_error() {

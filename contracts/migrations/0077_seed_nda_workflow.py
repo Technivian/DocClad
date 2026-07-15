@@ -76,7 +76,7 @@ DEMO_CLAUSES = [
 
 NDA_TEMPLATE_BODY_ENRICHED = (
     'NON-DISCLOSURE AGREEMENT\n\n'
-    'This Non-Disclosure Agreement is entered into between DocClad B.V. and {{counterparty}} as of {{effective_date}}.\n\n'
+    'This Non-Disclosure Agreement is entered into between CLM One B.V. and {{counterparty}} as of {{effective_date}}.\n\n'
     '1. Purpose\n'
     'The parties wish to exchange confidential information for {{confidentiality_purpose}}.\n\n'
     '2. Confidential Information\n'

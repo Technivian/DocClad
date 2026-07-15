@@ -62,9 +62,9 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(response, 'Risk deviations')
-        self.assertContains(response, 'Monitored · no high-risk deviations')
-        self.assertContains(response, 'No DPA review is configured')
-        self.assertContains(response, 'Deadline tracking is not configured')
+        self.assertContains(response, 'dc-ds-metric__value--clear')
+        self.assertContains(response, 'Configure monitoring')
+        self.assertContains(response, 'Configure tracking')
         self.assertContains(response, 'Priority matter')
 
     def test_dashboard_empty_state_is_intentional(self):
@@ -72,7 +72,7 @@ class BoltonRedesignTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Governance setup is incomplete')
         self.assertContains(response, 'Import agreement')
-        self.assertContains(response, 'Monitored · no high-risk deviations')
+        self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'No active issues')
 
     def test_dashboard_container_constraint(self):
@@ -115,15 +115,15 @@ class BoltonRedesignTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Monitored · no high-risk deviations')
-        self.assertContains(response, 'Deadline tracking is not configured')
+        self.assertContains(response, 'dc-ds-metric__value--clear')
+        self.assertContains(response, 'Configure tracking')
 
     def test_priority_queue_empty_state_copy(self):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Governance setup is incomplete')
-        self.assertContains(response, 'No monitored issues require attention')
+        self.assertContains(response, 'Complete the setup items in the Action queue')
 
     def test_single_filter_system_no_duplicate_rows(self):
         # There must be exactly one filter system: saved-view tabs plus a
@@ -190,7 +190,7 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         # Inter is the sole product typeface per the approved brand kit and
-        # the "Ledger" design system (DOCCLAD_DESIGN_SYSTEM.md) — Manrope/Sora
+        # the "Ledger" design system (CLMONE_DESIGN_SYSTEM.md) — Manrope/Sora
         # were retired in the 2026-07-05 rebrand.
         self.assertContains(response, "font-family: 'Inter'")
         self.assertNotContains(response, "font-family: 'Manrope'")

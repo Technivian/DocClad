@@ -1,4 +1,4 @@
-{% load docclad_format %}
+{% load clmone_format %}
 <table class="dc-ds-table wq-table" data-table-core="server">
   <thead>
     <tr>
@@ -7,6 +7,7 @@
       <th>Responsible Party</th>
       <th class="wq-col-num">Due Date</th>
       <th>Compliance Status</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -28,9 +29,21 @@
       <td>{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
       <td class="wq-col-num{% if obligation.is_overdue %} wq-due-overdue{% endif %}">{{ obligation.due_date|due_countdown }}</td>
       <td><span class="badge-sm {{ obligation|obligation_compliance_badge_class }}">{{ obligation|obligation_compliance_label }}</span></td>
+      <td>
+        <div class="dc-ds-actions">
+          <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm">Edit</a>
+          {% if not obligation.is_completed %}<form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm">Complete</button></form>{% endif %}
+          <form method="post" action="{% url 'contracts:deadline_delete' obligation.pk %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm">Delete</button></form>
+        </div>
+      </td>
     </tr>
     {% empty %}
-    <tr><td colspan="5" class="wq-empty">No obligations tracked yet.</td></tr>
+    <tr>
+      <td colspan="6">
+        {% url 'contracts:deadline_create' as create_obligation_url %}
+        {% include "design_system/empty_state.html" with icon="calendar" title="No obligations are being tracked" reason="No renewal, notice, delivery, or compliance commitment has been added yet." how="Obligations appear here when they are created directly or extracted from governed contracts." action_url=create_obligation_url action_label="Add first obligation" class_name="dc-ds-empty--compact" %}
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>

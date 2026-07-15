@@ -150,9 +150,9 @@ class TestExtractClauseSpans(unittest.TestCase):
 
         mock_client.models.generate_content.assert_called_once()
 
-    def test_uses_gemini_flash_model(self):
+    def test_uses_current_stable_gemini_flash_model(self):
         from contracts.services.ai_extraction import _MODEL
-        self.assertEqual(_MODEL, "gemini-2.0-flash")
+        self.assertEqual(_MODEL, "gemini-3.5-flash")
 
 
 class TestGetSpansSummary(unittest.TestCase):

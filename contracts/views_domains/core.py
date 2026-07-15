@@ -384,7 +384,7 @@ def mfa_enroll(request):
 # Password recovery (Phase 5L)
 # ---------------------------------------------------------------------------
 
-class DocCladPasswordResetForm(PasswordResetForm):
+class CLMOnePasswordResetForm(PasswordResetForm):
     """Override domain/protocol so reset links use APP_BASE_URL, never request.get_host()."""
 
     def save(self, *args, **kwargs):
@@ -395,10 +395,10 @@ class DocCladPasswordResetForm(PasswordResetForm):
         return super().save(*args, **kwargs)
 
 
-class DocCladPasswordResetView(PasswordResetView):
+class CLMOnePasswordResetView(PasswordResetView):
     """Password reset request view with rate limiting and canonical URL links."""
 
-    form_class = DocCladPasswordResetForm
+    form_class = CLMOnePasswordResetForm
     template_name = 'registration/password_reset_form.html'
     email_template_name = 'registration/password_reset_email.txt'
     subject_template_name = 'registration/password_reset_subject.txt'
@@ -421,7 +421,7 @@ class DocCladPasswordResetView(PasswordResetView):
         return super().form_valid(form)
 
 
-class DocCladPasswordResetConfirmView(PasswordResetConfirmView):
+class CLMOnePasswordResetConfirmView(PasswordResetConfirmView):
     """Password reset confirmation view; audits on successful completion."""
 
     template_name = 'registration/password_reset_confirm.html'

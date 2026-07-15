@@ -1,6 +1,6 @@
 
 """
-API views for DocClad repository functionality.
+API views for CLM One repository functionality.
 """
 import hashlib
 import json

@@ -1,6 +1,6 @@
 """Sub-block D3: curated, idempotent demo data for a 15-minute walkthrough.
 
-Creates ONE fictional organization ("DocClad Demo Firm", slug docclad-demo)
+Creates ONE fictional organization ("CLM One Demo Firm", slug clmone-demo)
 with realistic, coherent data spanning the whole contract lifecycle: no real
 personal data (fictional counterparties, .example email addresses per
 RFC 2606), no QA debris, deterministic (fixed titles/usernames so automated
@@ -41,13 +41,13 @@ from contracts.services.starter_content import ensure_org_starter_content
 
 User = get_user_model()
 
-DEMO_ORG_SLUG = 'docclad-demo'
-DEMO_ORG_NAME = 'DocClad Demo Firm'
-DEMO_EMAIL_DOMAIN = 'docclad-demo.example'  # RFC 2606 reserved TLD — never a real, deliverable address
+DEMO_ORG_SLUG = 'clmone-demo'
+DEMO_ORG_NAME = 'CLM One Demo Firm'
+DEMO_EMAIL_DOMAIN = 'clmone-demo.example'  # RFC 2606 reserved TLD — never a real, deliverable address
 # Local-only demo login; overridable via env var so it is never a hardcoded
 # secret literal callers must trust. This organization only ever exists in a
 # local/non-production database (see the production refusal check below).
-DEMO_PASSWORD = os.environ.get('DEMO_SEED_PASSWORD', 'docclad-demo-2026!')
+DEMO_PASSWORD = os.environ.get('DEMO_SEED_PASSWORD', 'clmone-demo-2026!')
 
 DEMO_USERS = [
     # (username, first, last, profile_role, org_role)

@@ -1,13 +1,13 @@
 {% extends 'base_fullscreen.html' %}
 {% load static %}
 
-{% block title %}DocClad - Contract Lifecycle Management{% endblock %}
+{% block title %}CLM One - Contract Lifecycle Management{% endblock %}
 
 {% block body %}
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&display=swap" rel="stylesheet">
 <style nonce="{{ csp_nonce }}">
-    /* ── Landing is DocClad's "Ledger" language on a marketing surface —
-       see DOCCLAD_DESIGN_SYSTEM.md. Cool paper, navy ink, copper action
+    /* ── Landing is CLM One's "Ledger" language on a marketing surface —
+       see CLMONE_DESIGN_SYSTEM.md. Cool paper, navy ink, copper action
        accent; teal is reserved for the trust/verification signal (the
        IOLTA proof card, the footer mark). The one marketing-only latitude
        is a serif accent face (Fraunces) — the product itself never uses
@@ -66,7 +66,7 @@
     .lp-btn {
         /* Pill, marketing-only — matches the category norm (Ironclad, Juro, Clio
            all soften their landing CTAs even where the product stays sharp). The
-           product's own buttons stay small-radius; see DOCCLAD_DESIGN_SYSTEM.md §6. */
+           product's own buttons stay small-radius; see CLMONE_DESIGN_SYSTEM.md §6. */
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         padding: 12px 28px; border-radius: 999px; font-size: 15px; font-weight: 700;
         text-decoration: none; transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -226,8 +226,8 @@
 
     <nav class="lp-nav">
         <div class="lp-wrap lp-nav-inner">
-            <a href="/" aria-label="DocClad">
-                <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad" class="lp-logo">
+            <a href="/" aria-label="CLM One">
+                <img src="{% static 'img/brand/clmone-logo-primary.svg' %}" alt="CLM One" class="lp-logo">
             </a>
             <div class="lp-nav-links">
                 <a href="#lifecycle" class="lp-nav-link">Lifecycle</a>
@@ -250,7 +250,7 @@
                 <span class="lp-serif">to audit-ready.</span>
             </h1>
             <p class="lp-hero-sub">
-                The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — DocClad handles everything from first draft to renewal.
+                The only CLM with IOLTA-compliant trust accounts built in. Stop stitching together contract tools and billing software — CLM One handles everything from first draft to renewal.
             </p>
             <div class="lp-hero-ctas">
                 <a href="{% url 'register' %}" class="lp-btn lp-btn-navy">
@@ -268,9 +268,9 @@
                         <span class="lp-dot lp-dot-red"></span>
                         <span class="lp-dot lp-dot-yellow"></span>
                         <span class="lp-dot lp-dot-green"></span>
-                        <div class="lp-shot-url">app.docclad.com/dashboard</div>
+                        <div class="lp-shot-url">app.clmone.com/dashboard</div>
                     </div>
-                    <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="lp-shot-svg" role="img" aria-label="DocClad dashboard showing approvals, deadlines, and contract risk in one view">
+                    <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="lp-shot-svg" role="img" aria-label="CLM One dashboard showing approvals, deadlines, and contract risk in one view">
                         <defs>
                             <linearGradient id="lc-fade" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stop-color="#0D1117" stop-opacity="0"/>
@@ -285,7 +285,7 @@
                         <rect x="0" y="0" width="155" height="480" fill="#111827"/>
                         <rect x="154" y="0" width="1" height="480" fill="rgba(255,255,255,0.05)"/>
                         <rect x="12" y="12" width="20" height="20" rx="5" fill="#CF7248"/>
-                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">DocClad</text>
+                        <text x="38" y="26" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">CLM One</text>
                         <rect x="7" y="44" width="141" height="24" rx="5" fill="rgba(37,99,235,0.15)"/>
                         <rect x="18" y="52" width="6" height="6" rx="1" fill="#E29368"/>
                         <text x="30" y="60" font-family="system-ui,sans-serif" font-size="9.5" fill="rgba(255,255,255,0.9)">Dashboard</text>
@@ -503,7 +503,7 @@
         <div class="lp-wrap lp-center">
             <span class="lp-eyebrow lp-kicker">How it works</span>
             <h2 class="lp-h2">Nine stages. <span class="lp-serif">One system of record.</span></h2>
-            <p class="lp-section-sub">Every contract moves along the same path, and DocClad narrates each step — what's next, who's responsible, and what's overdue.</p>
+            <p class="lp-section-sub">Every contract moves along the same path, and CLM One narrates each step — what's next, who's responsible, and what's overdue.</p>
             <div class="lp-life-card">
                 <div class="lp-life-track" role="list" aria-label="Contract lifecycle stages">
                     <div class="lp-life-step done" role="listitem"><span class="lp-life-dot" aria-hidden="true"></span><span class="lp-life-label">Drafting</span></div>
@@ -619,7 +619,7 @@
     <section class="lp-cta lp-section-deep lp-center">
         <div class="lp-wrap-md">
             <h2 class="lp-h2">Your next contract breach starts with <span class="lp-serif">a missed deadline.</span></h2>
-            <p class="lp-cta-sub">DocClad closes that gap. No credit card required.</p>
+            <p class="lp-cta-sub">CLM One closes that gap. No credit card required.</p>
             <div class="lp-cta-ctas">
                 <a href="{% url 'register' %}" class="lp-btn lp-btn-navy">
                     Get started free
@@ -638,7 +638,7 @@
                         <span class="lp-footer-mark" aria-hidden="true">
                             <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         </span>
-                        DocClad
+                        CLM One
                     </div>
                     <p class="lp-footer-tag">Contract lifecycle management for legal professionals — with IOLTA-compliant trust accounting built in.</p>
                 </div>
@@ -667,7 +667,7 @@
                 </div>
             </div>
             <div class="lp-footer-legal">
-                <p>&copy; 2026 DocClad. All rights reserved.</p>
+                <p>&copy; 2026 CLM One. All rights reserved.</p>
                 <span class="lp-eyebrow">From draft to signed, to audit-ready</span>
             </div>
         </div>

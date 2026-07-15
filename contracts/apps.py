@@ -53,9 +53,9 @@ class ContractsConfig(AppConfig):
 
         if not is_local and not is_test_run and not is_deployed and not allow_remote:
             print(  # noqa: T201 — this is the point of the guard
-                f'[DocClad] REFUSING TO START: DATABASE_URL resolves to a non-local host '
+                f'[CLM One] REFUSING TO START: DATABASE_URL resolves to a non-local host '
                 f'({db_identity!r}) and this does not look like the deployed platform.\n'
-                f'[DocClad] Local development must not silently connect to a shared/remote '
+                f'[CLM One] Local development must not silently connect to a shared/remote '
                 f'database. Point DATABASE_URL at a local database (sqlite or a local '
                 f'Postgres), or set ALLOW_REMOTE_DATABASE=true to explicitly opt in '
                 f'(e.g. for staging debugging).'
@@ -63,4 +63,4 @@ class ContractsConfig(AppConfig):
             sys.exit(1)
 
         kind = 'local' if is_local else ('deployed platform' if is_deployed else 'REMOTE (explicitly allowed via ALLOW_REMOTE_DATABASE)')
-        print(f'[DocClad] Database: {db_identity} ({kind}, env={settings.DJANGO_ENV})')  # noqa: T201
+        print(f'[CLM One] Database: {db_identity} ({kind}, env={settings.DJANGO_ENV})')  # noqa: T201

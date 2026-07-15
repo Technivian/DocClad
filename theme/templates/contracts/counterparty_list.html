@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Counterparties – DocClad{% endblock %}
+{% block title %}Counterparties – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .tbl-row { border-bottom: 1px solid var(--card-border); }
@@ -49,7 +49,8 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6"><div class="empty-state">No counterparties found.</div></td></tr>
+        {% url 'contracts:counterparty_create' as counterparty_create_url %}
+        <tr><td colspan="6">{% include "design_system/empty_state.html" with icon="users" title="No counterparties in this view" reason="No external party matches the current workspace view." how="Counterparties appear here when they are added directly or associated with a governed agreement." action_url=counterparty_create_url action_label="Add first counterparty" class_name="dc-ds-empty--compact" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

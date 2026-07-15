@@ -71,7 +71,7 @@ SKIP_DRILL="${SKIP_DRILL:-false}"
 mkdir -p "$EVIDENCE_DIR"
 
 echo "================================================================"
-echo " DocClad Target Signoff"
+echo " CLM One Target Signoff"
 echo " Timestamp : $SIGNOFF_TS"
 echo " Commit    : $COMMIT_SHORT"
 echo " Org       : $ORG_SLUG ($ORG_NAME)"

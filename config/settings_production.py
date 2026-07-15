@@ -2,13 +2,15 @@ import logging
 import os
 import sys as _sys
 import warnings
+from ipaddress import ip_address
+from urllib.parse import urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 
 from . import settings_base as base
 from .settings_base import *  # noqa: F401,F403
 
-_prod_logger = logging.getLogger('docclad.production')
+_prod_logger = logging.getLogger('clmone.production')
 
 
 def _emergency_bypass_warning(flag_name):
@@ -36,8 +38,51 @@ if not ALLOWED_HOSTS:
     raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
 if not CSRF_TRUSTED_ORIGINS:
     raise ImproperlyConfigured('CSRF_TRUSTED_ORIGINS must be set in production.')
-if DEFAULT_FROM_EMAIL in ('noreply@cms-aegis.local', 'noreply@docclad.local'):
+if DEFAULT_FROM_EMAIL in ('noreply@cms-aegis.local', 'noreply@clmone.local'):
     raise ImproperlyConfigured('DEFAULT_FROM_EMAIL must be set in production.')
+
+
+def _validate_production_app_base_url():
+    """Reject outbound-link bases that would leak localhost or use HTTP."""
+    parsed = urlparse(APP_BASE_URL)
+    hostname = parsed.hostname or ''
+    if (
+        parsed.scheme != 'https'
+        or not hostname
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ImproperlyConfigured(
+            'APP_BASE_URL must be an absolute HTTPS origin without credentials, query, or fragment.'
+        )
+
+    if parsed.path not in ('', '/'):
+        raise ImproperlyConfigured('APP_BASE_URL must be an HTTPS origin, not a path-based URL.')
+
+    try:
+        address = ip_address(hostname)
+        is_non_public = (
+            address.is_private
+            or address.is_loopback
+            or address.is_link_local
+            or address.is_multicast
+            or address.is_reserved
+            or address.is_unspecified
+        )
+    except ValueError:
+        is_non_public = hostname.lower() == 'localhost' or hostname.lower().endswith('.localhost')
+    if is_non_public:
+        raise ImproperlyConfigured('APP_BASE_URL must not point to a local or non-public address in production.')
+
+
+_validate_production_app_base_url()
+
+if not OPERATOR_ALERT_EMAIL:
+    raise ImproperlyConfigured(
+        'OPERATOR_ALERT_EMAIL must be set in production so scheduled-job failures reach an operator.'
+    )
 
 # Reject weak / placeholder secret keys (settings_base only rejects an empty
 # key). A short or dev-marker key in production is a security defect.
@@ -64,11 +109,12 @@ if not ALLOW_SQLITE_IN_PRODUCTION and not _IS_TEST_RUN:
 elif ALLOW_SQLITE_IN_PRODUCTION:
     _emergency_bypass_warning('ALLOW_SQLITE_IN_PRODUCTION')
 
-# Media storage: warn if using filesystem in production (files lost on redeploy)
-# but don't hard-block it — set MEDIA_STORAGE_BACKEND=s3 when object storage is available.
-if MEDIA_STORAGE_BACKEND not in ('s3', 'filesystem'):
+# Contract files must be durable in production. The filesystem is ephemeral on
+# Render and must never be accepted through a bypass flag.
+if MEDIA_STORAGE_BACKEND != 's3':
     raise ImproperlyConfigured(
-        f'Unsupported MEDIA_STORAGE_BACKEND={MEDIA_STORAGE_BACKEND!r}. Use "s3" or "filesystem".'
+        'Production requires durable object storage. Set MEDIA_STORAGE_BACKEND=s3 '
+        'with a private AWS_STORAGE_BUCKET_NAME.'
     )
 
 SESSION_COOKIE_SECURE = True

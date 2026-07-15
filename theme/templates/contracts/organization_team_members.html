@@ -47,7 +47,7 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="5">{% include "design_system/empty_state.html" with title="No active members found." %}</td>
+        <td colspan="5">{% include "design_system/empty_state.html" with icon="user-plus" title="No active members" reason="No invited teammate currently has access to this workspace." how="Members appear here after they accept an invitation and activate their account." action_url="#organization-team-invite" action_label="Invite a member" class_name="dc-ds-empty--compact" %}</td>
       </tr>
       {% endfor %}
     </tbody>

@@ -1,6 +1,6 @@
 
 """
-API views for DocClad repository functionality.
+API views for CLM One repository functionality.
 """
 import hashlib
 import json
@@ -663,7 +663,7 @@ def documenso_esign_webhook_api(request):
     comparison to prevent timing attacks.
 
     The externalId on the Documenso document is set to
-    'docclad-{org_id}-{sig_req_id}' by DocumensoSignatureProvider.send().
+    'clmone-{org_id}-{sig_req_id}' by DocumensoSignatureProvider.send().
     Legacy records created before the rename use 'cms-aegis-{org_id}-{sig_req_id}'.
     Both formats are accepted here for backwards compatibility with in-flight signatures.
     """
@@ -694,10 +694,10 @@ def documenso_esign_webhook_api(request):
 
     # Look up SignatureRequest: first by our externalId pattern, then by doc id
     sig_req = None
-    # Accept both new 'docclad-' prefix and legacy 'cms-aegis-' prefix for in-flight signatures
-    if external_id.startswith('docclad-') or external_id.startswith('cms-aegis-'):
+    # Accept both new 'clmone-' prefix and legacy 'cms-aegis-' prefix for in-flight signatures
+    if external_id.startswith('clmone-') or external_id.startswith('cms-aegis-'):
         parts = external_id.split('-')
-        # docclad-{org}-{id} → 3 parts; cms-aegis-{org}-{id} → 4 parts
+        # clmone-{org}-{id} → 3 parts; cms-aegis-{org}-{id} → 4 parts
         if len(parts) in (3, 4):
             try:
                 sig_req = SignatureRequest.objects.filter(id=int(parts[-1])).first()

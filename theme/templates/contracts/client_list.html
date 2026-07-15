@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Clients – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Clients – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
 <div class="page-header">
@@ -54,7 +54,8 @@
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="px-5 py-12 text-center c-muted">No clients found. <a href="{% url 'contracts:client_create' %}" class="c-link">Add your first client</a></td></tr>
+            {% url 'contracts:client_create' as client_create_url %}
+            <tr><td colspan="6">{% include "design_system/empty_state.html" with icon="users" title="No clients in this view" reason="No client record matches the current workspace view." how="Clients appear here after a record is created and linked to contract or matter activity." action_url=client_create_url action_label="Add first client" class_name="dc-ds-empty--compact" %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

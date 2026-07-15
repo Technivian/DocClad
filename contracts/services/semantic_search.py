@@ -16,6 +16,11 @@ from contracts.models import ClauseTemplate
 
 logger = logging.getLogger(__name__)
 
+
+def _gemini_model() -> str:
+    from django.conf import settings
+    return getattr(settings, 'GEMINI_MODEL', 'gemini-3.5-flash')
+
 _MAX_CANDIDATES = 40  # cap prompt size for the reranking call
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -91,7 +96,7 @@ def _llm_rank(clauses: list[ClauseTemplate], query: str, *, limit: int) -> list[
 
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=_gemini_model(),
         contents=prompt,
         config=types.GenerateContentConfig(response_mime_type='application/json'),
     )

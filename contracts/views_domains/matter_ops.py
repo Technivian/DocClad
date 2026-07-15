@@ -93,7 +93,7 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         from datetime import timedelta
 
         from contracts.services.queue_rows import creator_map, latest_activity_map
-        from contracts.templatetags.docclad_format import task_priority_badge_class, task_status_badge_class
+        from contracts.templatetags.clmone_format import task_priority_badge_class, task_status_badge_class
 
         user = self.request.user
         org = get_user_organization(user)

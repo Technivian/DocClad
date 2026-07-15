@@ -5,7 +5,7 @@ from django.conf import settings
 
 from config.feature_flags import (
     is_feature_redesign_enabled,
-    is_docclad_mode_enabled,
+    is_clmone_mode_enabled,
     is_cms_aegis_mode_enabled,
     is_mochadocs_mode_enabled,
     is_test_mode_enabled
@@ -29,7 +29,7 @@ def _compute_asset_version():
         return ''
     css_paths = [
         os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'dist', 'styles.css'),
-        os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'docclad-tokens.css'),
+        os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'clmone-tokens.css'),
         os.path.join(settings.BASE_DIR, 'theme', 'static', 'css', 'command-center.css'),
     ]
     try:
@@ -96,8 +96,7 @@ def feature_flags(request):
         sidebar_nav = _sidebar_nav_for_template(request, request.user, getattr(request, 'organization', None))
     return {
         'FEATURE_REDESIGN': is_feature_redesign_enabled(),
-        'DOCCLAD_MODE': is_docclad_mode_enabled(),
-        'CMS_AEGIS_MODE': is_docclad_mode_enabled(),  # deprecated alias — remove after template migration
+        'CLMONE_MODE': is_clmone_mode_enabled(),
         'MOCHADOCS_MODE': is_mochadocs_mode_enabled(),
         'TEST_MODE': is_test_mode_enabled(),
         'SSO_ENABLED': getattr(settings, 'SSO_ENABLED', False),

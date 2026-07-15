@@ -15,33 +15,33 @@
 @theme {
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  --color-primary-400: #48A984;
-  --color-primary-500: #26966B;
-  --color-primary-600: #1B7F5A;
-  --color-primary-700: #176B4D;
-  --color-primary-800: #12573E;
-  --color-primary-100: #DDF3E9;
-  --color-primary: #1B7F5A;
+  --color-primary-400: #42A5A5;
+  --color-primary-500: #168C8C;
+  --color-primary-600: #12706F;
+  --color-primary-700: #0E5B5A;
+  --color-primary-800: #0A4746;
+  --color-primary-100: #C6E9E8;
+  --color-primary: #168C8C;
 
-  --color-accent-500: #26966B;
-  --color-accent: #1B7F5A;
+  --color-accent-500: #168C8C;
+  --color-accent: #168C8C;
 
   --color-ink: #171A1F;
-  --color-stroke: #DFE3E7;
-  --color-bg: #F5F7F8;
+  --color-stroke: #DCE2E8;
+  --color-bg: #F7F9FC;
   --color-card: #ffffff;
-  --color-border: #DFE3E7;
-  --color-muted: #69717C;
+  --color-border: #DCE2E8;
+  --color-muted: #667085;
 
   --color-secondary: #6b7280;
-  --color-success: #1B7F5A;
-  --color-warning: #9A6517;
-  --color-danger: #A7463F;
+  --color-success: #27865B;
+  --color-warning: #A76500;
+  --color-danger: #C4423D;
 
   --color-surface: #F0F2F3;
   --color-surface-contrast: #242830;
 
-  --radius-xl: 10px;
+  --radius-xl: 14px;
 }
 
 /* Casefile utilities: compact controls, hairline surfaces, and semantic states. */
@@ -51,8 +51,8 @@
 /* Bolton CLM UI helpers */
 @utility input { @apply w-full rounded-lg border border-border bg-card px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/40 focus:outline-none; }
 @utility badge { @apply inline-flex items-center rounded-xl px-2 py-1 text-xs font-semibold whitespace-nowrap; }
-@utility badge-success { background: #EFF9F4; color: #176B4D; }
-@utility badge-warning { background: #FBF3E3; color: #85540F; }
+@utility badge-success { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+@utility badge-warning { background: var(--status-pending-bg); color: var(--status-pending-fg); }
 @utility badge-neutral { @apply bg-primary-100 text-primary-700; }
 @utility card-section { @apply card p-6; }
 @utility table-base { @apply w-full text-sm text-left text-primary-700; }
@@ -73,4 +73,4 @@
 @utility status-active { @apply bg-primary-100 text-primary-700; }
 @utility status-draft { @apply bg-border text-muted; }
 @utility status-inactive { @apply bg-border text-muted; }
-@utility status-unverified { background: #FBF3E3; color: #85540F; }
+@utility status-unverified { background: var(--status-pending-bg); color: var(--status-pending-fg); }

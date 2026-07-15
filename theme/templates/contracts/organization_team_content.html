@@ -8,7 +8,7 @@
   </div>
   <div class="space-y-6">
     {% include "design_system/surface_card.html" with title="Inactive Members" labelledby="organization-team-inactive" body_template="contracts/organization_team_inactive.html" %}
-    {% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite" body_template="contracts/organization_team_invite.html" %}
+    <div id="organization-team-invite">{% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite-title" body_template="contracts/organization_team_invite.html" %}</div>
     {% include "design_system/surface_card.html" with title="Pending Invites" labelledby="organization-team-pending" body_template="contracts/organization_team_pending.html" %}
     {% include "design_system/surface_card.html" with title="Invitation History" labelledby="organization-team-history" body_template="contracts/organization_team_history.html" %}
   </div>

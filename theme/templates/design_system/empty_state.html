@@ -1,6 +1,12 @@
 <div class="dc-ds-empty{% if tone %} dc-ds-empty--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
-  {% if icon %}<span class="dc-ds-empty__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon %}</span>{% endif %}
+  {% if icon %}<span class="dc-ds-empty__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon only %}</span>{% endif %}
   <h2 class="dc-ds-empty__title">{{ title }}</h2>
-  {% if copy %}<p class="dc-ds-empty__copy">{{ copy }}</p>{% endif %}
-  {% if actions_template %}<div class="dc-ds-actions dc-ds-empty__actions">{% include actions_template %}</div>{% endif %}
+  {% if reason %}<p class="dc-ds-empty__copy">{{ reason }}</p>{% elif copy %}<p class="dc-ds-empty__copy">{{ copy }}</p>{% endif %}
+  {% if how %}<p class="dc-ds-empty__how">{{ how }}</p>{% endif %}
+  {% if actions_template or action_url and action_label %}
+  <div class="dc-ds-actions dc-ds-empty__actions">
+    {% if actions_template %}{% include actions_template %}{% endif %}
+    {% if action_url and action_label %}<a href="{{ action_url }}" class="dc-ds-button dc-ds-button--{{ action_tone|default:'primary' }}">{{ action_label }}</a>{% endif %}
+  </div>
+  {% endif %}
 </div>

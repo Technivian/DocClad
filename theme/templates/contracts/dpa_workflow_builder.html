@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load dpa_workflow_tags %}
-{% block title %}DPA Privacy Review Workflow – DocClad{% endblock %}
+{% block title %}DPA Privacy Review Workflow – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 /* Mirrors theme/templates/contracts/contract_form.html's cockpit classes —
@@ -275,7 +275,7 @@
             </span>
           </summary>
           <div class="cform-panel-body">
-            <p class="cform-smart-intro">DocClad is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.</p>
+            <p class="cform-smart-intro">CLM One is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.</p>
             <div class="cform-section-grid">
               {% for field in fields_by_section.PRIVACY_QUESTIONS|only_type:'BOOLEAN' %}
               <div class="cform-field cform-field-full{% if errors|get_item:field.key %} is-invalid{% endif %}">
@@ -601,7 +601,7 @@
         }
         const activeCount = signals.filter(s => s.tone === 'warn' || s.tone === 'high').length;
         if (!signals.length) {
-            signals.push({ tone: 'safe', text: 'No privacy risk signal selected yet; DocClad is monitoring the smart questions.', link: null });
+            signals.push({ tone: 'safe', text: 'No privacy risk signal selected yet; CLM One is monitoring the smart questions.', link: null });
         }
         if (riskEl) riskEl.textContent = activeCount ? activeCount + ' active' : 'None active';
         if (riskListEl) {

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Operations Dashboard – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Operations Dashboard – CLM One{% endblock %}
+{% block authenticated_page_title %}Operations{% endblock %}
+{% block authenticated_page_subtitle %}Monitor legal workload, queues, and service performance.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/operations_dashboard_content.html" wide=True %}

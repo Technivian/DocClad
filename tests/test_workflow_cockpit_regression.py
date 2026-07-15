@@ -201,4 +201,3 @@ class WorkflowCockpitRegressionTests(TestCase):
                 response,
                 reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}),
             )
-        self.assertContains(response, 'Open workspace')

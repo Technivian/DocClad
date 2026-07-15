@@ -21,5 +21,5 @@
   {% endfor %}
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with title="No pending invitations." %}
+  {% include "design_system/empty_state.html" with icon="user-plus" title="No pending invitations" reason="Every issued invitation has been accepted, revoked, or expired." how="New invitations remain here until the recipient joins the workspace." action_url="#organization-team-invite" action_label="Invite a member" action_tone="ghost" class_name="dc-ds-empty--compact" %}
 {% endif %}

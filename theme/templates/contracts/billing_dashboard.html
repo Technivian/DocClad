@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Billing &amp; Plan — DocClad{% endblock %}
+{% block title %}Billing &amp; Plan — CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .kpi-card-overage { border-color: rgba(239,68,68,0.5); }
@@ -125,7 +125,7 @@
             <span class="plan-downgrade">Downgrade via support</span>
           {% elif stripe_enabled %}
             {% if plan.name == 'ENTERPRISE' %}
-              <a href="mailto:sales@docclad.com" class="plan-btn">Contact sales</a>
+              <a href="mailto:sales@clmone.com" class="plan-btn">Contact sales</a>
             {% else %}
               <form method="post" action="{% url 'contracts:billing_checkout' plan.name %}">
                 {% csrf_token %}

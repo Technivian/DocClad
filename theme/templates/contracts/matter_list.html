@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Matters – DocClad{% endblock %}
+{% block title %}Matters – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
 <div class="page-header">
@@ -49,7 +49,8 @@
                 <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:matter_update' matter.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="px-5 py-12 text-center c-muted">No matters found.</td></tr>
+            {% url 'contracts:matter_create' as matter_create_url %}
+            <tr><td colspan="7">{% include "design_system/empty_state.html" with icon="folder" title="No matters in this view" reason="No legal matter has been opened for this workspace yet." how="Matters appear here after they are created and can then group contracts, reviews, and documents." action_url=matter_create_url action_label="Create first matter" class_name="dc-ds-empty--compact" %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

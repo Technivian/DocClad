@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Identity Telemetry – DocClad{% endblock %}
+{% block title %}Identity Telemetry – CLM One{% endblock %}
+{% block authenticated_page_title %}Identity Telemetry{% endblock %}
+{% block authenticated_page_subtitle %}Monitor authentication health, provisioning, and enterprise access.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/identity_telemetry_dashboard_content.html" wide=True %}

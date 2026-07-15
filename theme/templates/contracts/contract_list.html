@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format docclad_components %}
-{% block title %}Contract Workspace – DocClad{% endblock %}
+{% load clmone_format clmone_components %}
+{% block title %}Contract Workspace – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .cw-page { padding-top: 10px; }
@@ -44,9 +44,9 @@
   .cw-tab:hover { border-color: var(--text-muted); color: var(--text-primary); }
   .cw-tab-active,
   .cw-tab-active:hover {
-    background: var(--text-primary);
-    border-color: var(--text-primary);
-    color: var(--card-bg);
+    background: var(--color-control-selected-bg);
+    border-color: var(--color-control-selected-border);
+    color: var(--color-control-selected-text);
   }
   .cw-tools {
     display: flex;

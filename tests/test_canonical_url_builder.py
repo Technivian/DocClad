@@ -22,21 +22,21 @@ class CanonicalURLBuilderTests(TestCase):
 
     def test_build_canonical_url_from_https_base(self):
         """URLs built from HTTPS base remain HTTPS."""
-        with override_settings(APP_BASE_URL='https://app.docclad.com'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com'):
             url = build_canonical_url('/invite/abc123')
-        self.assertEqual(url, 'https://app.docclad.com/invite/abc123')
+        self.assertEqual(url, 'https://app.clmone.com/invite/abc123')
 
     def test_build_canonical_url_with_trailing_slash(self):
         """Trailing slashes handled correctly."""
-        with override_settings(APP_BASE_URL='https://app.docclad.com/'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com/'):
             url = build_canonical_url('/invite/abc123')
-        self.assertEqual(url, 'https://app.docclad.com/invite/abc123')
+        self.assertEqual(url, 'https://app.clmone.com/invite/abc123')
 
     def test_build_canonical_url_no_leading_slash(self):
         """Path without leading slash is handled."""
-        with override_settings(APP_BASE_URL='https://app.docclad.com'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com'):
             url = build_canonical_url('invite/abc123')
-        self.assertEqual(url, 'https://app.docclad.com/invite/abc123')
+        self.assertEqual(url, 'https://app.clmone.com/invite/abc123')
 
     def test_build_invitation_url_structure(self):
         """Invitation URL has correct structure with token."""
@@ -61,10 +61,10 @@ class CanonicalURLBuilderTests(TestCase):
         inv = OrganizationInvitation.objects.create(
             organization=org, email='user@example.com', role='MEMBER'
         )
-        with override_settings(APP_BASE_URL='https://app.docclad.com'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com'):
             url = build_invitation_url(inv.token)
-        # Even if a request came from attacker.evil.com, the URL still uses app.docclad.com
-        self.assertTrue(url.startswith('https://app.docclad.com'))
+        # Even if a request came from attacker.evil.com, the URL still uses app.clmone.com
+        self.assertTrue(url.startswith('https://app.clmone.com'))
         self.assertNotIn('attacker.evil.com', url)
         self.assertNotIn('localhost', url)
 
@@ -74,8 +74,8 @@ class CanonicalURLBuilderTests(TestCase):
         # so we test them by verifying the rules themselves:
         test_cases = [
             # (url, is_valid_for_production, reason)
-            ('https://app.docclad.com', True, 'valid production URL'),
-            ('http://app.docclad.com', False, 'HTTP not allowed in production'),
+            ('https://app.clmone.com', True, 'valid production URL'),
+            ('http://app.clmone.com', False, 'HTTP not allowed in production'),
             ('https://localhost:8000', False, 'localhost not allowed in production'),
             ('https://127.0.0.1:8000', False, '127.0.0.1 not allowed in production'),
         ]
@@ -106,7 +106,7 @@ class CanonicalURLBuilderTests(TestCase):
             organization=org, email='user@example.com', role='MEMBER', invited_by=owner
         )
 
-        with override_settings(APP_BASE_URL='https://app.docclad.com'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com'):
             with patch('contracts.services.invitations.send_mail') as mock_mail:
                 deliver_invitation(inv, actor=owner)
 
@@ -114,7 +114,7 @@ class CanonicalURLBuilderTests(TestCase):
         mock_mail.assert_called_once()
         call_args = mock_mail.call_args
         body = call_args[1]['message']
-        self.assertIn('https://app.docclad.com', body)
+        self.assertIn('https://app.clmone.com', body)
         self.assertNotIn('localhost', body)
         self.assertNotIn('127.0.0.1', body)
 
@@ -143,12 +143,12 @@ class HostHeaderInjectionTests(TestCase):
             organization=org, email='victim@example.com', role='MEMBER', invited_by=owner
         )
 
-        with override_settings(APP_BASE_URL='https://app.docclad.com'):
+        with override_settings(APP_BASE_URL='https://app.clmone.com'):
             from contracts.services.url_builder import build_invitation_url
             url = build_invitation_url(inv.token)
 
         # Malicious Host header cannot influence the URL
-        self.assertTrue(url.startswith('https://app.docclad.com'))
+        self.assertTrue(url.startswith('https://app.clmone.com'))
         self.assertNotIn('evil.com', url)
 
     def test_app_base_url_precedence_over_request(self):
@@ -162,11 +162,11 @@ class HostHeaderInjectionTests(TestCase):
 
         # Even if someone tried to use request.build_absolute_uri in the old code,
         # the new code uses canonical URL builder instead.
-        with override_settings(APP_BASE_URL='https://legitimate.docclad.com'):
+        with override_settings(APP_BASE_URL='https://legitimate.clmone.com'):
             from contracts.services.url_builder import build_invitation_url
             url = build_invitation_url(inv.token)
 
-        self.assertIn('legitimate.docclad.com', url)
+        self.assertIn('legitimate.clmone.com', url)
 
     @staticmethod
     def _create_user(org, username, role):
@@ -183,13 +183,13 @@ class ProductionConfigurationTests(TestCase):
     def test_production_url_is_https(self):
         """Production APP_BASE_URL must use HTTPS."""
         # In actual settings_base.py, this is validated at import time
-        prod_url = 'https://app.docclad.com'
+        prod_url = 'https://app.clmone.com'
         is_https = prod_url.lower().startswith('https://')
         self.assertTrue(is_https)
 
     def test_production_url_is_not_localhost(self):
         """Production APP_BASE_URL must not be localhost or 127.0.0.1."""
-        prod_url = 'https://app.docclad.com'
+        prod_url = 'https://app.clmone.com'
         is_localhost = 'localhost' in prod_url.lower() or '127.0.0.1' in prod_url
         self.assertFalse(is_localhost)
 

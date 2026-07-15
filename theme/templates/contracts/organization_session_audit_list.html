@@ -20,5 +20,6 @@
   {% endfor %}
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with title="No active sessions found for this organization." %}
+  {% url 'contracts:organization_team' as organization_team_url %}
+  {% include "design_system/empty_state.html" with icon="users" title="No active member sessions" reason="No organization member currently has a live authenticated session." how="Sessions appear here after a member signs in and remain visible until they expire or are revoked." action_url=organization_team_url action_label="Review team access" action_tone="ghost" %}
 {% endif %}

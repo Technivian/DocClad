@@ -1,7 +1,7 @@
 /* Deprecated adapter entry point.
 
    Canonical tokens and every temporary --ds-* compatibility alias now live
-   in theme/static/css/docclad-tokens.css, which is loaded before the compiled
+   in theme/static/css/clmone-tokens.css, which is loaded before the compiled
    application stylesheet by both base templates. Keep this file in the
    design-system import graph until all --ds-* consumers reach zero; do not
    add token values here. */

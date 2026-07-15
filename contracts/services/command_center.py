@@ -382,7 +382,7 @@ def _work_item_href(item):
         return reverse('contracts:legal_task_update', kwargs={'pk': item.legal_task_id})
     if item.risk_log_id:
         return reverse('contracts:risk_log_update', kwargs={'pk': item.risk_log_id})
-    return reverse('contracts:contract_list')
+    return reverse('contracts:repository')
 
 
 def command_center_work_item_to_row(item, current_user=None, today=None):

@@ -1,7 +1,19 @@
 import json
 import logging
 from datetime import datetime, timezone
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+from contracts.services.outbound_urls import validate_public_https_url
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def urlopen(request, timeout):
+    """Issue validated log-sink requests without following redirects."""
+    return build_opener(_NoRedirectHandler).open(request, timeout=timeout)
 
 
 class HttpJsonLogHandler(logging.Handler):
@@ -17,6 +29,7 @@ class HttpJsonLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
+            sink_url = validate_public_https_url(self.sink_url, label='HTTP log sink URL')
             payload = {
                 'timestamp': datetime.now(timezone.utc).isoformat(),
                 'level': record.levelname,
@@ -29,7 +42,7 @@ class HttpJsonLogHandler(logging.Handler):
             }
             body = json.dumps(payload).encode('utf-8')
             request = Request(
-                self.sink_url,
+                sink_url,
                 data=body,
                 headers={'Content-Type': 'application/json'},
                 method='POST',

@@ -1,4 +1,4 @@
-# DocClad Pilot Activation Sprint
+# CLM One Pilot Activation Sprint
 
 **Document Version:** 1.0  
 **Date:** 2026-06-23  
@@ -208,13 +208,13 @@ EOF
 **Verification Command:**
 ```bash
 # Operator runs:
-dig TXT sender.docclad.com
+dig TXT sender.clmone.com
 # Expected: SPF record present
 
-dig TXT default._domainkey.sender.docclad.com
+dig TXT default._domainkey.sender.clmone.com
 # Expected: DKIM record present
 
-dig TXT _dmarc.sender.docclad.com
+dig TXT _dmarc.sender.clmone.com
 # Expected: DMARC policy present
 
 # Resend verification (via dashboard):
@@ -249,7 +249,7 @@ DATABASE_URL               — postgresql://user:pass@host:5432/dbname
 OPERATOR_ALERT_EMAIL       — ops@company.com
 RESEND_API_KEY             — re_xxxxxxxxxxxxxxxxxxxxxxxx
 REDIS_URL                  — redis://host:6379/0
-DEFAULT_FROM_EMAIL         — noreply@sender.docclad.com
+DEFAULT_FROM_EMAIL         — noreply@sender.clmone.com
 DJANGO_SETTINGS_MODULE     — config.settings_production
 ```
 
@@ -259,10 +259,10 @@ DJANGO_SETTINGS_MODULE     — config.settings_production
 env | grep -E "^(DEBUG|ALLOWED_HOSTS|APP_BASE_URL|OPERATOR_ALERT_EMAIL|DEFAULT_FROM_EMAIL)" | sort
 
 # Expected output (redacted):
-ALLOWED_HOSTS=pilot.docclad.com
-APP_BASE_URL=https://pilot.docclad.com
+ALLOWED_HOSTS=pilot.clmone.com
+APP_BASE_URL=https://pilot.clmone.com
 DEBUG=false
-DEFAULT_FROM_EMAIL=noreply@pilot.docclad.com
+DEFAULT_FROM_EMAIL=noreply@pilot.clmone.com
 OPERATOR_ALERT_EMAIL=ops@company.com
 
 # Verify no hardcoded secrets in code:
@@ -298,22 +298,22 @@ grep -r "SECRET_KEY\s*=" config/settings_production.py
 ```bash
 # Operator runs:
 # 1. Create backup
-pg_dump -h $DB_HOST -U $DB_USER $DB_NAME | gzip > /backup/docclad-pilot-$(date +%Y%m%d-%H%M%S).sql.gz
+pg_dump -h $DB_HOST -U $DB_USER $DB_NAME | gzip > /backup/clmone-pilot-$(date +%Y%m%d-%H%M%S).sql.gz
 
 # 2. Upload to backup storage (S3 or managed service)
-aws s3 cp /backup/docclad-pilot-*.sql.gz s3://backup-bucket/docclad-pilot/
+aws s3 cp /backup/clmone-pilot-*.sql.gz s3://backup-bucket/clmone-pilot/
 
 # 3. Create fresh test database and restore
-createdb docclad_test_restore
-gunzip -c /backup/docclad-pilot-*.sql.gz | psql -d docclad_test_restore
+createdb clmone_test_restore
+gunzip -c /backup/clmone-pilot-*.sql.gz | psql -d clmone_test_restore
 
 # 4. Verify restoration
-psql docclad_test_restore -c "SELECT COUNT(*) FROM auth_user;"
-psql docclad_test_restore -c "SELECT COUNT(*) FROM contracts_organization;"
+psql clmone_test_restore -c "SELECT COUNT(*) FROM auth_user;"
+psql clmone_test_restore -c "SELECT COUNT(*) FROM contracts_organization;"
 # Expected: Non-zero counts
 
 # 5. Verify audit trigger exists
-psql docclad_test_restore -c "SELECT proname FROM pg_proc WHERE proname = 'contracts_auditlog_append_only';"
+psql clmone_test_restore -c "SELECT proname FROM pg_proc WHERE proname = 'contracts_auditlog_append_only';"
 # Expected: contracts_auditlog_append_only
 ```
 
@@ -626,7 +626,7 @@ Run these tests in order. Use one pilot organization and one test user created d
 ```
 Precondition: Test user exists with MFA required, TOTP secret generated
 Steps:
-  1. Open https://pilot.docclad.com/login
+  1. Open https://pilot.clmone.com/login
   2. Enter username: pilot-test-user, password: TestPilot!123
   3. Verify redirected to MFA challenge page
   4. Open authenticator app (or use recovery code)
@@ -650,7 +650,7 @@ Steps:
   2. Enter test user email: pilot@example.com
   3. Verify email received within 60 seconds
   4. Click reset link in email
-  5. Verify link uses https://pilot.docclad.com (not localhost or request.host)
+  5. Verify link uses https://pilot.clmone.com (not localhost or request.host)
   6. Enter new password
   7. Verify login works with new password
   8. Re-enable MFA if needed
@@ -659,7 +659,7 @@ Expected: Password reset succeeds; link uses canonical APP_BASE_URL
 Record:
 [ ] Forgot-password form works
 [ ] Email received within 60 seconds
-[ ] Reset link is canonical (https://pilot.docclad.com/...)
+[ ] Reset link is canonical (https://pilot.clmone.com/...)
 [ ] New password works
 [ ] Old password no longer works
 [ ] Audit event: auth.password_reset_completed logged
@@ -685,7 +685,7 @@ Expected: Invitation accepted; user can login
 Record:
 [ ] Invitation form works
 [ ] Email received within 60 seconds
-[ ] Invitation link is canonical (https://pilot.docclad.com/...)
+[ ] Invitation link is canonical (https://pilot.clmone.com/...)
 [ ] Accept link works
 [ ] Invitee added to org
 [ ] Audit events logged: invite_created, invite.delivery_succeeded
@@ -721,7 +721,7 @@ Steps:
   2. Click "Download"
   3. Verify file downloads within 30 seconds
   4. Verify file content matches original
-  5. Verify signed URL is canonical (https://pilot.docclad.com or S3 signed URL)
+  5. Verify signed URL is canonical (https://pilot.clmone.com or S3 signed URL)
 Expected: Download succeeds; no localhost URLs
 
 Record:
@@ -835,8 +835,8 @@ Record:
 Precondition: Pilot database has data from previous tests
 Steps:
   1. Create backup: pg_dump ... | gzip > backup.sql.gz
-  2. Create fresh test database: createdb docclad_test_restore
-  3. Restore: gunzip -c backup.sql.gz | psql docclad_test_restore
+  2. Create fresh test database: createdb clmone_test_restore
+  3. Restore: gunzip -c backup.sql.gz | psql clmone_test_restore
   4. Verify restored DB has same data:
      - SELECT COUNT(*) FROM contracts_contract; (should match original)
      - SELECT COUNT(*) FROM contracts_auditlog; (should match original)
@@ -862,7 +862,7 @@ Record:
 - [ ] Real email from Resend was accepted (not bounced/rejected)
 - [ ] Email arrived in inbox (not spam folder)
 - [ ] Sender domain passes SPF/DKIM/DMARC checks
-- [ ] Email contains canonical app URL (https://pilot.docclad.com/)
+- [ ] Email contains canonical app URL (https://pilot.clmone.com/)
 
 **Verification:**
 ```

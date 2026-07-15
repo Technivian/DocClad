@@ -1,6 +1,8 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Organization Activity – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Organization Activity – CLM One{% endblock %}
+{% block authenticated_page_title %}Organization Activity{% endblock %}
+{% block authenticated_page_subtitle %}Review workspace-level administrative and governance events.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/organization_activity_content.html" wide=True %}

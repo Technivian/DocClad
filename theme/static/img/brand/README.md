@@ -1,6 +1,6 @@
-# DocClad Brand Kit
+# CLM One Brand Kit
 
-This kit was created directly from the approved DocClad brand board and preserves the chosen visual lockup.
+This kit was created directly from the approved CLM One brand board and preserves the chosen visual lockup.
 
 ## Approved colours
 
@@ -11,16 +11,16 @@ This kit was created directly from the approved DocClad brand board and preserve
 
 ## Core assets
 
-- `docclad-logo-primary.svg`  
-  Primary horizontal logo with descriptor. Use on light backgrounds.
+- `clmone-logo-primary.svg`
+  Primary horizontal logo. Use on light backgrounds.
 
-- `docclad-logo-white.svg`  
+- `clmone-logo-white.svg`
   Full white version for dark backgrounds.
 
-- `docclad-logo-black.svg`  
+- `clmone-logo-black.svg`
   Monochrome black version.
 
-- `docclad-mark-primary.svg`  
+- `clmone-mark-primary.svg`
   Symbol-only mark for compact navigation, favicons and app icons.
 
 ## Usage rules
@@ -39,9 +39,9 @@ This kit was created directly from the approved DocClad brand board and preserve
 ## React example
 
 ```tsx
-import { DocCladLogo } from "@/components/brand/DocCladLogo";
+import { CLMOneLogo } from "@/components/brand/CLMOneLogo";
 
-<DocCladLogo
+<CLMOneLogo
   variant="primary"
   layout="full"
   className="h-10"

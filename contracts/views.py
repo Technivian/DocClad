@@ -144,6 +144,7 @@ from .views_domains.deadlines import (
     DeadlineUpdateView,
     ObligationsWorkspaceView,
     deadline_complete,
+    deadline_delete,
 )
 from .views_domains.contracts import (
     ContractCreateView,
@@ -152,6 +153,8 @@ from .views_domains.contracts import (
     ContractUpdateView,
     RepositoryView,
     contract_ai_assistant,
+    contract_approval_decision,
+    contract_submit_for_review,
     contract_template_picker,
     dashboard,
     legal_front_door,
@@ -171,6 +174,7 @@ from .views_domains.dpa_review import (
     dpa_review_run_analysis,
     dpa_review_set_approval_status,
     dpa_risk_item_add_note,
+    dpa_risk_item_create,
     dpa_risk_item_set_status,
 )
 from .views_domains.matter_ops import (
@@ -217,8 +221,8 @@ from .views_domains.actions import (
 )
 from .views_domains.core import (
     csp_report,
-    DocCladPasswordResetConfirmView,
-    DocCladPasswordResetView,
+    CLMOnePasswordResetConfirmView,
+    CLMOnePasswordResetView,
     health_check,
     index,
     LoginView,

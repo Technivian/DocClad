@@ -1,4 +1,4 @@
-"""pytest configuration for the DocClad test suite.
+"""pytest configuration for the CLM One test suite.
 
 Session setup
 ─────────────
@@ -56,7 +56,7 @@ def pytest_configure(config):
             '\n'
             'For the full-suite gate, run with:\n'
             '  DJANGO_SETTINGS_MODULE=config.settings_postgres_test\n'
-            '  TEST_DATABASE_URL=postgresql://<user>@localhost:5432/docclad_test\n'
+            '  TEST_DATABASE_URL=postgresql://<user>@localhost:5432/clmone_test\n'
             '  python -m pytest tests/ --create-db\n'
             '═══════════════════════════════════════════════════════════════',
             stacklevel=2,

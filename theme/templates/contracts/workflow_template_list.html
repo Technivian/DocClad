@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Workflow Templates – DocClad{% endblock %}
+{% block title %}Workflow Templates – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
@@ -74,9 +74,9 @@
             </div>
         </div>
         {% empty %}
-        <div class="col-span-full empty-state">
-            <p class="mb-4">No workflow templates found.</p>
-            <a href="{% url 'contracts:workflow_template_create' %}" class="c-link font-medium">Create your first template</a>
+        {% url 'contracts:workflow_template_create' as workflow_template_create_url %}
+        <div class="col-span-full">
+            {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules." action_url=workflow_template_create_url action_label="Create first template" %}
         </div>
         {% endfor %}
     </div>

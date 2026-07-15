@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import StringIO
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand, call_command, CommandError
@@ -118,8 +119,8 @@ def _start_trace_server(kind: str):
                     {
                         'received': True,
                         'processed': True,
-                        'delivery_id': self.headers.get('X-DOCCLAD-DELIVERY-ID'),
-                        'event_type': self.headers.get('X-DOCCLAD-EVENT'),
+                        'delivery_id': self.headers.get('X-CLMONE-DELIVERY-ID'),
+                        'event_type': self.headers.get('X-CLMONE-EVENT'),
                     },
                 )
                 return
@@ -249,6 +250,25 @@ class Command(BaseCommand):
             ),
         }
 
+    @staticmethod
+    @contextmanager
+    def _allow_local_trace_endpoints():
+        """Limit the trace harness to its own ephemeral local listeners.
+
+        Production integration code always validates public HTTPS endpoints.
+        This evidence command deliberately launches localhost-only fixture
+        servers, so its narrowly-scoped request path bypasses that validator
+        without creating a deploy-time configuration escape hatch.
+        """
+        def _trace_url(url, **_kwargs):
+            return url
+
+        with (
+            patch('contracts.services.salesforce.validate_public_https_url', side_effect=_trace_url),
+            patch('contracts.services.webhooks.validate_public_https_url', side_effect=_trace_url),
+        ):
+            yield
+
     def handle(self, *args, **options):
         output_dir = Path(options['output_dir'])
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -292,7 +312,7 @@ class Command(BaseCommand):
 
             sync_stdout = StringIO()
             try:
-                with override_settings(
+                with self._allow_local_trace_endpoints(), override_settings(
                     SALESFORCE_TOKEN_URL=f'{salesforce_base_url}/services/oauth2/token',
                 ):
                     call_command(
@@ -306,7 +326,8 @@ class Command(BaseCommand):
 
             dispatch_stdout = StringIO()
             try:
-                call_command('dispatch_webhook_deliveries', '--limit', '10', stdout=dispatch_stdout)
+                with self._allow_local_trace_endpoints():
+                    call_command('dispatch_webhook_deliveries', '--limit', '10', stdout=dispatch_stdout)
             except Exception as exc:
                 raise CommandError(f'Webhook dispatch trace failed: {exc}') from exc
 

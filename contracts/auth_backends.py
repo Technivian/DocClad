@@ -5,7 +5,7 @@ from django.utils.text import slugify
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 
-class DoccladOIDCAuthenticationBackend(OIDCAuthenticationBackend):
+class CLMOneOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     """Authenticate users via OIDC and map identities by email."""
 
     def _email_from_claims(self, claims):

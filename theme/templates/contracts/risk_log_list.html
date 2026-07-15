@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% load docclad_components %}
-{% load docclad_format %}
+{% load clmone_components %}
+{% load clmone_format %}
 
-{% block title %}Risk Register – DocClad{% endblock %}
+{% block title %}Risk Register – CLM One{% endblock %}
 
 {% block content %}
 <div id="risk-register-root" class="page-wrap page-wrap-fluid">
@@ -134,25 +134,15 @@
                 </td>
             </tr>
             {% empty %}
+            {% url 'contracts:risk_log_create' as risk_log_create_url %}
+            {% url 'contracts:risk_log_list' as risk_log_list_url %}
             <tr>
-                <td colspan="7" class="px-5 py-20 text-center">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                            <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-7.938 4h15.876c1.272 0 2.066-1.378 1.43-2.48L13.43 4.52c-.636-1.102-2.224-1.102-2.86 0L2.632 16.52c-.636 1.102.158 2.48 1.43 2.48z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-medium c-primary">No risks found</p>
-                            <p class="text-sm mt-1 c-muted">
-                                {% if search_query or selected_risk_level %}
-                                Try adjusting your filters or <a href="{% url 'contracts:risk_log_list' %}" class="c-link">clear the search</a>.
-                                {% else %}
-                                Get started by <a href="{% url 'contracts:risk_log_create' %}" class="c-link">logging your first risk</a>.
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
+                <td colspan="7">
+                    {% if search_query or selected_risk_level %}
+                        {% include "design_system/empty_state.html" with icon="alert-triangle" title="No risks match these filters" reason="The current search or severity filter excludes every recorded risk." how="Risks appear when their title, owner, or severity matches the active view." action_url=risk_log_list_url action_label="Clear filters" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+                    {% else %}
+                        {% include "design_system/empty_state.html" with icon="alert-triangle" title="No risks logged yet" reason="This workspace has no identified contract or matter risk requiring tracking." how="Risks appear here after a user records a finding or a governed review raises one." action_url=risk_log_create_url action_label="Log first risk" class_name="dc-ds-empty--compact" %}
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

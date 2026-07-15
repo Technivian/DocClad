@@ -118,7 +118,7 @@ def saml_acs(request, organization_slug):
     # MFA assurance (Phase 4G): only treat the SAML session as MFA-satisfied when
     # the assertion proves an accepted AuthnContext, or the org has explicitly
     # opted into trusting the IdP. Otherwise fail closed — the user must still
-    # complete DocClad MFA (the session is left unverified so the MFA gate fires).
+    # complete CLM One MFA (the session is left unverified so the MFA gate fires).
     from contracts.saml import saml_mfa_satisfied as _saml_mfa_satisfied
     from contracts.services.mfa_policy import organization_requires_mfa as _org_requires_mfa
 
@@ -137,7 +137,7 @@ def saml_acs(request, organization_slug):
         request.session['mfa_verified'] = True
     elif mfa_required:
         # Authenticated via SAML but MFA assurance not proven: do NOT mark the
-        # session verified — the MFA gate will require DocClad MFA next.
+        # session verified — the MFA gate will require CLM One MFA next.
         request.session['mfa_verified'] = False
 
     log_action(

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}DSAR Requests – DocClad{% endblock %}
+{% block title %}DSAR Requests – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .dsar-row:hover { background: var(--sidebar-hover); }
@@ -47,8 +47,9 @@
                     </td>
                 </tr>
                 {% empty %}
+                {% url 'contracts:dsar_create' as dsar_create_url %}
                 <tr>
-                    <td colspan="7" class="empty-state">No DSAR requests found.</td>
+                    <td colspan="7">{% include "design_system/empty_state.html" with icon="shield" title="No data-subject requests in this view" reason="No access, deletion, correction, or portability request has been recorded." how="Requests appear here after privacy operations logs a new data-subject case." action_url=dsar_create_url action_label="Add first request" class_name="dc-ds-empty--compact" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

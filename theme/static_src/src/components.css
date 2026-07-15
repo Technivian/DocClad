@@ -67,8 +67,8 @@
 /* Card Components — flat: hairline border only, no drop shadow */
 .card {
   @apply bg-white border border-stroke rounded-lg;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(23, 26, 31, .05), 0 5px 14px rgba(23, 26, 31, .035);
+  border-radius: var(--radius-subpanel);
+  box-shadow: var(--shadow-card);
 }
 
 .card-header {
@@ -132,7 +132,7 @@
   color: var(--text-primary);
   background: var(--input-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   box-shadow: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -140,7 +140,7 @@
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-subtle);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .input-error {
@@ -162,7 +162,7 @@
 /* Progress Components */
 .progress {
   @apply w-full rounded-full h-2;
-  background: #E7EAED;
+  background: var(--hairline);
 }
 
 .progress-bar {
@@ -289,7 +289,7 @@
 /* Layout Utilities */
 .container-main {
   @apply mx-auto px-6;
-  max-width: 1600px;
+  max-width: var(--page-max-width);
 }
 
 .page-header {
@@ -319,43 +319,42 @@
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px 24px;
-  margin-bottom: 24px;
+  gap: var(--space-16) var(--space-24);
+  margin-bottom: var(--space-24);
 }
 .arch-header-left  { flex: 1 1 220px; min-width: 0; }
 .arch-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; padding-top: 4px; }
 .arch-title-row    { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 .arch-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink-900);
   margin: 0;
-  line-height: 1.15;
+  font: var(--text-display);
   letter-spacing: 0;
 }
-.arch-subtitle { font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.5; }
+.arch-subtitle { margin: 0; color: var(--ink-500); font: var(--text-small); }
 
 /* ── Shared: card levels ───────────────────────────────── */
 /* Level 1 — forms, tables, primary content */
 .card-l1 {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 24px;
+  padding: var(--space-24);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
 }
 /* Level 2 — compact supporting panels */
 .card-l2 {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
+  padding: var(--space-16);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--well);
 }
 /* Level 3 — inline notices, status blocks */
 .card-l3 {
-  background: var(--primary-subtle);
-  border: 1px solid var(--primary-bg);
-  border-radius: 8px;
-  padding: 12px;
+  padding: var(--space-12);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--well);
 }
 
 /* ── Shared: button hierarchy ──────────────────────────── */
@@ -370,7 +369,7 @@
   background: var(--btn-gradient);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: opacity 0.15s;
   text-decoration: none;
@@ -390,7 +389,7 @@
   background: var(--primary-subtle);
   color: var(--primary-light);
   border: 1px solid var(--primary-bg);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: background 0.15s;
   text-decoration: none;
@@ -409,7 +408,7 @@
   color: var(--text-secondary);
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
   text-decoration: none;
@@ -488,14 +487,14 @@
   color: var(--text-primary);
   background: var(--input-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .form-control::placeholder { color: var(--text-muted); }
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-subtle);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 select.form-control   { background: var(--surface); cursor: pointer; }
 textarea.form-control { min-height: 90px; resize: vertical; }
@@ -588,7 +587,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
 .arch-workspace-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 24px;
+  gap: var(--grid-gutter);
   align-items: start;
 }
 .arch-workspace-main    { grid-column: span 8; min-width: 0; }
@@ -650,9 +649,9 @@ textarea.form-control { min-height: 90px; resize: vertical; }
 .arch-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-8);
+  padding-bottom: var(--space-16);
+  margin-bottom: var(--space-16);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -668,7 +667,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   padding: 7px 12px 7px 32px;
   font-size: 13px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--card-bg);
   color: var(--text-primary);
   transition: border-color 0.15s;
@@ -686,7 +685,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   font-weight: 500;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--card-bg);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
@@ -694,7 +693,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   white-space: nowrap;
 }
 .arch-chip:hover      { color: var(--text-primary); border-color: var(--text-muted); }
-.arch-chip.chip-active { color: var(--primary-light); border-color: var(--primary); background: var(--primary-subtle); }
+.arch-chip.chip-active { color: var(--color-control-selected-text); border-color: var(--color-control-selected-border); background: var(--color-control-selected-bg); }
 
 .arch-status-tabs {
   display: flex;
@@ -719,7 +718,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   display: inline-block;
 }
 .arch-status-tab:hover    { color: var(--text-primary); background: var(--sidebar-hover); }
-.arch-status-tab.tab-active { color: var(--primary-light); background: var(--sidebar-active-bg); font-weight: 600; }
+.arch-status-tab.tab-active { color: var(--color-control-selected-text); border-color: var(--color-control-selected-border); background: var(--color-control-selected-bg); font-weight: 600; }
 
 /* ════════════════════════════════════════════════
    ARCHETYPE 3 — DETAIL
@@ -769,7 +768,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
   white-space: nowrap;
 }
 .arch-tab:hover         { color: var(--text-primary); }
-.arch-tab.tab-active    { color: var(--primary-light); border-bottom-color: var(--primary); font-weight: 600; }
+.arch-tab.tab-active    { color: var(--color-control-selected-text); border-color: var(--color-control-selected-border); background: var(--color-control-selected-bg); font-weight: 600; }
 
 .arch-tab-panel            { display: none; }
 .arch-tab-panel.panel-active { display: block; }
@@ -778,7 +777,7 @@ textarea.form-control { min-height: 90px; resize: vertical; }
 .arch-detail-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 24px;
+  gap: var(--grid-gutter);
   align-items: start;
 }
 .arch-detail-grid > :first-child { grid-column: span 8; min-width: 0; }

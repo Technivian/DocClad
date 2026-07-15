@@ -1,136 +1,100 @@
 {% extends "base.html" %}
-{% block title %}New Contract – DocClad{% endblock %}
+{% block title %}New Contract – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if selected_type %}New {{ selected_type_label }}{% else %}New Contract{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}{% if selected_type %}Choose an approved template or begin a controlled blank draft.{% else %}Choose a governed contract type and approved workflow.{% endif %}{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  .ctp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; margin-top: 24px; }
   .ctp-card {
-    display: block; padding: 18px 20px; border: 1px solid var(--border); border-radius: 10px;
-    background: var(--card-bg); text-decoration: none; transition: border-color 0.12s, background 0.12s;
+    display: block; padding: var(--ds-space-4); text-decoration: none;
   }
-  .ctp-card:hover { border-color: var(--primary); background: var(--sidebar-hover); }
-  .ctp-card-title { font-size: 14px; font-weight: 650; color: var(--text-primary); }
-  .ctp-card-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .ctp-card-title { font-size: var(--ds-text-md); font-weight: 760; color: var(--ds-color-text); }
+  .ctp-card-sub { font-size: var(--ds-text-sm); color: var(--ds-color-text-secondary); margin-top: var(--ds-space-1); line-height: var(--ds-line-base); }
   .ctp-card-blank { border-style: dashed; }
-  .ctp-empty { padding: 24px 0; color: var(--text-muted); font-size: 13px; }
-
   /* Entry-card grid (Stage 1: "What are you creating?") */
-  .ctp-badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+  .ctp-badge-row { display: flex; flex-wrap: wrap; gap: var(--space-8); }
   .ctp-gov-badge {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px;
-    background: var(--primary-subtle); color: var(--primary); font-size: 11.5px; font-weight: 650;
+    gap: var(--ds-space-1);
   }
-  .ctp-gov-badge svg { width: 13px; height: 13px; }
-  .ctp-entry-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .ctp-gov-badge .dc-ds-icon { width: 14px; height: 14px; }
   .ctp-entry-card {
-    position: relative; display: flex; flex-direction: column; gap: 12px;
-    background: var(--card-bg); border: 1px solid var(--border); border-top: 3px solid var(--primary-subtle);
-    border-radius: 10px; padding: 16px;
-    text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s;
+    position: relative; display: flex; flex-direction: column; gap: var(--space-12);
+    min-height: 230px; padding: var(--space-16); text-decoration: none;
   }
-  .ctp-entry-card:hover {
-    border-color: var(--primary); border-top-color: var(--primary);
-    transform: translateY(-1px); box-shadow: var(--shadow-card);
-  }
+  .ctp-entry-heading { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-12); align-items: start; }
   .ctp-entry-icon {
-    width: 36px; height: 36px; border-radius: 9px; background: var(--primary-subtle); color: var(--primary);
+    width: 40px; height: 40px; border-radius: var(--radius-control); background: var(--seal-bg); color: var(--seal-dark);
     display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s;
   }
-  .ctp-entry-card:hover .ctp-entry-icon { background: var(--primary); color: #FFFFFF; }
-  .ctp-entry-icon svg { width: 18px; height: 18px; }
-  .ctp-entry-title { font-size: 16px; font-weight: 600; letter-spacing: -.01em; color: var(--text-primary); }
-  .ctp-entry-desc { color: var(--text-muted); font-size: 12.5px; line-height: 1.45; }
+  .ctp-entry-icon .dc-ds-icon { width: 18px; height: 18px; }
+  .ctp-entry-title { font: var(--text-heading); color: var(--ink-900); }
+  .ctp-entry-desc { margin-top: var(--space-4); color: var(--ink-500); font: var(--text-small); }
   .ctp-entry-meta {
-    display: flex; flex-direction: column; gap: 6px; margin-top: 2px; padding: 10px 12px;
-    background: var(--sidebar-hover); border-radius: 8px; font-size: 11.5px; color: var(--text-muted);
+    display: flex; flex-direction: column; gap: var(--space-8); margin-top: auto; padding-top: var(--space-12);
+    border-top: 1px solid var(--hairline); color: var(--ink-500); font: var(--text-meta);
   }
-  .ctp-entry-meta-row { display: flex; justify-content: space-between; gap: 10px; }
-  .ctp-entry-meta-row span { text-transform: uppercase; letter-spacing: .03em; font-size: 10.5px; }
-  .ctp-entry-meta-row b { color: var(--text-primary); font-weight: 650; font-size: 12px; }
+  .ctp-entry-meta-row { display: flex; justify-content: space-between; gap: var(--ds-space-2); }
+  .ctp-entry-meta-row span { color: var(--ink-500); }
+  .ctp-entry-meta-row b { max-width: 65%; color: var(--ink-700); font-size: var(--font-size-meta); font-weight: 600; text-align: right; }
   .ctp-entry-cta {
-    margin-top: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
-    padding: 8px 12px; border-radius: 8px; border: 1px solid var(--primary-hover); font-size: 12.5px; font-weight: 700;
-    color: #FFFFFF; background: var(--btn-gradient);
+    width: fit-content; min-height: 36px; margin-top: 0;
   }
-  .ctp-entry-card:hover .ctp-entry-cta { border-color: var(--primary-hover); color: #FFFFFF; background: var(--primary-hover); }
-  @media (max-width: 900px) { .ctp-entry-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 600px) { .ctp-entry-grid { grid-template-columns: 1fr; } }
-
   /* No 'unsafe-inline' in style-src: style="" attributes are silently
      dropped, so this section header's spacing/size lives here instead. */
-  .ctp-other-types-header { margin-top: 32px; }
-  .ctp-other-types-title { font-size: 16px; }
 </style>
 
-<div class="page-wrap ctp-page">
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow ctp-page">
 
   {% if selected_type %}
-  <a href="{% url 'contracts:contract_template_picker' %}" class="arch-back">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    Contract type
-  </a>
+  <div class="dc-ds-page-actions"><div class="dc-ds-actions"><a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--ghost">Choose another type</a></div></div>
 
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <h1 class="arch-title">New {{ selected_type_label }}</h1>
-    </div>
-  </div>
-
-  <div class="ctp-grid">
+  <div class="dc-ds-card-grid">
+    {% if templates %}
     {% for template in templates %}
-    <a href="{% url 'contracts:contract_create' %}?template={{ template.pk }}" class="ctp-card">
+    <a href="{% url 'contracts:contract_create' %}?template={{ template.pk }}" class="ctp-card dc-ds-surface dc-ds-surface--interactive">
       <div class="ctp-card-title">{{ template.name }}</div>
       {% if template.description %}<div class="ctp-card-sub">{{ template.description }}</div>{% endif %}
     </a>
-    {% empty %}
-    <div class="ctp-empty">No approved templates for this type yet.</div>
     {% endfor %}
-    <a href="{% url 'contracts:contract_create' %}?type={{ selected_type }}" class="ctp-card ctp-card-blank">
+    <a href="{% url 'contracts:contract_create' %}?type={{ selected_type }}" class="ctp-card ctp-card-blank dc-ds-surface dc-ds-surface--interactive">
       <div class="ctp-card-title">Start blank</div>
       <div class="ctp-card-sub">Draft from scratch — no template content.</div>
     </a>
+    {% else %}
+    {% url 'contracts:contract_create' as blank_contract_url %}
+    {% with blank_contract_url=blank_contract_url|add:'?type='|add:selected_type %}
+      {% include "design_system/empty_state.html" with icon="file-text" title="No approved templates for this type" reason="Your workspace has not published a reusable template for this contract type yet." how="Approved templates appear here after an administrator publishes them; you can still begin a controlled blank draft now." action_url=blank_contract_url action_label="Start blank draft" class_name="dc-ds-empty--activation" %}
+    {% endwith %}
+    {% endif %}
   </div>
 
   {% else %}
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <h1 class="arch-title">What are you creating?</h1>
-      <p class="arch-subtitle">Select a contract type. DocClad will apply the right approved template, playbook, clause logic, and approval route.</p>
-    </div>
-  </div>
-
   <div class="ctp-badge-row">
-    <span class="ctp-gov-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>AI-powered drafting</span>
-    <span class="ctp-gov-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg>Approved templates</span>
-    <span class="ctp-gov-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg>Full audit trail</span>
+    <span class="ctp-gov-badge dc-ds-badge dc-ds-badge--trust">{% include "design_system/icon.html" with name="sparkles" class_name="dc-ds-icon" %}AI-powered drafting</span>
+    <span class="ctp-gov-badge dc-ds-badge dc-ds-badge--trust">{% include "design_system/icon.html" with name="shield" class_name="dc-ds-icon" %}Approved templates</span>
+    <span class="ctp-gov-badge dc-ds-badge dc-ds-badge--trust">{% include "design_system/icon.html" with name="archive" class_name="dc-ds-icon" %}Full audit trail</span>
   </div>
 
-  <div class="ctp-entry-grid">
+  <div class="dc-ds-card-grid dc-ds-card-grid--3">
     {% for card in entry_cards %}
-    <a href="{{ card.start_url }}" class="ctp-entry-card">
-      <div class="ctp-entry-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          {% if card.icon == 'shield' %}<path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/>
-          {% elif card.icon == 'document' %}<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
-          {% elif card.icon == 'list' %}<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
-          {% elif card.icon == 'briefcase' %}<rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          {% elif card.icon == 'edit' %}<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-          {% elif card.icon == 'cloud' %}<path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/>
-          {% else %}<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>
-          {% endif %}
-        </svg>
-      </div>
-      <div>
-        <div class="ctp-entry-title">{{ card.title }}</div>
-        <div class="ctp-entry-desc">{{ card.description }}</div>
+    <a href="{{ card.start_url }}" class="ctp-entry-card dc-ds-surface dc-ds-surface--interactive">
+      <div class="ctp-entry-heading">
+        <div class="ctp-entry-icon">
+          {% include "design_system/icon.html" with name=card.icon class_name="dc-ds-icon" %}
+        </div>
+        <div>
+          <div class="ctp-entry-title">{{ card.title }}</div>
+          <div class="ctp-entry-desc">{{ card.description }}</div>
+        </div>
       </div>
       <div class="ctp-entry-meta">
         <div class="ctp-entry-meta-row"><span>Template</span><b>{{ card.template_name|default:"Approved template route" }}</b></div>
-        <div class="ctp-entry-meta-row"><span>Workflow</span><b>{% if card.contract_type == "DPA" %}DPA Privacy Review{% elif card.contract_type == "MSA" %}MSA Commercial Review{% elif card.contract_type == "NDA" %}NDA Self-Serve{% else %}Governed drafting{% endif %}</b></div>
-        <div class="ctp-entry-meta-row"><span>Draft time</span><b>~{{ card.draft_minutes }} min</b></div>
-        <div class="ctp-entry-meta-row"><span>Typical approvals</span><b>{{ card.typical_approvals }}</b></div>
+        <div class="ctp-entry-meta-row"><span>Approval route</span><b>{{ card.typical_approvals }}</b></div>
       </div>
-      <span class="ctp-entry-cta">Start governed draft &rarr;</span>
+      <span class="ctp-entry-cta dc-ds-button dc-ds-button--primary">Start draft &rarr;</span>
     </a>
+    {% empty %}
+    {% url 'contracts:document_create' as upload_contract_url %}
+    {% include "design_system/empty_state.html" with icon="upload" title="No governed contract types are available" reason="This workspace has no enabled contract-launch configuration." how="Contract types appear here after an administrator enables a governed workflow; signed agreements can still enter through upload." action_url=upload_contract_url action_label="Upload an agreement" class_name="dc-ds-empty--activation" %}
     {% endfor %}
   </div>
   {% endif %}

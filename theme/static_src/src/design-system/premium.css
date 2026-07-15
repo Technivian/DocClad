@@ -2,24 +2,111 @@
    Gives legacy Django pages the same spatial and surface system while they
    migrate to dc-ds primitives. Full-bleed workspaces keep their own frames. */
 
-html { background: var(--ds-color-canvas); }
+html { background: var(--paper); }
 
 body[data-design-system="casefile"] {
-  color: var(--ds-color-text);
-  font-family: var(--ds-font-sans);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 body[data-design-system="casefile"] .main-area {
-  background: var(--ds-color-canvas);
+  background: var(--paper);
 }
 
 body[data-design-system="casefile"] .main-area > .top-bar {
-  border-bottom-color: var(--ds-color-border);
-  background: rgba(255, 255, 255, .97);
-  box-shadow: 0 1px 0 rgba(23, 26, 31, .02);
-  backdrop-filter: blur(12px);
+  min-height: var(--space-96);
+  height: var(--space-96);
+  flex-basis: var(--space-96);
+  flex-shrink: 0;
+  gap: var(--space-16);
+  padding: 0 var(--space-24) 0 var(--space-32);
+  border: 0;
+  background: var(--card);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body[data-design-system="casefile"] .topbar-page-context {
+  min-width: 260px;
+  max-width: 540px;
+  flex: 1 1 540px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-title:empty) {
+  display: none;
+}
+
+body[data-design-system="casefile"] .topbar-page-title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-brand-foundation);
+  font: var(--text-display);
+  letter-spacing: -.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-design-system="casefile"] .topbar-page-subtitle {
+  margin: var(--space-4) 0 0;
+  overflow: hidden;
+  color: var(--ink-500);
+  font: var(--text-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar > .topbar-page-context + .topbar-flex {
+  min-width: 220px;
+  max-width: 320px;
+  flex: 0 1 320px;
+  margin-left: auto;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .global-search-form {
+  width: 100%;
+  max-width: 320px;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .global-search-input {
+  height: 48px;
+  padding-left: 44px;
+  border-color: transparent !important;
+  background: var(--color-surface-soft) !important;
+  font-size: var(--font-size-small);
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar :is(.org-form, .org-label, .topbar-new-contract, a[title="Team"], .nav-icon-search) {
+  display: none;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .username-text {
+  display: inline;
+  color: var(--color-brand-foundation);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .profile-caret {
+  display: block;
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .nav-icon-link {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+}
+
+body[data-design-system="casefile"] .main-area > .top-bar .nav-icon-link:hover {
+  background: var(--color-surface-soft);
 }
 
 body[data-design-system="casefile"] .main-content-pad {
@@ -29,9 +116,9 @@ body[data-design-system="casefile"] .main-content-pad {
 body[data-design-system="casefile"] .page-wrap {
   box-sizing: border-box;
   width: 100%;
-  max-width: var(--ds-page-max);
+  max-width: var(--page-max-width);
   margin-inline: auto;
-  padding: var(--ds-page-top) var(--ds-page-x) var(--ds-page-bottom);
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
 }
 
 body[data-design-system="casefile"] .page-wrap.page-wrap-fluid {
@@ -41,7 +128,7 @@ body[data-design-system="casefile"] .page-wrap.page-wrap-fluid {
 body[data-design-system="casefile"] .dc-ds-page {
   box-sizing: border-box;
   width: 100%;
-  padding: var(--ds-page-top) var(--ds-page-x) var(--ds-page-bottom);
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
 }
 
 body[data-design-system="casefile"] .page-wrap:is(.contract-form-page, .dpa-workflow-page, .msa-workflow-page, .nda-workflow-page) {
@@ -49,60 +136,78 @@ body[data-design-system="casefile"] .page-wrap:is(.contract-form-page, .dpa-work
 }
 
 body[data-design-system="casefile"] :is(.arch-header, .page-header) {
-  gap: 16px 24px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--ds-color-border);
+  gap: var(--space-16) var(--space-24);
+  margin-bottom: var(--space-24);
+  padding-bottom: var(--space-20);
+  border-bottom: 1px solid var(--line);
 }
 
 body[data-design-system="casefile"] :is(.arch-title, .page-title) {
-  color: var(--ds-color-text);
-  font-size: 28px;
-  line-height: 36px;
-  font-weight: 650;
+  color: var(--ink-900);
+  font: var(--text-display);
   letter-spacing: 0;
 }
 
 body[data-design-system="casefile"] :is(.arch-subtitle, .page-subtitle) {
   max-width: 840px;
-  color: var(--ds-color-text-secondary);
-  font-size: 14px;
-  line-height: 22px;
+  color: var(--ink-500);
+  font: var(--text-small);
 }
 
-body[data-design-system="casefile"] :is(.panel, .card-l1, .card-l2, .dc-ds-surface:not(.dc-ds-surface--expressive):not(.dc-ds-surface--feature)) {
-  border-color: var(--ds-color-border);
-  background: var(--ds-color-surface);
-  box-shadow: var(--ds-surface-shadow);
+body[data-design-system="casefile"] :is(.panel, .card, .card-l1, .summary-card, .kpi-card, .ad-card, .dc-ds-surface:not(.dc-ds-surface--feature)) {
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+body[data-design-system="casefile"] :is(.card-l2, .card-l3, .summary-row) {
+  border-color: var(--line);
+  border-radius: var(--radius-card);
+  background: var(--well);
+  box-shadow: none;
 }
 
 body[data-design-system="casefile"] :is(.panel-head, .card-header, .dc-ds-surface__head) {
-  border-bottom-color: var(--ds-color-border);
+  border-bottom-color: var(--line);
+  padding: var(--space-20) var(--space-24);
 }
 
-body[data-design-system="casefile"] :is(.btn-cta, .btn-quiet, .btn-primary-grad, .dc-ds-button) {
-  min-height: var(--ds-control-height);
-  border-radius: var(--ds-radius-md);
+body[data-design-system="casefile"] :is(.panel-inner, .panel-body, .card-body, .dc-ds-surface__body) {
+  padding: var(--space-24);
+}
+
+body[data-design-system="casefile"] :is(.btn, .btn-cta, .btn-soft, .btn-quiet, .btn-primary-grad, .dc-ds-button) {
+  min-height: var(--control-height);
+  border-radius: var(--radius-control);
   font-weight: 650;
-  transition: color var(--ds-motion-fast) var(--ds-ease-standard), background-color var(--ds-motion-fast) var(--ds-ease-standard), border-color var(--ds-motion-fast) var(--ds-ease-standard), box-shadow var(--ds-motion-fast) var(--ds-ease-standard), transform var(--ds-motion-fast) var(--ds-ease-standard);
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary) {
-  box-shadow: 0 1px 2px rgba(23, 107, 77, .18);
+  border-color: var(--seal);
+  background: var(--seal);
+  color: var(--clmone-white);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--seal-dark) 18%, transparent);
 }
 
 body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary):hover {
-  box-shadow: 0 4px 12px rgba(23, 107, 77, .16);
+  border-color: var(--seal-dark);
+  background: var(--seal-dark);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--seal-dark) 16%, transparent);
   transform: translateY(-1px);
 }
 
 body[data-design-system="casefile"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
-  border-radius: var(--ds-radius-md);
-  transition: border-color var(--ds-motion-fast) var(--ds-ease-standard), box-shadow var(--ds-motion-fast) var(--ds-ease-standard), background-color var(--ds-motion-fast) var(--ds-ease-standard);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-900);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 
 body[data-design-system="casefile"] :is(input, select):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]) {
-  min-height: var(--ds-control-height);
+  min-height: var(--control-height);
 }
 
 body[data-design-system="casefile"] :is(table, .dc-ds-table) {
@@ -111,15 +216,15 @@ body[data-design-system="casefile"] :is(table, .dc-ds-table) {
 
 body[data-design-system="casefile"] :is(th, .dc-ds-table th) {
   height: 42px;
-  background: #FAFBFB;
-  color: var(--ds-color-text-muted);
-  font-size: 11px;
+  background: var(--color-surface-table-head);
+  color: var(--ink-500);
+  font-size: var(--font-size-eyebrow);
   font-weight: 650;
   letter-spacing: 0;
 }
 
 body[data-design-system="casefile"] :is(tbody tr, .dc-ds-table tbody tr) {
-  transition: background-color var(--ds-motion-fast) var(--ds-ease-standard);
+  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 body[data-design-system="casefile"] .ctp-page {
@@ -143,23 +248,23 @@ body[data-design-system="casefile"] .ctp-entry-card {
   gap: 12px;
   padding: 16px;
   border-top-width: 1px;
-  border-color: var(--ds-color-border);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-surface-shadow);
+  border-color: var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  box-shadow: var(--shadow-card);
 }
 
 body[data-design-system="casefile"] .ctp-entry-card:hover {
-  border-color: #B9DFCE;
-  background: #FFFFFF;
-  box-shadow: var(--ds-surface-shadow-hover);
+  border-color: var(--color-status-success-border);
+  background: var(--card);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-2px);
 }
 
 body[data-design-system="casefile"] .ctp-entry-icon {
   width: 36px;
   height: 36px;
-  border-radius: var(--ds-radius-md);
-  background: var(--ds-color-action-soft);
+  border-radius: var(--radius-control);
+  background: var(--seal-bg);
 }
 
 body[data-design-system="casefile"] .ctp-entry-icon svg {
@@ -176,24 +281,142 @@ body[data-design-system="casefile"] .ctp-entry-title {
 
 body[data-design-system="casefile"] .ctp-entry-desc {
   min-height: 0;
-  color: var(--ds-color-text-secondary);
+  color: var(--ink-500);
   font-size: 13px;
   line-height: 18px;
 }
 
 body[data-design-system="casefile"] .ctp-entry-meta {
-  gap: 6px;
+  gap: var(--space-8);
   margin-top: auto;
-  padding: 10px 12px;
-  border: 1px solid var(--ds-color-border);
-  background: var(--ds-color-surface-muted);
+  padding: var(--space-12) 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  background: transparent;
 }
 
 body[data-design-system="casefile"] .ctp-entry-cta {
+  width: fit-content;
   min-height: 36px;
   margin-top: 0;
   padding-inline: 12px;
-  box-shadow: 0 1px 2px rgba(23, 107, 77, .16);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--seal-dark) 16%, transparent);
+}
+
+/* Repository-wide compatibility contract. Product pages may keep their
+   information architecture, but shell spacing, hierarchy, surfaces, controls,
+   tables, and semantic state all resolve to the Command Center system. */
+body[data-design-system="casefile"] .main-content-pad {
+  width: 100%;
+  min-width: 0;
+  background: var(--paper);
+}
+
+body[data-design-system="casefile"] .main-content-pad > :is(.max-w-2xl, .max-w-3xl, .max-w-lg, .ad-container) {
+  box-sizing: border-box;
+  width: calc(100% - (2 * var(--page-padding-x)));
+  margin-inline: auto;
+}
+
+body[data-design-system="casefile"] .main-content-pad > :is(.max-w-2xl, .max-w-3xl, .max-w-lg) {
+  margin-top: var(--page-padding-top);
+  margin-bottom: var(--page-padding-bottom);
+}
+
+body[data-design-system="casefile"] :is(.panel-title, .card-title, .summary-title, .section-header) {
+  color: var(--ink-900);
+  font: var(--text-heading);
+  letter-spacing: 0;
+}
+
+body[data-design-system="casefile"] :is(.panel-subtitle, .card-subtitle, .summary-subtitle, .section-subtitle) {
+  color: var(--ink-500);
+  font: var(--text-small);
+}
+
+body[data-design-system="casefile"] :is(.kpi-grid, .summary-grid, .stats-grid, .metrics-grid) {
+  gap: var(--space-16);
+}
+
+body[data-design-system="casefile"] :is(.kpi-card, .summary-card) {
+  padding: var(--space-16);
+}
+
+body[data-design-system="casefile"] :is(.arch-toolbar, .filter-bar, .filters-bar, .toolbar) {
+  gap: var(--space-8);
+  border-color: var(--line);
+}
+
+body[data-design-system="casefile"] :is(.arch-tabs, .tabs, .tab-list) {
+  border-color: var(--line);
+}
+
+body[data-design-system="casefile"] :is(.chip-active, .arch-chip.chip-active, .arch-status-tab.tab-active, .arch-tab.tab-active, .tab-active, [role="tab"][aria-selected="true"]) {
+  border-color: var(--color-control-selected-border);
+  background: var(--color-control-selected-bg);
+  color: var(--color-control-selected-text);
+  box-shadow: none;
+}
+
+body[data-design-system="casefile"] :is(.badge-success, .badge-green, .status-success, .status-clear) {
+  border-color: var(--color-status-success-border);
+  background: var(--status-positive-bg);
+  color: var(--status-positive-fg);
+}
+
+body[data-design-system="casefile"] :is(.badge-warning, .badge-yellow, .status-warning, .status-pending, .status-setup) {
+  border-color: var(--color-status-warning-border);
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+}
+
+body[data-design-system="casefile"] :is(.badge-danger, .badge-red, .status-danger, .status-error, .status-critical) {
+  border-color: var(--color-status-error-border);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-fg);
+}
+
+body[data-design-system="casefile"] :is(.badge-info, .badge-blue, .status-info, .status-progress) {
+  border-color: var(--color-status-info-border);
+  background: var(--status-progress-bg);
+  color: var(--status-progress-fg);
+}
+
+body[data-design-system="casefile"] :is(.badge-neutral, .badge-gray, .status-neutral) {
+  border-color: var(--color-status-neutral-border);
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-fg);
+}
+
+body[data-design-system="casefile"] :is(.table-container, .table-wrap, .panel-table, .dc-ds-table-wrap) {
+  max-width: 100%;
+  overflow-x: auto;
+  border-color: var(--line);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+}
+
+body[data-design-system="casefile"] :is(.empty-state, .dc-ds-empty) {
+  color: var(--ink-500);
+}
+
+body[data-design-system="casefile"] :is(.empty-state-title, .dc-ds-empty__title) {
+  color: var(--ink-900);
+}
+
+body[data-design-system="casefile"] :is(.arch-workspace-grid, .arch-detail-grid) {
+  gap: var(--grid-gutter);
+}
+
+body[data-design-system="casefile"] :is(.arch-context-rail, .dc-ds-rail) {
+  gap: var(--space-16);
+}
+
+body[data-design-system="casefile"] :is(.modal, .dialog, .drawer, [role="dialog"]) {
+  border-color: var(--line);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-overlay);
 }
 
 @media (max-width: 1024px) {
@@ -201,6 +424,18 @@ body[data-design-system="casefile"] .ctp-entry-cta {
     --page-padding-x: var(--space-24);
     --page-padding-top: var(--space-24);
     --page-padding-bottom: var(--space-48);
+  }
+
+  body[data-design-system="casefile"] .main-area > .top-bar {
+    padding-inline: var(--space-24);
+  }
+
+  body[data-design-system="casefile"] .topbar-page-context {
+    min-width: 220px;
+  }
+
+  body[data-design-system="casefile"] .main-area > .top-bar > .topbar-page-context + .topbar-flex {
+    max-width: 280px;
   }
 }
 
@@ -217,8 +452,44 @@ body[data-design-system="casefile"] .ctp-entry-cta {
   }
 
   body[data-design-system="casefile"] :is(.arch-title, .page-title) {
-    font-size: 24px;
-    line-height: 31px;
+    font: var(--text-title);
+  }
+
+  body[data-design-system="casefile"] .main-content-pad > :is(.max-w-2xl, .max-w-3xl, .max-w-lg, .ad-container) {
+    width: calc(100% - (2 * var(--space-16)));
+  }
+
+  body[data-design-system="casefile"] .main-area > .top-bar {
+    min-height: 64px;
+    height: 64px;
+    flex-basis: 64px;
+    gap: var(--space-8);
+    padding-inline: var(--space-16);
+  }
+
+  body[data-design-system="casefile"] .topbar-page-context {
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
+  body[data-design-system="casefile"] .topbar-page-title {
+    font: var(--text-section);
+  }
+
+  body[data-design-system="casefile"] .topbar-page-subtitle,
+  body[data-design-system="casefile"] .main-area > .top-bar > .topbar-page-context + .topbar-flex,
+  body[data-design-system="casefile"] .main-area > .top-bar :is(a[title="Settings"], .username-text, .profile-caret) {
+    display: none;
+  }
+
+  body[data-design-system="casefile"] .main-area > .top-bar .topbar-gap-sm {
+    gap: var(--space-4);
+  }
+
+  body[data-design-system="casefile"] :is(.panel-head, .card-header, .dc-ds-surface__head),
+  body[data-design-system="casefile"] :is(.panel-inner, .panel-body, .card-body, .dc-ds-surface__body) {
+    padding: var(--space-16);
   }
 
   body[data-design-system="casefile"] .topbar-new-contract {

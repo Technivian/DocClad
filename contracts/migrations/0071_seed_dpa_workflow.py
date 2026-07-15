@@ -117,7 +117,7 @@ DPA_TEMPLATE_NAME = 'Standard Data Processing Agreement'
 
 DPA_TEMPLATE_BODY_ENRICHED = (
     'DATA PROCESSING AGREEMENT\n\n'
-    'This Data Processing Agreement ("DPA") is entered into between DocClad B.V. '
+    'This Data Processing Agreement ("DPA") is entered into between CLM One B.V. '
     '("Controller") and {{counterparty}} ("Processor"), effective {{effective_date}}.\n\n'
     '1. Subject Matter. Processor will process personal data solely on behalf of Controller and only '
     'for the following purposes: {{processing_purpose}}.\n\n'

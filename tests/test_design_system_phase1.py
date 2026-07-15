@@ -12,7 +12,7 @@ class DesignSystemPhaseOneTests(SimpleTestCase):
         cls.root = Path(settings.BASE_DIR)
         cls.theme = cls.root / 'theme'
         cls.canonical = (
-            cls.theme / 'static' / 'css' / 'docclad-tokens.css'
+            cls.theme / 'static' / 'css' / 'clmone-tokens.css'
         ).read_text()
 
     def test_all_ds_consumers_resolve_through_canonical_aliases(self):
@@ -39,13 +39,13 @@ class DesignSystemPhaseOneTests(SimpleTestCase):
             self.theme / 'static_src' / 'src' / 'design-system' / 'tokens.css'
         ).read_text()
         self.assertIsNone(re.search(r'^\s*--ds-[a-z0-9-]+\s*:', adapter, re.MULTILINE))
-        self.assertIn('docclad-tokens.css', adapter)
+        self.assertIn('clmone-tokens.css', adapter)
 
     def test_aliases_load_before_every_compiled_consumer(self):
         for template_name in ('base.html', 'base_fullscreen.html'):
             template = (self.theme / 'templates' / template_name).read_text()
             self.assertLess(
-                template.index("css/docclad-tokens.css"),
+                template.index("css/clmone-tokens.css"),
                 template.index("css/dist/styles.css"),
                 template_name,
             )
@@ -103,8 +103,10 @@ class DesignSystemPhaseOneTests(SimpleTestCase):
         architecture = (
             self.root / 'docs' / 'design-system' / 'ARCHITECTURE.md'
         ).read_text()
-        self.assertIn('docclad-tokens.css', architecture)
+        self.assertIn('clmone-tokens.css', architecture)
         self.assertIn('.dc-ds-*', architecture)
         self.assertIn('premium.css', architecture)
         self.assertIn('Phase 1 — foundation', architecture)
-        self.assertIn('approved Command Center is a visual-quality reference', architecture)
+        self.assertIn('production Command Center is the visual and layout reference', architecture)
+        self.assertIn('source of truth for visual quality', architecture)
+        self.assertIn('layout rules', architecture)

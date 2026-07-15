@@ -1,12 +1,12 @@
 {% extends 'base_fullscreen.html' %}
 {% load static %}
 
-{% block title %}Sign in – DocClad{% endblock %}
+{% block title %}Sign in – CLM One{% endblock %}
 
 {% block body %}
 <div class="dc-ds-auth-shell">
-    <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="DocClad home">
-        <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad">
+    <a class="dc-ds-auth-brand" href="{% url 'index' %}" aria-label="CLM One home">
+        <img src="{% static 'img/brand/clmone-logo-primary.svg' %}" alt="CLM One">
     </a>
 
     <section class="dc-ds-auth-context" aria-labelledby="auth-context-title">
@@ -85,7 +85,7 @@
                 </a>
             </div>
 
-            <p class="dc-ds-auth-access">Need a DocClad workspace? <a href="{% url 'register' %}" class="dc-ds-auth-link">Create workspace</a></p>
+            <p class="dc-ds-auth-access">Need a CLM One workspace? <a href="{% url 'register' %}" class="dc-ds-auth-link">Create workspace</a></p>
 
             <div class="dc-ds-auth-trust">
                 {% include "design_system/icon.html" with name="shield" %}

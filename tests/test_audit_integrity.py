@@ -37,7 +37,7 @@ def _tamper_permitted():
     Uses SET LOCAL session_replication_role = 'replica', which disables all
     user-defined triggers for the current transaction only. Requires the test
     DB user to have the REPLICATION attribute or superuser — always true for
-    the DocClad test database owner. This path is unavailable to the
+    the CLM One test database owner. This path is unavailable to the
     production application role, which holds only DML privileges.
     Use only in verifier tests that must simulate a tampered audit chain.
     """

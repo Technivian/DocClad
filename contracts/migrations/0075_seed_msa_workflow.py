@@ -91,7 +91,7 @@ DEMO_CLAUSES = [
 
 MSA_TEMPLATE_BODY_ENRICHED = (
     'MASTER SERVICES AGREEMENT\n\n'
-    'This Master Services Agreement is entered into between DocClad B.V. and {{counterparty}} as of {{effective_date}}.\n\n'
+    'This Master Services Agreement is entered into between CLM One B.V. and {{counterparty}} as of {{effective_date}}.\n\n'
     '1. Services\n'
     'Supplier shall provide the services described in {{services_description}} and any applicable Statement of Work.\n\n'
     '2. Fees and Payment\n'

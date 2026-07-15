@@ -23,7 +23,10 @@
       </tr>
       {% empty %}
       <tr>
-        <td colspan="6">{% include "design_system/empty_state.html" with title="No webhook deliveries yet." %}</td>
+        <td colspan="6">
+          {% url 'organization_identity_settings' as identity_settings_url %}
+          {% include "design_system/empty_state.html" with icon="workflow" title="No webhook deliveries yet" reason="No configured endpoint has received an outbound integration event." how="Delivery attempts appear here when CLM One emits a subscribed event to an active webhook." action_url=identity_settings_url action_label="Review webhook settings" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>

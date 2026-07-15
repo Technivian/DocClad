@@ -8,7 +8,7 @@ on:
 
 jobs:
   forbidden-brand-check:
-    name: Forbidden-brand scan (DocClad)
+    name: Forbidden-brand scan (CLM One)
     runs-on: ubuntu-latest
     timeout-minutes: 2
 

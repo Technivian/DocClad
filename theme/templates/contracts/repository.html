@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Repository – DocClad{% endblock %}
+{% block title %}Repository – CLM One{% endblock %}
+{% block authenticated_page_title %}Contracts{% endblock %}
+{% block authenticated_page_subtitle %}Repository, workflow queues, and governed contract records.{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
@@ -14,6 +16,7 @@
      an existing, deliberate choice for this page, preserved through the
      migration rather than switched to .dc-ds-surface's default shadow. */
   .repo-page .dc-ds-surface { box-shadow: none; }
+  .repo-page .repo-views-card { overflow: hidden; }
 
   /* Sticky header needs an opaque fill so rows don't bleed through, and a
      scroll container so 8 columns don't silently clip under ~1550px
@@ -44,33 +47,11 @@
      CSP-clean (inline style attributes can't carry a nonce). */
   .repo-page .repo-muted-text { color: var(--text-muted); }
 
-  /* Status filter + saved-view chips: hairline pills, active = ink fill
-     (one active-chip language for the whole views rail). No canonical
-     equivalent exists for this exact toggle-chip contract, and the JS
-     toggles `.chip-active` directly, so this stays page-owned. */
-  .repo-page .repo-status-filter,
-  .repo-page .repo-saved-view {
-    border-radius: 9999px; background: transparent; border: 1px solid var(--border);
-    color: var(--text-secondary); padding: 5px 12px; font-size: 12px; font-weight: 600;
-  }
-  .repo-page .repo-status-filter:hover,
-  .repo-page .repo-saved-view:hover { border-color: var(--text-muted); color: var(--text-primary); }
-  .repo-page .repo-status-filter.chip-active,
-  .repo-page .repo-status-filter.chip-active:hover,
-  .repo-page .repo-saved-view.chip-active,
-  .repo-page .repo-saved-view.chip-active:hover {
-    background: var(--text-primary); border-color: var(--text-primary); color: var(--card-bg);
-  }
+  .repo-page .repo-empty-state { border: 0; }
 
-  /* Secondary toolbar links: quiet outlined 8px chips */
-  .repo-page .workspace-toolbar .btn-ghost {
-    border-radius: 8px; background: transparent;
-    border: 1px solid var(--border); color: var(--text-secondary);
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .repo-page .workspace-toolbar .btn-ghost:hover {
-    border-color: var(--text-muted); color: var(--text-primary);
-  }
+  /* The repository's contextual links reuse the shared quiet-button
+     treatment; their wrapping is the page's only layout concern. */
+  .repo-page .repo-toolbar { justify-content: flex-start; margin: 0; }
 
   /* Bulk-bar / pagination mini buttons: 8px radius controls */
   .repo-page .repo-mini-btn { border-radius: 8px; }
@@ -78,102 +59,74 @@
   /* Search + sort controls stay flat */
   .repo-page .input-base, .repo-page .select-base { box-shadow: none; }
 
-  /* "Expiring 30d" metric tile: the one KPI that needs a semantic tone.
-     .dc-ds-metric has no built-in tone modifier, so this is the one
-     requirement .dc-ds-* can't reasonably express — token-backed, not
-     hardcoded hex. */
-  .repo-page .dc-ds-metric.is-attention {
-    background: var(--status-pending-bg);
-    border-color: #ECD8B3;
-  }
-  .repo-page .dc-ds-metric.is-attention .dc-ds-metric__label,
-  .repo-page .dc-ds-metric.is-attention .dc-ds-metric__value {
-    color: var(--status-pending-fg);
-  }
-
-  /* .dc-ds-metric-grid's own breakpoint (1100px) collapses to one column —
-     tuned for narrower two-column scaffolds elsewhere. Repository's rail is
-     only 220px, so the main content area still has room for four short KPI
-     tiles well below 1100px; keep them in a row until the page's own
-     rail-stacking breakpoint (700px) takes over. */
-  @media (min-width: 701px) {
-    .repo-page .dc-ds-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  }
-
   @media (max-width: 700px) {
-    .repo-page .workspace-main { order: 1; }
-    .repo-page .views-rail { order: 2; }
-    .repo-page .workspace-main-head { align-items: stretch; flex-direction: column; gap: 16px; }
-    .repo-page .workspace-tools { width: 100%; }
-    .repo-page .workspace-tools .btn-primary-grad { width: 100%; justify-content: center; }
+    .repo-page .repo-toolbar { width: 100%; }
+    .repo-page .repo-toolbar .dc-ds-button { flex: 1 1 auto; }
   }
 </style>
-<div class="page-wrap page-wrap-fluid repo-page">
-    <div class="workspace-split">
-        <aside class="views-rail">
-            <div class="views-rail-head">
-                <p class="views-rail-title">Repository views</p>
-                <button type="button" data-action="save-view" class="btn-ghost text-xs px-2 py-1">Save view</button>
-            </div>
-            <div class="views-rail-list">
-                <button type="button" class="views-rail-link active" data-rail-view="all"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></button>
-                <button type="button" class="views-rail-link" data-rail-view="active"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></button>
-                <button type="button" class="views-rail-link" data-rail-view="draft"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></button>
-                <button type="button" class="views-rail-link" data-rail-view="expiring_30d"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></button>
-            </div>
-            <section class="dc-ds-surface mt-4" aria-labelledby="repo-saved-views-title">
-                <div class="dc-ds-surface__head">
-                    <h2 class="dc-ds-surface__title" id="repo-saved-views-title">Saved views</h2>
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow repo-page">
+    <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
+        <aside class="dc-ds-scaffold__rail">
+            <div class="repo-views-card dc-ds-surface">
+                <div class="dc-ds-rail-section">
+                <div class="views-rail-head dc-ds-rail-section__head">
+                    <p class="dc-ds-rail-section__title">Repository views</p>
+                    <button type="button" data-action="save-view" class="btn-ghost text-xs px-2 py-1">Save view</button>
                 </div>
-                <div class="dc-ds-surface__body">
+                <div class="views-rail-list dc-ds-rail-section__body">
+                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail active" data-rail-view="all" aria-pressed="true"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></button>
+                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="active" aria-pressed="false"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></button>
+                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="draft" aria-pressed="false"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></button>
+                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="expiring_30d" aria-pressed="false"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></button>
+                </div>
+                </div>
+                <section class="dc-ds-rail-section" aria-labelledby="repo-saved-views-title">
+                <div class="dc-ds-rail-section__head">
+                    <h2 class="dc-ds-rail-section__title" id="repo-saved-views-title">Saved views</h2>
+                </div>
+                <div class="dc-ds-rail-section__body">
                     <div id="saved-views"></div>
                 </div>
-            </section>
-            <section class="dc-ds-surface mt-4" aria-labelledby="repo-status-filters-title">
-                <div class="dc-ds-surface__head">
-                    <h2 class="dc-ds-surface__title" id="repo-status-filters-title">Status filters</h2>
+                </section>
+                <section class="dc-ds-rail-section" aria-labelledby="repo-status-filters-title">
+                <div class="dc-ds-rail-section__head">
+                    <h2 class="dc-ds-rail-section__title" id="repo-status-filters-title">Status filters</h2>
                 </div>
-                <div class="dc-ds-surface__body flex flex-wrap gap-2">
-                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="">All</button>
-                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="ACTIVE">Active</button>
-                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="DRAFT">Draft</button>
-                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="PENDING">Pending</button>
-                    <button type="button" class="repo-mini-btn repo-status-filter" data-status-filter="EXPIRED">Expired</button>
+                <div class="dc-ds-rail-section__body flex flex-wrap gap-2">
+                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="" aria-pressed="true">All</button>
+                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="ACTIVE" aria-pressed="false">Active</button>
+                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="DRAFT" aria-pressed="false">Draft</button>
+                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="PENDING" aria-pressed="false">Pending</button>
+                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="EXPIRED" aria-pressed="false">Expired</button>
                 </div>
-            </section>
+                </section>
+            </div>
         </aside>
 
-        <section class="workspace-main">
-            <div class="workspace-main-head">
-                <div>
-                    <h1 class="workspace-title">Repository Control Center</h1>
-                    <p class="workspace-subtitle">Operational scan view for active paper, incoming versions, and exception-ready documents.</p>
+        <section class="dc-ds-scaffold__main dc-ds-page-flow">
+            <div class="dc-ds-page-actions">
+                <div class="dc-ds-actions repo-toolbar">
+                    <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--ghost">Workflow</a>
+                    <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-button dc-ds-button--ghost">Approvals</a>
+                    <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button dc-ds-button--ghost">Signatures</a>
+                    <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Risks</a>
+                    <a href="{% url 'contracts:audit_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Audit</a>
                 </div>
-                <div class="workspace-tools">
-                    <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
-                        {% include "design_system/icon.html" with name="upload" class_name="w-4 h-4" %}
-                        Upload Document
-                    </a>
-                </div>
+                <a href="{% url 'contracts:document_create' %}" class="dc-ds-button dc-ds-button--primary">
+                    {% include "design_system/icon.html" with name="upload" %}
+                    Upload document
+                </a>
             </div>
 
-            <div class="workspace-toolbar">
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Workflow Board</a>
-                <a href="{% url 'contracts:approval_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Approvals Queue</a>
-                <a href="{% url 'contracts:signature_request_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Signature Queue</a>
-                <a href="{% url 'contracts:risk_log_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Risk Register</a>
-                <a href="{% url 'contracts:audit_log_list' %}" class="px-2.5 py-1 text-xs rounded-md border btn-ghost">Audit Trail</a>
-            </div>
-
-            <div class="panel-inner">
-                <div class="dc-ds-metric-grid mb-6">
-                    {% include "design_system/metric_card.html" with label="Total Contracts" value=total_documents %}
-                    {% include "design_system/metric_card.html" with label="Active" value=active_documents %}
-                    {% include "design_system/metric_card.html" with label="Draft" value=draft_documents %}
-                    {% include "design_system/metric_card.html" with label="Expiring 30d" value=expiring_documents class_name="is-attention" %}
+            <div class="dc-ds-page-flow">
+                <div class="dc-ds-summary" aria-label="Contract repository summary">
+                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Total contracts</span><strong class="dc-ds-summary__value">{{ total_documents }}</strong></div>
+                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Active</span><strong class="dc-ds-summary__value">{{ active_documents }}</strong></div>
+                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Draft</span><strong class="dc-ds-summary__value">{{ draft_documents }}</strong></div>
+                    <div class="dc-ds-summary__item {% if expiring_documents %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}"><span class="dc-ds-summary__label">Expiring in 30 days</span><strong class="dc-ds-summary__value">{% if expiring_documents %}{{ expiring_documents }} to review{% else %}Clear{% endif %}</strong></div>
                 </div>
 
-                <div class="rounded-xl border p-4 mb-4 u-panel-canvas">
+                <div class="dc-ds-filterbar">
                     <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
                         <div class="xl:col-span-7 relative min-w-0">
                             {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
@@ -236,5 +189,5 @@
     <div id="details-drawer" class="repo-drawer"></div>
 </div>
 
-<script src="{% static 'js/docclad-repository.js' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}"></script>
+<script src="{% static 'js/clmone-repository.js' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}"></script>
 {% endblock %}

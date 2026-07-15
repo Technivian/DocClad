@@ -4,12 +4,23 @@ import hashlib
 import hmac
 import json
 from datetime import timedelta
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from django.db.models import Q
 from django.utils import timezone
 
 from contracts.models import WebhookDelivery, WebhookEndpoint
+from contracts.services.outbound_urls import setting_host_allowlist, validate_public_https_url
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def urlopen(request, timeout):
+    """Issue validated webhook requests without following unvalidated redirects."""
+    return build_opener(_NoRedirectHandler).open(request, timeout=timeout)
 
 
 def queue_webhook_event(*, organization, event_type: str, payload: dict):
@@ -39,9 +50,9 @@ def _webhook_headers(delivery: WebhookDelivery, body: bytes):
     secret = (delivery.endpoint.secret or '').encode('utf-8')
     if secret:
         signature = hmac.new(secret, body, hashlib.sha256).hexdigest()
-        headers['X-DOCCLAD-SIGNATURE'] = f'sha256={signature}'
-    headers['X-DOCCLAD-EVENT'] = delivery.event_type
-    headers['X-DOCCLAD-DELIVERY-ID'] = str(delivery.id)
+        headers['X-CLMONE-SIGNATURE'] = f'sha256={signature}'
+    headers['X-CLMONE-EVENT'] = delivery.event_type
+    headers['X-CLMONE-DELIVERY-ID'] = str(delivery.id)
     return headers
 
 
@@ -51,13 +62,18 @@ def dispatch_webhook_delivery(delivery: WebhookDelivery):
 
     delivery.attempt_count = int(delivery.attempt_count or 0) + 1
     body = json.dumps(delivery.payload or {}).encode('utf-8')
-    request = Request(
-        delivery.endpoint.url,
-        data=body,
-        headers=_webhook_headers(delivery, body),
-        method='POST',
-    )
     try:
+        endpoint_url = validate_public_https_url(
+            delivery.endpoint.url,
+            label='Webhook endpoint URL',
+            allowed_hosts=setting_host_allowlist('OUTBOUND_WEBHOOK_ALLOWED_HOSTS'),
+        )
+        request = Request(
+            endpoint_url,
+            data=body,
+            headers=_webhook_headers(delivery, body),
+            method='POST',
+        )
         with urlopen(request, timeout=10) as response:
             response_body = response.read().decode('utf-8', errors='replace')[:4000]
             status_code = int(getattr(response, 'status', 200))

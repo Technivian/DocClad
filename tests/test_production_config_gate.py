@@ -22,13 +22,15 @@ _VALID_ENV = {
     'DJANGO_ENV': 'production',
     'DJANGO_DEBUG': 'false',
     'DJANGO_SECRET_KEY': _STRONG_SECRET,
-    'ALLOWED_HOSTS': 'docclad.example.com',
-    'CSRF_TRUSTED_ORIGINS': 'https://docclad.example.com',
-    'DEFAULT_FROM_EMAIL': 'ops@docclad.example.com',
-    'DATABASE_URL': 'postgres://u:p@db.example.com:5432/docclad',
+    'ALLOWED_HOSTS': 'clmone.example.com',
+    'CSRF_TRUSTED_ORIGINS': 'https://clmone.example.com',
+    'DEFAULT_FROM_EMAIL': 'ops@clmone.example.com',
+    'DATABASE_URL': 'postgres://u:p@db.example.com:5432/clmone',
     'DB_SSL_REQUIRE': 'false',
     'MEDIA_STORAGE_BACKEND': 's3',
-    'AWS_STORAGE_BUCKET_NAME': 'docclad-pilot-bucket',
+    'AWS_STORAGE_BUCKET_NAME': 'clmone-pilot-bucket',
+    'APP_BASE_URL': 'https://app.clmone.example.com',
+    'OPERATOR_ALERT_EMAIL': 'operator@clmone.example.com',
     'GEMINI_API_KEY': '',
     'STRIPE_SECRET_KEY': '',
     # Sub-block D: a real deployed instance always has this set (Render sets
@@ -81,13 +83,33 @@ class ProductionRejectsUnsafeConfig(SimpleTestCase):
         self._assert_rejected({'CSRF_TRUSTED_ORIGINS': ''}, 'CSRF_TRUSTED_ORIGINS must be set')
 
     def test_rejects_default_from_email(self):
-        self._assert_rejected({'DEFAULT_FROM_EMAIL': 'noreply@docclad.local'}, 'DEFAULT_FROM_EMAIL must be set')
+        self._assert_rejected({'DEFAULT_FROM_EMAIL': 'noreply@clmone.local'}, 'DEFAULT_FROM_EMAIL must be set')
 
     def test_rejects_ephemeral_media(self):
         self._assert_rejected({'MEDIA_STORAGE_BACKEND': 'filesystem'}, 'durable object storage')
 
     def test_rejects_s3_without_bucket(self):
         self._assert_rejected({'AWS_STORAGE_BUCKET_NAME': ''}, 'AWS_STORAGE_BUCKET_NAME')
+
+    def test_rejects_non_https_app_base_url(self):
+        self._assert_rejected(
+            {'APP_BASE_URL': 'http://app.clmone.example.com'},
+            'APP_BASE_URL must be an absolute HTTPS',
+        )
+
+    def test_rejects_localhost_app_base_url(self):
+        self._assert_rejected(
+            {'APP_BASE_URL': 'https://localhost'},
+            'must not point to a local or non-public address',
+        )
+
+    def test_rejects_private_or_path_based_app_base_url(self):
+        for value in ('https://10.0.0.1', 'https://app.example.com/internal'):
+            with self.subTest(value=value):
+                self._assert_rejected({'APP_BASE_URL': value}, 'APP_BASE_URL must')
+
+    def test_rejects_missing_operator_alert_email(self):
+        self._assert_rejected({'OPERATOR_ALERT_EMAIL': ''}, 'OPERATOR_ALERT_EMAIL must be set')
 
 
 class ProductionAcceptsValidConfig(SimpleTestCase):
@@ -110,16 +132,7 @@ class ProductionAcceptsValidConfig(SimpleTestCase):
 
 
 class EmergencyBypassWarnings(SimpleTestCase):
-    """Bypass flags are allowed but must emit a high-severity warning."""
-
-    def test_ephemeral_media_bypass_warns(self):
-        r = _run(
-            {'MEDIA_STORAGE_BACKEND': 'filesystem', 'ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION': 'true'},
-            extra_args=('-W', 'always'),
-        )
-        self.assertEqual(r.returncode, 0, r.stderr[-400:])
-        self.assertIn('HIGH SEVERITY', r.stderr)
-        self.assertIn('ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION', r.stderr)
+    """The database bypass is exceptional and must remain noisy."""
 
     def test_sqlite_bypass_warns(self):
         r = _run(
@@ -150,33 +163,87 @@ class S3StorageOptionsValid(SimpleTestCase):
 
 
 class RenderDeploymentConfig(SimpleTestCase):
-    """render.yaml: worker/cron use production settings + shared production DB."""
+    """The CLM One Blueprint provisions one isolated, production-backed stack."""
 
     def setUp(self):
         with open(os.path.join(_REPO, 'render.yaml')) as fh:
             self.cfg = yaml.safe_load(fh)
         self.groups = {g['name']: g for g in self.cfg.get('envVarGroups', [])}
         self.services = {s['name']: s for s in self.cfg.get('services', [])}
+        self.databases = {d['name']: d for d in self.cfg.get('databases', [])}
 
     def _group_kv(self, name):
         return {e.get('key'): e.get('value') for e in self.groups[name]['envVars'] if 'key' in e}
 
-    def test_shared_group_sets_production_env_and_db(self):
-        kv = self._group_kv('docclad-shared')
+    def test_shared_group_contains_only_shareable_configuration(self):
+        group_name = 'clm-one-production-config'
+        kv = self._group_kv(group_name)
         self.assertEqual(kv.get('DJANGO_ENV'), 'production')
-        keys = {e.get('key') for e in self.groups['docclad-shared']['envVars']}
-        self.assertIn('DATABASE_URL', keys)
+        self.assertEqual(kv.get('MEDIA_STORAGE_BACKEND'), 's3')
+        for entry in self.groups[group_name]['envVars']:
+            self.assertNotEqual(entry.get('sync'), False)
+            self.assertNotIn('fromDatabase', entry)
+            self.assertNotIn('fromService', entry)
 
-    def test_worker_and_cron_reference_shared_group(self):
-        for svc in ('docclad-worker', 'docclad-cron-dispatch', 'docclad-cron-daily'):
+    def test_blueprint_provisions_private_database_and_cache(self):
+        database = self.databases['clm-one-production-postgres']
+        self.assertEqual(database['region'], 'frankfurt')
+        self.assertEqual(database['ipAllowList'], [])
+
+        cache = self.services['clm-one-production-cache']
+        self.assertEqual(cache['type'], 'keyvalue')
+        self.assertEqual(cache['region'], 'frankfurt')
+        self.assertEqual(cache['ipAllowList'], [])
+        self.assertEqual(cache['maxmemoryPolicy'], 'noeviction')
+
+    def test_all_application_services_share_config_and_datastores(self):
+        app_services = (
+            'clm-one-production-web',
+            'clm-one-production-worker',
+            'clm-one-production-cron-dispatch',
+            'clm-one-production-cron-daily',
+        )
+        for svc in app_services:
             self.assertIn(svc, self.services)
-            froms = {e.get('fromGroup') for e in self.services[svc]['envVars'] if 'fromGroup' in e}
-            self.assertIn('docclad-shared', froms, f'{svc} must inherit docclad-shared (prod DB+settings)')
+            env = self.services[svc]['envVars']
+            froms = {entry.get('fromGroup') for entry in env if 'fromGroup' in entry}
+            self.assertIn('clm-one-production-config', froms)
+            by_key = {entry.get('key'): entry for entry in env if entry.get('key')}
+            self.assertEqual(
+                by_key['DATABASE_URL']['fromDatabase'],
+                {'name': 'clm-one-production-postgres', 'property': 'connectionString'},
+            )
+            self.assertEqual(
+                by_key['REDIS_URL']['fromService'],
+                {
+                    'type': 'keyvalue',
+                    'name': 'clm-one-production-cache',
+                    'property': 'connectionString',
+                },
+            )
 
     def test_worker_type_and_cron_schedules(self):
-        self.assertEqual(self.services['docclad-worker']['type'], 'worker')
-        self.assertEqual(self.services['docclad-cron-dispatch']['type'], 'cronjob')
-        self.assertEqual(self.services['docclad-cron-daily']['type'], 'cronjob')
+        self.assertEqual(self.services['clm-one-production-worker']['type'], 'worker')
+        dispatch = self.services['clm-one-production-cron-dispatch']
+        daily = self.services['clm-one-production-cron-daily']
+        self.assertEqual(dispatch['type'], 'cron')
+        self.assertEqual(dispatch['schedule'], '*/15 * * * *')
+        self.assertEqual(daily['type'], 'cron')
+        self.assertEqual(daily['schedule'], '30 2 * * *')
+
+    def test_web_uses_render_url_and_runs_migrations_before_deploy(self):
+        web = self.services['clm-one-production-web']
+        by_key = {entry.get('key'): entry for entry in web['envVars'] if entry.get('key')}
+        self.assertEqual(
+            by_key['APP_BASE_URL']['fromService'],
+            {
+                'type': 'web',
+                'name': 'clm-one-production-web',
+                'envVarKey': 'RENDER_EXTERNAL_URL',
+            },
+        )
+        self.assertEqual(web['preDeployCommand'], 'python3 manage.py migrate --noinput')
+        self.assertNotIn('migrate', web['startCommand'])
 
     def test_ephemeral_media_bypass_absent_in_pilot_config(self):
         raw = open(os.path.join(_REPO, 'render.yaml')).read()

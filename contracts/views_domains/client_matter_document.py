@@ -534,7 +534,7 @@ class DocumentDeleteView(TenantScopedQuerysetMixin, LoginRequiredMixin, DeleteVi
 def document_download(request, pk):
     """Authenticated, tenant-safe, audited document download (A6).
 
-    DocClad authorizes here and then redirects to a short-lived signed URL
+    CLM One authorizes here and then redirects to a short-lived signed URL
     (private object storage) rather than exposing object URLs directly. Enforces
     tenant access, document permission, and (soft-)deletion state, and records a
     download/blocked audit event without storing the URL or file contents.

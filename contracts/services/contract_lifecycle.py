@@ -1,4 +1,5 @@
 import logging
+import hashlib
 from datetime import date
 from decimal import Decimal
 
@@ -21,6 +22,8 @@ CONTRACT_LIFECYCLE_TRANSITIONS = {
 }
 
 TRACKED_CONTRACT_FIELDS = (
+    'title',
+    'content',
     'status',
     'lifecycle_stage',
     'contract_type',
@@ -41,6 +44,7 @@ TRACKED_CONTRACT_FIELDS = (
     'termination_notice_date',
     'client_id',
     'matter_id',
+    'owner_id',
 )
 
 
@@ -74,6 +78,21 @@ def build_contract_audit_changes(before_contract, after_contract, tracked_fields
 
     changes = {}
     for field_name in tracked_fields:
+        if field_name == 'content':
+            before_content = getattr(before_contract, field_name, '') or ''
+            after_content = getattr(after_contract, field_name, '') or ''
+            if before_content != after_content:
+                changes[field_name] = {
+                    'before': {
+                        'sha256': hashlib.sha256(before_content.encode('utf-8')).hexdigest(),
+                        'length': len(before_content),
+                    },
+                    'after': {
+                        'sha256': hashlib.sha256(after_content.encode('utf-8')).hexdigest(),
+                        'length': len(after_content),
+                    },
+                }
+            continue
         before_value = _normalize_audit_value(getattr(before_contract, field_name, None))
         after_value = _normalize_audit_value(getattr(after_contract, field_name, None))
         if before_value != after_value:
@@ -195,7 +214,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
 # blocked by the graph; the precondition then enforces approval/signature.
 CONTRACT_STATUS_TRANSITIONS = {
     'DRAFT': {'IN_REVIEW', 'PENDING', 'CANCELLED'},
-    'PENDING': {'IN_REVIEW', 'APPROVED', 'ACTIVE', 'CANCELLED'},   # submitted for approval
+    'PENDING': {'IN_REVIEW', 'APPROVED', 'ACTIVE', 'DRAFT', 'CANCELLED'},   # submitted for approval
     'IN_REVIEW': {'APPROVED', 'PENDING', 'ACTIVE', 'DRAFT', 'CANCELLED'},
     'APPROVED': {'ACTIVE', 'CANCELLED'},
     'ACTIVE': {'EXPIRED', 'TERMINATED', 'COMPLETED'},

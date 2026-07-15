@@ -16,5 +16,5 @@
   {% endfor %}
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with title="No inactive members." %}
+  {% include "design_system/empty_state.html" with icon="circle-check" title="No inactive members" reason="No workspace member has been deactivated." how="Deactivated members appear here and can be restored without issuing a new invitation." action_url="#organization-team-members" action_label="Review active members" action_tone="ghost" class_name="dc-ds-empty--compact" %}
 {% endif %}

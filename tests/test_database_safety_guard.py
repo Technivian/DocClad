@@ -54,6 +54,10 @@ class ManageDotPyDatabaseGuardTests(SimpleTestCase):
             'DJANGO_SETTINGS_MODULE': 'config.settings',
             'DJANGO_SECRET_KEY': 'x' * 50,
             'ALLOWED_HOSTS': '127.0.0.1,localhost',
+            'APP_BASE_URL': 'https://app.example.com',
+            'OPERATOR_ALERT_EMAIL': 'security@example.com',
+            'MEDIA_STORAGE_BACKEND': 's3',
+            'AWS_STORAGE_BUCKET_NAME': 'clmone-test-bucket',
         }
 
     def _run(self, code, extra_env):
@@ -126,7 +130,7 @@ class ManageDotPyDatabaseGuardTests(SimpleTestCase):
             {'DJANGO_ENV': 'development', 'DATABASE_URL': 'sqlite:///:memory:'},
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('[DocClad] Database:', result.stdout)
+        self.assertIn('[CLM One] Database:', result.stdout)
         self.assertIn('(local', result.stdout)
 
     def test_empty_database_url_defaults_to_local_sqlite_and_is_allowed(self):

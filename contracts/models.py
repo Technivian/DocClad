@@ -50,12 +50,12 @@ class Organization(models.Model):
     saml_slo_url = models.URLField(blank=True)
     saml_metadata_url = models.URLField(blank=True)
     saml_x509_certificate = models.TextField(blank=True)
-    # SAML MFA trust policy (Phase 4G). DocClad marks a SAML session as
+    # SAML MFA trust policy (Phase 4G). CLM One marks a SAML session as
     # MFA-satisfied only when the assertion's AuthnContextClassRef is in
     # `saml_accepted_authn_contexts` (comma/newline-separated), OR when the org
     # has explicitly enabled `saml_mfa_trusted` (compatibility mode: delegates
     # MFA enforcement entirely to the IdP). Default is fail-closed: a SAML login
-    # without proven MFA assurance must still complete DocClad MFA.
+    # without proven MFA assurance must still complete CLM One MFA.
     saml_mfa_trusted = models.BooleanField(default=False)
     saml_accepted_authn_contexts = models.TextField(blank=True)
     scim_enabled = models.BooleanField(default=False)
@@ -850,6 +850,14 @@ class Contract(models.Model):
     ], default='DRAFTING')
     client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
     matter = models.ForeignKey('Matter', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_contracts',
+        help_text='Active workspace member accountable for this contract.',
+    )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_contracts')
     approved_at = models.DateTimeField(null=True, blank=True)
@@ -1013,7 +1021,7 @@ class Document(models.Model):
     def _check_evidentiary(self):
         """Block soft-deletion of evidentiary records (Phase 5I).
 
-        Derived entirely from existing DocClad model relationships — no second
+        Derived entirely from existing CLM One model relationships — no second
         parallel document-classification system is introduced.
 
         A document is evidentiary when it falls into any of:
@@ -1116,6 +1124,16 @@ class DocumentOCRReview(models.Model):
 class AIExtractionSpan(models.Model):
     """A text-span citation produced by the AI extraction rules engine."""
 
+    class ReviewStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Needs review'
+        CONFIRMED = 'CONFIRMED', 'Confirmed'
+        DISMISSED = 'DISMISSED', 'Dismissed'
+
+    class RiskLevel(models.TextChoices):
+        CLEAR = 'CLEAR', 'Clear'
+        REVIEW = 'REVIEW', 'Review needed'
+        RISK = 'RISK', 'Active risk'
+
     document = models.ForeignKey(
         Document, on_delete=models.CASCADE, related_name='ai_extraction_spans'
     )
@@ -1128,6 +1146,33 @@ class AIExtractionSpan(models.Model):
     end_char = models.PositiveIntegerField()
     confidence = models.DecimalField(max_digits=5, decimal_places=4)
     extraction_model = models.CharField(max_length=100, default='rules-engine-v1')
+    rationale = models.CharField(max_length=500, blank=True)
+    risk_level = models.CharField(
+        max_length=10,
+        choices=RiskLevel.choices,
+        default=RiskLevel.REVIEW,
+    )
+    source_template = models.ForeignKey(
+        'ClauseTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ai_extraction_spans',
+        help_text='Approved clause-library source matched to this citation.',
+    )
+    review_status = models.CharField(
+        max_length=12,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+    )
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_ai_extraction_spans',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1135,10 +1180,15 @@ class AIExtractionSpan(models.Model):
         indexes = [
             models.Index(fields=['document', 'label']),
             models.Index(fields=['organization', 'label']),
+            models.Index(fields=['organization', 'review_status']),
         ]
 
     def __str__(self):
         return f'{self.label} span [{self.start_char}:{self.end_char}] on {self.document_id}'
+
+    @property
+    def label_display(self):
+        return self.label.replace('_', ' ').title()
 
 
 class TimeEntry(models.Model):
@@ -3102,6 +3152,13 @@ class DPAReviewPack(models.Model):
     # directly to the related Contract rows is the real equivalent.
     related_contracts = models.ManyToManyField(Contract, blank=True, related_name='dpa_review_packs_as_related')
     documents = models.ManyToManyField(Document, blank=True, related_name='dpa_review_packs')
+    reviewer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_dpa_review_packs',
+    )
 
     # 1. Role qualification
     role_qualification = models.CharField(max_length=25, choices=RoleQualification.choices, default=RoleQualification.AMBIGUOUS)
@@ -3412,6 +3469,7 @@ class ApprovalRule(models.Model):
 class ApprovalRequest(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
+        CHANGES_REQUESTED = 'CHANGES_REQUESTED', 'Changes Requested'
         APPROVED = 'APPROVED', 'Approved'
         REJECTED = 'REJECTED', 'Rejected'
         ESCALATED = 'ESCALATED', 'Escalated'
@@ -3420,7 +3478,7 @@ class ApprovalRequest(models.Model):
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='approval_requests')
     rule = models.ForeignKey(ApprovalRule, on_delete=models.SET_NULL, null=True, blank=True)
     approval_step = models.CharField(max_length=50)
-    status = models.CharField(max_length=15, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_assignments')
     delegated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_approval_assignments')
     delegated_at = models.DateTimeField(null=True, blank=True)
@@ -3440,8 +3498,18 @@ class ApprovalRequest(models.Model):
         if new_status == self.status:
             return True
         allowed_transitions = {
-            self.Status.PENDING: {self.Status.APPROVED, self.Status.REJECTED, self.Status.ESCALATED},
-            self.Status.ESCALATED: {self.Status.APPROVED, self.Status.REJECTED},
+            self.Status.PENDING: {
+                self.Status.CHANGES_REQUESTED,
+                self.Status.APPROVED,
+                self.Status.REJECTED,
+                self.Status.ESCALATED,
+            },
+            self.Status.ESCALATED: {
+                self.Status.CHANGES_REQUESTED,
+                self.Status.APPROVED,
+                self.Status.REJECTED,
+            },
+            self.Status.CHANGES_REQUESTED: set(),
             self.Status.APPROVED: set(),
             self.Status.REJECTED: set(),
         }

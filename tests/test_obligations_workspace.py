@@ -23,7 +23,7 @@ from contracts.models import (
     OrganizationMembership,
 )
 from contracts.nav_config import get_nav_for
-from contracts.templatetags.docclad_format import (
+from contracts.templatetags.clmone_format import (
     obligation_compliance_badge_class,
     obligation_compliance_label,
     obligation_compliance_status,
@@ -69,7 +69,7 @@ class ObligationComplianceStatusTests(TestCase):
         cases = {
             'MET': (self._deadline(is_completed=True), 'Met', 'badge-green'),
             'OVERDUE': (self._deadline(due_date=_today() - timedelta(days=1)), 'Overdue', 'badge-red'),
-            'BREACH_RISK': (self._deadline(due_date=_today() + timedelta(days=1), reminder_days=7), 'Breach Risk', 'badge-yellow'),
+            'BREACH_RISK': (self._deadline(due_date=_today() + timedelta(days=1), reminder_days=7), 'Breach Risk', 'badge-red'),
             'PENDING': (self._deadline(due_date=_today() + timedelta(days=90), reminder_days=7), 'Pending Action', 'badge-blue'),
         }
         for status, (deadline, label, badge_class) in cases.items():
@@ -175,8 +175,10 @@ class ObligationsNavTests(TestCase):
         obligations_entry = next(e for e in entries if e.get('label') == 'Obligations')
         self.assertEqual(obligations_entry['url_name'], 'contracts:obligations_workspace')
 
-    def test_law_firm_ops_nav_unaffected(self):
-        law_firm_org = Organization.objects.create(name='Law Firm Org', slug='obligations-law-firm-org')
+    def test_law_firm_ops_uses_the_same_standard_nav(self):
+        law_firm_org = Organization.objects.create(
+            name='Law Firm Org', slug='obligations-law-firm-org', workspace_mode='law_firm_ops',
+        )
         entries = get_nav_for(law_firm_org, self.user)
         labels = [e.get('label') for e in entries if e['kind'] == 'item']
-        self.assertNotIn('Obligations', labels)
+        self.assertIn('Obligations', labels)

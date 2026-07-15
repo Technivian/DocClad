@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}DocClad{% endblock %}</title>
+    <title>{% block title %}CLM One{% endblock %}</title>
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
     {% load static %}
@@ -12,26 +12,26 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
-    <meta name="theme-color" content="#F5F7F8">
-    <meta property="og:title" content="DocClad">
+    <meta name="theme-color" content="#F7F9FC">
+    <meta property="og:title" content="CLM One">
     <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
-    <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     {% block page_css %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
     <script nonce="{{ csp_nonce }}">
-        // DocClad is intentionally light-only to keep the operating surface consistent.
+        // CLM One is intentionally light-only to keep the operating surface consistent.
         (function() {
-            localStorage.setItem('docclad-theme', 'light');
+            localStorage.setItem('clmone-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
         })();
     </script>
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
-    <script src="{% static 'js/docclad-ui.js' %}" defer></script>
+    <script src="{% static 'js/clmone-ui.js' %}" defer></script>
     <style nonce="{{ csp_nonce }}">
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         /* Token-backed utilities replacing former inline style="" attributes (CSP). */
@@ -82,95 +82,97 @@
             --card-bg: var(--card);
             --card-border: var(--line);
             --input-bg: var(--card);
-            --badge-bg: #913A35;
+            --badge-bg: var(--status-danger-fg);
             --msg-success-bg: var(--status-positive-bg);
             --msg-success-text: var(--status-positive-fg);
-            --msg-success-border: #B9DFCE;
+            --msg-success-border: var(--color-status-success-border);
             --msg-error-bg: var(--status-danger-bg);
             --msg-error-text: var(--status-danger-fg);
-            --msg-error-border: #EACAC7;
+            --msg-error-border: var(--color-status-error-border);
             --msg-warning-bg: var(--status-pending-bg);
             --msg-warning-text: var(--status-pending-fg);
-            --msg-warning-border: #ECD8B3;
-            --avatar-gradient: #232428;
+            --msg-warning-border: var(--color-status-warning-border);
+            --avatar-gradient: var(--color-brand-foundation);
             --btn-gradient: var(--color-brand-primary);
             --logo-gradient: var(--color-brand-primary);
-            --row-unread-bg: #F3DACB;
-            --row-overdue-bg: #FBECEA;
+            --row-unread-bg: var(--status-progress-bg);
+            --row-overdue-bg: var(--status-danger-bg);
         }
 
-        /* Light operational shell, shared by every authenticated workspace. */
+        /* Shared authenticated shell. Keep this foundation consistent with
+           Command Center so following a primary action never drops users
+           into a second, light-themed application chrome. */
         :root, [data-theme="light"] {
-            --sidebar-fixed-bg: var(--shell);
-            --sidebar-fixed-border: var(--line);
-            --sidebar-fixed-text: var(--ink-600);
-            --sidebar-fixed-text-active: var(--color-brand-primary);
-            --sidebar-fixed-icon: var(--ink-500);
-            --sidebar-fixed-hover: var(--well);
-            --sidebar-fixed-active-bg: var(--card);
-            --sidebar-fixed-active-border: var(--line-strong);
-            --sidebar-fixed-section-label: var(--ink-500);
+            --sidebar-fixed-bg: var(--color-brand-foundation);
+            --sidebar-fixed-border: var(--color-brand-foundation-border);
+            --sidebar-fixed-text: rgba(255, 255, 255, 0.74);
+            --sidebar-fixed-text-active: var(--clmone-white);
+            --sidebar-fixed-icon: rgba(255, 255, 255, 0.7);
+            --sidebar-fixed-hover: var(--color-brand-foundation-raised);
+            --sidebar-fixed-active-bg: var(--color-brand-foundation-raised);
+            --sidebar-fixed-active-border: transparent;
+            --sidebar-fixed-section-label: rgba(255, 255, 255, 0.52);
         }
 
         /* Panels and the top bar stay flat — hairline borders carry separation, no ambient shadows. */
 
         /* KPI cards stay flat — hairline border only, no ambient shadow */
         [data-theme="light"] .kpi-card:hover {
-            border-color: #CDD2D8;
+            border-color: var(--line-strong);
         }
 
         [data-theme="light"] .bg-white {
-            background-color: #FFFFFF !important;
+            background-color: var(--card) !important;
         }
         [data-theme="light"] .bg-slate-50,
         [data-theme="light"] .bg-gray-50 {
-            background-color: #F0F2F3 !important;
+            background-color: var(--well) !important;
         }
         [data-theme="light"] .bg-gray-100 {
-            background-color: #E5E9F0 !important;
+            background-color: var(--hairline) !important;
         }
         [data-theme="light"] .hover\:bg-gray-50:hover,
         [data-theme="light"] .hover\:bg-slate-50:hover {
-            background-color: #F0F2F3 !important;
+            background-color: var(--well) !important;
         }
 
         [data-theme="light"] .text-gray-900,
         [data-theme="light"] .text-slate-900 {
-            color: #171A1F !important;
+            color: var(--ink-900) !important;
         }
         [data-theme="light"] .text-gray-800,
         [data-theme="light"] .text-slate-800 {
-            color: #343A42 !important;
+            color: var(--ink-700) !important;
         }
         [data-theme="light"] .text-gray-700,
         [data-theme="light"] .text-slate-700 {
-            color: #343A42 !important;
+            color: var(--ink-700) !important;
         }
         [data-theme="light"] .text-gray-600,
         [data-theme="light"] .text-slate-600 {
-            color: #505863 !important;
+            color: var(--ink-600) !important;
         }
         [data-theme="light"] .text-gray-500,
         [data-theme="light"] .text-slate-500 {
-            color: #69717C !important;
+            color: var(--ink-500) !important;
         }
         [data-theme="light"] .text-gray-400,
         [data-theme="light"] .text-slate-400 {
-            color: #8B929C !important;
+            color: var(--ink-400) !important;
         }
 
         [data-theme="light"] .border-gray-200,
         [data-theme="light"] .border-slate-200,
         [data-theme="light"] .border-gray-100,
         [data-theme="light"] .border-slate-100 {
-            border-color: #DFE3E7 !important;
+            border-color: var(--line) !important;
         }
         [data-theme="light"] .border-gray-300 {
-            border-color: #CDD2D8 !important;
+            border-color: var(--line-strong) !important;
         }
         [data-theme="light"] .divide-gray-100 > * + *,
         [data-theme="light"] .divide-gray-200 > * + * {
-            border-color: #DFE3E7 !important;
+            border-color: var(--line) !important;
         }
 
         [data-theme="light"] .shadow-sm,
@@ -181,13 +183,13 @@
         [data-theme="light"] input,
         [data-theme="light"] select,
         [data-theme="light"] textarea {
-            background-color: #FFFFFF !important;
-            color: #171A1F !important;
-            border-color: #DFE3E7 !important;
+            background-color: var(--card) !important;
+            color: var(--ink-900) !important;
+            border-color: var(--line) !important;
         }
         [data-theme="light"] input::placeholder,
         [data-theme="light"] textarea::placeholder {
-            color: #8B929C !important;
+            color: var(--ink-400) !important;
         }
         [data-theme="light"] input:focus-visible,
         [data-theme="light"] select:focus-visible,
@@ -197,18 +199,18 @@
         }
 
         [data-theme="light"] table {
-            color: #171A1F;
+            color: var(--ink-900);
         }
         [data-theme="light"] th {
-            color: #69717C !important;
-            border-color: #CDD2D8 !important;
-            background-color: #F0F2F3;
+            color: var(--ink-500) !important;
+            border-color: var(--line-strong) !important;
+            background-color: var(--color-surface-table-head);
         }
         [data-theme="light"] td {
-            border-color: #DFE3E7 !important;
+            border-color: var(--line) !important;
         }
         [data-theme="light"] tbody tr:hover {
-            background-color: #F0F2F3 !important;
+            background-color: var(--well) !important;
         }
 
         [data-theme="light"] .badge-green  { background: var(--status-positive-bg); color: var(--status-positive-fg); }
@@ -218,11 +220,12 @@
         [data-theme="light"] .badge-purple { background: var(--status-special-bg); color: var(--status-special-fg); }
         [data-theme="light"] .badge-gray   { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
-        .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--sidebar-fixed-section-label); padding: 16px 5px 8px; margin: 0; }
-        .nav-link { display: flex; align-items: center; gap: 11px; min-height: 40px; padding: 0 11px; font-size: 13px; color: var(--sidebar-fixed-text); border-radius: 8px; margin: 2px 0; transition: all 0.15s; text-decoration: none; border: 1px solid transparent; }
+        .nav-section { display: none; }
+        .nav-link { position: relative; display: flex; align-items: center; gap: var(--space-16); min-height: 54px; padding: 0 var(--space-16); margin: 0 0 1px; font-size: 14px; color: var(--sidebar-fixed-text); border: 0; border-radius: var(--radius-control); transition: all 0.15s; text-decoration: none; }
         .nav-link:hover { background: var(--sidebar-fixed-hover); color: var(--sidebar-fixed-text-active); }
-        .nav-link.active { background: var(--sidebar-fixed-active-bg); color: var(--sidebar-fixed-text-active); font-weight: 600; border-color: var(--sidebar-fixed-active-border); box-shadow: 0 1px 2px rgba(16,24,40,.04); }
-        .nav-link svg { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; color: var(--sidebar-fixed-icon); }
+        .nav-link.active { background: var(--sidebar-fixed-active-bg); color: var(--sidebar-fixed-text-active); font-weight: 600; border: 0; box-shadow: none; }
+        .nav-link.active::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: var(--radius-pill); background: var(--seal); }
+        .nav-link svg { width: 21px; height: 21px; flex-shrink: 0; opacity: .95; color: currentColor; }
         .nav-link.active svg { opacity: 1; color: var(--sidebar-fixed-text-active); }
         .nav-link--action { color: var(--sidebar-fixed-text-active); }
         .nav-group { margin: 2px 0; }
@@ -240,8 +243,8 @@
             height: 82px;
             display: flex;
             align-items: center;
-            padding: 0 18px;
-            border-bottom: 1px solid var(--sidebar-fixed-border);
+            padding: 0 var(--space-24);
+            border: 0;
         }
         .sidebar-brand .logo-wordmark {
             display: block;
@@ -258,7 +261,7 @@
         }
 
         .sidebar-container {
-            width: 280px;
+            width: 225px;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -283,7 +286,7 @@
         body.nav-collapsed .sidebar-brand .logo-wordmark { display: none; }
         body.nav-collapsed .sidebar-brand .logo-mark { display: block; height: 34px; width: 34px; }
         .sidebar-brand .logo-mark { display: none; }
-        .sidebar-footer { padding: 12px; border-top: 1px solid var(--sidebar-fixed-border); margin-top: auto; }
+        .sidebar-footer { padding: 0 var(--space-16) var(--space-16); border-top: 0; margin-top: auto; background: var(--sidebar-fixed-bg); }
         .sidebar-footer-org { font-size: 12px; font-weight: 600; color: #303236; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
         .sidebar-footer-collapse { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text); cursor: pointer; }
         .sidebar-footer-collapse:hover { color: var(--sidebar-fixed-text-active); }
@@ -492,10 +495,10 @@
         .status-dot.gray  { background: #69717C; }
 
         /* Badge chips — fully rounded pills, tinted background + same-hue text.
-           Six archival pairs (see DOCCLAD_DESIGN_SYSTEM.md §4): green=positive,
+           Six archival pairs (see CLMONE_DESIGN_SYSTEM.md §4): green=positive,
            blue=in-progress, yellow=pending, red=danger, purple=special, gray=neutral.
            Compatibility aliases: colour values are sourced entirely from the
-           canonical --status-*-fg/--status-*-bg tokens in docclad-tokens.css
+           canonical --status-*-fg/--status-*-bg tokens in clmone-tokens.css
            (Phase 2 badge/status/empty consolidation) — do not hardcode hex here.
            Canonical replacement: .dc-ds-badge--{success,progress,attention,danger,special,neutral}. */
         .badge-sm { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; white-space: nowrap; letter-spacing: 0.01em; }
@@ -521,7 +524,7 @@
 
         /* StageDots — compact lifecycle indicator for queue/table rows.
            Reusable across Dashboard, Repository, Tasks, Approvals (see the
-           stage_dots tag in docclad_components.py). Same done/current/
+           stage_dots tag in clmone_components.py). Same done/current/
            upcoming states as the .lc-* detail-page stepper, condensed to a
            single-row dot strip with an sr-only label for accessibility. */
         /* Three clearly distinct states, one accent color: upcoming is a
@@ -557,7 +560,7 @@
             text-decoration: none; transition: background 0.15s, color 0.15s; cursor: pointer;
             border: 1px solid transparent;
         }
-        .chip-active   { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .chip-active   { background: var(--color-control-selected-bg); color: var(--color-control-selected-text); border-color: var(--color-control-selected-border); }
         .chip-inactive { background: var(--surface); color: var(--text-secondary); border-color: var(--border); }
         .chip-inactive:hover { background: var(--border); color: var(--text-primary); }
 
@@ -610,20 +613,20 @@
             background: var(--card-bg); color: var(--text-secondary);
         }
         .repo-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .repo-saved-view, .repo-filter-chip {
+        .repo-saved-view:not(.dc-ds-choice), .repo-filter-chip:not(.dc-ds-choice) {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 12px; border-radius: 9999px; font-size: 12px;
             font-weight: 600; border: 1px solid var(--border);
             background: var(--surface); color: var(--text-secondary);
         }
-        .repo-filter-chip { cursor: pointer; }
+        .repo-filter-chip:not(.dc-ds-choice) { cursor: pointer; }
         .repo-filter-chip span, .repo-saved-view-delete {
             display: inline-flex; align-items: center; justify-content: center;
             width: 18px; height: 18px; border-radius: 9999px;
             background: rgba(148,163,184,0.18); color: var(--text-muted);
             font-size: 11px; line-height: 1;
         }
-        .repo-saved-view {
+        .repo-saved-view:not(.dc-ds-choice) {
             cursor: pointer;
         }
         .repo-saved-view-wrap {
@@ -778,7 +781,7 @@
 
             /* AssigneeChip — avatar-initial + name, or a muted "Unassigned"
                state. Reusable across Dashboard, Repository, Tasks, Approvals
-               (see the assignee_chip tag in docclad_components.py). */
+               (see the assignee_chip tag in clmone_components.py). */
             .assignee-chip { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
             .assignee-chip-avatar {
                 width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
@@ -798,7 +801,7 @@
             /* ActivityLine — avatar + human sentence + relative time, or a
                muted "No recent activity" placeholder. Reusable across
                Dashboard, Repository, contract Activity tab (see the
-               activity_line tag in docclad_components.py). */
+               activity_line tag in clmone_components.py). */
             .activity-line { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
             .activity-line-avatar {
                 width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
@@ -814,16 +817,16 @@
             /* WorkQueueTable / WorkQueueLayout — shared queue table + saved-
                view tabs. Reusable across Dashboard, Repository, Tasks,
                Approvals so each screen doesn't reinvent table markup. */
-            .wq-tabs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--card-border); padding-bottom: 0; margin-bottom: 0; }
+            .wq-tabs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding-bottom: 0; margin-bottom: 0; }
             .wq-tab {
-                appearance: none; background: transparent; border: none; cursor: pointer;
+                appearance: none; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-control); cursor: pointer;
                 font: inherit; font-size: 13px; font-weight: 600; color: var(--text-muted);
-                padding: 10px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px;
+                padding: 7px 12px;
                 display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
-                transition: color 0.12s, border-color 0.12s;
+                transition: color 0.12s, border-color 0.12s, background-color 0.12s;
             }
-            .wq-tab:hover { color: var(--text-primary); }
-            .wq-tab.wq-tab-active { color: var(--text-primary); font-weight: 700; border-bottom-color: var(--primary); }
+            .wq-tab:hover { border-color: var(--line-strong); color: var(--text-primary); }
+            .wq-tab.wq-tab-active { background: var(--color-control-selected-bg); border-color: var(--color-control-selected-border); color: var(--color-control-selected-text); font-weight: 700; }
             /* Saved-view count chip — same shape/behavior as the Repository
                rail's .views-rail-count so the two layouts read as one
                component family. */
@@ -1016,15 +1019,15 @@
                here instead of an underline, to fit the vertical layout) —
                not a colored-text treatment, so the two screens read as one
                component family even though the layout differs. */
-            .views-rail-link {
+            .views-rail-link:not(.dc-ds-choice) {
                 display: flex; align-items: center; justify-content: space-between; gap: 10px;
                 padding: 8px 10px; border-radius: 10px; color: var(--text-secondary);
                 text-decoration: none; font-size: 13px; font-weight: 500; border: 1px solid transparent;
                 transition: color 0.12s, background 0.12s;
             }
-            .views-rail-link:hover { background: var(--sidebar-hover); color: var(--text-primary); }
-            .views-rail-link.active { background: var(--sidebar-hover); color: var(--text-primary); font-weight: 700; box-shadow: inset 3px 0 0 var(--primary); }
-            .views-rail-link.active .views-rail-count { background: var(--primary-subtle); border-color: var(--primary-bg); color: var(--primary-light); }
+            .views-rail-link:not(.dc-ds-choice):hover { background: var(--sidebar-hover); color: var(--text-primary); }
+            .views-rail-link:not(.dc-ds-choice).active { background: var(--color-control-selected-bg); border-color: var(--color-control-selected-border); color: var(--color-control-selected-text); font-weight: 700; }
+            .views-rail-link.active .views-rail-count { background: var(--card); border-color: var(--color-control-selected-border); color: var(--color-control-selected-text); }
             .workspace-main { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
             .workspace-main-head { padding: 14px 16px; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
             .workspace-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
@@ -1181,7 +1184,7 @@
             .table-sticky .tbl-head th { position: sticky; top: 0; z-index: 4; background: var(--surface); }
             .tab-pill      { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.25rem; }
             .tab-pill-item { padding: 0.375rem 0.75rem; font-size: 0.75rem; font-weight: 0.5; border-radius: 0.375rem; transition: all 0.15s; white-space: nowrap; }
-            .tab-pill-active-state { background: var(--card-bg); color: var(--text-primary); }
+            .tab-pill-active-state { background: var(--color-control-selected-bg); border-color: var(--color-control-selected-border); color: var(--color-control-selected-text); }
             .tab-pill-idle-state   { color: var(--text-secondary); }
             .stat-label    { font-size: 0.75rem; font-weight: 0.6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
             .stat-value    { font-size: 1.875rem; font-weight: 0.7; }
@@ -1199,13 +1202,14 @@
             .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 8px; padding: 8px 10px 8px 32px; font-size: 12px; }
             .global-search-input:focus-visible { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px var(--focus-ring); }
             .logo-link        { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
-            .logo-wordmark    { height: var(--docclad-logo-header-height, 38px); width: auto; object-fit: contain; display: block; }
-            .logo-mark        { width: var(--docclad-mark-size, 34px); height: var(--docclad-mark-size, 34px); object-fit: contain; display: none; }
-            .sidebar-brand .logo-command-center { display: none; }
+            .logo-wordmark    { height: var(--clmone-logo-header-height, 38px); width: auto; object-fit: contain; display: block; }
+            .logo-mark        { width: var(--clmone-mark-size, 34px); height: var(--clmone-mark-size, 34px); object-fit: contain; display: none; }
+            .sidebar-brand .logo-wordmark:not(.logo-command-center) { display: none; }
+            .sidebar-brand .logo-command-center { display: block; height: 38px; }
             body.nav-collapsed .logo-wordmark { display: none; }
             body.nav-collapsed .logo-mark     { display: block; }
             /* Topbar follows the page theme; swap in the matching logo variant
-               regardless of collapsed state (see DOCCLAD_DESIGN_SYSTEM.md §6). */
+               regardless of collapsed state (see CLMONE_DESIGN_SYSTEM.md §6). */
             [data-theme="light"] .logo-dark  { display: none !important; }
             .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
             /* Search icon fallback: shown only when the inline search input is hidden (narrow screens). */
@@ -1245,12 +1249,12 @@
             .auth-link     { font-size: 14px; color: var(--text-secondary); padding: 8px 16px; font-weight: 500; transition: all 0.2s; text-decoration: none; }
             .btn-primary-grad { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; color: white; font-size: 13px; font-weight: 600; border-radius: 8px; transition: all 0.2s; text-decoration: none; background: var(--btn-gradient); }
             .btn-primary-grad svg { width: 14px; height: 14px; }
-            .sidebar-padding { padding: 10px 12px 16px; overflow-y: auto; }
+            .sidebar-padding { padding: var(--space-8) var(--space-16) 230px; overflow-y: auto; }
             .main-content-pad { padding: 0; flex: 1 0 auto; }
             .sidebar-workspace {
                 margin: 12px 12px 8px;
                 padding: 10px;
-                display: flex;
+                display: none;
                 align-items: center;
                 gap: 10px;
                 border: 1px solid var(--sidebar-fixed-border);
@@ -1275,7 +1279,7 @@
             .sidebar-workspace-meta { color: #69717C; font-size: 11px; line-height: 16px; }
             .sidebar-workspace-chevron { width: 16px; height: 16px; color: #69717C; }
             .sidebar-utility {
-                display: flex;
+                display: none;
                 align-items: center;
                 gap: 10px;
                 min-height: 40px;
@@ -1290,19 +1294,20 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                margin-top: 10px;
-                padding: 9px;
-                border: 1px solid var(--sidebar-fixed-border);
+                height: 72px;
+                margin: 0;
+                padding: var(--space-8) var(--space-4);
+                border: 0;
                 border-radius: 9px;
-                background: #fff;
-                color: #171A1F;
+                background: transparent;
+                color: var(--clmone-white);
                 text-decoration: none;
             }
-            .sidebar-profile-avatar { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; background: #232428; color: #fff; font-size: 13px; font-weight: 650; }
+            .sidebar-profile-avatar { width: 36px; height: 36px; border-radius: var(--radius-pill); display: grid; place-items: center; background: var(--color-brand-primary); color: #fff; font-size: 13px; font-weight: 650; }
             .sidebar-profile-copy { min-width: 0; flex: 1; }
             .sidebar-profile-name { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .sidebar-profile-role { margin-top: 2px; color: #69717C; font-size: 11px; }
-            .sidebar-profile svg { width: 16px; height: 16px; color: #69717C; }
+            .sidebar-profile-role { margin-top: 2px; color: rgba(255, 255, 255, .56); font-size: 11px; }
+            .sidebar-profile svg { width: 16px; height: 16px; color: rgba(255, 255, 255, .62); }
             body.nav-collapsed .sidebar-workspace,
             body.nav-collapsed .sidebar-profile,
             body.nav-collapsed .sidebar-utility { display: none; }
@@ -1389,6 +1394,76 @@
                 body.mobile-nav-open .sidebar-scrim { display: block; }
                 body.mobile-nav-open { overflow: hidden; }
             }
+
+            /* Shared Command Center rail. This is intentionally unscoped:
+               navigation is product chrome, never page chrome. A route may
+               change the work surface, but it must not change the sidebar. */
+            .sidebar-container {
+                position: relative;
+                width: 225px;
+                border: 0;
+                background: var(--color-shell-deep);
+                overflow: visible;
+                box-shadow: var(--shadow-shell-edge);
+            }
+            .sidebar-brand {
+                height: 82px;
+                flex-basis: 82px;
+                flex-shrink: 0;
+                padding: 0 24px;
+            }
+            .sidebar-brand .logo-command-center { height: 38px; }
+            .sidebar-padding { padding: 8px 16px 24px; overflow-y: auto; }
+            .nav-link {
+                min-height: 54px;
+                margin: 0 0 1px;
+                padding: 0 16px;
+                border-radius: var(--radius-control);
+                gap: 16px;
+                color: color-mix(in srgb, var(--clmone-white) 68%, transparent);
+                font-size: 14px;
+                font-weight: 540;
+                letter-spacing: 0;
+                transition: color var(--transition-base), background-color var(--transition-base);
+            }
+            .nav-link svg { width: 21px; height: 21px; padding: 0; border-radius: 0; background: transparent; color: currentColor; opacity: 1; }
+            .nav-link:hover { background: color-mix(in srgb, var(--clmone-white) 5%, transparent); color: var(--clmone-white); transform: none; }
+            .nav-link.active { background: color-mix(in srgb, var(--clmone-white) 7%, transparent); color: var(--clmone-white); font-weight: 650; }
+            .nav-link.active::before { left: -16px; top: 12px; bottom: 12px; border-radius: 0 3px 3px 0; }
+            .nav-link--action { margin: 9px 0 10px; color: color-mix(in srgb, var(--clmone-white) 90%, transparent); }
+            .nav-link--action svg { color: var(--seal); }
+            .nav-group { margin: 1px 0; }
+            .nav-group-items { gap: 1px; padding: 3px 0 7px 40px; }
+            .nav-group-trigger .nav-group-chevron { color: color-mix(in srgb, var(--clmone-white) 55%, transparent); }
+            .nav-sub-link { position: relative; min-height: 32px; padding: 0 8px; border-radius: 6px; color: color-mix(in srgb, var(--clmone-white) 55%, transparent); font-size: 12px; }
+            .nav-sub-link:hover { background: color-mix(in srgb, var(--clmone-white) 4%, transparent); color: var(--clmone-white); }
+            .nav-sub-link.active { color: var(--clmone-white); }
+            .nav-sub-link.active::before { content: ""; position: absolute; left: -13px; width: 4px; height: 4px; border-radius: 50%; background: var(--seal); }
+            .sidebar-footer { padding: 12px 16px 16px; background: var(--color-shell-deep); }
+            .sidebar-profile { min-height: 60px; height: auto; padding: 8px 10px; border-radius: 7px; gap: 12px; color: color-mix(in srgb, var(--clmone-white) 92%, transparent); }
+            .sidebar-profile-avatar { width: 38px; height: 38px; border: 2px solid color-mix(in srgb, var(--clmone-white) 12%, transparent); background: var(--gradient-avatar-expressive); box-shadow: var(--shadow-avatar-expressive); }
+            .sidebar-profile-name { font-size: 13px; color: var(--clmone-white); }
+            .sidebar-profile-role { font-size: 12px; color: color-mix(in srgb, var(--clmone-white) 48%, transparent); }
+            .sidebar-profile svg { color: color-mix(in srgb, var(--clmone-white) 58%, transparent); }
+
+            @media (max-width: 900px) {
+                .sidebar-container {
+                    position: fixed;
+                    inset: 0 auto 0 0;
+                    z-index: 80;
+                    width: 225px;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                    transform: translateX(-100%);
+                    box-shadow: 18px 0 40px rgba(8, 18, 35, .22);
+                }
+                body.mobile-nav-open .sidebar-container { transform: translateX(0); }
+                .sidebar-brand { height: 76px; flex-basis: 76px; padding: 0 28px; }
+                .sidebar-padding { padding: 8px 16px 20px; }
+                .nav-link { min-height: 44px; justify-content: flex-start; padding: 0 10px; font-size: 13px; }
+                .nav-link.active::before { left: -16px; }
+                .sidebar-footer { display: block; }
+            }
         </style>
 </head>
 <body class="c-primary-text" data-design-system="casefile">
@@ -1400,17 +1475,17 @@
                 {% include "design_system/icon.html" with name="menu" class_name="nav-icon-svg" %}
             </button>
             {% endif %}
-            <a href="{% url 'dashboard' %}" class="logo-link" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-logo-white.svg' %}" alt="DocClad" class="logo-wordmark logo-dark">
-                <img src="{% static 'img/brand/docclad-logo-primary.svg' %}" alt="DocClad" class="logo-wordmark logo-light">
-                <img src="{% static 'img/brand/docclad-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-dark">
-                <img src="{% static 'img/brand/docclad-mark-primary.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-light">
+            <a href="{% url 'dashboard' %}" class="logo-link" aria-label="CLM One — go to dashboard">
+                <img src="{% static 'img/brand/clmone-logo-white.svg' %}" alt="CLM One" class="logo-wordmark logo-dark">
+                <img src="{% static 'img/brand/clmone-logo-primary.svg' %}" alt="CLM One" class="logo-wordmark logo-light">
+                <img src="{% static 'img/brand/clmone-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-dark">
+                <img src="{% static 'img/brand/clmone-mark-primary.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-light">
             </a>
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                 <div class="global-search-wrap">
                     {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
-                    <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties" value="{{ request.GET.q|default:'' }}">
+                    <input type="search" name="q" class="global-search-input" placeholder="Search contracts and workflows…" value="{{ request.GET.q|default:'' }}">
                 </div>
             </form>
             {% endif %}
@@ -1477,10 +1552,10 @@
     {% if user.is_authenticated %}
     <div class="main-layout">
         <nav class="sidebar-container" id="sidebar" aria-label="Primary navigation">
-            <a href="{% url 'dashboard' %}" class="sidebar-brand" aria-label="DocClad — go to dashboard">
-                <img src="{% static 'img/brand/docclad-logo-black.svg' %}" alt="DocClad" class="logo-wordmark">
-                <img src="{% static 'img/brand/docclad-logo-command-center.svg' %}" alt="DocClad" class="logo-wordmark logo-command-center">
-                <img src="{% static 'img/brand/docclad-mark-black.svg' %}" alt="" aria-hidden="true" class="logo-mark">
+            <a href="{% url 'dashboard' %}" class="sidebar-brand" aria-label="CLM One — go to dashboard">
+                <img src="{% static 'img/brand/clmone-logo-black.svg' %}" alt="CLM One" class="logo-wordmark">
+                <img src="{% static 'img/brand/clmone-logo-command-center.svg' %}" alt="CLM One" class="logo-wordmark logo-command-center">
+                <img src="{% static 'img/brand/clmone-mark-black.svg' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
             {% if CURRENT_ORGANIZATION %}
             <div class="sidebar-workspace">
@@ -1542,11 +1617,15 @@
                 <button type="button" class="mobile-nav-toggle" id="mobileNavToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">
                     {% include "design_system/icon.html" with name="menu" %}
                 </button>
+                <div class="topbar-page-context" aria-label="Current page">
+                    <h1 class="topbar-page-title">{% block authenticated_page_title %}{% endblock %}</h1>
+                    <p class="topbar-page-subtitle">{% block authenticated_page_subtitle %}{% endblock %}</p>
+                </div>
                 <div class="topbar-flex topbar-gap-lg">
                     <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                         <div class="global-search-wrap">
                             {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
-                            <input type="search" name="q" class="global-search-input" placeholder="Search contracts, workflows, counterparties..." value="{{ request.GET.q|default:'' }}">
+                            <input type="search" name="q" class="global-search-input" placeholder="Search contracts and workflows…" value="{{ request.GET.q|default:'' }}">
                         </div>
                     </form>
                 </div>
@@ -1611,7 +1690,7 @@
                 {% block content %}{% endblock %}
             </div>
             <footer class="app-footer">
-                &copy; {% now "Y" %} DocClad B.V. All rights reserved.
+                &copy; {% now "Y" %} CLM One B.V. All rights reserved.
                 <a href="{% url 'privacy' %}">Privacy Policy</a>
                 <span aria-hidden="true">&middot;</span>
                 <a href="{% url 'terms' %}">Terms of Service</a>
@@ -1636,7 +1715,7 @@
         if (!railToggle && !railToggleFooter) {
             return;
         }
-        var STORAGE_KEY = 'docclad-rail-collapsed';
+        var STORAGE_KEY = 'clmone-rail-collapsed';
         if (localStorage.getItem(STORAGE_KEY) === '1') {
             document.body.classList.add('nav-collapsed');
         }
@@ -1698,6 +1777,45 @@
                 closeMenu();
             }
         });
+    })();
+
+    /* Legacy page headers progressively adopt the Command Center shell.
+       Explicit template blocks win; this bridge promotes the established
+       shared header patterns without changing route or form behavior. */
+    (function () {
+        var context = document.querySelector('.topbar-page-context');
+        var title = context && context.querySelector('.topbar-page-title');
+        var subtitle = context && context.querySelector('.topbar-page-subtitle');
+        var main = document.querySelector('.main-content-pad');
+        if (!context || !title || !main || title.textContent.trim()) return;
+
+        var sourceTitle = main.querySelector(
+            '.dc-ds-page-hero .dc-ds-title, .arch-header .arch-title, .page-header .page-title, .workspace-header .workspace-title'
+        );
+        if (!sourceTitle) return;
+        var header = sourceTitle.closest('.dc-ds-page-hero, .arch-header, .page-header, .workspace-header');
+        if (!header) return;
+
+        title.textContent = sourceTitle.textContent.trim();
+        var sourceSubtitle = header.querySelector(
+            '.dc-ds-subtitle, .arch-subtitle, .page-subtitle, .workspace-subtitle'
+        );
+        if (subtitle && sourceSubtitle) subtitle.textContent = sourceSubtitle.textContent.trim();
+
+        var sourceContext = sourceTitle.closest('.dc-ds-page-hero__context, .arch-header-copy, .page-header-copy, .workspace-header-copy');
+        if (sourceContext && header.contains(sourceContext)) {
+            sourceContext.classList.add('dc-ds-promoted-context-source');
+        } else {
+            sourceTitle.classList.add('dc-ds-promoted-context-source');
+            if (sourceSubtitle) sourceSubtitle.classList.add('dc-ds-promoted-context-source');
+            var eyebrow = header.querySelector('.dc-ds-eyebrow, .arch-eyebrow, .page-eyebrow');
+            if (eyebrow) eyebrow.classList.add('dc-ds-promoted-context-source');
+        }
+
+        header.classList.add('dc-ds-header-promoted');
+        if (!header.querySelector('a, button, input, select, textarea, form, [role="button"]')) {
+            header.classList.add('dc-ds-header-promoted--context-only');
+        }
     })();
     </script>
 

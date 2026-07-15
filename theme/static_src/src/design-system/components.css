@@ -1,18 +1,18 @@
 /* Casefile Django adapter components. Shared classes use the dc-ds-* prefix. */
 .dc-ds-page {
-  max-width: 1600px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: var(--ds-space-6) var(--ds-grid-margin) var(--ds-space-10);
-  color: var(--ds-color-text);
-  font-family: var(--ds-font-sans);
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
 }
 
 .dc-ds-page--wide { max-width: none; }
 
 .dc-ds-grid {
   display: grid;
-  grid-template-columns: repeat(var(--ds-grid-columns), minmax(0, 1fr));
-  gap: var(--ds-grid-gutter);
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  gap: var(--grid-gutter);
 }
 
 .dc-ds-span-12 { grid-column: span 12; }
@@ -25,52 +25,103 @@
 .dc-ds-scaffold {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--ds-grid-gutter);
+  gap: var(--grid-gutter);
 }
 
 .dc-ds-scaffold--with-rail {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.32fr);
+  grid-template-columns: minmax(0, 1fr) 296px;
   align-items: start;
 }
+
+.dc-ds-scaffold__main { min-width: 0; order: 1; }
+.dc-ds-scaffold__rail { min-width: 0; order: 2; }
+
+/* Canonical page composition. The authenticated shell owns title/subtitle;
+   pages own only their action row and content rhythm. */
+.dc-ds-page-flow {
+  display: grid;
+  gap: var(--space-24);
+}
+
+.dc-ds-page-actions {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.dc-ds-page-actions > .dc-ds-actions:last-child,
+.dc-ds-page-actions > :only-child { margin-left: auto; }
+
+.dc-ds-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-16);
+}
+
+.dc-ds-card-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .dc-ds-page-hero {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--ds-space-5);
+  gap: var(--space-20);
   flex-wrap: wrap;
 }
 
+body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero__context {
+  display: none;
+}
+
+body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero {
+  justify-content: flex-end;
+}
+
+body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-actions)) {
+  display: none;
+}
+
+.dc-ds-promoted-context-source,
+.dc-ds-header-promoted--context-only {
+  display: none !important;
+}
+
+.dc-ds-header-promoted {
+  justify-content: flex-end !important;
+  margin-bottom: var(--space-16) !important;
+  padding-bottom: 0 !important;
+  border-bottom: 0 !important;
+}
+
 .dc-ds-eyebrow {
-  margin: 0 0 var(--ds-space-2);
-  color: var(--ds-color-text-secondary);
-  font-size: var(--ds-text-sm);
-  line-height: var(--ds-line-tight);
-  font-weight: 750;
+  margin: 0 0 var(--space-8);
+  color: var(--ink-600);
+  font: var(--text-eyebrow);
+  text-transform: uppercase;
+  letter-spacing: .08em;
 }
 
 .dc-ds-title {
   margin: 0;
-  color: var(--ds-color-text);
-  font-size: var(--ds-text-title);
-  line-height: 1.08;
-  font-weight: 780;
+  color: var(--ink-900);
+  font: var(--text-display);
   letter-spacing: 0;
 }
 
 .dc-ds-subtitle {
-  margin: var(--ds-space-2) 0 0;
+  margin: var(--space-8) 0 0;
   max-width: 820px;
-  color: var(--ds-color-text-secondary);
-  font-size: var(--ds-text-md);
-  line-height: var(--ds-line-base);
+  color: var(--ink-500);
+  font: var(--text-small);
 }
 
 .dc-ds-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--ds-space-2);
+  gap: var(--space-8);
   flex-wrap: wrap;
 }
 
@@ -79,54 +130,51 @@
   align-items: center;
   justify-content: center;
   min-height: 36px;
-  padding: 0 var(--ds-space-4);
-  border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-md);
-  background: var(--ds-color-surface);
-  color: var(--ds-color-text);
-  font-size: var(--ds-text-sm);
-  line-height: var(--ds-line-tight);
-  font-weight: 760;
+  padding: 0 var(--space-16);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-900);
+  font: var(--text-small);
+  font-weight: 650;
   text-decoration: none;
   cursor: pointer;
   transition: background-color var(--ds-motion-fast) var(--ds-ease-standard), border-color var(--ds-motion-fast) var(--ds-ease-standard), color var(--ds-motion-fast) var(--ds-ease-standard);
 }
 
-.dc-ds-button:hover { border-color: var(--ds-color-border-strong); background: #FBFCFE; }
-.dc-ds-button:focus-visible { outline: none; box-shadow: var(--ds-focus-ring); }
-.dc-ds-button--primary { border-color: var(--ds-color-action); background: var(--ds-color-action); color: #fff; }
-.dc-ds-button--primary:hover { border-color: var(--ds-color-action-hover); background: var(--ds-color-action-hover); }
+.dc-ds-button:hover { border-color: var(--line-strong); background: var(--color-surface-card-hover); }
+.dc-ds-button:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+.dc-ds-button--primary { border-color: var(--seal); background: var(--seal); color: var(--clmone-white); }
+.dc-ds-button--primary:hover { border-color: var(--seal-dark); background: var(--seal-dark); }
 .dc-ds-button--ghost { background: transparent; }
-.dc-ds-button--danger { border-color: var(--ds-color-danger); background: var(--ds-color-danger); color: #fff; }
+.dc-ds-button--danger { border-color: var(--status-danger-fg); background: var(--status-danger-fg); color: var(--clmone-white); }
 .dc-ds-button:disabled { opacity: .5; cursor: not-allowed; }
 .dc-ds-button .dc-ds-icon { width: 16px; height: 16px; }
 .dc-ds-icon { width: 18px; height: 18px; display: block; flex: 0 0 auto; }
 
 .dc-ds-surface {
-  background: var(--ds-color-surface);
-  border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-shadow-hairline);
+  background: var(--card);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  box-shadow: var(--shadow-card);
 }
 
 .dc-ds-surface__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--ds-space-3);
-  padding: var(--ds-space-4);
-  border-bottom: 1px solid var(--ds-color-border);
+  gap: var(--space-12);
+  padding: var(--space-20) var(--space-24);
+  border-bottom: 1px solid var(--line);
 }
 
 .dc-ds-surface__title {
   margin: 0;
-  color: var(--ds-color-text);
-  font-size: var(--ds-text-md);
-  line-height: var(--ds-line-tight);
-  font-weight: 800;
+  color: var(--ink-900);
+  font: var(--text-heading);
 }
 
-.dc-ds-surface__body { padding: var(--ds-space-4); }
+.dc-ds-surface__body { padding: var(--space-24); }
 
 /* Expressive surfaces are reserved for command dashboards, activation
    moments, and high-level context. Dense records and forms keep the default
@@ -140,10 +188,10 @@
 .dc-ds-surface--feature {
   min-height: var(--feature-surface-min-height);
   overflow: hidden;
-  border-color: rgba(255, 255, 255, .22);
+  border-color: color-mix(in srgb, var(--clmone-white) 22%, transparent);
   border-radius: var(--radius-feature);
   background: var(--gradient-feature);
-  color: var(--docclad-white);
+  color: var(--clmone-white);
   box-shadow: var(--shadow-feature);
 }
 
@@ -172,15 +220,15 @@
 .dc-ds-metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ds-space-3);
+  gap: var(--space-12);
 }
 
 .dc-ds-metric {
-  padding: var(--ds-space-4);
-  background: var(--ds-color-surface);
-  border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-shadow-hairline);
+  padding: var(--space-16);
+  background: var(--card);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  box-shadow: var(--shadow-card);
 }
 
 .dc-ds-metric__label {
@@ -243,6 +291,97 @@
   vertical-align: 2px;
 }
 
+/* Compact operational summary. This replaces grids of large zero-value KPI
+   cards on list pages while preserving semantic, scannable state. */
+.dc-ds-summary {
+  display: grid;
+  grid-template-columns: repeat(var(--dc-ds-summary-columns, 4), minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.dc-ds-summary--vertical {
+  --dc-ds-summary-columns: 1;
+}
+
+.dc-ds-summary__item {
+  min-width: 0;
+  padding: var(--space-16);
+  border-left: 1px solid var(--hairline);
+}
+
+.dc-ds-summary__item:first-child { border-left: 0; }
+.dc-ds-summary--vertical .dc-ds-summary__item { border-top: 1px solid var(--hairline); border-left: 0; }
+.dc-ds-summary--vertical .dc-ds-summary__item:first-child { border-top: 0; }
+
+.dc-ds-summary__label {
+  display: block;
+  color: var(--ink-500);
+  font: var(--text-meta);
+  font-weight: 600;
+}
+
+.dc-ds-summary__value {
+  display: block;
+  margin-top: var(--space-4);
+  color: var(--status-progress-fg);
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dc-ds-summary__note {
+  display: block;
+  margin-top: var(--space-4);
+  color: var(--ink-500);
+  font: var(--text-meta);
+  line-height: 1.4;
+}
+
+.dc-ds-summary__item--clear .dc-ds-summary__value { color: var(--status-positive-fg); }
+.dc-ds-summary__item--setup .dc-ds-summary__value { color: var(--status-pending-fg); }
+.dc-ds-summary__item--danger .dc-ds-summary__value { color: var(--status-danger-fg); }
+.dc-ds-summary__item--info .dc-ds-summary__value { color: var(--status-progress-fg); }
+
+/* One selected-control language for horizontal tabs, filter pills, saved
+   views, and vertical repository views. Layout may change; state does not. */
+.dc-ds-choice {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-600);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dc-ds-choice:hover { border-color: var(--line-strong); color: var(--ink-900); }
+.dc-ds-choice:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+.dc-ds-choice:is(.is-selected, .active, .chip-active, [aria-pressed="true"]) {
+  border-color: var(--color-control-selected-border);
+  background: var(--color-control-selected-bg);
+  color: var(--color-control-selected-text);
+  font-weight: 700;
+}
+
+.dc-ds-choice--rail { width: 100%; border-radius: var(--radius-card); }
+
+.dc-ds-rail-section + .dc-ds-rail-section { border-top: 1px solid var(--line); }
+.dc-ds-rail-section__head { padding: var(--space-12) var(--space-16) var(--space-8); }
+.dc-ds-rail-section__body { padding: var(--space-8) var(--space-16) var(--space-16); }
+.dc-ds-rail-section__title { margin: 0; color: var(--ink-600); font: var(--text-eyebrow); text-transform: uppercase; }
+
 .dc-ds-badge {
   display: inline-flex;
   align-items: center;
@@ -259,12 +398,12 @@
 }
 
 .dc-ds-badge--success,
-.dc-ds-badge--trust { border-color: #B9DFCE; background: var(--ds-color-success-soft); color: var(--ds-color-success); }
-.dc-ds-badge--progress { border-color: #CAD8EB; background: var(--ds-color-progress-soft); color: var(--ds-color-progress); }
-.dc-ds-badge--attention { border-color: #ECD8B3; background: var(--ds-color-attention-soft); color: var(--ds-color-attention); }
-.dc-ds-badge--danger { border-color: #EACAC7; background: var(--ds-color-danger-soft); color: var(--ds-color-danger); }
-.dc-ds-badge--special { border-color: #DED2E7; background: var(--ds-color-special-soft); color: var(--ds-color-special); }
-.dc-ds-badge--phase { border-color: #B9DFCE; background: var(--ds-color-trust-soft); color: var(--ds-color-trust); }
+.dc-ds-badge--trust { border-color: var(--color-status-success-border); background: var(--status-positive-bg); color: var(--status-positive-fg); }
+.dc-ds-badge--progress { border-color: var(--color-status-info-border); background: var(--status-progress-bg); color: var(--status-progress-fg); }
+.dc-ds-badge--attention { border-color: var(--color-status-warning-border); background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.dc-ds-badge--danger { border-color: var(--color-status-error-border); background: var(--status-danger-bg); color: var(--status-danger-fg); }
+.dc-ds-badge--special { border-color: var(--color-status-special-border); background: var(--status-special-bg); color: var(--status-special-fg); }
+.dc-ds-badge--phase { border-color: var(--color-status-success-border); background: var(--seal-bg); color: var(--seal-dark); }
 /* neutral: added for the canonical semantic vocabulary (Phase 2 badge/status/empty
    consolidation) — covers "neutral", "inactive", and "not applicable" semantics.
    Previously only reachable via the base .dc-ds-badge default, which is fragile
@@ -282,9 +421,9 @@
   color: var(--ds-color-text-secondary);
 }
 
-.dc-ds-alert--attention { border-color: #ECD8B3; background: var(--ds-color-attention-soft); color: var(--ds-color-attention); }
-.dc-ds-alert--danger { border-color: #EACAC7; background: var(--ds-color-danger-soft); color: var(--ds-color-danger); }
-.dc-ds-alert--success { border-color: #B9DFCE; background: var(--ds-color-success-soft); color: var(--ds-color-success); }
+.dc-ds-alert--attention { border-color: var(--color-status-warning-border); background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.dc-ds-alert--danger { border-color: var(--color-status-error-border); background: var(--status-danger-bg); color: var(--status-danger-fg); }
+.dc-ds-alert--success { border-color: var(--color-status-success-border); background: var(--status-positive-bg); color: var(--status-positive-fg); }
 
 .dc-ds-work-row {
   display: grid;
@@ -314,20 +453,20 @@
   background: var(--ds-color-surface);
   color: inherit;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(23, 26, 31, .03);
+  box-shadow: var(--shadow-card);
   transition: border-color var(--ds-motion-fast) var(--ds-ease-standard), background-color var(--ds-motion-fast) var(--ds-ease-standard), box-shadow var(--ds-motion-fast) var(--ds-ease-standard), transform var(--ds-motion-fast) var(--ds-ease-standard);
 }
 
 .dc-ds-action-zone[href]:hover {
-  border-color: #B9DFCE;
-  background: #FBFDFC;
-  box-shadow: var(--ds-surface-shadow-hover);
+  border-color: var(--color-status-success-border);
+  background: var(--color-surface-action-hover);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
 }
 
 .dc-ds-action-zone[href]:focus-visible {
   outline: none;
-  box-shadow: var(--ds-focus-ring);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .dc-ds-action-zone__label {
@@ -355,6 +494,7 @@
 
 .dc-ds-empty__title { margin: 0; color: var(--ds-color-text); font-size: var(--ds-text-lg); font-weight: 800; }
 .dc-ds-empty__copy { margin: var(--ds-space-2) auto 0; max-width: 520px; color: var(--ds-color-text-secondary); font-size: var(--ds-text-md); line-height: var(--ds-line-base); }
+.dc-ds-empty__how { margin: var(--ds-space-2) auto 0; max-width: 560px; color: var(--ds-color-text-muted); font-size: var(--ds-text-sm); line-height: var(--ds-line-base); }
 .dc-ds-empty__actions { justify-content: center; margin-top: var(--ds-space-4); }
 
 .dc-ds-empty__icon {
@@ -428,7 +568,7 @@
   border: 1px solid var(--color-shell-callout-border);
   border-radius: calc(var(--radius-surface) - 2px);
   background: var(--gradient-shell-callout);
-  color: var(--docclad-white);
+  color: var(--clmone-white);
   box-shadow: var(--shadow-shell-callout);
 }
 
@@ -627,7 +767,7 @@
 
 .dc-ds-form-errors {
   padding: var(--ds-space-3) var(--ds-space-4);
-  border: 1px solid #EACAC7;
+  border: 1px solid var(--color-status-error-border);
   border-radius: var(--ds-radius-lg);
   background: var(--ds-color-danger-soft);
 }
@@ -679,7 +819,7 @@
 .dc-ds-table th {
   padding: 12px 16px;
   border-bottom: 1px solid var(--ds-color-border);
-  background: #FAFBFB;
+  background: var(--color-surface-table-head);
   color: var(--ds-color-text-muted);
   font-size: var(--ds-text-xs);
   font-weight: 700;
@@ -695,14 +835,14 @@
 }
 
 .dc-ds-table tr:last-child td { border-bottom: 0; }
-.dc-ds-table tbody tr:hover { background: #FAFBFB; }
+.dc-ds-table tbody tr:hover { background: var(--color-surface-table-head); }
 .dc-ds-table tbody tr:focus-within { background: var(--ds-color-trust-soft); }
 .dc-ds-table [data-numeric] { text-align: right; font-variant-numeric: tabular-nums; }
 .dc-ds-table [aria-sort] { color: var(--ds-color-text-secondary); }
 .dc-ds-table [aria-sort] button { display: inline-flex; align-items: center; gap: 6px; color: inherit; font: inherit; text-transform: inherit; }
 
 /* Chart host contract. Rendering engines receive these values through
-   DocClad.chartTheme so charts never introduce a second visual language. */
+   CLMOne.chartTheme so charts never introduce a second visual language. */
 .dc-ds-chart {
   min-height: 240px;
   color: var(--ds-color-text-secondary);
@@ -732,6 +872,7 @@
   .dc-ds-span-4,
   .dc-ds-span-3 { grid-column: span 6; }
   .dc-ds-scaffold--with-rail { grid-template-columns: 1fr; }
+  .dc-ds-card-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -741,6 +882,14 @@
   .dc-ds-span-4,
   .dc-ds-span-3 { grid-column: span 12; }
   .dc-ds-metric-grid { grid-template-columns: 1fr; }
+  .dc-ds-card-grid--3,
+  .dc-ds-summary { grid-template-columns: 1fr; }
+  .dc-ds-summary__item { border-top: 1px solid var(--hairline); border-left: 0; }
+  .dc-ds-summary__item:first-child { border-top: 0; }
+  .dc-ds-page-actions,
+  .dc-ds-page-actions .dc-ds-actions { align-items: stretch; }
+  .dc-ds-page-actions > *,
+  .dc-ds-page-actions .dc-ds-button { width: 100%; }
   .dc-ds-settings-section { grid-template-columns: 1fr; }
 }
 
@@ -826,12 +975,12 @@
 .dc-ds-catalog__surface-stack { display: grid; gap: var(--space-12); }
 .dc-ds-catalog__shell-callout { padding: var(--space-16); }
 .dc-ds-catalog__shell-callout strong { display: block; font-size: var(--font-size-meta); }
-.dc-ds-catalog__shell-callout p { margin: var(--space-8) 0 0; color: color-mix(in srgb, var(--docclad-white) 70%, transparent); font-size: var(--font-size-eyebrow); line-height: 1.45; }
+.dc-ds-catalog__shell-callout p { margin: var(--space-8) 0 0; color: color-mix(in srgb, var(--clmone-white) 70%, transparent); font-size: var(--font-size-eyebrow); line-height: 1.45; }
 .dc-ds-catalog__feature-demo { min-height: 320px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: var(--space-32); }
-.dc-ds-catalog__feature-demo h3 { margin: var(--space-16) 0 var(--space-8); color: var(--docclad-white); font: var(--text-title); }
-.dc-ds-catalog__feature-demo p { max-width: 520px; margin: 0 0 var(--space-24); color: color-mix(in srgb, var(--docclad-white) 78%, transparent); font: var(--text-body); }
-.dc-ds-catalog__feature-demo .dc-ds-button { border-color: var(--docclad-white); background: var(--docclad-white); color: var(--color-feature-deep); }
-.dc-ds-catalog__feature-badge { border-color: color-mix(in srgb, var(--docclad-white) 28%, transparent); background: color-mix(in srgb, var(--docclad-white) 14%, transparent); color: var(--docclad-white); }
+.dc-ds-catalog__feature-demo h3 { margin: var(--space-16) 0 var(--space-8); color: var(--clmone-white); font: var(--text-title); }
+.dc-ds-catalog__feature-demo p { max-width: 520px; margin: 0 0 var(--space-24); color: color-mix(in srgb, var(--clmone-white) 78%, transparent); font: var(--text-body); }
+.dc-ds-catalog__feature-demo .dc-ds-button { border-color: var(--clmone-white); background: var(--clmone-white); color: var(--color-feature-deep); }
+.dc-ds-catalog__feature-badge { border-color: color-mix(in srgb, var(--clmone-white) 28%, transparent); background: color-mix(in srgb, var(--clmone-white) 14%, transparent); color: var(--clmone-white); }
 .dc-ds-catalog__form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ds-space-4); padding: var(--ds-space-4); border: 1px solid var(--ds-color-border); border-radius: var(--ds-radius-lg); background: var(--ds-color-surface); }
 .dc-ds-catalog__form input { width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid var(--ds-color-border); border-radius: var(--ds-radius-md); background: var(--ds-color-surface); color: var(--ds-color-text); }
 .dc-ds-catalog__form input:focus { outline: none; border-color: var(--ds-color-trust); box-shadow: var(--ds-focus-ring); }

@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% load docclad_components %}
-{% block title %}{{ contract.title }} – DocClad{% endblock %}
+{% load clmone_format %}
+{% load clmone_components %}
+{% block title %}{{ contract.title }} – CLM One{% endblock %}
 {% block content %}
+{% url 'contracts:document_create' as attach_document_url %}
 <style nonce="{{ csp_nonce }}">
   .arch-header-chips { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
   .arch-action-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -22,7 +23,7 @@
 <div class="page-wrap reveal-stagger">
 
   {# ── Back link ────────────────────────────────────────────── #}
-  <a href="{% url 'contracts:contract_list' %}" class="arch-back">
+  <a href="{% url 'contracts:repository' %}" class="arch-back">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
     </svg>
@@ -76,8 +77,8 @@
     </div>
     <div class="arch-header-right">
       <div class="arch-action-bar">
-        <a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>
-        <a href="{% url 'contracts:approval_request_create' %}" class="btn-quiet">Request approval</a>
+        {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>{% endif %}
+        {% if can_submit_for_review %}<button type="button" class="btn-quiet" data-open-workflow>Submit for review</button>{% endif %}
         <a href="{% url 'contracts:signature_request_create' %}" class="btn-quiet">Send for signature</a>
         <button type="button" id="run-grounded-check" class="btn-cta">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -239,6 +240,114 @@
             <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary text-sm">Attach first document</a>
           </div>
           {% endif %}
+
+          <div class="mt-6 pt-6 border-t" id="ai-clause-review"
+               data-extract-url="{% url 'contracts:contract_ai_extract_api' contract.pk %}"
+               data-review-url-template="{% url 'contracts:ai_extraction_span_review_api' contract.pk 0 %}">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="text-base font-700 c-primary">AI-assisted clause review</h2>
+                  <span class="badge-sm badge-blue">Human review required</span>
+                </div>
+                <p class="text-xs c-muted mt-1">Verbatim document citations, grounded in this workspace’s approved clause library.</p>
+              </div>
+              {% if can_use_ai and ai_provider_configured and documents %}
+              <button type="button" class="dc-ds-button dc-ds-button--primary" data-ai-extract>
+                {% if ai_clause_span_count %}Re-extract clauses{% else %}Extract clauses{% endif %}
+              </button>
+              {% endif %}
+            </div>
+
+            <div class="hidden text-sm c-danger mb-4" role="alert" data-ai-extract-error></div>
+            <div class="text-xs c-muted mb-4" role="status" aria-live="polite" data-ai-extract-status></div>
+
+            {% if not ai_features_enabled %}
+              <div class="dc-ds-empty">
+                <h3 class="dc-ds-empty__title">AI-assisted review is disabled</h3>
+                <p>Workspace policy currently prevents contract text from being sent to an AI provider.</p>
+                <p>When an administrator enables AI data controls, clause extraction becomes available here.</p>
+              </div>
+            {% else %}
+              {% if not ai_provider_configured %}
+              <div class="card-l2 p-3 mb-4">
+                <h3 class="text-sm font-semibold c-primary">AI provider setup is incomplete</h3>
+                <p>No provider key is configured, so no contract text has been sent externally.</p>
+                <p class="text-xs c-muted mt-1">Existing review evidence remains available. Configure Gemini to run or refresh extraction.</p>
+              </div>
+              {% endif %}
+            {% if not documents %}
+              {% include "design_system/empty_state.html" with icon="file-text" title="No document to review" reason="This contract has no attached agreement." how="Clause citations appear after a readable PDF, Word, or text agreement is attached and processed." action_url=attach_document_url action_label="Attach document" %}
+            {% elif not ai_clause_span_count %}
+              <div class="dc-ds-empty">
+                <h3 class="dc-ds-empty__title">No clause citations yet</h3>
+                <p>Extraction has not run, or the attached documents contain no machine-readable text.</p>
+                <p>CLM One creates verbatim citations from processed document text and then matches them to approved clauses.</p>
+                {% if ai_provider_configured %}
+                <div class="dc-ds-empty__actions">
+                  <button type="button" class="dc-ds-button dc-ds-button--primary" data-ai-extract>Extract clauses</button>
+                </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="space-y-6">
+              {% for doc in documents %}
+                {% with spans=doc.ai_extraction_spans.all %}
+                {% if spans %}
+                <section aria-labelledby="ai-doc-{{ doc.pk }}">
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h3 id="ai-doc-{{ doc.pk }}" class="text-sm font-semibold c-primary">{{ doc.title }}</h3>
+                    <a href="{% url 'contracts:document_detail' doc.pk %}" class="text-xs c-link">Open source document</a>
+                  </div>
+                  <div class="divide-y">
+                  {% for span in spans %}
+                    <article class="py-4 first:pt-0" data-ai-span="{{ span.pk }}">
+                      <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="text-sm font-semibold c-primary">{{ span.label_display }}</span>
+                        {% if span.risk_level == 'CLEAR' %}
+                          <span class="badge-sm badge-green">Monitored / clear</span>
+                        {% elif span.risk_level == 'RISK' %}
+                          <span class="badge-sm badge-red">Active risk</span>
+                        {% else %}
+                          <span class="badge-sm badge-yellow">Review needed</span>
+                        {% endif %}
+                        {% if span.review_status == 'CONFIRMED' %}
+                          <span class="badge-sm badge-green" data-review-badge>Confirmed</span>
+                        {% elif span.review_status == 'DISMISSED' %}
+                          <span class="badge-sm badge-gray" data-review-badge>Dismissed</span>
+                        {% else %}
+                          <span class="badge-sm badge-yellow" data-review-badge>Needs human review</span>
+                        {% endif %}
+                        <span class="text-xs c-muted">{% widthratio span.confidence 1 100 %}% confidence</span>
+                      </div>
+                      <blockquote class="card-l2 text-sm c-primary p-3 break-words">“{{ span.span_text }}”</blockquote>
+                      {% if span.rationale %}<p class="text-xs c-muted mt-2"><strong>Reason:</strong> {{ span.rationale }}</p>{% endif %}
+                      {% if span.source_template %}
+                        <div class="mt-3 text-xs c-muted">
+                          <strong class="c-primary">Approved source:</strong> {{ span.source_template.title }} · v{{ span.source_template.version }}
+                          {% if span.source_template.playbook_notes %}<div class="mt-1"><strong>Playbook:</strong> {{ span.source_template.playbook_notes }}</div>{% endif %}
+                          {% if span.source_template.fallback_content %}<details class="mt-1"><summary class="c-link cursor-pointer">Show fallback clause</summary><p class="mt-1 break-words">{{ span.source_template.fallback_content }}</p></details>{% endif %}
+                        </div>
+                      {% else %}
+                        <p class="text-xs c-muted mt-2">No approved library clause matched. Legal review is required before relying on this citation.</p>
+                      {% endif %}
+                      {% if can_use_ai %}
+                      <div class="flex flex-wrap gap-2 mt-3" data-review-actions>
+                        <button type="button" class="dc-ds-button" data-review-status="CONFIRMED">Confirm citation</button>
+                        <button type="button" class="dc-ds-button dc-ds-button--ghost" data-review-status="DISMISSED">Dismiss</button>
+                      </div>
+                      {% endif %}
+                    </article>
+                  {% endfor %}
+                  </div>
+                </section>
+                {% endif %}
+                {% endwith %}
+              {% endfor %}
+              </div>
+            {% endif %}
+            {% endif %}
+          </div>
         </div>
       </div>{# /tab-documents #}
 
@@ -266,6 +375,31 @@
             </div>
             {% else %}
             <div class="py-6 text-center text-sm c-muted">No approvals requested for this contract yet.</div>
+            {% endif %}
+
+            {% if can_submit_for_review %}
+            <form method="post" action="{% url 'contracts:contract_submit_for_review' contract.pk %}" class="mt-5 pt-5 border-t border-[var(--border)] space-y-3" id="contract-submit-review-form">
+              {% csrf_token %}
+              <label class="block text-sm font-medium c-primary" for="reviewer-id">Reviewer</label>
+              <select class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="reviewer-id" name="reviewer_id" required>
+                <option value="">Select an active workspace reviewer</option>
+                {% for reviewer in reviewer_choices %}<option value="{{ reviewer.pk }}">{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}
+              </select>
+              <label class="block text-sm font-medium c-primary" for="submit-comment">Submission note</label>
+              <textarea class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="submit-comment" name="comment" rows="2" placeholder="What should the reviewer focus on?"></textarea>
+              <button type="submit" class="btn-cta">Submit for review</button>
+            </form>
+            {% elif can_decide_approval and open_approval %}
+            <form method="post" action="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'approve' %}" class="mt-5 pt-5 border-t border-[var(--border)] space-y-3">
+              {% csrf_token %}
+              <label class="block text-sm font-medium c-primary" for="decision-comment">Decision comment</label>
+              <textarea class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="decision-comment" name="comment" rows="3" required></textarea>
+              <div class="flex flex-wrap gap-2">
+                <button type="submit" class="btn-cta">Approve</button>
+                <button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'request-changes' %}" class="btn-soft-primary">Request changes</button>
+                <button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'reject' %}" class="btn-quiet">Reject</button>
+              </div>
+            </form>
             {% endif %}
           </div>
 
@@ -396,7 +530,12 @@
         <div class="arch-section-label">Quick links</div>
         <div class="detail-stack">
           <a href="{% url 'contracts:risk_log_list' %}" class="text-sm c-link font-medium">Risk register</a>
-          <a href="{% url 'contracts:deadline_create' %}" class="text-sm c-link font-medium">Add deadline</a>
+          <a href="{% url 'contracts:deadline_create' %}?contract={{ contract.pk }}" class="text-sm c-link font-medium">Add deadline or obligation</a>
+          {% if dpa_review_pack %}
+          <a href="{% url 'contracts:dpa_review_pack_detail' dpa_review_pack.pk %}" class="text-sm c-link font-medium">Open DPA review</a>
+          {% elif can_edit %}
+          <a href="{% url 'contracts:contract_update' contract.pk %}" class="text-sm c-link font-medium">Enable DPA review</a>
+          {% endif %}
         </div>
       </div>
 
@@ -420,6 +559,18 @@
         tab.addEventListener('click', () => activateTab(tab.dataset.tab));
     });
 
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+    if (requestedTab && document.querySelector(`.arch-tab[data-tab="${requestedTab}"]`)) {
+        activateTab(requestedTab);
+    }
+
+    document.querySelectorAll('[data-open-workflow]').forEach((button) => {
+        button.addEventListener('click', () => {
+            activateTab('workflow');
+            document.getElementById('contract-submit-review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+
     const runCheckBtn = document.getElementById('run-grounded-check');
     const reviewDetails = document.getElementById('contract-field-review');
     if (runCheckBtn && reviewDetails) {
@@ -429,6 +580,81 @@
             reviewDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
+})();
+</script>
+
+{# ── Governed AI clause extraction/review JS ─────────────── #}
+<script nonce="{{ csp_nonce }}">
+(() => {
+    const root = document.getElementById('ai-clause-review');
+    if (!root) return;
+    const status = root.querySelector('[data-ai-extract-status]');
+    const error = root.querySelector('[data-ai-extract-error]');
+    const csrf = '{{ csrf_token }}';
+
+    async function readJson(response) {
+        try { return await response.json(); } catch (_) { return {}; }
+    }
+
+    root.querySelectorAll('[data-ai-extract]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            root.querySelectorAll('[data-ai-extract]').forEach((item) => { item.disabled = true; });
+            error.classList.add('hidden');
+            status.textContent = 'Extracting cited clauses from readable document text…';
+            try {
+                const response = await fetch(root.dataset.extractUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: '{}',
+                });
+                const data = await readJson(response);
+                if (!response.ok) throw new Error(data.error || 'Clause extraction could not be completed.');
+                status.textContent = `${data.created || 0} clause citation${data.created === 1 ? '' : 's'} extracted. Refreshing review…`;
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', 'documents');
+                window.location.assign(url.toString());
+            } catch (requestError) {
+                error.textContent = requestError.message;
+                error.classList.remove('hidden');
+                status.textContent = '';
+                root.querySelectorAll('[data-ai-extract]').forEach((item) => { item.disabled = false; });
+            }
+        });
+    });
+
+    root.querySelectorAll('[data-review-status]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const article = button.closest('[data-ai-span]');
+            if (!article) return;
+            const spanId = article.dataset.aiSpan;
+            const endpoint = root.dataset.reviewUrlTemplate.replace('/0/review/', `/${spanId}/review/`);
+            article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = true; });
+            error.classList.add('hidden');
+            status.textContent = 'Saving human review…';
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                    body: JSON.stringify({ status: button.dataset.reviewStatus }),
+                });
+                const data = await readJson(response);
+                if (!response.ok) throw new Error(data.error || 'The review decision could not be saved.');
+                const badge = article.querySelector('[data-review-badge]');
+                if (badge) {
+                    badge.textContent = data.review_status === 'CONFIRMED' ? 'Confirmed' : 'Dismissed';
+                    badge.className = data.review_status === 'CONFIRMED' ? 'badge-sm badge-green' : 'badge-sm badge-gray';
+                    badge.setAttribute('data-review-badge', '');
+                }
+                status.textContent = `Review saved by ${data.reviewed_by}.`;
+                article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = false; });
+            } catch (requestError) {
+                error.textContent = requestError.message;
+                error.classList.remove('hidden');
+                status.textContent = '';
+                article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = false; });
+            }
+        });
+    });
 })();
 </script>
 

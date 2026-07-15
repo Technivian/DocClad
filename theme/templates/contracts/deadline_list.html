@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Deadlines – DocClad{% endblock %}
+{% block title %}Deadlines – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">.overdue-date { color: var(--msg-error-text); }</style>
 <div class="page-wrap">
@@ -62,11 +62,16 @@
                 </form>
                 {% endif %}
                 <a href="{% url 'contracts:deadline_update' deadline.pk %}" class="text-xs font-medium c-muted hover:c-link">Edit</a>
+                <form method="post" action="{% url 'contracts:deadline_delete' deadline.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="text-xs font-medium c-danger">Delete</button>
+                </form>
               </div>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="7" class="empty-state">No deadlines found.</td></tr>
+          {% url 'contracts:deadline_create' as deadline_create_url %}
+          <tr><td colspan="7">{% include "design_system/empty_state.html" with icon="calendar" title="No deadlines in this view" reason="No renewal, notice, approval, or delivery date matches this view." how="Deadlines appear here after they are configured directly or extracted from governed contracts." action_url=deadline_create_url action_label="Add first deadline" class_name="dc-ds-empty--compact" %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

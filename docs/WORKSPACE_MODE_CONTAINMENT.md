@@ -1,11 +1,10 @@
 # Workspace-Mode Containment (Phase 5 of the Product Coherence Redesign)
 
-`Organization.workspace_mode` (`law_firm_ops` / `in_house_clm`) changes what
-a tenant sees — sidebar emphasis, dashboard framing, Matter detail sections,
-Risk Review framing. This note is the single place documenting how that
-branching is allowed to happen, which routes are genuinely shared, and which
-are temporary placeholders — so future mode-aware changes have a policy to
-follow instead of re-deriving one per PR.
+`Organization.workspace_mode` (`law_firm_ops` / `in_house_clm`) changes only
+the views where each operating model needs distinct content: Matter detail and
+Risk Review. The Command Center and primary navigation are intentionally
+shared. This note documents that boundary so future mode-aware changes do not
+reintroduce incidental branching.
 
 Enforced by [`tests/test_workspace_mode_containment.py`](../tests/test_workspace_mode_containment.py).
 That file is the living contract — if a route's classification changes, the
@@ -37,8 +36,8 @@ refactor — see the Bucket B correction below.
 
 | Route | URL name | Classification | Notes |
 |---|---|---|---|
-| Nav sidebar | `nav_config.get_nav_for` | Shared dispatcher | Produces the two nav specs; not itself a page. Zero new routes, zero permission changes — see its own module docstring. |
-| Dashboard | `dashboard` | Shared shell, mode-specific content | `contracts.py::dashboard` computes `is_in_house_clm` once; `dashboard.html` branches `{% if is_in_house_clm %}Command Center{% else %}Dashboard{% endif %}` and the sections beneath it. |
+| Nav sidebar | `nav_config.get_nav_for` | Shared / mode-neutral | One standard primary navigation for both modes. It exposes only the current core surface; secondary routes remain reachable by direct URL. |
+| Dashboard | `dashboard` | Shared / mode-neutral | Command Center is the standard dashboard for every organization. It has no `workspace_mode` branch. |
 | Matter detail | `contracts:matter_detail` | Shared shell, mode-specific content | `MatterDetailView.get_context_data` branches once; `matter_detail.html` renders the Matter Workspace Spine for `in_house_clm`, the original billing/time-entry layout otherwise. |
 | Risk Review | `contracts:risk_log_list` / `risk_log_list_legacy` | Shared shell, mode-specific content | `RiskLogListView` picks `legal_intelligence_hub.html` vs `risk_log_list.html` via `get_template_names()`, short-circuiting the unused query path entirely rather than computing-then-discarding it. |
 | Org security settings | `organization_security_settings` | Shared / mode-neutral, with a mode **selector** | Not content-per-mode — it's the admin control that sets `workspace_mode` itself (`actions.py::organization_security_settings`, the `save_workspace_mode` action). No change needed. |
@@ -47,37 +46,19 @@ refactor — see the Bucket B correction below.
 | DPA Reviews | `contracts:dpa_review_pack_list` | Shared / mode-neutral | DPA review is a general compliance primitive, not law-firm-exclusive. |
 | Approvals | `contracts:approval_request_list` | Shared / mode-neutral | Approval requests are a general legal-ops primitive. |
 | Reports | `contracts:reports_dashboard` | Shared / mode-neutral | Generic aggregate reporting. |
-| Obligations | `contracts:deadline_list` | **Temporary stopgap** | `nav_config.py`'s in_house_clm nav labels this "Obligations" but points at the pre-existing, unbranched Deadlines page. Deliberate and self-documented in `nav_config.py`'s module docstring — not a dedicated Obligations view. `contracts/services/obligations.py` already exists (a persisted-data `ObligationService` over `Deadline`) but is currently wired only into JSON API endpoints, not this page. Building the dedicated page is explicitly Phase 6+ scope, not this phase. |
-| Playbooks | `contracts:dpa_playbook_list` | **Temporary stopgap** | Same treatment, pointing at the DPA playbook positions list "until Clause Library playbooks are merged in" (verbatim from `nav_config.py`). `law_firm_ops` has no "Playbooks" nav item at all, so this stopgap cannot leak the wrong framing into the other mode — it just isn't fully built yet. |
+| Obligations | `contracts:obligations_workspace` | Shared / mode-neutral | Dedicated obligations workspace; no longer a deadline-list stopgap. |
+| Playbooks | `contracts:dpa_playbook_list` | Secondary / mode-neutral | The route remains directly reachable, but is deliberately absent from the standard primary navigation until its final product framing is defined. |
 
-No route in this audit needs to be hidden or redirected for either mode.
-The two stopgaps are intentionally visible (removing them would leave no
-nav path to Deadlines/Playbook positions at all, which is worse), and their
-underlying pages are generic enough — data-driven off `DeadlineType` /
-`DPAPlaybookPosition.Topic`, not hardcoded law-firm or CLM copy — that they
-don't misrepresent the other mode's domain. The correction this phase makes
-is turning that intentionality into a pinned test, not a UI change.
+No route needs to be hidden or redirected for either mode. The primary
+navigation deliberately favours a single, coherent information architecture;
+secondary routes remain available by direct URL and command search.
 
-## Bucket B correction (dashboard unification)
+## Explicit dashboard standardization
 
-A concurrent, uncommitted change (not part of Phases 1-4) had replaced the
-dashboard's `is_in_house_clm` gate with `show_command_center = True`
-unconditionally — i.e. converged both modes onto one Command Center layout
-without an explicit product decision to do so, and rewrote
-`tests/test_command_center_in_house_clm.py`'s
-`LawFirmOpsDashboardPreservedTests` to assert the *opposite* of what Phase 2
-required. That is exactly the "not a legitimate shape" case described above.
-
-It was **stashed, not discarded** (`git stash` on the three affected files
-only, since it may represent real in-progress work from another session),
-and the working tree restored to the tested Phase 1-4 contract: shared
-`dashboard.html` shell, `is_in_house_clm`-gated content, `law_firm_ops`
-sees "Dashboard" with the original priority strip/right rail, `in_house_clm`
-sees "Command Center" with DPA/MSA conflicts, approvals, and matter
-activity. If dashboard convergence is wanted later, it should be scoped as
-its own reviewed change — likely still "shared shell, mode-specific
-content," just with more content shared between the branches than today,
-not zero branching.
+The Command Center is now a deliberate shared product decision, not an
+accidental removal of a mode gate. The containment tests assert that both
+workspace modes render the same governed dashboard and that law-firm billing
+language does not reappear there.
 
 ## Testing expectations for future mode-aware changes
 
@@ -95,9 +76,8 @@ Any PR that adds or changes `workspace_mode` branching must:
    both modes) and, if the route touches organization-scoped data, a
    tenant-scoping test proving cross-org data doesn't leak — `workspace_mode`
    must never become a backdoor around organization scoping.
-3. If it's a **stopgap**: pin the nav mapping via `get_nav_for()` (not by
-   scraping rendered HTML) and assert the underlying page still renders
-   generically, per `StopgapRouteContractTests`.
+3. If primary navigation changes: pin the resulting labels via
+   `get_nav_for()` (not by scraping rendered HTML) for both modes.
 4. Gate on a single `is_in_house_clm`/`workspace_mode` computation per
    request — never scatter `getattr(org, 'workspace_mode', ...)` calls
    throughout a view or template.

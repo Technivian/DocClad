@@ -250,11 +250,11 @@ class MatterWorkspaceDataTests(_MatterFixtureMixin, TestCase):
 
 
 class LawFirmOpsMatterPreservedTests(_MatterFixtureMixin, TestCase):
-    """workspace_mode default (law_firm_ops) preserves prior matter detail
+    """law_firm_ops preserves prior matter detail
     behavior — billing/time-entry sections must not disappear."""
 
     def setUp(self):
-        self.org = self._make_org(None)
+        self.org = self._make_org('law_firm_ops')
         self.user = User.objects.create_user(username='firm_matter_user', password='testpass123!')
         OrganizationMembership.objects.create(
             organization=self.org, user=self.user, role=OrganizationMembership.Role.OWNER, is_active=True,

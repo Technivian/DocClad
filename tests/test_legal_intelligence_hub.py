@@ -348,11 +348,11 @@ class LegalIntelligenceHubLinkTests(_HubFixtureMixin, TestCase):
 
 
 class LawFirmOpsRiskRegisterPreservedTests(_HubFixtureMixin, TestCase):
-    """workspace_mode default (law_firm_ops) must keep the original Risk
+    """law_firm_ops must keep the original Risk
     Register — the Legal Intelligence Hub is in_house_clm-only."""
 
     def setUp(self):
-        self.org = self._make_org(None)
+        self.org = self._make_org('law_firm_ops')
         self.user, self.client_ = self._make_user_and_login(self.org, 'hub_lawfirm_user')
 
     def _get(self, **params):

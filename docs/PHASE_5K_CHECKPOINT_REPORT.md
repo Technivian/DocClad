@@ -191,10 +191,10 @@ No real SAML IdP is available in this environment. The following behaviors are v
 ### Operator Checklist (Before Production IdP Integration)
 
 - [ ] Configure `SP_ENTITY_ID` and `SAML_ACS_URL` in `render.yaml` / operator settings.
-- [ ] Upload DocClad SP metadata to each IdP.
+- [ ] Upload CLM One SP metadata to each IdP.
 - [ ] Verify round-trip login with real IdP: assertion signature must be valid; any signature failure must redirect to `/login/`.
 - [ ] Test `NotOnOrAfter` staleness: replay a captured assertion after its `NotBefore`/`NotOnOrAfter` window — must reject.
-- [ ] Test audience restriction: configure a second SP entity ID; confirm assertion for SP-A is rejected when DocClad SP-B receives it.
+- [ ] Test audience restriction: configure a second SP entity ID; confirm assertion for SP-A is rejected when CLM One SP-B receives it.
 - [ ] Test issuer mismatch: assertion from an untrusted issuer must be rejected.
 - [ ] If using `saml_accepted_authn_contexts`: send an assertion with the expected context and verify `mfa_verified = True`; send one without and verify the MFA gate fires.
 - [ ] If using `saml_mfa_trusted = True`: confirm SAML login without any `AuthnContext` marks session as MFA-verified.

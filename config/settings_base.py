@@ -278,8 +278,7 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DOCCLAD_MODE = False
-CMS_AEGIS_MODE = DOCCLAD_MODE  # deprecated alias — remove after env var migration
+CLMONE_MODE = False
 BUILD_SHA = os.getenv('BUILD_SHA', '').strip() or _git_short_sha(BASE_DIR) or 'unknown'
 BUILD_LABEL = f'commit {BUILD_SHA}' if BUILD_SHA != 'unknown' else 'commit unknown'
 
@@ -288,16 +287,16 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Keep default CSRF cookie name for browser compatibility with form posts.
-# Session cookie renamed from cms_aegis_sessionid → docclad_sessionid.
+# Session cookie renamed from cms_aegis_sessionid → clmone_sessionid.
 # Existing sessions using the old name will require re-login once the env var is
 # not overriding this. Production must set SESSION_COOKIE_NAME explicitly during transition.
-SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'docclad_sessionid')
+SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'clmone_sessionid')
 CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'csrftoken')
 SESSION_IDLE_TIMEOUT_MINUTES = int(os.getenv('SESSION_IDLE_TIMEOUT_MINUTES', '120'))
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 if SSO_ENABLED:
-    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.DoccladOIDCAuthenticationBackend')
+    AUTHENTICATION_BACKENDS.insert(0, 'contracts.auth_backends.CLMOneOIDCAuthenticationBackend')
 
 OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID', '')
 OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET', '')
@@ -414,6 +413,10 @@ SALESFORCE_TOKEN_ENCRYPTION_SALT = os.getenv('SALESFORCE_TOKEN_ENCRYPTION_SALT',
 SALESFORCE_API_VERSION = os.getenv('SALESFORCE_API_VERSION', '61.0').strip()
 SALESFORCE_SYNC_DEFAULT_LIMIT = int(os.getenv('SALESFORCE_SYNC_DEFAULT_LIMIT', '200'))
 
+# Optional comma-separated deployment allowlist for customer webhook hosts.
+# The runtime always rejects localhost and non-public IP targets.
+OUTBOUND_WEBHOOK_ALLOWED_HOSTS = os.getenv('OUTBOUND_WEBHOOK_ALLOWED_HOSTS', '').strip()
+
 NETSUITE_CLIENT_ID = os.getenv('NETSUITE_CLIENT_ID', '').strip()
 NETSUITE_CLIENT_SECRET = os.getenv('NETSUITE_CLIENT_SECRET', '').strip()
 NETSUITE_TOKEN_URL = os.getenv('NETSUITE_TOKEN_URL', '').strip()
@@ -473,13 +476,13 @@ RQ_QUEUES = {
 if not _redis_url:
     RQ_QUEUES['default']['ASYNC'] = False
 
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@docclad.local')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@clmone.local')
 SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
 
 # Canonical base URL used by all outbound email links. Must be set in
 # production via the APP_BASE_URL environment variable (https, no trailing
 # slash). Defaults to localhost for development/test — url_builder.py and
-# DocCladPasswordResetForm both read this.
+# CLMOnePasswordResetForm both read this.
 APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://localhost:8000').strip()
 
 # Operator alert email — if set, send_operator_job_failure_alert() sends a
@@ -515,6 +518,7 @@ if _sentry_dsn:
     )
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '').strip()
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash').strip()
 # An explicit GEMINI_AI_ENABLED env override always wins; otherwise AI is on
 # only when a key is present. A pilot deployment sets GEMINI_AI_ENABLED=false
 # to keep confidential contract text off the LLM until the AI-controls work

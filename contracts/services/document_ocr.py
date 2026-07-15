@@ -55,7 +55,7 @@ def _extract_pdf_text(document):
             pages.append(page.extract_text() or '')
         text = '\n'.join(pages).strip()
         if not text:
-            # No embedded text: a scanned/image-only PDF. DocClad does text
+            # No embedded text: a scanned/image-only PDF. CLM One does text
             # extraction, not image OCR — route to manual review explicitly.
             return '', Decimal('0.15'), 'manual-review-image-pdf'
         return text, Decimal('0.82'), 'pdf-extraction'

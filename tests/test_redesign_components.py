@@ -135,7 +135,7 @@ class RedesignComponentsTestCase(TestCase):
             created_by=self.user,
         )
         TrademarkRequest.objects.create(
-            mark_text='DOCCLAD MARK',
+            mark_text='CLMONE MARK',
             description='Primary trademark filing for the platform.',
             goods_services='Legal software services',
             filing_basis='Use in commerce',
@@ -149,7 +149,7 @@ class RedesignComponentsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Trademark Requests')
         self.assertContains(response, 'Search marks, clients, matters, or descriptions...')
-        self.assertContains(response, 'DOCCLAD MARK')
+        self.assertContains(response, 'CLMONE MARK')
         self.assertContains(response, 'Brand Protection')
         self.assertContains(response, 'Use in commerce')
 
@@ -176,7 +176,7 @@ class RedesignComponentsTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Search across contracts, matters, documents, and task signals with relevance ranking.')
-        self.assertContains(response, 'Search contracts, clients, matters, documents, clauses, task signals...')
+        self.assertContains(response, 'Search contracts and workflows…')
         self.assertContains(response, 'Cases (1)')
         self.assertContains(response, contract.title)
 

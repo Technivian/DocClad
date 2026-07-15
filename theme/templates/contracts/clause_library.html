@@ -200,7 +200,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
         <h3 class="mt-2 text-sm font-medium empty-state-title">No clauses found</h3>
-        <p class="mt-1 text-sm c-muted">Get started by creating your first clause.</p>
+        <p class="mt-1 text-sm c-muted">No approved clause matches the current search or category.</p>
+        <p class="mt-1 text-sm c-muted">Clauses appear here after legal creates and approves reusable language.</p>
         <div class="mt-6">
             <button type="button" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg" data-action="open-new-clause-modal">New Clause</button>
         </div>
@@ -485,7 +486,7 @@ function debounce(func, wait) {
 
 function showToast(message, type = 'info') {
     const tone = type === 'error' ? 'danger' : type;
-    window.DocClad.toast(message, { tone: tone });
+    window.CLMOne.toast(message, { tone: tone });
 }
 
 // Keyboard shortcuts

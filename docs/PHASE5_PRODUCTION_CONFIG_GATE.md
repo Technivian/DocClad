@@ -2,7 +2,7 @@
 
 `config.settings_production` fails closed at boot on unsafe configuration. The
 settings module is selected by the `config.settings` dispatcher when
-`DJANGO_ENV=production` (set in the Render `docclad-shared` env group, so web,
+`DJANGO_ENV=production` (set in the Render `clmone-shared` env group, so web,
 worker and cron all run production settings against the shared `DATABASE_URL`).
 
 ## Enforced rejections (boot-time `ImproperlyConfigured`)
@@ -34,7 +34,7 @@ are **absent from the pilot `render.yaml`**:
 - `ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION`
 
 When either is enabled, production boot emits a **HIGH SEVERITY** warning on every
-start (Python warning + `docclad.production` logger `CRITICAL`). Enabling a bypass
+start (Python warning + `clmone.production` logger `CRITICAL`). Enabling a bypass
 requires, before it is set:
 
 1. **Technical Owner** approval (named).

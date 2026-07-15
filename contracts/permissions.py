@@ -57,7 +57,8 @@ def can_access_contract_action(user, contract, action=ContractAction.VIEW):
     if action == ContractAction.EDIT:
         if membership.role in [OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN]:
             return True
-        return bool(contract.created_by_id and contract.created_by_id == user.id)
+        accountable_user_id = contract.owner_id or contract.created_by_id
+        return bool(accountable_user_id and accountable_user_id == user.id)
 
     return False
 

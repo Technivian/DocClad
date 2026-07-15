@@ -1,6 +1,6 @@
 
 """
-API views for DocClad repository functionality.
+API views for CLM One repository functionality.
 """
 import hashlib
 import json
@@ -131,7 +131,7 @@ from contracts.api._helpers import (
 def contracts_api(request):
     """
     API endpoint for listing contracts with filtering and pagination.
-    Used by the DocClad repository UI.
+    Used by the CLM One repository UI.
     """
     try:
         # Parse filters from request

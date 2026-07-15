@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}DocClad{% endblock %}</title>
+    <title>{% block title %}CLM One{% endblock %}</title>
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
     <link rel="icon" type="image/svg+xml" href="{% static 'img/brand/favicon.svg' %}">
@@ -13,21 +13,21 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
     <link rel="manifest" href="{% static 'site.webmanifest' %}">
     <meta name="theme-color" content="#F5F7F8">
-    <meta property="og:title" content="DocClad">
+    <meta property="og:title" content="CLM One">
     <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="{% static 'css/docclad-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
-    <script src="{% static 'js/docclad-ui.js' %}" defer></script>
+    <script src="{% static 'js/clmone-ui.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">
         // Public and authenticated surfaces share the same light theme.
         (function() {
-            localStorage.setItem('docclad-theme', 'light');
+            localStorage.setItem('clmone-theme', 'light');
             document.documentElement.setAttribute('data-theme', 'light');
         })();
     </script>
@@ -75,8 +75,8 @@
         [data-theme="light"] .brand-logo-dark  { display: none; }
 
         /* ── Brand logo sizing (SVGs have transparent backgrounds — no crop needed) ── */
-        .logo-left-dark   { height: var(--docclad-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
-        .logo-left-light  { height: var(--docclad-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
+        .logo-left-dark   { height: var(--clmone-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
+        .logo-left-light  { height: var(--clmone-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
         .logo-right-dark  { height: 38px; width: auto; display: block; object-fit: contain; }
         .logo-right-light { height: 38px; width: auto; display: block; object-fit: contain; }
 

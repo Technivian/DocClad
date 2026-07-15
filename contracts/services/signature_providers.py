@@ -253,7 +253,7 @@ class DocumensoSignatureProvider:
             body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="title"\r\n\r\n' + title.encode() + b'\r\n')
 
             # externalId for idempotency
-            ext_id = f'docclad-{signature_request.organization_id}-{signature_request.id}'
+            ext_id = f'clmone-{signature_request.organization_id}-{signature_request.id}'
             body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="externalId"\r\n\r\n' + ext_id.encode() + b'\r\n')
 
             # recipients as JSON
@@ -275,7 +275,7 @@ class DocumensoSignatureProvider:
             # No document: create a minimal document with a placeholder
             payload = {
                 'title': title,
-                'externalId': f'docclad-{signature_request.organization_id}-{signature_request.id}',
+                'externalId': f'clmone-{signature_request.organization_id}-{signature_request.id}',
                 'recipients': [{
                     'name': signature_request.signer_name,
                     'email': signature_request.signer_email,

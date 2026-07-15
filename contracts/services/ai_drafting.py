@@ -13,7 +13,11 @@ from contracts.models import ClauseRecommendation, Contract
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "gemini-2.0-flash"
+_MODEL = "gemini-3.5-flash"  # compatibility alias; runtime value comes from settings
+
+def get_drafting_model() -> str:
+    from django.conf import settings
+    return getattr(settings, 'GEMINI_MODEL', 'gemini-3.5-flash')
 
 _SUGGEST_SCHEMA = {
     "type": "object",
@@ -80,7 +84,7 @@ class AIClauseDraftingService:
         )
 
         response = _get_client().models.generate_content(
-            model=_MODEL,
+            model=get_drafting_model(),
             contents=prompt,
             config=types.GenerateContentConfig(response_mime_type='application/json'),
         )
@@ -129,7 +133,7 @@ class AIClauseDraftingService:
         )
 
         response = _get_client().models.generate_content(
-            model=_MODEL,
+            model=get_drafting_model(),
             contents=prompt,
         )
 

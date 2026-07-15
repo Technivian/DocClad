@@ -2,7 +2,7 @@
    Not a shared primitive: sized specifically for the profile page identity
    header and MFA recovery-code preview, which do not appear elsewhere.
    Loaded through base.html's {% block page_css %} outlet, after
-   docclad-tokens.css and dist/styles.css. */
+   clmone-tokens.css and dist/styles.css. */
 .profile-page-avatar {
   width: 64px;
   height: 64px;

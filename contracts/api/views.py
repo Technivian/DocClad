@@ -1,5 +1,5 @@
 """
-API views for DocClad repository functionality.
+API views for CLM One repository functionality.
 
 Thin facade: implementations live in domain-aligned submodules under
 ``contracts.api``. Every public symbol is re-exported here so existing imports
@@ -100,6 +100,7 @@ from contracts.api.analytics import (
 from contracts.api.documents_ai import (
     document_upload_api,
     contract_ai_extract_api,
+    ai_extraction_span_review_api,
     ai_suggest_clauses_api,
     ai_clause_recommendations_api,
     ai_accept_clause_api,
@@ -144,6 +145,7 @@ from contracts.api.admin import (
     approval_contract_list_api,
     approval_approve_api,
     approval_reject_api,
+    approval_request_changes_api,
     approval_delegate_api,
     approval_overdue_api,
     approval_escalate_overdue_api,

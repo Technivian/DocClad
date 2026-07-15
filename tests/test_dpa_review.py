@@ -406,6 +406,50 @@ class DPAReviewPackViewTests(TestCase):
         response = client.get(reverse('contracts:dpa_review_pack_list'))
         self.assertEqual(response.status_code, 200)
 
+    def test_list_uses_canonical_design_system_primitives(self):
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.get(reverse('contracts:dpa_review_pack_list'))
+        body = response.content.decode()
+        self.assertIn('dc-ds-page dc-ds-page--wide dc-ds-page-flow dpa-review-page', body)
+        self.assertIn('<h1 class="topbar-page-title">DPA Reviews</h1>', body)
+        self.assertNotIn('<header class="dc-ds-page-hero', body)
+        self.assertIn('dc-ds-scaffold dc-ds-scaffold--with-rail', body)
+        self.assertIn('dc-ds-summary dc-ds-summary--vertical', body)
+        self.assertIn('dc-ds-surface', body)
+        self.assertIn('dc-ds-table', body)
+        self.assertNotIn('class="kpi-card', body)
+        self.assertNotIn('class="panel overflow-hidden"', body)
+
+    def test_list_exposes_semantic_row_counts_and_badges(self):
+        DPARiskItem.objects.create(
+            review_pack=self.review_pack,
+            category=DPARiskItem.Category.TRANSFER,
+            title='Transfer mechanism missing',
+            description='Needs review',
+            severity=DPARiskItem.Severity.CRITICAL,
+            owners='LEGAL',
+            status=DPARiskItem.Status.OPEN,
+        )
+        DPARiskItem.objects.create(
+            review_pack=self.review_pack,
+            category=DPARiskItem.Category.SECURITY,
+            title='Resolved security item',
+            description='Resolved',
+            severity=DPARiskItem.Severity.HIGH,
+            owners='LEGAL',
+            status=DPARiskItem.Status.RESOLVED,
+        )
+        client = TestClient()
+        client.login(username='dpa_member', password='testpass123')
+        response = client.get(reverse('contracts:dpa_review_pack_list'))
+        self.assertEqual(response.status_code, 200)
+        row = response.context['review_pack_rows'][0]
+        self.assertEqual(row['unresolved_risk_count'], 1)
+        self.assertEqual(row['critical_risk_count'], 1)
+        self.assertEqual(row['risk_tone'], 'danger')
+        self.assertEqual(row['approval_tone'], 'neutral')
+
     def test_detail_view_renders_for_member(self):
         client = TestClient()
         client.login(username='dpa_member', password='testpass123')

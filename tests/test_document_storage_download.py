@@ -94,6 +94,8 @@ class ProductionStorageGuardTests(TestCase):
             'ALLOWED_HOSTS': 'example.com',
             'CSRF_TRUSTED_ORIGINS': 'https://example.com',
             'DEFAULT_FROM_EMAIL': 'ops@example.com',
+            'APP_BASE_URL': 'https://app.example.com',
+            'OPERATOR_ALERT_EMAIL': 'security@example.com',
             'ALLOW_SQLITE_IN_PRODUCTION': 'true',  # isolate the storage check
             'DATABASE_URL': 'sqlite:///tmp/guardtest.sqlite3',
         }
@@ -115,16 +117,17 @@ class ProductionStorageGuardTests(TestCase):
 
     def test_production_accepts_s3_with_bucket(self):
         result = self._run_setup({
-            'MEDIA_STORAGE_BACKEND': 's3', 'AWS_STORAGE_BUCKET_NAME': 'docclad-test-bucket',
+            'MEDIA_STORAGE_BACKEND': 's3', 'AWS_STORAGE_BUCKET_NAME': 'clmone-test-bucket',
         })
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_production_allows_explicit_ephemeral_opt_in(self):
+    def test_production_rejects_ephemeral_opt_in(self):
         result = self._run_setup({
             'MEDIA_STORAGE_BACKEND': 'filesystem',
             'ALLOW_EPHEMERAL_MEDIA_IN_PRODUCTION': 'true',
         })
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('durable object storage', result.stderr)
 
     def test_secret_values_not_leaked_in_error(self):
         result = self._run_setup({

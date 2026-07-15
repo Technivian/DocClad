@@ -162,7 +162,7 @@ class StandardNavTests(TestCase):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         href = reverse('dashboard')
-        self.assertRegex(content, rf'<a href="{href}" class="nav-link active"')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
         self.assertIn('Command Center', content)
 
     def test_new_contract_links_to_contract_type_picker(self):
@@ -171,11 +171,17 @@ class StandardNavTests(TestCase):
         href = reverse('contracts:contract_template_picker')
         self.assertIn(f'href="{href}"', content)
 
+    def test_contracts_links_to_the_canonical_repository(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        self.assertIn(f'href="{reverse("contracts:repository")}"', content)
+        self.assertNotIn(f'href="{reverse("contracts:contract_list")}"', content)
+
     def test_active_state_still_works_in_standard_nav(self):
         response = self.owner_client.get(reverse('contracts:dpa_review_pack_list'))
         content = sidebar_html(response)
         href = reverse('contracts:dpa_review_pack_list')
-        self.assertRegex(content, rf'<a href="{href}" class="nav-link active"')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
 
 
 class SpecialistModuleDirectUrlAccessTests(TestCase):

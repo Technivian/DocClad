@@ -1,5 +1,4 @@
 import csv
-import json
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -804,7 +803,7 @@ def reports_dashboard(request):
         'overdue_deadlines': overdue_deadlines,
         'upcoming_deadlines': upcoming_deadlines,
         'high_risks': high_risks,
-        'monthly_billing': json.dumps(monthly_billing),
+        'monthly_billing': monthly_billing,
         'practice_areas': list(practice_areas),
         'case_signals': {
             'overdue_deadlines': overdue_deadlines,
@@ -819,7 +818,7 @@ def reports_dashboard(request):
         'monthly_hours': monthly_hours,
         'executive_cycle_time_days': executive_cycle_time_days,
         'executive_bottlenecks': executive_bottlenecks,
-        'executive_risk_trend': json.dumps(executive_risk_trend),
+        'executive_risk_trend': executive_risk_trend,
         'executive_saved_dashboards': executive_saved_dashboards,
     }
     return render(request, 'contracts/reports_dashboard.html', context)

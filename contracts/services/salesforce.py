@@ -7,8 +7,9 @@ from functools import lru_cache
 from typing import Any
 import base64
 import hashlib
+import re
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 import json
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -16,6 +17,18 @@ from django.conf import settings
 from django.db import transaction
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils import timezone
+
+from contracts.services.outbound_urls import validate_public_https_url
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def urlopen(request, timeout):
+    """Issue validated Salesforce requests without following redirects."""
+    return build_opener(_NoRedirectHandler).open(request, timeout=timeout)
 
 
 DEFAULT_SALESFORCE_OBJECT = 'Opportunity'
@@ -143,8 +156,9 @@ def build_salesforce_authorize_url(state: str) -> str:
 
 def _salesforce_token_request(payload: dict[str, str]) -> dict[str, Any]:
     body = urlencode(payload).encode('utf-8')
+    token_url = validate_public_https_url(settings.SALESFORCE_TOKEN_URL, label='SALESFORCE_TOKEN_URL')
     request = Request(
-        settings.SALESFORCE_TOKEN_URL,
+        token_url,
         data=body,
         headers={'Content-Type': 'application/x-www-form-urlencoded'},
         method='POST',
@@ -158,6 +172,7 @@ def _salesforce_token_request(payload: dict[str, str]) -> dict[str, Any]:
 
 
 def _salesforce_get_json(url: str, access_token: str) -> dict[str, Any]:
+    url = validate_public_https_url(url, label='Salesforce API URL')
     request = Request(
         url,
         headers={
@@ -179,6 +194,8 @@ def _payload_to_token_data(payload: dict[str, Any]) -> SalesforceTokenPayload:
         raise SalesforceOAuthError('Salesforce token payload missing access_token.')
     refresh_token = str(payload.get('refresh_token', '')).strip()
     instance_url = str(payload.get('instance_url', '')).strip()
+    if instance_url:
+        instance_url = validate_public_https_url(instance_url, label='Salesforce instance URL')
     external_org_id = str(payload.get('id', '')).strip()
     scope = str(payload.get('scope', '')).strip()
     expires_in = payload.get('expires_in')
@@ -239,12 +256,17 @@ def _source_object_for_mapping(field_map: list[dict[str, Any]]) -> str:
 
 
 def build_salesforce_soql(field_map: list[dict[str, Any]], source_object: str, limit: int = 200) -> str:
+    identifier = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*$')
+    if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', source_object):
+        raise SalesforceSyncError('Salesforce source object contains invalid characters.')
     projected_fields: list[str] = []
     for item in field_map:
         object_name = str(item.get('salesforce_object', '')).strip() or DEFAULT_SALESFORCE_OBJECT
         field_name = str(item.get('salesforce_field', '')).strip()
         if object_name != source_object or not field_name:
             continue
+        if not identifier.fullmatch(field_name):
+            raise SalesforceSyncError('Salesforce field mapping contains invalid characters.')
         if field_name not in projected_fields:
             projected_fields.append(field_name)
     if 'Id' not in projected_fields:
@@ -255,7 +277,7 @@ def build_salesforce_soql(field_map: list[dict[str, Any]], source_object: str, l
 
 def fetch_salesforce_records(instance_url: str, access_token: str, soql: str) -> list[dict[str, Any]]:
     api_version = str(getattr(settings, 'SALESFORCE_API_VERSION', '61.0')).strip() or '61.0'
-    base = instance_url.rstrip('/')
+    base = validate_public_https_url(instance_url, label='Salesforce instance URL').rstrip('/')
     endpoint = f'{base}/services/data/v{api_version}/query?{urlencode({"q": soql})}'
     records: list[dict[str, Any]] = []
 

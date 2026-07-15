@@ -17,13 +17,10 @@ Three buckets, matching the architecture note:
 2. Shared / mode-neutral routes (Dashboard, Repository, Counterparties,
    DPA Reviews, Approvals, Reports) — reachable and organization-scoped for
    both modes, with no mode-conditional branching at all.
-3. Documented stopgap routes (Playbooks -> dpa_playbook_list) — nav_config's
-   mapping is a deliberate, temporary placeholder, not a dedicated page.
-   These tests pin that mapping and the page's generic (unbranched) shape
-   so any future change must be a deliberate edit here, not silent drift.
-   Obligations was a stopgap through Phase 3 but now has a dedicated view
-   (contracts:obligations_workspace, Phase 4) — see
-   tests/test_obligations_workspace.py for its own coverage.
+3. Primary navigation — mode-neutral. Playbooks remains directly reachable
+   while its product framing is finalized, but it is deliberately not a
+   primary-shell entry for either workspace mode. Obligations has a dedicated
+   workspace (contracts:obligations_workspace, Phase 4).
 """
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
@@ -47,9 +44,9 @@ User = get_user_model()
 
 class _ContainmentFixtureMixin:
     def _make_org_with_user(self, workspace_mode, label, username):
-        kwargs = {}
-        if workspace_mode:
-            kwargs['workspace_mode'] = workspace_mode
+        # Organization defaults to in_house_clm, so test fixtures must set
+        # law_firm_ops explicitly rather than relying on an omitted value.
+        kwargs = {'workspace_mode': workspace_mode or Organization.WorkspaceMode.LAW_FIRM_OPS}
         org = Organization.objects.create(
             name=f'{label} {id(self)}-{username}',
             slug=f'{label.lower().replace(" ", "-")}-{id(self)}-{username}',
@@ -235,15 +232,12 @@ class SharedNeutralRoutesTenantScopingTests(_ContainmentFixtureMixin, TestCase):
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Bucket 3 — documented stopgap routes: pin the mapping + the generic shape
+# Bucket 3 — standard navigation contract
 # ═══════════════════════════════════════════════════════════════════════
 
-class StopgapRouteContractTests(_ContainmentFixtureMixin, TestCase):
-    """Obligations and Playbooks are deliberate placeholders in the
-    in_house_clm nav (see contracts/nav_config.py's module docstring and
-    docs/WORKSPACE_MODE_CONTAINMENT.md). These tests pin today's known
-    shape so a change to either side is a deliberate edit, not silent
-    drift — they are NOT a statement that this is the final design."""
+class NavigationContractTests(_ContainmentFixtureMixin, TestCase):
+    """The primary shell is shared. Secondary routes stay directly reachable
+    without leaking a temporary, mode-specific information architecture."""
 
     def setUp(self):
         self.clm_org, self.clm_user, self.clm_client = self._make_org_with_user(
@@ -261,18 +255,13 @@ class StopgapRouteContractTests(_ContainmentFixtureMixin, TestCase):
         self.assertEqual(len(obligations_items), 1)
         self.assertEqual(obligations_items[0]['url_name'], 'contracts:obligations_workspace')
 
-    def test_in_house_clm_playbooks_nav_item_points_at_dpa_playbook_list(self):
-        nav = get_nav_for(self.clm_org, self.clm_user)
-        playbook_items = [e for e in nav if e.get('kind') == 'item' and e.get('label') == 'Playbooks']
-        self.assertEqual(len(playbook_items), 1)
-        self.assertEqual(playbook_items[0]['url_name'], 'contracts:dpa_playbook_list')
-
-    def test_law_firm_ops_has_no_playbooks_nav_item(self):
-        """Confirms the stopgap can't leak DPA-privacy framing into
-        law_firm_ops — the label doesn't exist there at all."""
-        nav = get_nav_for(self.firm_org, self.firm_user)
-        labels = [e.get('label') for e in nav if e.get('kind') == 'item']
-        self.assertNotIn('Playbooks', labels)
+    def test_primary_navigation_is_mode_neutral_and_has_no_playbooks_stopgap(self):
+        firm_labels = [e.get('label') for e in get_nav_for(self.firm_org, self.firm_user)
+                       if e.get('kind') == 'item']
+        clm_labels = [e.get('label') for e in get_nav_for(self.clm_org, self.clm_user)
+                      if e.get('kind') == 'item']
+        self.assertEqual(firm_labels, clm_labels)
+        self.assertNotIn('Playbooks', firm_labels)
 
     def test_deadline_list_renders_generically_for_in_house_clm(self):
         response = self.clm_client.get(reverse('contracts:deadline_list'))

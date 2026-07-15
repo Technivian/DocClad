@@ -87,7 +87,7 @@ class UnauthJourneys(_Base):
         r = Client().get(reverse('login'))
         self.assertEqual(r.status_code, 200)
         body = r.content.decode()
-        self.assertIn('DocClad', body)
+        self.assertIn('CLM One', body)
         self.assertNotIn('CMS Aegis', body)
 
     def test_successful_login(self):

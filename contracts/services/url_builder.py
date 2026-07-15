@@ -27,7 +27,7 @@ def build_canonical_url(path: str) -> str:
     Example:
         url = build_canonical_url(reverse('contracts:accept_organization_invite',
                                           kwargs={'token': invitation.token}))
-        # Returns: 'https://docclad.com/invite/abc123' (in production)
+        # Returns: 'https://clmone.com/invite/abc123' (in production)
     """
     base_url = getattr(settings, 'APP_BASE_URL', None)
     if not base_url:

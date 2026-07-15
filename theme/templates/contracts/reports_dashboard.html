@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Reports & Analytics – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Reports & Analytics – CLM One{% endblock %}
 
 {% block extra_css %}
 <style nonce="{{ csp_nonce }}">
@@ -164,8 +164,10 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ monthly_billing|json_script:"monthly-billing-data" }}
+{{ executive_risk_trend|json_script:"executive-risk-trend-data" }}
 <script nonce="{{ csp_nonce }}">
-    const data = JSON.parse('{{ monthly_billing|safe }}');
+    const data = JSON.parse(document.getElementById('monthly-billing-data').textContent);
     const chart = document.getElementById('billing-chart');
 
     document.querySelectorAll('.report-progress-fill').forEach((bar) => {
@@ -199,7 +201,7 @@
         });
     }
 
-    const riskTrendData = JSON.parse('{{ executive_risk_trend|safe }}');
+    const riskTrendData = JSON.parse(document.getElementById('executive-risk-trend-data').textContent);
     const riskTrendChart = document.getElementById('risk-trend-chart');
     if (riskTrendChart && riskTrendData.length > 0) {
         const maxRisk = Math.max(...riskTrendData.map(d => d.total), 1);

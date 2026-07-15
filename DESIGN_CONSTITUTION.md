@@ -304,7 +304,7 @@ Rationale and source findings: `IRONCLAD_DESIGN_AUDIT.md`.
 - `badge-sm` is fully rounded (`border-radius: 9999px`). Tinted background +
   same-hue text in both themes (unchanged).
 - Status→color mapping is code, not template markup. Templates MUST use the
-  `status_badge_class` / `phase_badge_class` filters from `docclad_format`:
+  `status_badge_class` / `phase_badge_class` filters from `clmone_format`:
   `<span class="badge-sm {{ contract.status|status_badge_class }}">`.
   Hand-rolled `{% if status == … %}badge-…{% endif %}` chains are retired — they
   caused 5 of 9 statuses to silently render gray.
@@ -332,9 +332,9 @@ Rationale and source findings: `IRONCLAD_DESIGN_AUDIT.md`.
 
 ## 14) Token Authority — "Ledger" Design Language (added 2026-07-05, v1.3)
 
-- `theme/static/css/docclad-tokens.css` is the canonical token layer;
-  `DOCCLAD_DESIGN_SYSTEM.md` is the spec and rationale. Both derive from the
-  approved brand board (`docclad_agent_brand_kit/docs/`).
+- `theme/static/css/clmone-tokens.css` is the canonical token layer;
+  `CLMONE_DESIGN_SYSTEM.md` is the spec and rationale. Both derive from the
+  approved brand board (`clmone_agent_brand_kit/docs/`).
 - New/updated UI must consume `--ink-*`, `--seal-*`, `--status-*`, `--paper/--card/
   --well`, `--line/--hairline` tokens. The legacy `--primary #2563EB` / `--accent
   #22C55E` values and raw Tailwind palette literals are deprecated: do not introduce
@@ -343,7 +343,7 @@ Rationale and source findings: `IRONCLAD_DESIGN_AUDIT.md`.
   remove on touch.
 - The product is light-first; dark theme derives from the same tokens ("navy night").
 - Fiduciary surfaces (anything displaying or moving client funds) must use the
-  fiduciary grammar of DOCCLAD_DESIGN_SYSTEM.md §5: seal-wash background, seal top
+  fiduciary grammar of CLMONE_DESIGN_SYSTEM.md §5: seal-wash background, seal top
   rule, mono eyebrow. Money values are always tabular-numeral and right-aligned;
   totals carry ledger rules.
 
@@ -359,7 +359,7 @@ Dynamic output regions (AI assistant, search results loaded asynchronously, stat
 
 ### Single-PR rule for Ledger token changes
 
-- Any change to a token in `theme/static/css/docclad-tokens.css` must ship in the
+- Any change to a token in `theme/static/css/clmone-tokens.css` must ship in the
   same pull request as the Django template changes that consume it. Token edits
   and their consuming markup are never split across separate PRs — a token
   landing without its consumer (or vice versa) is a review-blocking defect,

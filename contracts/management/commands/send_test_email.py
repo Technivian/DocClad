@@ -14,7 +14,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Sending test email to {recipient} via {settings.EMAIL_HOST} ...')
         try:
             send_mail(
-                subject='DocClad — SMTP test',
+                subject='CLM One — SMTP test',
                 message='If you received this, outbound email is working correctly.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[recipient],

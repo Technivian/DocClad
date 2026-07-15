@@ -436,7 +436,7 @@ class ApprovalsCopyQualityTests(TestCase):
 
 class ApprovalsShellConvergenceTests(TestCase):
     """Approvals must use the shared shell (.page-wrap/.page-wrap-fluid), not
-    a fourth private page-recipe alongside .DocCladDashboard/.page-wrap/the
+    a fourth private page-recipe alongside .CLMOneDashboard/.page-wrap/the
     former Privacy grid — the whole point of this convergence block."""
 
     def setUp(self):
@@ -456,7 +456,7 @@ class ApprovalsShellConvergenceTests(TestCase):
         html = response.content.decode()
         # The old duplicate shell hardcoded these exact values locally —
         # asserting they're gone proves the page no longer competes with
-        # .page-wrap/.DocCladDashboard for "what is the page shell".
+        # .page-wrap/.CLMOneDashboard for "what is the page shell".
         self.assertNotIn('.approvals-page { max-width', html)
         self.assertNotIn('max-width: 1480px', html)
 

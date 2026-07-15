@@ -6,7 +6,7 @@ contracts/apps.py's AppConfig.ready() (after apps are loaded).
 """
 import os
 
-# Render (docclad's deployment platform per render.yaml) sets these on every
+# Render (clmone's deployment platform per render.yaml) sets these on every
 # real deployed service. None of them can be present on a developer's laptop
 # by accident, which is what makes this a meaningfully different signal from
 # DJANGO_ENV — this repo's local .env sets DJANGO_ENV=production (mirroring

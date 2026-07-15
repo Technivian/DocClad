@@ -19,7 +19,7 @@ from contracts.services.queue_rows import (
     assignee_map_for_contracts,
     latest_activity_map,
 )
-from contracts.templatetags.docclad_format import lifecycle_steps, money, status_badge_class as status_badge_class_for
+from contracts.templatetags.clmone_format import lifecycle_steps, money, status_badge_class as status_badge_class_for
 
 
 class BulkUpdateValidationError(Exception):
@@ -64,7 +64,8 @@ class DjangoRepositoryService:
             value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
             start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
             end_date=end_date.isoformat() if end_date else None,
-            owner=contract.created_by.get_full_name() if contract.created_by else 'System',
+            owner=(contract.owner or contract.created_by).get_full_name() or (contract.owner or contract.created_by).username
+            if (contract.owner or contract.created_by) else 'Unassigned',
             updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
             created_at=contract.created_at.isoformat() if contract.created_at else None,
             status_badge_class=status_badge_class_for(contract.status),
@@ -85,7 +86,7 @@ class DjangoRepositoryService:
     def list(self, params: ListParams) -> ListResult:
         """List contracts with filtering and pagination"""
         queryset = scope_queryset_for_organization(
-            Contract.objects.select_related('created_by').all(),
+            Contract.objects.select_related('created_by', 'owner').all(),
             self.organization,
         )
         

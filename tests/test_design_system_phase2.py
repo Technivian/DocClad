@@ -5,7 +5,7 @@ from django.conf import settings
 from django.template import engines
 from django.test import SimpleTestCase
 
-from contracts.templatetags.docclad_format import (
+from contracts.templatetags.clmone_format import (
     CANONICAL_BADGE_TONE,
     LEGACY_BADGE_CLASS,
     semantic_badge_tone,
@@ -135,6 +135,20 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         self.assertIn('dc-ds-empty', rendered)
         self.assertIn('No records found.', rendered)
         self.assertIn('Try again later.', rendered)
+
+    def test_empty_state_partial_supports_reason_how_and_primary_action(self):
+        django_engine = engines['django']
+        template = django_engine.from_string(
+            '{% include "design_system/empty_state.html" with '
+            'title="No contracts" reason="Nothing has been uploaded." '
+            'how="Uploaded agreements appear here automatically." '
+            'action_url="/contracts/documents/new/" action_label="Upload contract" %}'
+        )
+        rendered = template.render({})
+        self.assertIn('Nothing has been uploaded.', rendered)
+        self.assertIn('Uploaded agreements appear here automatically.', rendered)
+        self.assertIn('href="/contracts/documents/new/"', rendered)
+        self.assertIn('Upload contract', rendered)
 
     def test_second_empty_state_css_system_is_token_consistent_with_base_html(self):
         # theme/static_src/src/components.css's .empty-state is shadowed by

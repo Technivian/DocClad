@@ -42,7 +42,7 @@ def page_body(html, root_id):
 
 class RiskRegisterShellConvergenceTests(TestCase):
     def setUp(self):
-        self.organization = Organization.objects.create(name='Shell Firm', slug='risk-shell-firm')
+        self.organization = Organization.objects.create(name='Shell Firm', slug='risk-shell-firm', workspace_mode='law_firm_ops')
         self.user = User.objects.create_user(username='risk_shell_user', password='testpass123', email='shell@example.com')
         OrganizationMembership.objects.create(organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True)
         self.client = TestClient()
@@ -79,7 +79,7 @@ class RiskRegisterShellConvergenceTests(TestCase):
 
 class RiskRegisterRowContentTests(TestCase):
     def setUp(self):
-        self.organization = Organization.objects.create(name='Row Firm', slug='risk-row-firm')
+        self.organization = Organization.objects.create(name='Row Firm', slug='risk-row-firm', workspace_mode='law_firm_ops')
         self.owner = User.objects.create_user(username='risk_owner', password='testpass123', email='owner@example.com', first_name='Rowan')
         OrganizationMembership.objects.create(organization=self.organization, user=self.owner, role=OrganizationMembership.Role.MEMBER, is_active=True)
         self.client = TestClient()
@@ -128,7 +128,9 @@ class RiskRegisterRowContentTests(TestCase):
     def test_empty_state_renders(self):
         response = self.client.get(reverse('contracts:risk_log_list'))
         body = page_body(response.content.decode(), 'risk-register-root')
-        self.assertIn('No risks found', body)
+        self.assertIn('No risks logged yet', body)
+        self.assertIn('Risks appear here after a user records a finding', body)
+        self.assertIn('Log first risk', body)
 
     def test_search_and_risk_level_filter_still_work(self):
         RiskLog.objects.create(title='Findable Risk', description='unique-marker-xyz', contract=self.contract, risk_level=RiskLog.RiskLevel.CRITICAL, created_by=self.owner)
@@ -145,8 +147,8 @@ class RiskRegisterRowContentTests(TestCase):
 
 class RiskRegisterCrossTenantIsolationTests(TestCase):
     def setUp(self):
-        self.org_a = Organization.objects.create(name='Risk Org A', slug='risk-layout-org-a')
-        self.org_b = Organization.objects.create(name='Risk Org B', slug='risk-layout-org-b')
+        self.org_a = Organization.objects.create(name='Risk Org A', slug='risk-layout-org-a', workspace_mode='law_firm_ops')
+        self.org_b = Organization.objects.create(name='Risk Org B', slug='risk-layout-org-b', workspace_mode='law_firm_ops')
         self.user_a = User.objects.create_user(username='risk_layout_a', password='testpass123', email='a@example.com')
         self.user_b = User.objects.create_user(username='risk_layout_b', password='testpass123', email='b@example.com')
         OrganizationMembership.objects.create(organization=self.org_a, user=self.user_a, role=OrganizationMembership.Role.MEMBER, is_active=True)

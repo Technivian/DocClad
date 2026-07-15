@@ -197,7 +197,7 @@ These notifications **must** be implemented before pilot launch:
    - **No secrets:** Never include codes, tokens, or sensitive data in email headers (body OK for codes)
    - **Codes in email body:** 6-digit MFA codes and recovery codes displayed prominently (email is secure channel)
    - **Footer:** Optional: help link, unsubscribe (if applicable)
-   - **Branding:** "DocClad" only; no CMS Aegis legacy references
+   - **Branding:** "CLM One" only; no CMS Aegis legacy references
 
 #### 5. Configuration & Deployment
    - **Environment variables:** Operator alert email address, reminder timings

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Invoices – DocClad{% endblock %}
+{% block title %}Invoices – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
   <div class="page-header">
@@ -58,11 +58,11 @@
           <td class="px-5 py-3 tbl-td text-right"><a href="{% url 'contracts:invoice_update' invoice.pk %}" class="text-xs c-muted hover:underline">Edit</a></td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" class="empty-state">No invoices found.</td></tr>
+        {% url 'contracts:invoice_create' as invoice_create_url %}
+        <tr><td colspan="8">{% include "design_system/empty_state.html" with icon="file" title="No invoices in this view" reason="No invoice record matches the current workspace view." how="Invoices appear here after a billing record is created for tracked legal work." action_url=invoice_create_url action_label="Create first invoice" class_name="dc-ds-empty--compact" %}</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 {% endblock %}
-

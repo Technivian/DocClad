@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Contract Review Studio – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Contract Review Studio – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .crs-shell {
@@ -141,7 +141,7 @@
       {% for clause in clauses %}
       <div class="crs-clause-block {% if clause.highlighted %}flagged{% endif %}">
         <span class="crs-clause-num">{{ clause.num }}</span>
-        <div class="crs-clause-body"><span class="crs-clause-heading">{{ clause.heading }}</span> {{ clause.body|safe }}</div>
+        <div class="crs-clause-body"><span class="crs-clause-heading">{{ clause.heading }}</span> {{ clause.body }}</div>
       </div>
       {% endfor %}
       <div class="crs-page-nav">

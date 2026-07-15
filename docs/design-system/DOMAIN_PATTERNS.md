@@ -1,6 +1,6 @@
 # Domain Patterns
 
-DocClad components encode contract operations, not generic SaaS labels.
+CLM One components encode contract operations, not generic SaaS labels.
 
 ## Workflow State
 

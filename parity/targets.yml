@@ -1,7 +1,7 @@
 
 # Feature Parity Targets - behaviors to match (no proprietary code)
 
-repository_docclad_like:
+repository_clmone_like:
   filter_chips:
     - status: "Multi-select status filter chips"
     - type: "Contract type filter chips" 

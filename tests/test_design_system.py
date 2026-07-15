@@ -56,7 +56,7 @@ class DesignSystemTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'DocClad')
+        self.assertContains(response, 'CLM One')
         self.assertContains(response, 'Risk deviations')
         self.assertContains(response, 'css/command-center.css')
 
@@ -111,10 +111,10 @@ class DesignSystemTests(TestCase):
     def test_authenticated_shell_exposes_casefile_interaction_contracts(self):
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'js/docclad-ui.js')
-        self.assertContains(response, 'id="docclad-command-palette"')
+        self.assertContains(response, 'js/clmone-ui.js')
+        self.assertContains(response, 'id="clmone-command-palette"')
         self.assertContains(response, 'data-command-input')
-        self.assertContains(response, 'id="docclad-toast-region"')
+        self.assertContains(response, 'id="clmone-toast-region"')
 
     def test_casefile_catalogue_is_authenticated_and_renders_primitives(self):
         url = reverse('contracts:design_system_catalog')
@@ -124,7 +124,7 @@ class DesignSystemTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'DocClad Design System')
+        self.assertContains(response, 'CLM One Design System')
         self.assertContains(response, 'Semantic color and type')
         self.assertContains(response, 'dc-ds-table')
         self.assertContains(response, 'data-toast-message')
@@ -145,11 +145,11 @@ class DesignSystemTests(TestCase):
         docs_dir = root / 'docs' / 'design-system'
         self.assertTrue(required_docs.issubset({path.name for path in docs_dir.iterdir()}))
 
-        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
-        runtime = (root / 'theme' / 'static' / 'js' / 'docclad-ui.js').read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'clmone-tokens.css').read_text()
+        runtime = (root / 'theme' / 'static' / 'js' / 'clmone-ui.js').read_text()
         for token in ('--casefile-forest-600', '--status-progress-fg', '--grid-columns', '--radius-card'):
             self.assertIn(token, tokens)
-        self.assertIn('DocClad.toast', runtime)
+        self.assertIn('CLMOne.toast', runtime)
         self.assertIn('commandPalette', runtime)
 
     def test_casefile_is_the_light_only_shell_standard(self):
@@ -157,7 +157,7 @@ class DesignSystemTests(TestCase):
         core_assets = (
             root / 'theme' / 'templates' / 'base.html',
             root / 'theme' / 'templates' / 'base_fullscreen.html',
-            root / 'theme' / 'static' / 'css' / 'docclad-tokens.css',
+            root / 'theme' / 'static' / 'css' / 'clmone-tokens.css',
         )
         for asset in core_assets:
             content = asset.read_text()
@@ -168,11 +168,11 @@ class DesignSystemTests(TestCase):
 
     def test_casefile_runtime_exposes_motion_chart_table_and_server_feedback(self):
         root = Path(settings.BASE_DIR)
-        runtime = (root / 'theme' / 'static' / 'js' / 'docclad-ui.js').read_text()
+        runtime = (root / 'theme' / 'static' / 'js' / 'clmone-ui.js').read_text()
         for contract in (
-            'DocClad.motion',
-            'DocClad.chartTheme',
-            'DocClad.dataTable',
+            'CLMOne.motion',
+            'CLMOne.chartTheme',
+            'CLMOne.dataTable',
             'data-server-toast',
             'data-table-core',
             'prefers-reduced-motion: reduce',
@@ -181,7 +181,7 @@ class DesignSystemTests(TestCase):
 
     def test_casefile_spacing_scale_uses_distinct_four_pixel_steps(self):
         root = Path(settings.BASE_DIR)
-        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'clmone-tokens.css').read_text()
         for token in (
             '--space-12: 12px',
             '--space-16: 16px',
@@ -199,18 +199,185 @@ class DesignSystemTests(TestCase):
         premium = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
         ).read_text()
-        tokens = (root / 'theme' / 'static' / 'css' / 'docclad-tokens.css').read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'clmone-tokens.css').read_text()
         picker = (
             root / 'theme' / 'templates' / 'contracts' / 'contract_template_picker.html'
         ).read_text()
 
         self.assertIn('@import "./premium.css"', index)
         self.assertIn('--page-padding-x: var(--space-32)', tokens)
-        self.assertIn('--page-padding-top: var(--space-32)', tokens)
+        self.assertIn('--page-padding-top: var(--space-24)', tokens)
         self.assertIn('--ds-page-x: var(--page-padding-x)', tokens)
         self.assertIn('.page-wrap', premium)
         self.assertIn('.dc-ds-page', premium)
         self.assertIn('ctp-page', picker)
+
+    def test_command_center_rules_are_canonical_across_legacy_and_shared_pages(self):
+        root = Path(settings.BASE_DIR)
+        tokens = (root / 'theme' / 'static' / 'css' / 'clmone-tokens.css').read_text()
+        premium = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        ).read_text()
+        components = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
+        ).read_text()
+
+        for contract in (
+            '--color-surface-page: #F7F9FC',
+            '--color-status-success-border',
+            '--color-status-warning-border',
+            '--color-status-error-border',
+            '--radius-subpanel: 14px',
+            '--radius-card: 10px',
+            '--shadow-card:',
+        ):
+            self.assertIn(contract, tokens)
+
+        for legacy_family in (
+            '.page-wrap',
+            '.panel, .card, .card-l1, .summary-card, .kpi-card, .ad-card',
+            '.btn, .btn-cta, .btn-soft, .btn-quiet, .btn-primary-grad',
+            '.table-container, .table-wrap, .panel-table, .dc-ds-table-wrap',
+            '.badge-success, .badge-green, .status-success, .status-clear',
+        ):
+            self.assertIn(legacy_family, premium)
+
+        self.assertIn('border-radius: var(--radius-subpanel)', components)
+        self.assertIn('background: var(--color-surface-table-head)', components)
+
+    def test_global_search_selected_controls_and_debug_ui_have_one_contract(self):
+        root = Path(settings.BASE_DIR)
+        base = (root / 'theme' / 'templates' / 'base.html').read_text()
+        tokens = (root / 'theme' / 'static' / 'css' / 'clmone-tokens.css').read_text()
+        premium = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        ).read_text()
+        development = (root / 'config' / 'settings_development.py').read_text()
+
+        self.assertEqual(base.count('placeholder="Search contracts and workflows…"'), 2)
+        for token in (
+            '--color-control-selected-bg',
+            '--color-control-selected-border',
+            '--color-control-selected-text',
+        ):
+            self.assertIn(token, tokens)
+            self.assertIn(token, premium)
+        self.assertIn("DJANGO_DEBUG_TOOLBAR', default=False", development)
+        self.assertIn('if DJANGO_DEBUG_TOOLBAR and not DJANGO_E2E:', development)
+
+    def test_primary_contract_empty_states_explain_cause_population_and_action(self):
+        template_root = Path(settings.BASE_DIR) / 'theme' / 'templates' / 'contracts'
+        for relative_path in (
+            'document_list.html',
+            'matter_list.html',
+            'client_list.html',
+            'counterparty_list.html',
+            'deadline_list.html',
+            'signature_request_list.html',
+            'dsar_list.html',
+            'risk_log_list.html',
+            'workflow_template_list.html',
+            'legal_hold_list.html',
+            'invoice_list.html',
+            'data_inventory_list.html',
+            'transfer_record_list.html',
+        ):
+            template = (template_root / relative_path).read_text()
+            with self.subTest(template=relative_path):
+                self.assertIn('design_system/empty_state.html', template)
+                self.assertIn('reason=', template)
+                self.assertIn('how=', template)
+                self.assertIn('action_label=', template)
+
+    def test_primary_pages_share_command_center_header_and_scaffold(self):
+        root = Path(settings.BASE_DIR)
+        template_root = root / 'theme' / 'templates'
+        base = (template_root / 'base.html').read_text()
+        premium = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        ).read_text()
+
+        self.assertIn('class="topbar-page-context"', base)
+        self.assertIn('block authenticated_page_title', base)
+        self.assertIn('dc-ds-header-promoted', base)
+        self.assertIn('.topbar-page-context', premium)
+        self.assertIn('height: var(--space-96)', premium)
+
+        for relative_path in (
+            'dashboard.html',
+            'contracts/contract_template_picker.html',
+            'contracts/repository.html',
+            'contracts/dpa_review_pack_list.html',
+            'contracts/obligations_workspace.html',
+            'settings_hub.html',
+        ):
+            content = (template_root / relative_path).read_text()
+            self.assertIn('block authenticated_page_title', content, relative_path)
+
+        repository = (template_root / 'contracts' / 'repository.html').read_text()
+        components = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
+        ).read_text()
+        self.assertIn('dc-ds-scaffold dc-ds-scaffold--with-rail', repository)
+        self.assertIn('grid-template-columns: minmax(0, 1fr) 296px', components)
+        self.assertIn('.dc-ds-scaffold__rail { min-width: 0; order: 2; }', components)
+        self.assertNotIn('Repository Control Center', repository)
+
+    def test_primary_pages_use_shared_rhythm_summary_and_selected_controls(self):
+        root = Path(settings.BASE_DIR)
+        template_root = root / 'theme' / 'templates' / 'contracts'
+        components = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
+        ).read_text()
+
+        for selector in (
+            '.dc-ds-page-flow',
+            '.dc-ds-page-actions',
+            '.dc-ds-summary',
+            '.dc-ds-choice',
+        ):
+            self.assertIn(selector, components)
+
+        for relative_path in (
+            'contract_template_picker.html',
+            'repository.html',
+            'dpa_review_pack_list.html',
+            'obligations_workspace.html',
+        ):
+            content = (template_root / relative_path).read_text()
+            self.assertIn('dc-ds-page-flow', content, relative_path)
+
+        repository = (template_root / 'repository.html').read_text()
+        self.assertIn('dc-ds-choice dc-ds-choice--rail', repository)
+        self.assertIn('dc-ds-summary', repository)
+
+        for relative_path in ('dpa_review_pack_list.html', 'obligations_workspace.html'):
+            content = (template_root / relative_path).read_text()
+            self.assertIn('dc-ds-scaffold--with-rail', content, relative_path)
+            self.assertIn('dc-ds-summary--vertical', content, relative_path)
+
+    def test_command_center_styles_do_not_override_shared_navigation_shell(self):
+        root = Path(settings.BASE_DIR)
+        command_center = (
+            root / 'theme' / 'static' / 'css' / 'command-center.css'
+        ).read_text()
+        base = (root / 'theme' / 'templates' / 'base.html').read_text()
+
+        for route_scoped_shell_selector in (
+            'body:has(.cc-v3) .sidebar-container',
+            'body:has(.cc-v3) .sidebar-brand',
+            'body:has(.cc-v3) .sidebar-padding',
+            'body:has(.cc-v3) .sidebar-footer',
+            'body:has(.cc-v3) .sidebar-profile',
+            'body:has(.cc-v3) .nav-link',
+            'body:has(.cc-v3) .nav-group',
+            'body:has(.cc-v3) .nav-sub-link',
+        ):
+            self.assertNotIn(route_scoped_shell_selector, command_center)
+
+        self.assertIn('navigation is product chrome, never page chrome', base)
+        self.assertIn('width: 225px', base)
+        self.assertIn('min-height: 54px', base)
 
     def test_core_operational_surfaces_use_central_icons_and_table_contracts(self):
         root = Path(settings.BASE_DIR)
@@ -240,7 +407,7 @@ class DesignSystemTests(TestCase):
         clause_library = (
             root / 'theme' / 'templates' / 'contracts' / 'clause_library.html'
         ).read_text()
-        self.assertIn('window.DocClad.toast', clause_library)
+        self.assertIn('window.CLMOne.toast', clause_library)
         self.assertNotIn('.toast-base', clause_library)
 
     def test_public_pages_expose_build_metadata(self):

@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-$ROOT_DIR/.venv/bin/python}"
-TARGET_HOST="${TARGET_HOST:-docclad-preview.onrender.com}"
+TARGET_HOST="${TARGET_HOST:-clmone-preview.onrender.com}"
 TARGET_ORIGIN="${TARGET_ORIGIN:-https://$TARGET_HOST}"
 TARGET_DB_URL="${TARGET_DB_URL:-}"
 TARGET_SECRET_KEY="${TARGET_SECRET_KEY:-}"

@@ -26,7 +26,7 @@
     {
       "name": "django-guided-intake",
       "runtimeExecutable": ".venv/bin/python",
-      "runtimeArgs": ["/Users/haroonwahed/Documents/Projects/docclad-guided-intake/manage.py", "runserver", "8062", "--noreload"],
+      "runtimeArgs": ["${workspaceFolder}/manage.py", "runserver", "8062", "--noreload"],
       "port": 8062,
       "env": {
         "DJANGO_ENV": "development",

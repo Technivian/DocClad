@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{{ object|yesno:"Edit,New" }} Approval Rule – DocClad{% endblock %}
+{% block title %}{{ object|yesno:"Edit,New" }} Approval Rule – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Approval Rule{% endblock %}
+{% block authenticated_page_subtitle %}Configure conditional approval routing for governed workflows.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_form_content.html" %}

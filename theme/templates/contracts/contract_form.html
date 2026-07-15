@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}{% if form.instance.pk %}Edit Contract{% else %}New Contract{% endif %} – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 /* editor-page header: compact 20px title (Ironclad designer convention) */
@@ -496,7 +496,7 @@
       </div>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:contract_list' %}" class="btn-link">Cancel</a>
+      <a href="{% url 'contracts:repository' %}" class="btn-link">Cancel</a>
       <button type="submit" name="preview_draft" value="1" class="btn-quiet">Preview draft</button>
       <button type="submit" class="btn-cta" id="submit-contract-btn">
         {% if form.instance.pk %}Update Contract{% else %}Create Contract{% endif %}
@@ -617,8 +617,8 @@
               {% endif %}
               {% endfor %}
 
-              {% for field in form.visible_fields %}{% if field.name == 'counterparty' %}
-              <div class="cform-field cform-field-full">
+              {% for field in form.visible_fields %}{% if field.name == 'counterparty' or field.name == 'owner' %}
+              <div class="cform-field">
                 <label class="form-label">
                   {{ field.label }}
                   {% if field.field.required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}
@@ -711,7 +711,7 @@
           </div>
         </section>
 
-        <details class="cform-intake-panel cform-collapsible" data-collapsible="lifecycle-control">
+        <details class="cform-intake-panel cform-collapsible" data-collapsible="lifecycle-control" open>
           <summary class="cform-panel-head cform-summary">
             <div class="cform-panel-head-title-row">
               <span class="cform-panel-num" aria-hidden="true">4</span>
@@ -915,7 +915,7 @@
         <div class="cform-rail-card">
           <div class="cform-rail-head">
             <div class="arch-section-label">Route preview</div>
-            <p class="text-xs c-muted mt-1">What DocClad will prepare after creation.</p>
+            <p class="text-xs c-muted mt-1">What CLM One will prepare after creation.</p>
           </div>
           <div class="cform-rail-body">
             <div class="cform-route-row is-active" data-route-row="draft">
@@ -1204,7 +1204,10 @@ contract_type change — no per-keystroke request needed.
             if (parsed && typeof parsed === 'object') LAUNCH_SETUP = parsed;
         } catch (e) { /* leave LAUNCH_SETUP empty — page still works, just without setup guidance */ }
     }
-    const DYNAMIC_REQUIRED_FIELD_NAMES = ['counterparty', 'governing_law', 'jurisdiction', 'start_date', 'end_date', 'content'];
+    // The server always requires the two lifecycle dates for the MVP intake.
+    // Only route-specific requirements may be toggled by the launch setup.
+    const DYNAMIC_REQUIRED_FIELD_NAMES = ['jurisdiction', 'content'];
+    const CORE_REQUIRED_FIELD_NAMES = new Set(['start_date', 'end_date']);
 
     function field(name) {
         return form.querySelector('[name="' + name + '"]');
@@ -1262,7 +1265,7 @@ contract_type change — no per-keystroke request needed.
             if (launchSetupTemplateCopyEl) {
                 const titleEl = document.querySelector('[data-route-title="template"]');
                 if (titleEl) titleEl.textContent = 'Custom drafting route';
-                launchSetupTemplateCopyEl.textContent = 'No approved template is mapped yet. DocClad will create a governed intake record and route it for legal review.';
+                launchSetupTemplateCopyEl.textContent = 'No approved template is mapped yet. CLM One will create a governed intake record and route it for legal review.';
             }
             if (playbookRow) playbookRow.hidden = true;
             return;
@@ -1331,7 +1334,7 @@ contract_type change — no per-keystroke request needed.
     function updateDynamicRequiredStars(setup) {
         const requiredSet = new Set((setup && setup.required_fields) || []);
         document.querySelectorAll('[data-required-star]').forEach(function (star) {
-            star.hidden = !requiredSet.has(star.dataset.requiredStar);
+            star.hidden = !(requiredSet.has(star.dataset.requiredStar) || CORE_REQUIRED_FIELD_NAMES.has(star.dataset.requiredStar));
         });
     }
 

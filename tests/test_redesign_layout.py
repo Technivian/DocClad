@@ -30,7 +30,7 @@ class RedesignLayoutTests(TestCase):
     def test_base_shell_uses_casefile_light_mode(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'DocClad')
+        self.assertContains(response, 'CLM One')
         self.assertContains(response, 'data-theme="light"')
         self.assertContains(response, 'data-design-system="casefile"')
         self.assertNotContains(response, 'data-action="toggle-theme"')
@@ -83,8 +83,8 @@ class RedesignLayoutTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Command Center')
         self.assertContains(response, 'Risk deviations')
-        self.assertContains(response, 'No DPA review is configured')
-        self.assertContains(response, 'Deadline tracking is not configured')
+        self.assertContains(response, 'Configure monitoring')
+        self.assertContains(response, 'Configure tracking')
         self.assertContains(response, 'Priority matter')
         self.assertContains(response, 'Layout Contract')
 

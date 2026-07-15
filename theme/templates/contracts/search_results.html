@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Search{% if q %}: {{ q }}{% endif %} – DocClad{% endblock %}
+{% block title %}Search{% if q %}: {{ q }}{% endif %} – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
   <div class="page-header">
@@ -12,8 +12,8 @@
   <form method="get" class="mb-8">
     <div class="grid gap-3">
       <div class="flex gap-2">
-        <input type="text" name="q" value="{{ q }}" placeholder="Search contracts, clients, matters, documents, clauses, task signals..."
-               autofocus aria-label="Search contracts, clients, matters, documents, clauses..."
+        <input type="text" name="q" value="{{ q }}" placeholder="Search contracts and workflows…"
+               autofocus aria-label="Search contracts and workflows"
                class="input-base flex-1 px-4 py-3 border rounded-xl text-sm">
         <button type="submit"
                 class="inline-flex items-center px-6 py-3 text-sm font-semibold text-white rounded-xl transition-opacity hover:opacity-90 btn-primary-grad">Search</button>
@@ -215,16 +215,11 @@
   {% endif %}
 
   {% if not results.cases and not results.clients and not results.case_matters and not results.documents and not results.clauses and not results.counterparties and not results.task_signals %}
-  <div class="text-center py-12">
-    <svg class="w-12 h-12 mx-auto c-muted mb-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-    <p class="text-sm c-muted">No results found for "{{ q }}"</p>
-  </div>
+    {% url 'contracts:global_search' as search_url %}
+    {% include "design_system/empty_state.html" with icon="search" title="No matching contracts or workflows" reason="The current search does not match any accessible contract, matter, document, clause, or counterparty." how="Results appear after governed workspace content contains the searched term." action_url=search_url action_label="Clear search" action_tone="ghost" %}
   {% endif %}
   {% else %}
-  <div class="text-center py-12">
-    <svg class="w-12 h-12 mx-auto c-muted mb-3" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-    <p class="text-sm c-muted">Enter a search term to begin</p>
-  </div>
+    {% include "design_system/empty_state.html" with icon="search" title="Search the governed workspace" reason="No search term has been entered yet." how="Results can include contracts, workflows, documents, clauses, matters, clients, and counterparties you can access." action_url="#global-search-input" action_label="Start a search" action_tone="ghost" %}
   {% endif %}
 </div>
 {% endblock %}

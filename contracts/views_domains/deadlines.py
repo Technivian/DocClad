@@ -14,7 +14,7 @@ from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
-from contracts.templatetags.docclad_format import obligation_compliance_status
+from contracts.templatetags.clmone_format import obligation_compliance_status
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
     TenantAssignCreateMixin,
@@ -114,12 +114,31 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
         'assigned_to': organization_user_queryset,
     }
 
+    def get_initial(self):
+        initial = super().get_initial()
+        contract_id = self.request.GET.get('contract')
+        if contract_id:
+            contract = Contract.objects.filter(
+                organization=self.get_organization(), pk=contract_id,
+            ).first()
+            if contract:
+                initial['contract'] = contract
+        return initial
+
     def form_valid(self, form):
         if form.instance.contract and not can_access_contract_action(self.request.user, form.instance.contract, ContractAction.EDIT):
             return HttpResponseForbidden('You do not have permission to create deadlines for this contract.')
         form.instance.created_by = self.request.user
         response = super().form_valid(form)
-        log_action(self.request.user, 'CREATE', 'Deadline', self.object.id, str(self.object), request=self.request)
+        log_action(
+            self.request.user, 'CREATE', 'Deadline', self.object.id, str(self.object), request=self.request,
+            changes={
+                'event': 'deadline.created',
+                'contract_id': self.object.contract_id,
+                'due_date': self.object.due_date.isoformat(),
+                'assigned_to_id': self.object.assigned_to_id,
+            },
+        )
         return response
 
 
@@ -142,9 +161,38 @@ class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
 
     def dispatch(self, request, *args, **kwargs):
         deadline = self.get_object()
+        self.original_values = {
+            field: getattr(deadline, field)
+            for field in ('title', 'description', 'deadline_type', 'priority', 'due_date', 'due_time', 'reminder_days', 'contract_id', 'matter_id', 'assigned_to_id')
+        }
         if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
             return HttpResponseForbidden('You do not have permission to edit this contract deadline.')
         return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        if form.instance.contract and not can_access_contract_action(
+            self.request.user, form.instance.contract, ContractAction.EDIT,
+        ):
+            return HttpResponseForbidden('You do not have permission to attach this deadline to that contract.')
+        response = super().form_valid(form)
+        changes = {}
+        for field_name, before in self.original_values.items():
+            after = getattr(self.object, field_name)
+            if before != after:
+                changes[field_name] = {
+                    'before': before.isoformat() if hasattr(before, 'isoformat') else before,
+                    'after': after.isoformat() if hasattr(after, 'isoformat') else after,
+                }
+        log_action(
+            self.request.user, 'UPDATE', 'Deadline', self.object.id, str(self.object),
+            request=self.request,
+            changes={
+                'event': 'deadline.updated',
+                'contract_id': self.object.contract_id,
+                'field_changes': changes,
+            },
+        )
+        return response
 
 
 @login_required
@@ -158,10 +206,46 @@ def deadline_complete(request, pk):
     deadline = get_object_or_404(deadline_queryset, pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
         return HttpResponseForbidden('You do not have permission to complete this contract deadline.')
+    if deadline.is_completed:
+        messages.info(request, f'Deadline "{deadline.title}" was already complete.')
+        return redirect('contracts:deadline_list')
     deadline.is_completed = True
     deadline.completed_at = timezone.now()
     deadline.completed_by = request.user
     deadline.save()
-    log_action(request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request)
+    log_action(
+        request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
+        changes={
+            'event': 'deadline.completed',
+            'contract_id': deadline.contract_id,
+            'previous_state': 'OPEN',
+            'new_state': 'COMPLETED',
+        },
+    )
     messages.success(request, f'Deadline "{deadline.title}" marked as complete.')
+    return redirect('contracts:deadline_list')
+
+
+@login_required
+@require_POST
+def deadline_delete(request, pk):
+    organization = get_user_organization(request.user)
+    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        return HttpResponseForbidden('You do not have permission to delete this contract deadline.')
+    snapshot = {
+        'event': 'deadline.deleted',
+        'contract_id': deadline.contract_id,
+        'title': deadline.title,
+        'due_date': deadline.due_date.isoformat(),
+        'was_completed': deadline.is_completed,
+    }
+    object_id = deadline.pk
+    object_repr = str(deadline)
+    deadline.delete()
+    log_action(
+        request.user, 'DELETE', 'Deadline', object_id, object_repr,
+        request=request, changes=snapshot,
+    )
+    messages.success(request, f'Deadline "{snapshot["title"]}" deleted.')
     return redirect('contracts:deadline_list')

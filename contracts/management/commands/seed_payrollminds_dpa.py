@@ -151,7 +151,7 @@ class Command(BaseCommand):
     help = 'Seed a Payrollminds DPA Review Pack demo scenario (counterparty, DPA contract, subprocessor, transfer record, review pack, playbook).'
 
     def add_arguments(self, parser):
-        parser.add_argument('--organization-slug', default='docclad-demo')
+        parser.add_argument('--organization-slug', default='clmone-demo')
         parser.add_argument('--created-by-username', default='demo_admin')
 
     def handle(self, *args, **options):

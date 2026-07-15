@@ -268,10 +268,10 @@ def saml_mfa_satisfied(organization, auth) -> dict:
 - If MFA required and assurance satisfied:
   - `mfa_enabled=True`, `mfa_verified_at=now()`, `session['mfa_verified']=True`
 - If MFA required but NOT satisfied:
-  - `session['mfa_verified']=False` → user must complete DocClad MFA next
+  - `session['mfa_verified']=False` → user must complete CLM One MFA next
 
 **Security Strengths:**
-- Fail-closed by default: SAML login without proven MFA assurance requires DocClad MFA
+- Fail-closed by default: SAML login without proven MFA assurance requires CLM One MFA
 - Signature, audience, issuer, and freshness all verified
 - AuthnContext extraction is best-effort (tries multiple methods)
 - Accepted contexts are case-sensitive, trimmed (no fuzzy matching)
@@ -359,7 +359,7 @@ saml_accepted_authn_contexts = models.TextField(blank=True)  # newline/comma-sep
 **Trust Policy Modes:**
 
 1. **Default (Fail-Closed):** Neither flag set
-   - DocClad MFA required regardless of SAML assurance
+   - CLM One MFA required regardless of SAML assurance
    - Most restrictive, most secure
 
 2. **AuthnContext Validation:** `saml_accepted_authn_contexts` configured
@@ -370,7 +370,7 @@ saml_accepted_authn_contexts = models.TextField(blank=True)  # newline/comma-sep
 
 3. **Org-Trusted IdP:** `saml_mfa_trusted=True`
    - SAML MFA fully trusted
-   - DocClad MFA skipped
+   - CLM One MFA skipped
    - Requires org admin explicit opt-in (highest trust level)
 
 **Policy Updates:**
@@ -383,7 +383,7 @@ saml_accepted_authn_contexts = models.TextField(blank=True)  # newline/comma-sep
 - Policy is org-level, not global
 - No automatic trust — explicit opt-in required
 - AuthnContext parsing whitespace/punctuation-agnostic (robust)
-- Fallback to DocClad MFA if context extraction fails
+- Fallback to CLM One MFA if context extraction fails
 - Full audit trail for compliance
 
 **Test Coverage:** `/tests/test_saml_mfa_trust.py`
@@ -524,7 +524,7 @@ def scope_queryset_for_organization(queryset, organization):
 **Issue 3: SAML AuthnContext Extraction** (Low, Fail-Closed)
 - Uses best-effort method probing
 - If extraction fails, defaults to `satisfied=False` (fail-closed)
-- **Impact:** Low (worst case is DocClad MFA required anyway)
+- **Impact:** Low (worst case is CLM One MFA required anyway)
 - **Recommendation:** Log warnings if context extraction fails; monitor in Phase 5L
 - **Status:** Acceptable (fail-closed default is safe)
 

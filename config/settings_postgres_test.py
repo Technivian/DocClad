@@ -29,7 +29,7 @@ Add TEST_DATABASE_URL to .env (see .env.example for format), then:
 Or as a one-liner (without storing credentials in .env):
 
     DJANGO_SETTINGS_MODULE=config.settings_postgres_test \\
-    TEST_DATABASE_URL=postgresql://<user>@localhost:5432/docclad_test \\
+    TEST_DATABASE_URL=postgresql://<user>@localhost:5432/clmone_test \\
         python -m pytest tests/ --create-db
 
 NEVER point TEST_DATABASE_URL at production or pilot data.
@@ -69,7 +69,7 @@ if not _TEST_DATABASE_URL:
         'TEST_DATABASE_URL is required when using config.settings_postgres_test.\n'
         '\n'
         'Set it in .env or export it before running pytest:\n'
-        '  TEST_DATABASE_URL=postgresql://<user>@localhost:5432/docclad_test\n'
+        '  TEST_DATABASE_URL=postgresql://<user>@localhost:5432/clmone_test\n'
         '\n'
         'See .env.example (section "Test database") for the full topology guide.\n'
         'Never point TEST_DATABASE_URL at production or pilot data.'

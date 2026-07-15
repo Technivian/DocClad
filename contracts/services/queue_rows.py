@@ -22,7 +22,13 @@ def assignee_map_for_contracts(org, contract_ids):
     so it is resolved last and wins the overwrite."""
     if not org or not contract_ids:
         return {}
-    result = {}
+    from contracts.models import Contract
+    result = {
+        contract.pk: contract.owner
+        for contract in Contract.objects.filter(
+            organization=org, pk__in=contract_ids, owner__isnull=False,
+        ).select_related('owner')
+    }
     for deadline in (
         Deadline.objects.for_organization(org)
         .filter(contract_id__in=contract_ids, is_completed=False, assigned_to__isnull=False)
@@ -102,7 +108,7 @@ def activity_line_parts(log):
         return None, None, None
     from django.utils.timesince import timesince
 
-    from contracts.templatetags.docclad_format import object_type_label
+    from contracts.templatetags.clmone_format import object_type_label
 
     if log.user:
         actor = log.user.get_full_name() or log.user.username

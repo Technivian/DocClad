@@ -41,7 +41,7 @@ from contracts.services.recovery_codes import consume_recovery_code
 
 User = get_user_model()
 
-APP_BASE = 'https://app.docclad.example.com'
+APP_BASE = 'https://app.clmone.example.com'
 
 
 def _make_user(username, email=None, active=True):
@@ -82,27 +82,27 @@ class PasswordResetCanonicalURLTests(TestCase):
     def test_reset_email_link_uses_app_base_url(self):
         """Link in reset email must use APP_BASE_URL, not the request Host header."""
         # Use a normal testserver request — the key assertion is that the link
-        # uses APP_BASE_URL (app.docclad.example.com), not the request host.
+        # uses APP_BASE_URL (app.clmone.example.com), not the request host.
         self.client.post(reverse('password_reset'), {'email': self.user.email})
         self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].body
-        self.assertIn('app.docclad.example.com', body)
+        self.assertIn('app.clmone.example.com', body)
         self.assertNotIn('testserver', body)
         self.assertNotIn('localhost', body)
 
     def test_reset_email_link_never_uses_request_host(self):
-        """DocCladPasswordResetForm.save() must override domain from APP_BASE_URL."""
-        from contracts.views_domains.core import DocCladPasswordResetForm
+        """CLMOnePasswordResetForm.save() must override domain from APP_BASE_URL."""
+        from contracts.views_domains.core import CLMOnePasswordResetForm
         from django.test import RequestFactory
         rf = RequestFactory()
         request = rf.post(reverse('password_reset'), {'email': self.user.email})
         # Simulate a form save with APP_BASE_URL set.
-        form = DocCladPasswordResetForm({'email': self.user.email})
+        form = CLMOnePasswordResetForm({'email': self.user.email})
         self.assertTrue(form.is_valid())
         form.save(request=request)
         self.assertEqual(len(mail.outbox), 1)
         body = mail.outbox[0].body
-        self.assertIn('app.docclad.example.com', body)
+        self.assertIn('app.clmone.example.com', body)
         self.assertNotIn('testserver', body)
 
     def test_reset_link_uses_https(self):
@@ -299,7 +299,7 @@ class MfaCodeEmailTests(TestCase):
     def test_mfa_code_email_uses_canonical_url(self):
         send_mfa_code_email(self.user, '111111')
         body = mail.outbox[0].body
-        self.assertIn('app.docclad.example.com', body)
+        self.assertIn('app.clmone.example.com', body)
         self.assertNotIn('localhost', body)
 
     def test_mfa_enrolled_notification_sent(self):
@@ -501,7 +501,7 @@ class RecoveryCodeServiceTests(TestCase):
 
 @override_settings(
     APP_BASE_URL=APP_BASE,
-    OPERATOR_ALERT_EMAIL='ops@docclad.example.com',
+    OPERATOR_ALERT_EMAIL='ops@clmone.example.com',
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
 )
 class JobFailureAlertTests(TestCase):
@@ -522,7 +522,7 @@ class JobFailureAlertTests(TestCase):
         sent = send_operator_job_failure_alert(run)
         self.assertTrue(sent)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('ops@docclad.example.com', mail.outbox[0].to)
+        self.assertIn('ops@clmone.example.com', mail.outbox[0].to)
 
     def test_alert_subject_contains_job_name(self):
         run = self._make_failed_run(job_name='critical_renewal_job')
@@ -537,7 +537,7 @@ class JobFailureAlertTests(TestCase):
         self.assertIn(str(run.run_id), body)
         self.assertIn('test_job', body)
         self.assertIn('RuntimeError', body)
-        self.assertIn('app.docclad.example.com', body)
+        self.assertIn('app.clmone.example.com', body)
 
     def test_alert_body_does_not_contain_localhost(self):
         run = self._make_failed_run()
@@ -618,7 +618,7 @@ class JobFailureAlertTests(TestCase):
 
 @override_settings(
     APP_BASE_URL=APP_BASE,
-    OPERATOR_ALERT_EMAIL='ops@docclad.example.com',
+    OPERATOR_ALERT_EMAIL='ops@clmone.example.com',
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
 )
 class NotificationDeliveryErrorTests(TestCase):

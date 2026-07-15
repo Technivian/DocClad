@@ -1,12 +1,12 @@
-{% load docclad_format %}
+{% load clmone_format %}
 {% if item.action == 'CREATE' %}
-  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="success" body_template="contracts/organization_activity_row_body.html" %}
+  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|brand_name|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="success" body_template="contracts/organization_activity_row_body.html" %}
 {% elif item.action == 'DELETE' %}
-  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="danger" body_template="contracts/organization_activity_row_body.html" %}
+  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|brand_name|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="danger" body_template="contracts/organization_activity_row_body.html" %}
 {% elif item.action == 'APPROVE' %}
-  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="success" body_template="contracts/organization_activity_row_body.html" %}
+  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|brand_name|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="success" body_template="contracts/organization_activity_row_body.html" %}
 {% elif item.action == 'REJECT' %}
-  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="attention" body_template="contracts/organization_activity_row_body.html" %}
+  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|brand_name|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display badge_tone="attention" body_template="contracts/organization_activity_row_body.html" %}
 {% else %}
-  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display body_template="contracts/organization_activity_row_body.html" %}
+  {% include "design_system/dense_admin_row.html" with title=item.user.get_full_name|default:item.user.username|default:"System" metadata=item.object_repr|brand_name|truncatechars:50 timestamp=item.timestamp|date:"M d, Y H:i" badge_label=item.get_action_display body_template="contracts/organization_activity_row_body.html" %}
 {% endif %}

@@ -3,12 +3,13 @@ from decimal import Decimal
 import json
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -47,6 +48,7 @@ from contracts.models import (
     DPARiskItem,
     DPAPlaybookPosition,
     ApprovalRule,
+    OrgPolicy,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
@@ -65,7 +67,7 @@ from contracts.services.command_center import (
 )
 from contracts.services.contract_launch_setup import get_entry_cards, get_launch_setup_map
 from contracts.services.draft_cockpit import get_governance_panel
-from contracts.templatetags.docclad_format import status_badge_class
+from contracts.templatetags.clmone_format import status_badge_class
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
 from contracts.services.contract_lifecycle import build_contract_audit_changes
@@ -75,6 +77,8 @@ from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
 from contracts.services.contract_templates import render_merge_fields
+
+User = get_user_model()
 
 
 class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -201,7 +205,12 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         case_record = self.object
         ctx['case'] = case_record
         ctx['case_record'] = case_record
-        ctx['documents'] = case_record.documents.select_related('uploaded_by').all()[:10]
+        ctx['documents'] = list(
+            case_record.documents
+            .select_related('uploaded_by', 'ocr_review')
+            .prefetch_related('ai_extraction_spans__source_template', 'ai_extraction_spans__reviewed_by')
+            .all()[:10]
+        )
         ctx['case_documents'] = ctx['documents']
         ctx['deadlines'] = case_record.deadlines.filter(is_completed=False)[:5]
         ctx['case_deadlines'] = ctx['deadlines']
@@ -215,7 +224,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         # reuse the exact same derivation Dashboard/Repository already use
         # (assignee_map_for_contracts), so "who owns this" agrees everywhere.
         org = get_user_organization(self.request.user)
-        ctx['owner'] = assignee_map_for_contracts(org, [case_record.pk]).get(case_record.pk)
+        ctx['owner'] = case_record.owner or case_record.created_by
         ctx['approval_requests'] = case_record.approval_requests.select_related(
             'assigned_to', 'delegated_to',
         ).order_by('-created_at')[:10]
@@ -223,10 +232,52 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         ctx['contract_tasks'] = LegalTask.objects.filter(contract=case_record).select_related(
             'assigned_to',
         ).order_by('due_date')[:10]
+        approval_ids = list(case_record.approval_requests.values_list('pk', flat=True))
+        deadline_ids = list(case_record.deadlines.values_list('pk', flat=True))
+        dpa_pack_ids = list(case_record.dpa_review_packs.values_list('pk', flat=True))
+        activity_filter = Q(model_name='Contract', object_id=case_record.pk)
+        if approval_ids:
+            activity_filter |= Q(model_name='ApprovalRequest', object_id__in=approval_ids)
+        if deadline_ids:
+            activity_filter |= Q(model_name='Deadline', object_id__in=deadline_ids)
+        if dpa_pack_ids:
+            activity_filter |= Q(model_name='DPAReviewPack', object_id__in=dpa_pack_ids)
         ctx['activity_entries'] = AuditLog.objects.filter(
-            organization=org, model_name='Contract', object_id=case_record.pk,
-        ).select_related('user').order_by('-timestamp')[:20]
+            activity_filter, organization=org,
+        ).select_related('user').order_by('-timestamp')[:40]
         ctx['contract_risks'] = RiskLog.objects.filter(contract=case_record).select_related('assigned_to')[:10]
+        ctx['reviewer_choices'] = User.objects.filter(
+            organization_memberships__organization=org,
+            organization_memberships__is_active=True,
+        ).exclude(pk=case_record.owner_id or case_record.created_by_id).distinct().order_by(
+            'first_name', 'last_name', 'username',
+        )
+        ctx['can_edit'] = can_access_contract_action(self.request.user, case_record, ContractAction.EDIT)
+        policy = OrgPolicy.objects.filter(organization=org).first()
+        ctx['ai_features_enabled'] = policy.ai_features_enabled if policy else True
+        ctx['ai_provider_configured'] = bool(
+            getattr(settings, 'GEMINI_AI_ENABLED', False)
+            and getattr(settings, 'GEMINI_API_KEY', '')
+        )
+        ctx['can_use_ai'] = (
+            ctx['ai_features_enabled']
+            and can_access_contract_action(self.request.user, case_record, ContractAction.AI)
+        )
+        ctx['ai_clause_span_count'] = sum(
+            len(document.ai_extraction_spans.all()) for document in ctx['documents']
+        )
+        ctx['can_submit_for_review'] = ctx['can_edit'] and case_record.status == Contract.Status.DRAFT
+        ctx['open_approval'] = case_record.approval_requests.filter(
+            status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
+        ).select_related('assigned_to').order_by('-created_at').first()
+        if ctx['open_approval']:
+            from contracts.services.approval_workflow import actor_can_decide
+            ctx['can_decide_approval'] = actor_can_decide(
+                ctx['open_approval'], self.request.user, 'approve',
+            )
+        else:
+            ctx['can_decide_approval'] = False
+        ctx['dpa_review_pack'] = case_record.dpa_review_packs.order_by('-created_at').first()
         return ctx
 
 
@@ -234,7 +285,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
 def legal_front_door(request):
     """The Legal Front Door: "What legal work do you need?" — the entry
     point ahead of the contract-type picker. Every option below routes to
-    an existing, already-governed DocClad destination; this view adds no
+    an existing, already-governed CLM One destination; this view adds no
     new domain model and no new permission surface, it only assembles
     links. Shared/mode-neutral per docs/WORKSPACE_MODE_CONTAINMENT.md —
     every option applies equally to law_firm_ops and in_house_clm tenants,
@@ -243,7 +294,7 @@ def legal_front_door(request):
         {
             'key': 'create',
             'title': 'Create a contract',
-            'description': 'Select a contract type. DocClad applies the right approved template, playbook, and approval route.',
+            'description': 'Select a contract type. CLM One applies the right approved template, playbook, and approval route.',
             'icon': 'document',
             'href': reverse('contracts:contract_template_picker'),
         },
@@ -252,7 +303,7 @@ def legal_front_door(request):
             'title': 'Review a contract',
             'description': 'Open an existing contract to review its terms, status, and risk position.',
             'icon': 'search',
-            'href': reverse('contracts:contract_list'),
+            'href': reverse('contracts:repository'),
         },
         {
             'key': 'upload',
@@ -296,12 +347,22 @@ def legal_front_door(request):
 
 @login_required
 def upload_signed_contract(request):
-    """GET-only screen for the signed-contract ingest flow. The actual
-    upload POST goes directly to the existing document_upload_api (already
-    login_required, org-scoped, CSRF-protected — no changes made to it)
-    via fetch() from this template's script; this view only renders the
-    form shell."""
-    return render(request, 'contracts/upload_signed_contract.html', {})
+    """Render the existing-agreement intake form.
+
+    The CSRF-protected multipart API creates both the draft contract record
+    and its persisted source document; this view supplies tenant-scoped owner
+    choices and canonical contract metadata options.
+    """
+    organization = get_user_organization(request.user)
+    owners = User.objects.filter(
+        organization_memberships__organization=organization,
+        organization_memberships__is_active=True,
+    ).distinct().order_by('first_name', 'last_name', 'username')
+    return render(request, 'contracts/upload_signed_contract.html', {
+        'contract_types': Contract.ContractType.choices,
+        'currencies': Contract.Currency.choices,
+        'owners': owners,
+    })
 
 
 @login_required
@@ -341,7 +402,7 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     model = Contract
     form_class = ContractForm
     template_name = 'contracts/contract_form.html'
-    success_url = reverse_lazy('contracts:contract_list')
+    success_url = reverse_lazy('contracts:repository')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -362,6 +423,7 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
             initial['content'] = template.body
         elif self.request.GET.get('type'):
             initial['contract_type'] = self.request.GET.get('type')
+        initial.setdefault('owner', self.request.user)
         return initial
 
     def get_context_data(self, **kwargs):
@@ -438,6 +500,9 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         # so this runs whether or not a template was used to start the draft.
         form.instance.content = render_merge_fields(form.instance.content, form.instance)
         response = super().form_valid(form)
+        if self.object.dpa_attached:
+            from contracts.services.dpa_activation import ensure_dpa_review_pack
+            ensure_dpa_review_pack(self.object, self.request.user, request=self.request)
         log_action(
             self.request.user,
             'CREATE',
@@ -449,6 +514,10 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 'status': self.object.status,
                 'lifecycle_stage': self.object.lifecycle_stage,
                 'contract_type': self.object.contract_type,
+                'owner_id': self.object.owner_id,
+                'counterparty': self.object.counterparty,
+                'start_date': self.object.start_date.isoformat() if self.object.start_date else None,
+                'end_date': self.object.end_date.isoformat() if self.object.end_date else None,
             },
             request=self.request,
         )
@@ -460,7 +529,7 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
     model = Contract
     form_class = ContractForm
     template_name = 'contracts/contract_form.html'
-    success_url = reverse_lazy('contracts:contract_list')
+    success_url = reverse_lazy('contracts:repository')
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -585,7 +654,69 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
             except ContractTransitionError as exc:
                 form.add_error('status', str(exc))
                 return self.form_invalid(form)
+        if self.object.dpa_attached:
+            from contracts.services.dpa_activation import ensure_dpa_review_pack
+            ensure_dpa_review_pack(self.object, self.request.user, request=self.request)
         return response
+
+
+@login_required
+@require_POST
+def contract_submit_for_review(request, pk):
+    organization = get_user_organization(request.user)
+    contract = get_object_or_404(
+        scope_queryset_for_organization(Contract.objects.select_related('owner', 'created_by'), organization),
+        pk=pk,
+    )
+    reviewer = get_object_or_404(
+        User.objects.filter(
+            organization_memberships__organization=organization,
+            organization_memberships__is_active=True,
+        ).distinct(),
+        pk=request.POST.get('reviewer_id'),
+    )
+    from contracts.services.approval_workflow import ApprovalAccessDenied, get_approval_workflow_service
+    try:
+        get_approval_workflow_service().submit_for_review(
+            contract,
+            request.user,
+            reviewer,
+            comment=(request.POST.get('comment') or '').strip(),
+            request=request,
+        )
+    except (ApprovalAccessDenied, ValueError) as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, f'Contract submitted to {reviewer.get_full_name() or reviewer.username}.')
+    return redirect('contracts:contract_detail', pk=contract.pk)
+
+
+@login_required
+@require_POST
+def contract_approval_decision(request, pk, approval_id, decision):
+    organization = get_user_organization(request.user)
+    contract = get_object_or_404(
+        scope_queryset_for_organization(Contract.objects.all(), organization), pk=pk,
+    )
+    approval = get_object_or_404(
+        ApprovalRequest.objects.filter(organization=organization, contract=contract), pk=approval_id,
+    )
+    from contracts.services.approval_workflow import ApprovalAccessDenied, get_approval_workflow_service
+    actions = {
+        'approve': get_approval_workflow_service().approve,
+        'reject': get_approval_workflow_service().reject,
+        'request-changes': get_approval_workflow_service().request_changes,
+    }
+    action = actions.get(decision)
+    if action is None:
+        return HttpResponseForbidden('Invalid approval decision.')
+    try:
+        action(approval.pk, request.user, comments=(request.POST.get('comment') or '').strip())
+    except (ApprovalAccessDenied, ValueError) as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, f'Approval decision recorded: {decision.replace("-", " ")}.')
+    return redirect('contracts:contract_detail', pk=contract.pk)
 
 
 class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -595,7 +726,7 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
-        return scope_queryset_for_organization(Contract.objects.select_related('created_by'), org).order_by('-updated_at', '-created_at')
+        return scope_queryset_for_organization(Contract.objects.select_related('created_by', 'owner'), org).order_by('-updated_at', '-created_at')
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -606,7 +737,14 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
             total=Count('id'),
             active=Count('id', filter=Q(status=Contract.Status.ACTIVE)),
             draft=Count('id', filter=Q(status=Contract.Status.DRAFT)),
-            expiring=Count('id', filter=Q(end_date__isnull=False, end_date__lte=expiry_cutoff)),
+            expiring=Count(
+                'id',
+                filter=Q(
+                    status=Contract.Status.ACTIVE,
+                    end_date__gte=timezone.localdate(),
+                    end_date__lte=expiry_cutoff,
+                ),
+            ),
         )
         ctx['total_documents'] = doc_stats['total']
         ctx['active_documents'] = doc_stats['active']
@@ -1523,7 +1661,7 @@ def dashboard(request):
             'title': 'Urgent actions',
             'value': attention_total,
             'supporting_text': 'Blocking, critical, or overdue work',
-            'href': reverse('contracts:contract_list'),
+            'href': reverse('contracts:repository'),
             'tone': 'rose' if attention_total else 'teal',
             'empty_headline': None if attention_total else 'All caught up',
             'empty_detail': 'No governed workflows need attention right now.',
@@ -1532,7 +1670,7 @@ def dashboard(request):
             'title': 'Needs Legal Review',
             'value': clm_needs_review_count,
             'supporting_text': 'Contracts awaiting legal action',
-            'href': reverse('contracts:contract_list'),
+            'href': reverse('contracts:repository'),
             'tone': 'teal',
             'empty_headline': None if clm_needs_review_count else 'Nothing awaiting review',
             'empty_detail': 'No contracts are waiting on legal review.',
@@ -1560,7 +1698,7 @@ def dashboard(request):
         'title': 'Exposure Review',
         'value': _format_currency_eur(contract_exposure_total) if contract_exposure_total else None,
         'supporting_text': 'Commercial exposure under review',
-        'href': reverse('contracts:contract_list'),
+        'href': reverse('contracts:repository'),
         'tone': 'neutral',
         'empty_headline': None if contract_exposure_total else 'No exposure data',
         'empty_detail': 'Add contract values to track commercial exposure.',

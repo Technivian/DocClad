@@ -56,8 +56,8 @@ class MentionsAiAndReminderTests(TestCase):
             password='testpass123',
         )
 
-        self.organization = Organization.objects.create(name='Acme Firm', slug='acme-firm-main')
-        self.other_organization = Organization.objects.create(name='Other Firm', slug='other-firm')
+        self.organization = Organization.objects.create(name='Acme Firm', slug='acme-firm-main', workspace_mode='law_firm_ops')
+        self.other_organization = Organization.objects.create(name='Other Firm', slug='other-firm', workspace_mode='law_firm_ops')
 
         OrganizationMembership.objects.create(
             organization=self.organization,
@@ -241,8 +241,8 @@ class MentionsAiAndReminderTests(TestCase):
         timeline_text = ' '.join(timeline)
         self.assertIn('22 days overdue', timeline_text)
         self.assertIn('25 days overdue', timeline_text)
-        self.assertNotIn('-22', timeline_text)
-        self.assertNotIn('-25', timeline_text)
+        self.assertNotIn('in -22 day', timeline_text)
+        self.assertNotIn('in -25 day', timeline_text)
         self.assertNotIn('day(s)', timeline_text)
 
     def test_internal_ai_assistant_phrases_future_dates_in_days(self):

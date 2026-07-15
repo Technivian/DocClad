@@ -1,82 +1,59 @@
 {% extends 'base.html' %}
-{% load docclad_format %}
+{% load clmone_format %}
 
-{% block title %}Obligations – DocClad{% endblock %}
+{% block title %}Obligations – CLM One{% endblock %}
+{% block authenticated_page_title %}Obligations{% endblock %}
+{% block authenticated_page_subtitle %}Track contractual commitments, trigger dates, and required follow-up.{% endblock %}
 
 {% block content %}
-{% comment %}
-Phase 4 of the Product Coherence Redesign — the in_house_clm Obligations
-workspace. Built on the existing Deadline entity (no new model). Compliance
-status is derived per-row, never stored — see obligation_compliance_status
-in contracts/templatetags/docclad_format.py.
-{% endcomment %}
-<div id="obligations-workspace-root" class="page-wrap page-wrap-fluid">
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <div class="arch-title-row">
-        <h1 class="arch-title">Obligations</h1>
-      </div>
-      <p class="arch-subtitle">Compliance obligations across your contracts and matters, tracked to their trigger dates.</p>
-    </div>
-    <div class="arch-header-right">
-      <a href="{% url 'contracts:deadline_create' %}" class="btn-primary-grad">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        New Obligation
-      </a>
-    </div>
+<style nonce="{{ csp_nonce }}">
+  /* The table wrapper is the only obligation-specific composition rule;
+     layout, summary, state, and rhythm are shared primitives. */
+  .obligations-page .obligations-table .dc-ds-surface__body { padding: 0; }
+</style>
+
+<div id="obligations-workspace-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow obligations-page">
+  {% url 'contracts:deadline_create' as new_obligation_url %}
+  <div class="dc-ds-page-actions">
+    <div class="dc-ds-actions"><a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">New Obligation</a></div>
   </div>
 
-  <div class="ad-priority-strip">
-    <div class="ad-card ad-priority-card">
-      <div class="ad-priority-icon-row">
-        <span class="icon-badge tone-danger"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></span>
-        <span class="ad-priority-label">Overdue</span>
+  <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
+  <section class="dc-ds-scaffold__main dc-ds-surface obligations-table" aria-labelledby="all-obligations-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h2 class="dc-ds-surface__title" id="all-obligations-title">All obligations</h2>
+        <p class="dc-ds-subtitle">Every tracked obligation across your contracts and matters, earliest due date first.</p>
       </div>
-      <div class="ad-priority-value-row">
-        <span class="ad-priority-value{% if obligations_overdue_count %} is-danger{% endif %}">{{ obligations_overdue_count }}</span>
-      </div>
-      <div class="ad-priority-caption">Past their due date, not yet met</div>
     </div>
-    <div class="ad-card ad-priority-card">
-      <div class="ad-priority-icon-row">
-        <span class="icon-badge tone-pending"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
-        <span class="ad-priority-label">Breach Risk</span>
-      </div>
-      <div class="ad-priority-value-row">
-        <span class="ad-priority-value{% if obligations_breach_risk_count %} is-danger{% endif %}">{{ obligations_breach_risk_count }}</span>
-      </div>
-      <div class="ad-priority-caption">Inside their reminder window</div>
+    <div class="dc-ds-surface__body dc-ds-table-wrap">
+      {% include 'components/_obligations_matrix_table.html' %}
     </div>
-    <div class="ad-card ad-priority-card">
-      <div class="ad-priority-icon-row">
-        <span class="icon-badge tone-progress"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
-        <span class="ad-priority-label">Pending Action</span>
+  </section>
+  <aside class="dc-ds-scaffold__rail" aria-label="Obligation summary">
+    <div class="dc-ds-summary dc-ds-summary--vertical">
+      <div class="dc-ds-summary__item {% if obligations_overdue_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+        <span class="dc-ds-summary__label">Overdue</span>
+        <strong class="dc-ds-summary__value">{% if obligations_overdue_count %}{{ obligations_overdue_count }} intervention{{ obligations_overdue_count|pluralize }}{% else %}Clear{% endif %}</strong>
+        <span class="dc-ds-summary__note">Past due and not met</span>
       </div>
-      <div class="ad-priority-value-row">
-        <span class="ad-priority-value">{{ obligations_pending_count }}</span>
+      <div class="dc-ds-summary__item {% if obligations_breach_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+        <span class="dc-ds-summary__label">Breach risk</span>
+        <strong class="dc-ds-summary__value">{% if obligations_breach_risk_count %}{{ obligations_breach_risk_count }} intervention{{ obligations_breach_risk_count|pluralize }}{% else %}Clear{% endif %}</strong>
+        <span class="dc-ds-summary__note">Inside the reminder window</span>
       </div>
-      <div class="ad-priority-caption">Open, outside the reminder window</div>
+      <div class="dc-ds-summary__item dc-ds-summary__item--info">
+        <span class="dc-ds-summary__label">Pending action</span>
+        <strong class="dc-ds-summary__value">{{ obligations_pending_count }}</strong>
+        <span class="dc-ds-summary__note">Open outside reminder window</span>
+      </div>
+      <div class="dc-ds-summary__item dc-ds-summary__item--clear">
+        <span class="dc-ds-summary__label">Met</span>
+        <strong class="dc-ds-summary__value">{{ obligations_met_count }}</strong>
+        <span class="dc-ds-summary__note">Completed obligations</span>
+      </div>
     </div>
-    <div class="ad-card ad-priority-card">
-      <div class="ad-priority-icon-row">
-        <span class="icon-badge tone-positive"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></span>
-        <span class="ad-priority-label">Met</span>
-      </div>
-      <div class="ad-priority-value-row">
-        <span class="ad-priority-value">{{ obligations_met_count }}</span>
-      </div>
-      <div class="ad-priority-caption">Completed obligations</div>
-    </div>
-  </div>
-
-  <div class="ad-card ad-queue-card">
-    <div class="ad-head">
-      <span class="ad-head-stack">
-        <span class="ad-head-title">All Obligations</span>
-        <span class="ad-head-subtitle">Every tracked obligation across your contracts and matters, earliest due date first.</span>
-      </span>
-    </div>
-    {% include 'components/_obligations_matrix_table.html' %}
+  </aside>
   </div>
 </div>
 {% endblock %}

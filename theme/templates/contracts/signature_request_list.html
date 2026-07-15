@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Signature Workspace – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Signature Workspace – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .failed-packets-list > div { border-bottom: 1px solid var(--card-border); }
@@ -144,8 +144,9 @@
                     </td>
                 </tr>
                 {% empty %}
+                {% url 'contracts:signature_request_create' as signature_request_create_url %}
                 <tr>
-                    <td colspan="8" class="px-5 py-12 text-center c-muted">No signature packets found.</td>
+                    <td colspan="8">{% include "design_system/empty_state.html" with icon="file" title="No signature packets in this view" reason="No agreement is currently routed for signature." how="Packets appear here after a governed contract reaches signature and a request is created." action_url=signature_request_create_url action_label="Create signature request" class_name="dc-ds-empty--compact" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

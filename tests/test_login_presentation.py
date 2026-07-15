@@ -25,7 +25,7 @@ class LoginPresentationTests(TestCase):
         response = self.client.get(reverse('login'))
         body = response.content.decode()
 
-        self.assertEqual(body.count('alt="DocClad"'), 1)
+        self.assertEqual(body.count('alt="CLM One"'), 1)
         for retired_copy in (
             'Protect your portfolio',
             'Empower your team',

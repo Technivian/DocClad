@@ -1,4 +1,4 @@
-# DocClad Pilot Launch: Notification Requirements Matrix
+# CLM One Pilot Launch: Notification Requirements Matrix
 
 ## Summary
 
@@ -14,8 +14,8 @@ This matrix identifies which email notifications are **mandatory before pilot la
 | **Invitation acceptance confirmation** | ❌ Missing | **DEFERRED** | Not implemented | User receives redirect + flash message on web; email not sent |
 | **Invitation expiry notification** | ❌ Missing | **DEFERRED** | Not implemented | Invitations expire silently; no email notification |
 | **Invitation revocation notification** | ❌ Missing | **DEFERRED** | Not implemented | Admin revokes; invitee gets no notification (only valid invites work) |
-| **Password reset / recovery** | ⚠️ Not verified | **MANDATORY** | Django default available; not verified through Resend in Phase 5J | Must use canonical URL builder; test through Resend sandbox |
-| **MFA enrollment/verification** | ⚠️ Not verified | **MANDATORY** | Django+custom flow; MFA tests exist but email path not verified | Must use canonical URL builder; test through Resend sandbox |
+| **Password reset / recovery** | ✅ Complete | **MANDATORY** | Phase 5L canonical URL, privacy, token and rate-limit tests | Verify delivery through the configured provider before launch |
+| **MFA enrollment/verification** | ✅ Complete | **MANDATORY** | Phase 5L notification tests cover verification and security changes | Verify delivery through the configured provider before launch |
 | **MFA totp recovery codes** | ⚠️ Not verified | **DEFERRED** | Not verified | If MFA implemented, recovery code delivery deferred post-launch |
 | **Contract approval request** | ❌ Missing | **DEFERRED** | Not implemented | Approval workflow exists (Phase 5G); notification deferred |
 | **Approval decision notification** | ❌ Missing | **DEFERRED** | Not implemented | Approver decision tracked; deferred |
@@ -27,7 +27,7 @@ This matrix identifies which email notifications are **mandatory before pilot la
 | **Obligation/deadline reminder** | ❌ Missing | **MANDATORY (if obligations enabled)** | Not implemented | Obligation tracking exists; **MANDATORY if obligation journey is pilot-enabled** |
 | **Contract archived/deleted notification** | ❌ Missing | **DEFERRED** | Not implemented | Archival is silent operation |
 | **Document uploaded notification** | ❌ Missing | **DEFERRED** | Not implemented | Upload tracked; deferred |
-| **Operator job failure alert** | ❌ Missing | **MANDATORY** | Not implemented | Jobs have error handling; **MANDATORY: operator must be alerted on job failures before launch** |
+| **Operator job failure alert** | ✅ Complete | **MANDATORY** | Phase 5L deduplicated, safe-metadata alert delivery tests | Configure `OPERATOR_ALERT_EMAIL` in production |
 | **DSAR/evidence export ready** | ❌ Missing | **NO** | Not implemented | DSAR scope boundary; export completed but no notification |
 | **Invoice issued** | ❌ Missing | **OPTIONAL** | Not implemented | Billing not in pilot scope |
 | **Payment received** | ❌ Missing | **OPTIONAL** | Not implemented | Billing not in pilot scope |
@@ -50,40 +50,28 @@ This matrix identifies which email notifications are **mandatory before pilot la
   - [ ] DKIM/SPF/DMARC verification (operator)
   - [ ] Bounce webhook integration (Phase 5K)
 
-### 2. Password Reset / Recovery ⏳ IMPLEMENT BEFORE LAUNCH
-- **Status**: ⚠️ **NOT YET IMPLEMENTED**
+### 2. Password Reset / Recovery ✅ IMPLEMENTED
+- **Status**: ✅ **PHASE 5L COMPLETE**
 - **Requirement**: MANDATORY before pilot launch
-- **Current state**: Django password reset middleware available; email path not yet hardened
-- **Implementation**:
-  - [ ] Update password reset token generation to use `build_canonical_url()`
-  - [ ] Test end-to-end through Resend sandbox
-  - [ ] Verify no localhost URLs in production
-  - [ ] Add authorization checks (only authenticated user can reset own password)
-- **Deadline**: Before pilot launch
+- **Current state**: canonical `APP_BASE_URL`, HTTPS link generation, generic responses, token handling and rate limiting are covered by Phase 5L tests.
+- **Remaining release evidence**:
+  - [ ] Test delivery through the configured production email provider.
+  - [ ] Verify no localhost URLs in the deployed environment.
 
-### 3. MFA Enrollment/Verification ⏳ IMPLEMENT BEFORE LAUNCH
-- **Status**: ⚠️ **NOT YET IMPLEMENTED**
+### 3. MFA Enrollment/Verification ✅ IMPLEMENTED
+- **Status**: ✅ **PHASE 5L COMPLETE**
 - **Requirement**: MANDATORY before pilot launch
-- **Current state**: MFA infrastructure exists (tests, middleware); email path not yet hardened
-- **Implementation**:
-  - [ ] Verify all MFA emails use `build_canonical_url()`
-  - [ ] Test through Resend sandbox
-  - [ ] Verify TOTP/backup codes email path
-  - [ ] Add authorization checks (only MFA-enabled user receives MFA email)
-- **Deadline**: Before pilot launch
+- **Current state**: MFA verification and security-change notifications use canonical URLs; recovery-code values are never emailed.
+- **Remaining release evidence**:
+  - [ ] Test delivery through the configured production email provider.
 
-### 4. Operator Job Failure Alerts ⏳ IMPLEMENT BEFORE LAUNCH
-- **Status**: ⚠️ **NOT YET IMPLEMENTED**
+### 4. Operator Job Failure Alerts ✅ IMPLEMENTED
+- **Status**: ✅ **PHASE 5L COMPLETE**
 - **Requirement**: MANDATORY before pilot launch
 - **What it does**: Notifies operators when scheduled background jobs (expiration checks, renewal reminders, lifecycle jobs, etc.) fail
-- **Implementation**:
-  - [ ] Add job failure exception handler
-  - [ ] Configure operator alert email address (via environment or settings)
-  - [ ] Create email template with error classification (safe errors only, no secrets)
-  - [ ] Implement rate limiting (don't spam on repeated failures)
-  - [ ] Add audit logging of job failures
-  - [ ] Test via Resend sandbox
-- **Deadline**: Before pilot launch
+- **Implementation**: job failures send a safe-metadata email at most once per job per hour and are audited.
+- **Remaining release evidence**:
+  - [ ] Configure `OPERATOR_ALERT_EMAIL` and test delivery through the production email provider.
 
 ### 5. Signature Request Notification (IF e-signature enabled) ⏳ CONDITIONAL
 - **Status**: ⚠️ **NOT YET IMPLEMENTED**
@@ -142,7 +130,7 @@ This matrix identifies which email notifications are **mandatory before pilot la
 
 ### Application-Layer Hardening (Phase 5J) ✅ COMPLETE
 
-- ✅ App passes full test suite (1148 tests) with direct PostgreSQL
+- ✅ Canonical URL, password recovery, MFA, and operator-alert tests pass under the hermetic test settings.
 - ✅ All canonical URL tests pass (22 tests)
 - ✅ Invitation delivery tests pass (8 tests)
 - ✅ APP_BASE_URL validation enforces HTTPS + non-localhost in production
@@ -153,9 +141,6 @@ This matrix identifies which email notifications are **mandatory before pilot la
 ### Before Enabling Resend Live Provider (Exit Sandbox)
 
 - [ ] Mandatory notification implementation (Phase 5K):
-  - [ ] Password recovery with canonical URLs
-  - [ ] MFA communication with canonical URLs
-  - [ ] Operator job failure alerts
   - [ ] Signature notifications (if pilot-enabled)
   - [ ] Renewal reminders (if pilot-enabled)
   - [ ] Obligation reminders (if pilot-enabled)
@@ -205,7 +190,7 @@ This matrix identifies which email notifications are **mandatory before pilot la
 | Canonical URL builder | **Production-compatible verified** | Tested to prevent Host injection; localhost detection; HTTPS enforcement |
 | Authorization enforcement | **Verified via unit tests** | OWNER/ADMIN only, MEMBER blocked, cross-tenant isolated |
 | Audit no-leak | **Verified via unit tests** | Token, password, credentials never stored in audit |
-| Branding | **Verified** | "DocClad" in UI, no CMS Aegis found, sender domain configurable |
+| Branding | **Verified** | "CLM One" in UI, no CMS Aegis found, sender domain configurable |
 | Live Resend delivery | **NOT VERIFIED** | Sandbox API key only; bounce/complaint webhooks not integrated |
 | DKIM/SPF/DMARC | **NOT VERIFIED** | Not configured; requires DNS + Resend dashboard setup |
 | Bounce handling | **NOT IMPLEMENTED** | Webhook processing TBD |

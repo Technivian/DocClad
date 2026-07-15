@@ -34,7 +34,7 @@ def dashboard_body(html):
     real page body never rendered them). Assertions about what the page
     actually shows a user must be scoped to the body, not the DjDT sidebar.
     """
-    start = html.find('DocCladDashboard')
+    start = html.find('CLMOneDashboard')
     end = html.find('id="djDebug"')
     if start == -1:
         return html
@@ -87,8 +87,8 @@ class DashboardEmptyStateTests(TestCase):
         body = dashboard_body(response.content.decode())
         self.assertIn('Governance setup is incomplete', body)
         self.assertIn('Import agreement', body)
-        self.assertIn('Monitored · no high-risk deviations', body)
-        self.assertIn('Add first key date', body)
+        self.assertIn('Risk deviations', body)
+        self.assertIn('Configure deadlines', body)
 
     def test_onboarding_checklist_hidden_once_a_contract_exists(self):
         organization = get_user_organization(self.user)
@@ -190,7 +190,7 @@ class StageDotsComponentTests(TestCase):
         self.user = User.objects.create_user(username='stageuser', password='testpass123', email='stage@example.com')
 
     def _render(self, contract):
-        return Template('{% load docclad_components %}{% stage_dots contract %}').render(Context({'contract': contract}))
+        return Template('{% load clmone_components %}{% stage_dots contract %}').render(Context({'contract': contract}))
 
     def test_stage_dots_marks_current_lifecycle_stage(self):
         contract = Contract.objects.create(
@@ -218,7 +218,7 @@ class AssigneeChipComponentTests(TestCase):
         )
 
     def _render(self, user):
-        return Template('{% load docclad_components %}{% assignee_chip user %}').render(Context({'user': user}))
+        return Template('{% load clmone_components %}{% assignee_chip user %}').render(Context({'user': user}))
 
     def test_assignee_chip_shows_assigned_user(self):
         rendered = self._render(self.user)
@@ -238,7 +238,7 @@ class ActivityLineComponentTests(TestCase):
         )
 
     def _render(self, log):
-        return Template('{% load docclad_components %}{% activity_line log %}').render(Context({'log': log}))
+        return Template('{% load clmone_components %}{% activity_line log %}').render(Context({'log': log}))
 
     def test_activity_line_renders_human_readable_entry(self):
         contract = Contract.objects.create(

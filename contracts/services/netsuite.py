@@ -3,12 +3,23 @@ from __future__ import annotations
 from decimal import Decimal
 import json
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from django.conf import settings
 from django.utils.dateparse import parse_date, parse_datetime
 
 from contracts.models import Contract
+from contracts.services.outbound_urls import validate_public_https_url
+
+
+class _NoRedirectHandler(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def urlopen(request, timeout):
+    """Issue validated integration requests without following redirects."""
+    return build_opener(_NoRedirectHandler).open(request, timeout=timeout)
 
 
 DEFAULT_NETSUITE_FIELD_MAP = {
@@ -81,8 +92,9 @@ def fetch_netsuite_access_token() -> str:
             'client_secret': settings.NETSUITE_CLIENT_SECRET,
         }
     ).encode('utf-8')
+    token_url = validate_public_https_url(settings.NETSUITE_TOKEN_URL, label='NETSUITE_TOKEN_URL')
     request = Request(
-        settings.NETSUITE_TOKEN_URL,
+        token_url,
         data=payload,
         headers={'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json'},
         method='POST',
@@ -102,7 +114,8 @@ def fetch_netsuite_access_token() -> str:
 
 def fetch_netsuite_records(limit: int = 200) -> list[dict]:
     access_token = fetch_netsuite_access_token()
-    url = f'{settings.NETSUITE_API_URL.rstrip("/")}?{urlencode({"limit": max(1, int(limit))})}'
+    api_url = validate_public_https_url(settings.NETSUITE_API_URL, label='NETSUITE_API_URL')
+    url = f'{api_url.rstrip("/")}?{urlencode({"limit": max(1, int(limit))})}'
     request = Request(
         url,
         headers={'Authorization': f'Bearer {access_token}', 'Accept': 'application/json'},

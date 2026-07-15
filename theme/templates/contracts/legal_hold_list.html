@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Legal Holds – DocClad{% endblock %}
+{% block title %}Legal Holds – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .lh-row:hover { background: var(--sidebar-hover); }
@@ -46,8 +46,9 @@
                     </td>
                 </tr>
                 {% empty %}
+                {% url 'contracts:legal_hold_create' as legal_hold_create_url %}
                 <tr>
-                    <td colspan="6" class="empty-state">No legal holds found.</td>
+                    <td colspan="6">{% include "design_system/empty_state.html" with icon="shield" title="No legal holds in this view" reason="No preservation hold has been issued for this workspace." how="Holds appear here after legal creates a matter-specific preservation instruction." action_url=legal_hold_create_url action_label="Create first legal hold" class_name="dc-ds-empty--compact" %}</td>
                 </tr>
                 {% endfor %}
             </tbody>

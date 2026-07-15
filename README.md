@@ -1,6 +1,6 @@
-# DocClad
+# CLM One
 
-DocClad is a Django-based contract lifecycle management platform with multi-tenant organization support, role-based access control, reminders, audit logging, and a tested UI layer.
+CLM One is a Django-based contract lifecycle management platform with multi-tenant organization support, role-based access control, reminders, audit logging, and a tested UI layer.
 
 ## Current State
 
@@ -43,7 +43,7 @@ scripts/dev_https.sh down
 
 ## SSO (OIDC)
 
-DocClad supports optional SSO using OIDC (for example: Azure AD / Entra ID, Okta, Auth0, Keycloak).
+CLM One supports optional SSO using OIDC (for example: Azure AD / Entra ID, Okta, Auth0, Keycloak).
 
 Install dependency:
 

@@ -374,7 +374,7 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         response = self.client_.get(reverse('contracts:dpa_workflow_builder'))
         content = response.content.decode()
         self.assertContains(response, 'AI Smart Questions')
-        self.assertContains(response, 'DocClad is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.')
+        self.assertContains(response, 'CLM One is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.')
         for question in (
             'Will the counterparty process personal data?',
             'Will data leave the EEA?',

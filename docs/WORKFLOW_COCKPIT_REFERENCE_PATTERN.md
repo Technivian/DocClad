@@ -1,6 +1,6 @@
 # Workflow Cockpit Reference Pattern
 
-DocClad now has three reference workflow-first contract creation paths:
+CLM One now has three reference workflow-first contract creation paths:
 
 - DPA cockpit route: `/contracts/new/dpa/`
 - MSA cockpit route: `/contracts/new/msa/`
@@ -13,7 +13,7 @@ These are the baseline implementation pattern for governed drafting before more 
 Both routes follow the same lifecycle:
 
 1. User selects contract type from New Contract.
-2. DocClad opens a dedicated workflow cockpit for that type.
+2. CLM One opens a dedicated workflow cockpit for that type.
 3. User completes field definitions and smart routing questions.
 4. Live draft preview updates from the approved template.
 5. Risk checks and approval reasoning update in the cockpit.

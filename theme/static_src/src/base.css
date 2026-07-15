@@ -1,4 +1,4 @@
-/* Legacy Tailwind adapter. Canonical values live in docclad-tokens.css. */
+/* Legacy Tailwind adapter. Canonical values live in clmone-tokens.css. */
 :root {
   --ink: var(--ink-900);
   --bg: var(--paper);

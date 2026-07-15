@@ -97,7 +97,7 @@ ENTRY_CARD_TYPES = [
 # statement reads as an intentional product decision, not missing config.
 CUSTOM_DRAFTING_ROUTE_TITLE = 'Custom drafting route'
 CUSTOM_DRAFTING_ROUTE_COPY = (
-    'No approved template is mapped yet. DocClad will create a governed '
+    'No approved template is mapped yet. CLM One will create a governed '
     'intake record and route it for legal review.'
 )
 

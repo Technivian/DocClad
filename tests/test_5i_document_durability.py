@@ -57,7 +57,7 @@ PW = 'StrongPw!123'
 
 # ─── S3/moto topology ────────────────────────────────────────────────────────
 
-TEST_BUCKET = 'docclad-5i-test'
+TEST_BUCKET = 'clmone-5i-test'
 TEST_REGION = 'us-east-1'
 
 _S3_STORAGE_SETTINGS = {
@@ -794,7 +794,7 @@ class DeletionAuthorizationMatrixTests(TestCase):
 class EvidentiaryProtectionTests(TestCase):
     """Phase 5I pilot-readiness defect fixed: centralized evidentiary rule.
 
-    Derived entirely from existing DocClad model relationships:
+    Derived entirely from existing CLM One model relationships:
     - SignatureRequest.status=SIGNED → document is a signed record
     - Contract.lifecycle_stage=EXECUTED + Document.status=FINAL → executed source doc
     - Document.document_type in {COURT_FILING, PLEADING, DISCOVERY} + status=FINAL

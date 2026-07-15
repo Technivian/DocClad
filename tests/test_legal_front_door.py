@@ -1,6 +1,6 @@
 """Covers the Legal Front Door entry screen and the Upload Signed Contract
 screen — both additive, link-only/thin-wrapper views introduced alongside
-the DocClad Legal Work Engine plan. Neither introduces a new domain model;
+the CLM One Legal Work Engine plan. Neither introduces a new domain model;
 this file checks routing, permission gating, and (for upload) that the
 screen's own template renders and correctly targets the pre-existing,
 unmodified document_upload_api.
@@ -53,7 +53,7 @@ class LegalFrontDoorViewTests(TestCase):
     def test_options_link_to_existing_routes(self):
         response = self.client_.get(reverse('contracts:legal_front_door'))
         self.assertContains(response, reverse('contracts:contract_template_picker'))
-        self.assertContains(response, reverse('contracts:contract_list'))
+        self.assertContains(response, reverse('contracts:repository'))
         self.assertContains(response, reverse('contracts:upload_signed_contract'))
         self.assertContains(response, reverse('contracts:dpa_review_pack_list'))
         self.assertContains(response, reverse('contracts:approval_request_list'))

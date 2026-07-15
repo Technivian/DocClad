@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}Documents – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}Documents – CLM One{% endblock %}
 {% block content %}
 <div class="page-wrap">
 <div class="page-header">
@@ -61,7 +61,8 @@
                 <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="px-5 py-12 text-center c-muted">No documents found.</td></tr>
+            {% url 'contracts:document_create' as document_create_url %}
+            <tr><td colspan="7">{% include "design_system/empty_state.html" with icon="file" title="No documents in this view" reason="No uploaded contract document matches the current workspace view." how="Documents appear here after an agreement is uploaded or attached to a governed contract." action_url=document_create_url action_label="Upload first document" class_name="dc-ds-empty--compact" %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

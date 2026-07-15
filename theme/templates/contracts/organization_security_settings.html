@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}Organization Security – DocClad{% endblock %}
+{% block title %}Organization Security – CLM One{% endblock %}
+{% block authenticated_page_title %}Organization Security{% endblock %}
+{% block authenticated_page_subtitle %}Control MFA policy and active organization sessions.{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/organization_security_settings_content.html" wide=True %}

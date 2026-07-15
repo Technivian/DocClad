@@ -1,6 +1,6 @@
-# Casefile: The DocClad Design System
+# Casefile: The CLM One Design System
 
-Casefile is the product and engineering standard for every DocClad interface.
+Casefile is the product and engineering standard for every CLM One interface.
 It applies to Django templates, JavaScript interactions, generated UI, design
 previews, and any future frontend runtime.
 
@@ -12,16 +12,16 @@ previews, and any future frontend runtime.
 - Confident: status, ownership, and consequences are explicit.
 - Actionable: every operational surface makes the next valid action clear.
 
-DocClad is a governed contract operations system. It must not look like a
+CLM One is a governed contract operations system. It must not look like a
 generic document store, a marketing site, or an AI demonstration.
 
 ## Authority
 
 When sources disagree, use this order:
 
-1. `DESIGN_CONSTITUTION.md` (the DocClad Governance Charter).
+1. `DESIGN_CONSTITUTION.md` (the CLM One Governance Charter).
 2. [Frontend Architecture](ARCHITECTURE.md).
-3. `theme/static/css/docclad-tokens.css`.
+3. `theme/static/css/clmone-tokens.css`.
 4. Live components under `theme/templates/design_system/` and canonical
    `.dc-ds-*` CSS under `theme/static_src/src/design-system/components.css`.
 5. Older redesign plans, audits, and screenshots as historical context only.

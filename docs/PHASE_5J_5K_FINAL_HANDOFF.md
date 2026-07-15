@@ -209,9 +209,9 @@
 # From tests/test_canonical_url_builder.py
 def test_url_never_contains_request_host(self):
     """Built URL uses APP_BASE_URL, not request Host header."""
-    with override_settings(APP_BASE_URL='https://app.docclad.com'):
+    with override_settings(APP_BASE_URL='https://app.clmone.com'):
         url = build_invitation_url(inv.token)
-    self.assertTrue(url.startswith('https://app.docclad.com'))
+    self.assertTrue(url.startswith('https://app.clmone.com'))
     self.assertNotIn('attacker.evil.com', url)
     self.assertNotIn('localhost', url)
 ```

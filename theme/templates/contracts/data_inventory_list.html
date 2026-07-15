@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Data Inventory (RoPA) – DocClad{% endblock %}
+{% block title %}Data Inventory (RoPA) – CLM One{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .di-row:hover { background: var(--sidebar-hover); }
@@ -40,7 +40,8 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="px-5 py-12 text-center c-muted">No data inventory records found.</td></tr>
+                {% url 'contracts:data_inventory_create' as data_inventory_create_url %}
+                <tr><td colspan="6">{% include "design_system/empty_state.html" with icon="shield" title="No data inventory records in this view" reason="No processing activity has been catalogued for this workspace." how="Records appear here after privacy operations documents a system, purpose, data category, and owner." action_url=data_inventory_create_url action_label="Add first record" class_name="dc-ds-empty--compact" %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% load docclad_format %}
-{% block title %}{{ matter.matter_number }} – DocClad{% endblock %}
+{% load clmone_format %}
+{% block title %}{{ matter.matter_number }} – CLM One{% endblock %}
 {% block content %}
 {% if is_in_house_clm %}
 {% comment %}
@@ -57,7 +57,7 @@ here triggers DPA analysis or approval mutation.
             <span class="ad-head-title">Linked Contracts</span>
             <span class="ad-head-subtitle">Contracts tied to this matter.</span>
           </span>
-          <a href="{% url 'contracts:contract_list' %}" class="ad-head-link">View all &rarr;</a>
+          <a href="{% url 'contracts:repository' %}" class="ad-head-link">View all &rarr;</a>
         </div>
         {% for c in clm_contracts %}
         <a href="{% url 'contracts:contract_detail' c.pk %}" class="ad-rail-item">

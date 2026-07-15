@@ -1,71 +1,84 @@
 {% extends 'base.html' %}
-{% load docclad_format %}
-{% block title %}DPA Reviews – DocClad{% endblock %}
+{% block title %}DPA Reviews – CLM One{% endblock %}
+{% block authenticated_page_title %}DPA Reviews{% endblock %}
+{% block authenticated_page_subtitle %}Monitor privacy terms, approval readiness, and unresolved data-protection risk.{% endblock %}
 {% block content %}
-<div id="dpa-review-root" class="page-wrap page-wrap-fluid">
-    <div class="arch-header">
-        <div class="arch-header-left">
-            <div class="arch-title-row">
-                <h1 class="arch-title">DPA Reviews</h1>
+<style nonce="{{ csp_nonce }}">
+  /* DPA Reviews owns only record-specific link treatment; page layout,
+     summary, surfaces, state, and rhythm are shared primitives. */
+  .dpa-review-page .dpa-review-contract-link { color: var(--ds-color-text); font-weight: 780; text-decoration: none; }
+  .dpa-review-page .dpa-review-contract-link:hover { color: var(--ds-color-action); }
+  .dpa-review-page .dpa-review-contract-link:focus-visible { outline: none; box-shadow: var(--ds-focus-ring); border-radius: var(--ds-radius-sm); }
+  .dpa-review-page .dpa-review-counterparty { margin-top: 2px; color: var(--ds-color-text-muted); font-size: var(--ds-text-xs); }
+</style>
+
+<div id="dpa-review-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dpa-review-page">
+    {% url 'contracts:contract_template_picker' as new_dpa_contract_url %}
+    <div class="dc-ds-page-actions">
+        <div class="dc-ds-actions"><a class="dc-ds-button dc-ds-button--ghost" href="{{ playbook_url }}">Open DPA playbook</a></div>
+    </div>
+
+    <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
+    <section class="dc-ds-scaffold__main dc-ds-surface" aria-labelledby="dpa-review-packs-title">
+        <div class="dc-ds-surface__head">
+            <div>
+                <h2 class="dc-ds-surface__title" id="dpa-review-packs-title">Review packs</h2>
             </div>
-            <p class="arch-subtitle">Role qualification, transfer, subprocessor, and liability risk across every Data Processing Agreement</p>
         </div>
-        <div class="arch-header-right">
-            <a href="{% url 'contracts:dpa_playbook_list' %}" class="btn-ghost">Playbook</a>
+        <div class="dc-ds-table-wrap">
+            <table class="dc-ds-table" data-table-core="server">
+                <caption>DPA review packs with role qualification, unresolved risks, approval status, and most recent update.</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">DPA / contract</th>
+                        <th scope="col">Role qualification</th>
+                        <th scope="col" data-numeric>Unresolved risks</th>
+                        <th scope="col">Approval status</th>
+                        <th scope="col" data-numeric>Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in review_pack_rows %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'contracts:dpa_review_pack_detail' row.pack.pk %}" class="dpa-review-contract-link">{{ row.pack.contract.title }}</a>
+                            {% if row.pack.counterparty %}<div class="dpa-review-counterparty">{{ row.pack.counterparty.name }}</div>{% endif %}
+                        </td>
+                        <td>{{ row.pack.get_role_qualification_display }}</td>
+                        <td data-numeric><span class="dc-ds-badge dc-ds-badge--{{ row.risk_tone }}">{{ row.unresolved_risk_count }} open</span></td>
+                        <td><span class="dc-ds-badge dc-ds-badge--{{ row.approval_tone }}">{{ row.pack.get_approval_status_display }}</span></td>
+                        <td data-numeric>{{ row.pack.updated_at|date:"d M Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            {% include "design_system/empty_state.html" with icon="shield" title="No DPA review packs yet" reason="No governed contract in this workspace currently carries a Data Processing Agreement." how="Review packs appear automatically when a DPA contract enters the governed workflow." action_url=new_dpa_contract_url action_label="Create DPA contract" class_name="dc-ds-empty--compact" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </div>
-
-    <div class="dash-grid dash-grid-3 kpi-strip mb-6">
-        <div class="kpi-card">
-            <div class="kpi-label">DPA Review Packs</div>
-            <div class="kpi-value c-primary">{{ total_packs }}</div>
+    </section>
+    <aside class="dc-ds-scaffold__rail" aria-label="DPA review summary">
+        <div class="dc-ds-summary dc-ds-summary--vertical">
+            <div class="dc-ds-summary__item dc-ds-summary__item--info">
+                <span class="dc-ds-summary__label">Review packs</span>
+                <strong class="dc-ds-summary__value">{{ total_packs }}</strong>
+                <span class="dc-ds-summary__note">Governed DPA records</span>
+            </div>
+            <div class="dc-ds-summary__item {% if pending_approval_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+                <span class="dc-ds-summary__label">Awaiting decision</span>
+                <strong class="dc-ds-summary__value">{% if pending_approval_count %}{{ pending_approval_count }} active{% else %}Clear{% endif %}</strong>
+                <span class="dc-ds-summary__note">Draft or under review</span>
+            </div>
+            <div class="dc-ds-summary__item {% if open_critical_risk_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+                <span class="dc-ds-summary__label">Critical risk</span>
+                <strong class="dc-ds-summary__value">{% if open_critical_risk_count %}{{ open_critical_risk_count }} intervention{{ open_critical_risk_count|pluralize }}{% else %}Clear{% endif %}</strong>
+                <span class="dc-ds-summary__note">Open critical findings</span>
+            </div>
         </div>
-        <div class="kpi-card {% if pending_approval_count %}stat-card-amber{% endif %}">
-            <div class="kpi-label {% if pending_approval_count %}c-amber-soft{% endif %}">Pending Approval</div>
-            <div class="kpi-value {% if pending_approval_count %}c-amber{% else %}c-primary{% endif %}">{{ pending_approval_count }}</div>
-        </div>
-        <div class="kpi-card {% if open_critical_risk_count %}stat-card-red{% endif %}">
-            <div class="kpi-label {% if open_critical_risk_count %}c-red-soft{% endif %}">Open Critical Risks</div>
-            <div class="kpi-value {% if open_critical_risk_count %}c-red{% else %}c-primary{% endif %}">{{ open_critical_risk_count }}</div>
-        </div>
-    </div>
-
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
-                <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">DPA / Contract</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Counterparty</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Role Qualification</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Open Risks</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Approval Status</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pack in review_packs %}
-                <tr class="border-b transition-colors tbl-row">
-                    <td class="px-5 py-3.5">
-                        <a href="{% url 'contracts:dpa_review_pack_detail' pack.pk %}" class="font-medium c-link">{{ pack.contract.title }}</a>
-                    </td>
-                    <td class="px-5 py-3.5 tbl-td">{{ pack.counterparty.name|default:'—' }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ pack.get_role_qualification_display }}</td>
-                    <td class="px-5 py-3.5 tbl-td">{{ pack.risk_items.all|length }}</td>
-                    <td class="px-5 py-3.5">
-                        <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
-                    </td>
-                    <td class="px-5 py-3.5 tbl-td">{{ pack.updated_at|date:"d M Y" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="px-5 py-20 text-center">
-                        <p class="font-medium c-primary">No DPA review packs yet</p>
-                        <p class="text-sm mt-1 c-muted">DPA review packs are created for contracts that carry a Data Processing Agreement.</p>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    </aside>
     </div>
 </div>
 {% endblock %}

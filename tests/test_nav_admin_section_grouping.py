@@ -46,30 +46,27 @@ class NavSectionGroupingTests(TestCase):
         self.owner_client = TestClient()
         self.owner_client.login(username='nav_owner', password='testpass123!')
 
-    def test_budget_is_not_grouped_under_admin_section_for_member(self):
+    def test_specialist_tools_are_not_in_standard_nav_for_member(self):
         response = self.member_client.get(reverse('dashboard'))
         content = response.content.decode()
-        admin_idx = content.index('>ADMIN<')
-        planning_idx = content.index('>PLANNING<')
-        budget_idx = content.index('Budget &amp; Capacity')
-        self.assertLess(planning_idx, admin_idx, 'PLANNING section must come before ADMIN')
-        self.assertLess(budget_idx, admin_idx, 'Budget & Capacity link must render before the ADMIN section')
+        self.assertNotIn('Budget &amp; Capacity', content)
+        self.assertNotIn('Escrow', content)
 
     def test_member_does_not_see_escrow_nav_link(self):
         response = self.member_client.get(reverse('dashboard'))
         self.assertNotContains(response, 'Escrow')
 
-    def test_admin_sees_escrow_nav_link(self):
+    def test_admin_does_not_see_escrow_nav_link(self):
         response = self.admin_client.get(reverse('dashboard'))
-        self.assertContains(response, 'Escrow')
+        self.assertNotContains(response, 'Escrow')
 
-    def test_owner_sees_escrow_nav_link(self):
+    def test_owner_does_not_see_escrow_nav_link(self):
         response = self.owner_client.get(reverse('dashboard'))
-        self.assertContains(response, 'Escrow')
+        self.assertNotContains(response, 'Escrow')
 
-    def test_member_sees_budget_nav_link(self):
+    def test_member_does_not_see_budget_nav_link(self):
         response = self.member_client.get(reverse('dashboard'))
-        self.assertContains(response, 'Budget &amp; Capacity')
+        self.assertNotContains(response, 'Budget &amp; Capacity')
 
     def test_settings_link_still_present_for_all_roles(self):
         for client in (self.member_client, self.admin_client, self.owner_client):

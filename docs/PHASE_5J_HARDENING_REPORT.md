@@ -195,7 +195,7 @@ APP_BASE_URL=http://localhost:8000  # Local dev default
 | **Bounce/complaint handling** | **UNVERIFIED — Phase 5K or later** | Webhook processing not implemented (scope boundary) |
 | **Authorization** | **Verified via 1148-test suite** | OWNER/ADMIN only, MEMBER blocked, cross-tenant isolated |
 | **Audit security** | **Verified via 1148-test suite** | No token leakage, error classification safe, no secrets in exceptions |
-| **Branding** | **Verified in Phase 5J** | "DocClad" in all email strings, no CMS Aegis found, sender verified |
+| **Branding** | **Verified in Phase 5J** | "CLM One" in all email strings, no CMS Aegis found, sender verified |
 
 ---
 

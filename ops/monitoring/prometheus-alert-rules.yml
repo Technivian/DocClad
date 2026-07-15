@@ -1,7 +1,7 @@
 groups:
-  - name: docclad-slo
+  - name: clmone-slo
     rules:
-      - alert: DoccladHigh5xxRateP1
+      - alert: CLMOneHigh5xxRateP1
         expr: |
           sum(rate(http_requests_total{status=~"5.."}[5m])) /
           sum(rate(http_requests_total[5m])) > 0.02
@@ -10,10 +10,10 @@ groups:
           severity: page
           priority: P1
         annotations:
-          summary: "DocClad high 5xx rate"
+          summary: "CLM One high 5xx rate"
           description: "5xx ratio is above 2% for 5 minutes."
 
-      - alert: DoccladHigh5xxRateP2
+      - alert: CLMOneHigh5xxRateP2
         expr: |
           sum(rate(http_requests_total{status=~"5.."}[15m])) /
           sum(rate(http_requests_total[15m])) > 0.008
@@ -22,10 +22,10 @@ groups:
           severity: ticket
           priority: P2
         annotations:
-          summary: "DocClad elevated 5xx rate"
+          summary: "CLM One elevated 5xx rate"
           description: "5xx ratio is above 0.8% for 15 minutes."
 
-      - alert: DoccladCoreRouteP95HighP1
+      - alert: CLMOneCoreRouteP95HighP1
         expr: |
           histogram_quantile(
             0.95,
@@ -36,10 +36,10 @@ groups:
           severity: page
           priority: P1
         annotations:
-          summary: "DocClad p95 latency high"
+          summary: "CLM One p95 latency high"
           description: "Core route p95 latency above 1.5s for 10 minutes."
 
-      - alert: DoccladCoreRouteP95HighP2
+      - alert: CLMOneCoreRouteP95HighP2
         expr: |
           histogram_quantile(
             0.95,
@@ -50,10 +50,10 @@ groups:
           severity: ticket
           priority: P2
         annotations:
-          summary: "DocClad p95 latency elevated"
+          summary: "CLM One p95 latency elevated"
           description: "Core route p95 latency above 800ms for 15 minutes."
 
-      - alert: DoccladReminderSchedulerStalled
+      - alert: CLMOneReminderSchedulerStalled
         expr: time() - reminder_scheduler_last_success_epoch > 1800
         for: 5m
         labels:

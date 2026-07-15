@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # check_brand_regression.sh — Fail if forbidden CMS Aegis branding is reintroduced.
-# Run in CI to prevent regressions after the DocClad rename.
+# Run in CI to prevent regressions after the CLM One rename.
 #
 # ALLOWLISTED FILES (intentional technical remnants — must not be broadened without
 # documenting a new reason):
@@ -11,8 +11,8 @@
 #     a terminal state in Documenso.
 #
 #   contracts/context_processors.py
-#     CMS_AEGIS_MODE context key is a deprecated template alias for DOCCLAD_MODE.
-#     Remove after all templates are migrated to use DOCCLAD_MODE.
+#     CMS_AEGIS_MODE context key is a deprecated template alias for CLMONE_MODE.
+#     Remove after all templates are migrated to use CLMONE_MODE.
 #
 #   config/settings_base.py
 #     CMS_AEGIS_MODE settings alias + session cookie comment referencing old name.
@@ -24,16 +24,16 @@
 #
 #   config/feature_flags.py
 #     is_cms_aegis_mode_enabled() deprecated alias. Remove after all callers migrate
-#     to is_docclad_mode_enabled().
+#     to is_clmone_mode_enabled().
 #
 #   tests/test_salesforce_sprint2_ingestion.py
 #     Mocks PostgreSQL db name 'cms_aegis' as returned by pg_catalog in the
 #     verify_postgres_cutover management command test. This is an infrastructure
-#     mock, not product branding. Remove after CI db is renamed to 'docclad'.
+#     mock, not product branding. Remove after CI db is renamed to 'clmone'.
 #
 #   theme/templates/base.html, theme/templates/base_fullscreen.html
 #     localStorage fallback reads 'cms-aegis-theme' for existing users' saved preference
-#     before migrating to 'docclad-theme'. Remove once the transition period ends.
+#     before migrating to 'clmone-theme'. Remove once the transition period ends.
 #
 #   theme/static/js/csp-handlers.js
 #     Removes 'cms-aegis-theme' localStorage key during theme migration. Remove this
@@ -47,7 +47,8 @@
 
 set -euo pipefail
 
-FORBIDDEN_PATTERN='CMS Aegis|CMSAegis|CMS_AEGIS|cms-aegis|cmsaegis'
+LEGACY_APP_PATTERN='[Dd]oc[Cc]''lad|DOCC''LAD'
+FORBIDDEN_PATTERN="CMS Aegis|CMSAegis|CMS_AEGIS|cms-aegis|cmsaegis|${LEGACY_APP_PATTERN}"
 
 # Files with permitted technical remnants (exact paths from repo root)
 ALLOWLIST_FILES=(
@@ -109,7 +110,7 @@ for f in "${EXCLUDE_FILES[@]}"; do
   EXCLUDE_ARGS+=(--exclude="$(basename "$f")")
 done
 
-echo "=== DocClad brand regression check ==="
+echo "=== CLM One brand regression check ==="
 
 FINDINGS=0
 while IFS=: read -r file _rest; do
@@ -137,7 +138,7 @@ done < <(grep -rniE --binary-files=without-match "$FORBIDDEN_PATTERN" "${EXCLUDE
 
 if [[ $FINDINGS -gt 0 ]]; then
   echo ""
-  echo "ERROR: $FINDINGS forbidden branding reference(s) found. Update to DocClad."
+  echo "ERROR: $FINDINGS forbidden branding reference(s) found. Update to CLM One."
   exit 1
 fi
 

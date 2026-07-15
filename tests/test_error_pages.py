@@ -1,7 +1,7 @@
 """Branded error pages + no-traceback-leak (audit findings B4 / C11).
 
 Verifies:
-  - Custom 404/500/403/400 templates exist, render, and carry DocClad branding.
+  - Custom 404/500/403/400 templates exist, render, and carry CLM One branding.
   - A 404 served by the app uses the branded template (not Django's default).
   - PreviewExceptionMiddleware does NOT leak a traceback when DEBUG is off.
 
@@ -18,7 +18,7 @@ class ErrorTemplateTests(TestCase):
     def test_all_error_templates_render_with_branding(self):
         for name in ('400.html', '403.html', '404.html', '500.html'):
             html = render_to_string(name)
-            self.assertIn('DocClad', html, f'{name} missing branding')
+            self.assertIn('CLM One', html, f'{name} missing branding')
             # No Django technical-500 markers should ever appear.
             self.assertNotIn('Traceback', html)
 

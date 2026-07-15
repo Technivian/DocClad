@@ -25,7 +25,7 @@ _ALERT_DEDUP_WINDOW = timedelta(hours=1)
 
 
 def _from_email() -> str:
-    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@docclad.local')
+    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@clmone.local')
 
 
 def _operator_email() -> str | None:
@@ -61,12 +61,12 @@ def send_mfa_code_email(user, code: str) -> bool:
     from contracts.services.url_builder import build_canonical_url
     challenge_url = build_canonical_url('/mfa/challenge/')
     body = (
-        f'Your DocClad verification code is: {code}\n\n'
+        f'Your CLM One verification code is: {code}\n\n'
         'This code expires in 10 minutes. Do not share it with anyone.\n\n'
         f'Enter it at: {challenge_url}'
     )
     return _send(
-        subject='Your DocClad verification code',
+        subject='Your CLM One verification code',
         body=body,
         to=user.email,
         event_tag='mfa.code_email',
@@ -82,12 +82,12 @@ def send_mfa_enrolled_notification(user) -> bool:
     from contracts.services.url_builder import build_canonical_url
     settings_url = build_canonical_url('/settings/')
     body = (
-        'Two-factor authentication has been enabled on your DocClad account.\n\n'
+        'Two-factor authentication has been enabled on your CLM One account.\n\n'
         'If you did not enable this, contact your organization administrator immediately.\n\n'
         f'Manage security settings: {settings_url}'
     )
     return _send(
-        subject='Two-factor authentication enabled — DocClad',
+        subject='Two-factor authentication enabled — CLM One',
         body=body,
         to=user.email,
         event_tag='mfa.enrolled_notification',
@@ -99,12 +99,12 @@ def send_mfa_disabled_notification(user) -> bool:
     from contracts.services.url_builder import build_canonical_url
     settings_url = build_canonical_url('/settings/')
     body = (
-        'Two-factor authentication has been disabled on your DocClad account.\n\n'
+        'Two-factor authentication has been disabled on your CLM One account.\n\n'
         'If you did not make this change, contact your organization administrator immediately.\n\n'
         f'Re-enable MFA: {settings_url}'
     )
     return _send(
-        subject='Two-factor authentication disabled — DocClad',
+        subject='Two-factor authentication disabled — CLM One',
         body=body,
         to=user.email,
         event_tag='mfa.disabled_notification',
@@ -116,14 +116,14 @@ def send_mfa_recovery_codes_regenerated_notification(user) -> bool:
     from contracts.services.url_builder import build_canonical_url
     profile_url = build_canonical_url('/profile/')
     body = (
-        'New MFA recovery codes have been generated for your DocClad account.\n\n'
+        'New MFA recovery codes have been generated for your CLM One account.\n\n'
         'Your previous recovery codes are now invalid. '
         'Save the new codes from your profile page in a secure location.\n\n'
         'If you did not generate new codes, contact your administrator immediately.\n\n'
         f'View your profile: {profile_url}'
     )
     return _send(
-        subject='New MFA recovery codes generated — DocClad',
+        subject='New MFA recovery codes generated — CLM One',
         body=body,
         to=user.email,
         event_tag='mfa.recovery_codes_regenerated_notification',
@@ -135,13 +135,13 @@ def send_suspicious_recovery_use_notification(user) -> bool:
     from contracts.services.url_builder import build_canonical_url
     settings_url = build_canonical_url('/settings/')
     body = (
-        'A recovery code was used to access your DocClad account.\n\n'
+        'A recovery code was used to access your CLM One account.\n\n'
         'If this was not you, your account may be compromised. '
         'Contact your organization administrator immediately and revoke all active sessions.\n\n'
         f'Review your security settings: {settings_url}'
     )
     return _send(
-        subject='Recovery code used on your account — DocClad',
+        subject='Recovery code used on your account — CLM One',
         body=body,
         to=user.email,
         event_tag='mfa.suspicious_recovery_use',
@@ -192,7 +192,7 @@ def send_operator_job_failure_alert(job_run) -> bool:
     error_preview = (job_run.error_summary or 'unknown')[:200]
 
     body = (
-        f'A scheduled job failed on DocClad.\n\n'
+        f'A scheduled job failed on CLM One.\n\n'
         f'Job name:        {job_run.job_name}\n'
         f'Run ID:          {job_run.run_id}\n'
         f'Scope:           {scope}\n'
@@ -205,7 +205,7 @@ def send_operator_job_failure_alert(job_run) -> bool:
         'This alert fires at most once per job per hour. '
         'Repeated failures within the window will not generate additional alerts.'
     )
-    subject = f'[DocClad] Scheduled job failed: {job_run.job_name}'
+    subject = f'[CLM One] Scheduled job failed: {job_run.job_name}'
 
     sent = _send(subject=subject, body=body, to=recipient, event_tag='job.failure_alert')
     if sent:

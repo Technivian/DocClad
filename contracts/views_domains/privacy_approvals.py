@@ -675,7 +675,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
 
         from contracts.services.approval_workflow import actor_can_decide
         from contracts.services.queue_rows import latest_activity_map
-        from contracts.templatetags.docclad_format import (
+        from contracts.templatetags.clmone_format import (
             approval_status_badge_class,
             approval_step_label,
             money,
@@ -840,6 +840,9 @@ class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin
                 decision_made = True
             elif new_status == ApprovalRequest.Status.REJECTED and original_status != ApprovalRequest.Status.REJECTED:
                 svc.reject(ar.pk, self.request.user, comments)
+                decision_made = True
+            elif new_status == ApprovalRequest.Status.CHANGES_REQUESTED and original_status != ApprovalRequest.Status.CHANGES_REQUESTED:
+                svc.request_changes(ar.pk, self.request.user, comments)
                 decision_made = True
         except ApprovalAccessDenied as exc:
             form.add_error(None, str(exc))

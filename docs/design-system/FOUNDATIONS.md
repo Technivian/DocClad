@@ -9,7 +9,7 @@ Casefile uses semantic roles, never color names in product decisions.
 | Canvas | `--paper` | Application background |
 | Surface | `--card` | Working panels and controls |
 | Well | `--well` | Grouped controls and quiet bands |
-| Cool canvas | `--color-surface-canvas-cool` | Command dashboards and expressive workspaces |
+| Cool canvas | `--color-surface-canvas-cool` | Alias for expressive compositions on the canonical application canvas |
 | Soft surface | `--color-surface-soft` | Setup actions and low-emphasis grouped controls |
 | Text | `--ink-900` | Primary content |
 | Secondary text | `--ink-500` | Supporting content |
@@ -21,16 +21,18 @@ Casefile uses semantic roles, never color names in product decisions.
 | Special | `--status-special-*` | Specialist or privileged review states |
 | Clear | `--color-state-clear*` | Explicitly empty operational queues, always paired with “Clear” text |
 
-Teal is not decoration. It means action, selection, progress, or trust.
-Amber and red require a real operational reason. Never communicate status by
-color alone; pair color with text, iconography, or position.
+Semantic colour follows the Command Center contract: green means monitored and
+clear; amber means setup incomplete or not measured; red means genuine risk or
+required intervention; blue/teal means neutral category, information, action,
+selection, or trust. Never communicate status by color alone; pair color with
+text, iconography, or position.
 
 `--ds-*` names are deprecated aliases retained for compatibility. New code
 uses the canonical tokens shown above.
 
 ## Typography
 
-Use Inter across product UI. Do not introduce Geist unless DocClad adopts a
+Use Inter across product UI. Do not introduce Geist unless CLM One adopts a
 new frontend runtime and validates the full application again.
 
 | Style | Size / line height | Weight | Use |
@@ -75,11 +77,13 @@ outer page padding.
 ## Shape And Elevation
 
 - Controls: 8px radius.
-- Cards and panels: 10px radius.
-- Spacious dashboard surfaces: 20px radius through `--radius-surface`.
+- Primary cards and panels: 14px radius through `--radius-subpanel`.
+- Inner action rows and compact nested controls: 10px radius through `--radius-card`.
+- Spacious contextual surfaces: 20px radius through `--radius-surface`.
 - Branded feature surfaces: 20px radius through `--radius-feature`.
 - Pills: status, filters, and people only.
-- Working surfaces use borders first and restrained shadows second.
+- Working surfaces use subtle borders and `--shadow-card`; clickable cards may
+  use `--shadow-card-hover` only on hover.
 - Expressive dashboard surfaces may use `--shadow-surface-expressive`; one
   branded feature surface per page may use `--shadow-feature`.
 - Nested cards are prohibited. Use bands, dividers, or list rows inside cards.

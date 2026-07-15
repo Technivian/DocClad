@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% load static humanize %}
-{% block title %}Command Center — DocClad{% endblock %}
+{% block title %}Command Center — CLM One{% endblock %}
+{% block authenticated_page_title %}Command Center{% endblock %}
+{% block authenticated_page_subtitle %}Overview of contracts, approvals, and governance.{% endblock %}
 {% block page_css %}<link href="{% static 'css/command-center.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">{% endblock %}
 
 {% block content %}
-<main class="command-center cc-v3" id="DocCladDashboard" data-command-center>
-  <header class="cc-v3-head">
-    <h1>Command Center</h1>
-  </header>
-
+<main class="command-center cc-v3" id="CLMOneDashboard" data-command-center>
   <div class="cc-v3-layout">
     <div class="cc-v3-primary">
       <section class="cc-v3-hero dc-ds-surface--feature{% if not priority_feature %} cc-v3-hero--empty dc-ds-surface--feature-clear{% endif %}" aria-labelledby="priority-matter-title">
@@ -47,32 +45,33 @@
         <div class="cc-v3-empty-hero-copy">
           <div class="cc-v3-hero-kicker"><span class="cc-v3-badge">Workspace status · {% if clm_setup_required_count %}Setup required{% else %}Clear{% endif %}</span></div>
           <h2 id="priority-matter-title">{% if clm_setup_required_count %}Governance setup is incomplete{% else %}Contract control is clear{% endif %}</h2>
-          <p>{% if clm_setup_required_count %}No monitored issues require attention. Complete the setup items in the Action queue to extend governance coverage.{% else %}Monitoring is active and no issue currently requires attention.{% endif %}</p>
+          <p>{% if clm_setup_required_count %}Complete the setup items in the Action queue to expand governance coverage.{% else %}Monitoring is active and no issue requires attention.{% endif %}</p>
           <div class="cc-v3-empty-hero-actions">
             <a class="is-primary" href="{% url 'contracts:contract_template_picker' %}">Import agreement <span aria-hidden="true">→</span></a>
           </div>
         </div>
         <div class="cc-v3-empty-hero-status" aria-label="Governance readiness summary">
-          <span class="is-clear"><strong>Monitored queues</strong> · Clear</span>
-          <span class="{% if clm_setup_required_count %}is-setup-required{% else %}is-clear{% endif %}"><strong>Governance coverage</strong> · {% if clm_setup_required_count %}Setup required{% else %}Clear{% endif %}</span>
+          <span class="is-clear"><strong>Monitored queues</strong><em>Clear</em></span>
+          <span class="{% if clm_setup_required_count %}is-setup-required{% else %}is-clear{% endif %}"><strong>Governance coverage</strong><em>{% if clm_setup_required_count %}Setup required{% else %}Clear{% endif %}</em></span>
         </div>
         {% endif %}
       </section>
 
       <section class="cc-v3-kpis" aria-label="Operational queues">
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:approval_request_list' %}?status=PENDING" aria-label="Pending approvals"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="circle-check" %}</span><span class="cc-v3-kpi-label">Pending approvals</span></div><strong class="cc-v3-kpi-value {% if clm_my_approvals_count %}is-action-required{% elif not approval_path_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_my_approvals_count %}Action required{% elif not approval_path_configured %}Setup required{% else %}Clear{% endif %}</strong><div class="cc-v3-kpi-meta">{% if clm_my_approvals_count %}{{ clm_my_approvals_count }} assigned to you · {{ clm_approval_overdue_count }} overdue{% elif not approval_path_configured %}Approval authority is not configured{% else %}Monitored · no pending approvals{% endif %}</div></a>
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:risk_log_list' %}?risk_level=HIGH" aria-label="Risk deviations"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span><span class="cc-v3-kpi-label">Risk deviations</span></div><strong class="cc-v3-kpi-value {% if clm_high_severity_count %}is-action-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_high_severity_count %}Action required{% else %}Clear{% endif %}</strong><div class="cc-v3-kpi-meta">{% if clm_high_severity_count %}{{ clm_high_severity_count }} unresolved high-risk finding{{ clm_high_severity_count|pluralize }}{% else %}Monitored · no high-risk deviations{% endif %}</div></a>
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:dpa_review_pack_list' %}" aria-label="DPA conflicts"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span><span class="cc-v3-kpi-label">DPA conflicts</span></div><strong class="cc-v3-kpi-value {% if clm_conflict_count %}is-action-required{% elif not dpa_monitoring_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_conflict_count %}Action required{% elif not dpa_monitoring_configured %}Setup required{% else %}Clear{% endif %}</strong><div class="cc-v3-kpi-meta">{% if clm_conflict_count %}{{ clm_conflict_count }} unresolved cross-document conflict{{ clm_conflict_count|pluralize }}{% elif not dpa_monitoring_configured %}No DPA review is configured{% else %}Monitored · no DPA conflicts{% endif %}</div></a>
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:deadline_list' %}" aria-label="Deadlines"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-kpi-label">Deadlines</span></div><strong class="cc-v3-kpi-value {% if clm_renewals_count or clm_deadline_overdue_count %}is-action-required{% elif not deadline_tracking_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_renewals_count or clm_deadline_overdue_count %}Action required{% elif not deadline_tracking_configured %}Setup required{% else %}Clear{% endif %}</strong><div class="cc-v3-kpi-meta">{% if clm_renewals_count or clm_deadline_overdue_count %}{{ clm_renewals_count }} due within 30 days · {{ clm_deadline_overdue_count }} overdue{% elif not deadline_tracking_configured %}Deadline tracking is not configured{% else %}Monitored · nothing due in 30 days{% endif %}</div></a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:approval_request_list' %}?status=PENDING" aria-label="Pending approvals"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="circle-check" %}</span><span class="cc-v3-kpi-label">Pending approvals</span></div><strong class="cc-v3-kpi-value {% if clm_my_approvals_count %}is-action-required{% elif not approval_path_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_my_approvals_count %}Action required{% elif not approval_path_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_my_approvals_count %}<span class="cc-v3-kpi-meta">{{ clm_my_approvals_count }} awaiting review</span>{% elif not approval_path_configured %}<span class="cc-v3-kpi-meta">Configure approval authority</span>{% endif %}</a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:risk_log_list' %}?risk_level=HIGH" aria-label="Risk deviations"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span><span class="cc-v3-kpi-label">Risk deviations</span></div><strong class="cc-v3-kpi-value {% if clm_high_severity_count %}is-action-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_high_severity_count %}Action required{% else %}Clear{% endif %}</strong>{% if clm_high_severity_count %}<span class="cc-v3-kpi-meta">{{ clm_high_severity_count }} high-risk finding{{ clm_high_severity_count|pluralize }}</span>{% endif %}</a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:dpa_review_pack_list' %}" aria-label="DPA conflicts"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="shield" %}</span><span class="cc-v3-kpi-label">DPA conflicts</span></div><strong class="cc-v3-kpi-value {% if clm_conflict_count %}is-action-required{% elif not dpa_monitoring_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_conflict_count %}Action required{% elif not dpa_monitoring_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_conflict_count %}<span class="cc-v3-kpi-meta">{{ clm_conflict_count }} conflict{{ clm_conflict_count|pluralize }} to resolve</span>{% elif not dpa_monitoring_configured %}<span class="cc-v3-kpi-meta">Configure monitoring</span>{% endif %}</a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:deadline_list' %}" aria-label="Deadlines"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-kpi-label">Deadlines</span></div><strong class="cc-v3-kpi-value {% if clm_renewals_count or clm_deadline_overdue_count %}is-action-required{% elif not deadline_tracking_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_renewals_count or clm_deadline_overdue_count %}Action required{% elif not deadline_tracking_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_renewals_count or clm_deadline_overdue_count %}<span class="cc-v3-kpi-meta">{{ clm_renewals_count }} due · {{ clm_deadline_overdue_count }} overdue</span>{% elif not deadline_tracking_configured %}<span class="cc-v3-kpi-meta">Configure tracking</span>{% endif %}</a>
       </section>
 
       <section class="cc-v3-card cc-v3-governance dc-ds-surface dc-ds-surface--expressive" aria-label="Governance controls">
         <h2 class="cc-v3-governance-title">Governance controls</h2>
         {% for signal in clm_governance_signals %}<a class="cc-v3-governance-item{% if signal.emphasis %} is-emphasis{% endif %}" href="{{ signal.href }}"><span class="cc-v3-governance-dot {{ signal.tone }}" aria-hidden="true"></span><span class="cc-v3-governance-copy"><span>{{ signal.label }}</span><strong>{{ signal.value }}</strong><em>{{ signal.detail }}</em></span></a>{% endfor %}
       </section>
+    </div>
 
-      <section class="cc-v3-card cc-v3-matters dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recent-matters-title">
-        <div class="cc-v3-section-head"><h2 id="recent-matters-title">Recent Matters</h2><a href="{% url 'contracts:contract_list' %}">View all</a></div>
+    <section class="cc-v3-card cc-v3-matters dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recent-matters-title">
+        <div class="cc-v3-section-head"><h2 id="recent-matters-title">Recent Matters</h2><a href="{% url 'contracts:repository' %}">View all</a></div>
         <div class="cc-v3-table-wrap">
           <table class="cc-v3-table">
             <thead><tr><th>Contract / Matter</th><th>Counterparty</th><th>Owner</th><th>Stage</th><th>Risk</th><th>Updated</th></tr></thead>
@@ -90,32 +89,31 @@
             </tbody>
           </table>
         </div>
-      </section>
-    </div>
+    </section>
 
     <aside class="cc-v3-rail" aria-label="Command Center recommendations and deadlines">
       <section class="cc-v3-card cc-v3-rail-card cc-v3-actions dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recommended-actions-title">
-        <div class="cc-v3-section-head"><h2 id="recommended-actions-title">Action queue</h2>{% if clm_recommended_actions %}<a href="{% url 'contracts:contract_list' %}">View all</a>{% endif %}</div>
-        <div class="cc-v3-rail-list">
+        <div class="cc-v3-section-head"><h2 id="recommended-actions-title">Action queue</h2>{% if clm_recommended_actions %}<a href="{% url 'contracts:repository' %}">View all</a>{% endif %}</div>
+        <div class="cc-v3-rail-body cc-v3-rail-list">
           {% for action in clm_recommended_actions %}
           <a class="cc-v3-action-row" href="{{ action.href }}"><span class="cc-v3-action-copy"><strong>{{ action.title }}{% if action.count > 1 %} · {{ action.count }} contracts{% endif %}</strong><span class="cc-v3-action-explanation">{{ action.explanation }}</span><span class="cc-v3-action-entities">{{ action.category|default:action.counterparty_text }}</span></span><span class="cc-v3-action-date">{% if action.due_label %}{{ action.due_label }}{% else %}Open{% endif %} →</span></a>
-          {% empty %}<div class="cc-v3-empty cc-v3-actions-empty dc-ds-empty dc-ds-empty--compact"><strong>No active issues</strong><span>Monitored queues are clear.</span></div>{% endfor %}
-          {% if clm_setup_required_count %}<div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="cc-v3-rail-quick-actions dc-ds-setup-list">{% if not approval_path_configured %}{% url 'contracts:approval_rule_list' as approval_rules_url %}{% include "design_system/setup_action.html" with href=approval_rules_url icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}{% endif %}{% if not dpa_monitoring_configured %}{% url 'contracts:dpa_review_pack_list' as dpa_reviews_url %}{% include "design_system/setup_action.html" with href=dpa_reviews_url icon="file-text" label="Configure DPA reviews" copy="Enable cross-document monitoring." %}{% endif %}{% if reviewer_setup_required %}{% url 'contracts:organization_team' as organization_team_url %}{% include "design_system/setup_action.html" with href=organization_team_url icon="user-plus" label="Invite a reviewer" copy="Add a legal, privacy, or finance owner." %}{% endif %}</div></div>{% endif %}
+          {% empty %}<div class="cc-v3-rail-state"><span>No active issues</span><strong class="is-clear">Monitored queues are clear.</strong></div>{% endfor %}
+          {% if clm_setup_required_count %}<div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="cc-v3-setup-list dc-ds-setup-list">{% if not approval_path_configured %}{% url 'contracts:approval_rule_list' as approval_rules_url %}{% include "design_system/setup_action.html" with href=approval_rules_url icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}{% endif %}{% if not dpa_monitoring_configured %}{% url 'contracts:dpa_review_pack_list' as dpa_reviews_url %}{% include "design_system/setup_action.html" with href=dpa_reviews_url icon="file-text" label="Configure DPA reviews" copy="Enable cross-document monitoring." %}{% endif %}{% if reviewer_setup_required %}{% url 'contracts:organization_team' as organization_team_url %}{% include "design_system/setup_action.html" with href=organization_team_url icon="user-plus" label="Invite a reviewer" copy="Add a legal, privacy, or finance owner." %}{% endif %}</div></div>{% endif %}
         </div>
       </section>
 
       <section class="cc-v3-card cc-v3-rail-card cc-v3-deadlines dc-ds-surface dc-ds-surface--expressive" aria-labelledby="upcoming-deadlines-title">
         <div class="cc-v3-section-head"><h2 id="upcoming-deadlines-title">Upcoming Deadlines</h2>{% if deadline_tracking_configured %}<a href="{% url 'contracts:deadline_list' %}">View calendar</a>{% endif %}</div>
-        <div>
+        <div class="cc-v3-rail-body">
           {% for item in clm_upcoming_obligations %}<a class="cc-v3-deadline-row" href="{{ item.href }}"><span class="cc-v3-calendar" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-deadline-copy"><strong>{{ item.title }}</strong><span>{{ item.counterparty }}</span></span><span class="cc-v3-date-status{% if item.status_tone == 'overdue' %} is-overdue{% endif %}">{{ item.status_label }}</span></a>
           {% empty %}
           {% if deadline_tracking_configured %}
-          <div class="cc-v3-empty cc-v3-deadline-empty dc-ds-empty dc-ds-empty--compact"><strong>No upcoming deadlines</strong><span>Nothing is due in the next 30 days.</span></div>
+          <div class="cc-v3-rail-state"><span>No upcoming deadlines</span><strong class="is-clear">Nothing due in the next 30 days.</strong></div>
           {% else %}
-          <div class="cc-v3-deadline-setup-state"><span>Deadline tracking</span><strong>Not configured</strong></div>
-          <div class="cc-v3-setup-list dc-ds-setup-list">
+          <div class="cc-v3-rail-state"><span>Deadline tracking</span><strong class="is-setup-required">Not configured</strong></div>
+          <div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="cc-v3-setup-list dc-ds-setup-list">
             {% url 'contracts:deadline_create' as deadline_create_url %}{% include "design_system/setup_action.html" with href=deadline_create_url icon="calendar" label="Configure deadlines" copy="Add renewal, notice, and approval dates." %}
-          </div>
+          </div></div>
           {% endif %}
           {% endfor %}
         </div>
@@ -128,8 +126,6 @@
 {% block extra_js %}
 <script nonce="{{ csp_nonce }}">
 (function () {
-  var search = document.querySelector('.global-search-input');
-  if (search) search.placeholder = 'Search contracts, clauses, parties…';
   var score = document.querySelector('[data-risk-score]');
   if (score) score.style.setProperty('--score', score.getAttribute('data-risk-score') + '%');
 })();

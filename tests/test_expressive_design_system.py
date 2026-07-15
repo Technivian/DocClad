@@ -12,7 +12,7 @@ class ExpressiveDesignSystemContractTests(SimpleTestCase):
         super().setUpClass()
         cls.root = Path(settings.BASE_DIR)
         cls.tokens = (
-            cls.root / 'theme' / 'static' / 'css' / 'docclad-tokens.css'
+            cls.root / 'theme' / 'static' / 'css' / 'clmone-tokens.css'
         ).read_text()
         cls.components = (
             cls.root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
@@ -59,7 +59,7 @@ class ExpressiveDesignSystemContractTests(SimpleTestCase):
             'dc-ds-surface--expressive',
             'dc-ds-metric--expressive',
             'dc-ds-metric__value--clear',
-            'dc-ds-empty--compact',
+            'dc-ds-setup-list',
             'design_system/setup_action.html',
         ):
             self.assertIn(class_name, self.dashboard)

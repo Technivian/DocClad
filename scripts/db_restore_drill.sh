@@ -4,7 +4,7 @@
 #
 # Usage:  ./scripts/db_restore_drill.sh <backup.dump> [scratch_db_url]
 #
-# If scratch_db_url is omitted, creates a local database named docclad_drill
+# If scratch_db_url is omitted, creates a local database named clmone_drill
 # (requires local Postgres with createdb access).
 set -euo pipefail
 
@@ -34,7 +34,7 @@ PG_RESTORE="${PG_RESTORE:-pg_restore}"
 SCRATCH_URL="${2:-}"
 LOCAL_SCRATCH=false
 if [[ -z "$SCRATCH_URL" ]]; then
-  SCRATCH_DB="docclad_drill_$(date +%s)"
+  SCRATCH_DB="clmone_drill_$(date +%s)"
   createdb "$SCRATCH_DB"
   SCRATCH_URL="postgresql://localhost/$SCRATCH_DB"
   LOCAL_SCRATCH=true

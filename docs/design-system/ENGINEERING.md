@@ -2,7 +2,7 @@
 
 ## Current Runtime
 
-DocClad is server-rendered Django with Tailwind CSS v4, semantic CSS tokens,
+CLM One is server-rendered Django with Tailwind CSS v4, semantic CSS tokens,
 and CSP-safe vanilla JavaScript. Casefile is framework-independent, but its
 current production adapters must remain native to this architecture.
 
@@ -12,11 +12,11 @@ same Casefile contracts without changing product semantics.
 
 ## File Ownership
 
-- Tokens: `theme/static/css/docclad-tokens.css`
+- Tokens: `theme/static/css/clmone-tokens.css`
 - Deprecated token adapter entry point: `theme/static_src/src/design-system/tokens.css`
 - Components: `theme/static_src/src/design-system/components.css`
 - Django primitives: `theme/templates/design_system/`
-- Interaction runtime: `theme/static/js/docclad-ui.js`
+- Interaction runtime: `theme/static/js/clmone-ui.js`
 - Living catalogue: `theme/templates/design_system/catalog.html`
 - Enforcement: `tests/test_design_system.py`
 
@@ -24,7 +24,7 @@ same Casefile contracts without changing product semantics.
 
 - Use semantic custom properties, not page-local hex values.
 - Shared classes use the `dc-ds-` prefix.
-- Use canonical properties from `docclad-tokens.css`; do not add new `--ds-*`
+- Use canonical properties from `clmone-tokens.css`; do not add new `--ds-*`
   aliases or define token values in the adapter entry point.
 - Page CSS may compose layout but may not redefine primitive anatomy.
 - Support 1536px desktop and 390px mobile without horizontal page overflow.
@@ -34,7 +34,7 @@ same Casefile contracts without changing product semantics.
 
 - No inline event handlers; Content Security Policy remains enforceable.
 - Shared behavior uses `data-*` contracts and delegated listeners.
-- Expose only the minimal stable global API under `window.DocClad`.
+- Expose only the minimal stable global API under `window.CLMOne`.
 - Commands and links must be permission-derived from server-rendered context.
 - Transient UI must restore focus and provide accessible announcements.
 
@@ -53,7 +53,7 @@ must remove the relevant compatibility layer and use `dc-ds-*` directly.
   filtering, and pagination through the shared `data-table-core="server"`
   contract; do not duplicate that state client-side.
 - Motion: defer unless CSS/Web Animations cannot express the required behavior.
-- Chart libraries: must consume `DocClad.chartTheme`. No chart dependency ships
+- Chart libraries: must consume `CLMOne.chartTheme`. No chart dependency ships
   until a production chart exists.
 - shadcn/ui: reference for composition and accessibility, not a runtime
   dependency in Django templates.

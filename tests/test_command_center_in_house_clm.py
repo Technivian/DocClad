@@ -68,19 +68,18 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'Command Center')
         self.assertNotContains(response, 'Legal operations')
         self.assertNotContains(response, 'Live workspace')
-        self.assertNotContains(response, 'Overview of contracts, approvals, and governance.')
+        self.assertContains(response, 'Overview of contracts, approvals, and governance.')
         # The compact header replaced the old oversized date <h1> + separate
-        # "Live portfolio overview" chip with a one-line operational summary
-        # next to the title; when nothing needs attention it reads as such
-        # rather than restating zeroed-out metric cards.
-        self.assertContains(response, 'No monitored issues require attention')
+        # "Live portfolio overview" chip with a concise operational subtitle
+        # beside the title; the empty hero directs the user to the next setup
+        # action instead of restating zeroed-out metric cards.
+        self.assertContains(response, 'Complete the setup items in the Action queue')
         self.assertNotContains(response, 'Attention needed:')
 
     def test_metric_cards_render(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Monitored · no high-risk deviations')
-        self.assertContains(response, 'Monitored · no DPA conflicts')
-        self.assertContains(response, 'Deadline tracking is not configured')
+        self.assertContains(response, 'dc-ds-metric__value--clear')
+        self.assertContains(response, 'Configure tracking')
 
     def test_priority_queue_and_right_rail_render(self):
         # Priority Queue is wired to real in-progress contracts, not hardcoded
