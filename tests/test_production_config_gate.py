@@ -176,7 +176,7 @@ class RenderDeploymentConfig(SimpleTestCase):
         return {e.get('key'): e.get('value') for e in self.groups[name]['envVars'] if 'key' in e}
 
     def test_shared_group_contains_only_shareable_configuration(self):
-        group_name = 'clm-one-free-config'
+        group_name = 'clm-one-config'
         kv = self._group_kv(group_name)
         self.assertEqual(kv.get('DJANGO_ENV'), 'production')
         self.assertEqual(kv.get('MEDIA_STORAGE_BACKEND'), 's3')
@@ -188,33 +188,33 @@ class RenderDeploymentConfig(SimpleTestCase):
             self.assertNotIn('fromService', entry)
 
     def test_blueprint_provisions_only_free_web_and_database(self):
-        self.assertEqual(set(self.services), {'clm-one-free-web'})
-        self.assertEqual(set(self.databases), {'clm-one-free-postgres'})
+        self.assertEqual(set(self.services), {'clm-one-web'})
+        self.assertEqual(set(self.databases), {'clm-one-postgres'})
 
-        web = self.services['clm-one-free-web']
+        web = self.services['clm-one-web']
         self.assertEqual(web['type'], 'web')
         self.assertEqual(web['plan'], 'free')
 
-        database = self.databases['clm-one-free-postgres']
+        database = self.databases['clm-one-postgres']
         self.assertEqual(database['plan'], 'free')
         self.assertEqual(database['region'], 'frankfurt')
         self.assertEqual(database['ipAllowList'], [])
 
     def test_web_uses_free_safe_runtime_configuration(self):
-        web = self.services['clm-one-free-web']
+        web = self.services['clm-one-web']
         froms = {entry.get('fromGroup') for entry in web['envVars'] if 'fromGroup' in entry}
-        self.assertIn('clm-one-free-config', froms)
+        self.assertIn('clm-one-config', froms)
         by_key = {entry.get('key'): entry for entry in web['envVars'] if entry.get('key')}
         self.assertEqual(
             by_key['DATABASE_URL']['fromDatabase'],
-            {'name': 'clm-one-free-postgres', 'property': 'connectionString'},
+            {'name': 'clm-one-postgres', 'property': 'connectionString'},
         )
         self.assertNotIn('REDIS_URL', by_key)
         self.assertEqual(
             by_key['APP_BASE_URL']['fromService'],
             {
                 'type': 'web',
-                'name': 'clm-one-free-web',
+                'name': 'clm-one-web',
                 'envVarKey': 'RENDER_EXTERNAL_URL',
             },
         )

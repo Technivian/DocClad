@@ -12,7 +12,7 @@
 # S3-compatible object storage because Render's free filesystem is ephemeral.
 
 envVarGroups:
-  - name: clm-one-free-config
+  - name: clm-one-config
     envVars:
       - key: DJANGO_ENV
         value: production
@@ -36,7 +36,7 @@ envVarGroups:
         value: "false"
 
 databases:
-  - name: clm-one-free-postgres
+  - name: clm-one-postgres
     plan: free
     region: frankfurt
     postgresMajorVersion: "16"
@@ -45,7 +45,7 @@ databases:
     ipAllowList: []
 
 services:
-  - name: clm-one-free-web
+  - name: clm-one-web
     type: web
     runtime: python
     plan: free
@@ -56,15 +56,15 @@ services:
     buildCommand: ./build.sh
     startCommand: sh -c 'python3 manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT'
     envVars:
-      - fromGroup: clm-one-free-config
+      - fromGroup: clm-one-config
       - key: DATABASE_URL
         fromDatabase:
-          name: clm-one-free-postgres
+          name: clm-one-postgres
           property: connectionString
       - key: APP_BASE_URL
         fromService:
           type: web
-          name: clm-one-free-web
+          name: clm-one-web
           envVarKey: RENDER_EXTERNAL_URL
       - key: ALLOWED_HOSTS
         value: localhost,.onrender.com
