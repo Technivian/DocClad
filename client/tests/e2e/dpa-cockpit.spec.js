@@ -13,10 +13,11 @@ async function login(page) {
 }
 
 async function reveal(locator) {
-  await locator.evaluate((element) => {
-    const section = element.closest('details');
-    if (section) section.open = true;
-  });
+  const section = locator.locator('xpath=ancestor::details[1]');
+  if (await section.count() && !(await section.evaluate((element) => element.open))) {
+    await section.locator('summary').click();
+  }
+  await expect(locator).toBeVisible();
 }
 
 async function fillField(page, key, value) {
@@ -91,8 +92,10 @@ test('New DPA Draft cockpit: fill, toggle smart questions, generate governed dra
   await expect(page.locator('#dpa-draft-doc')).toContainText('State of Delaware');
 
   // Clicking a risk signal jumps to and highlights the matching draft clause.
-  await page.locator('[data-clause-link="international-transfers"]').first().click();
+  await page.getByRole('tab', { name: 'Governance' }).click();
+  await page.locator('[data-clause-link="international-transfers"]:visible').first().click();
   await expect(page.locator('#international-transfers')).toHaveClass(/is-linked/);
+  await page.locator('[data-dpa-drawer-close]').click();
 
   // 7. Generate the governed draft.
   await page.click('#submit-dpa-btn');

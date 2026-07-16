@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ document.title }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ document.title }}{% endblock %}
+{% block authenticated_page_subtitle %}Version {{ document.version }} · {{ document.get_document_type_display }}{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .file-hash-code {

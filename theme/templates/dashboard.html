@@ -27,11 +27,12 @@
         </div>
         {% if priority_feature %}
         <article class="cc-v3-top-priority" aria-labelledby="top-priority-title">
-          <div class="cc-v3-top-priority-label">Top priority</div>
-          <div class="cc-v3-top-priority-title-row"><h3 id="top-priority-title">{{ priority_feature.title }}</h3><span>{{ priority_feature.current_stage|default:"Review" }}</span></div>
-          <div class="cc-v3-top-priority-meta"><span>{{ priority_feature.counterparty|default:"Counterparty pending" }}</span><span>{{ priority_feature.contract_type|default:"Contract" }}</span></div>
-          <div class="cc-v3-top-priority-detail"><span>Blocking issue</span><strong>{{ priority_feature.blocking_issue|default:priority_feature.attention_explanation }}</strong></div>
-          <div class="cc-v3-top-priority-detail"><span>Next action</span><strong>{{ priority_feature.recommendation }}</strong></div>
+          <div class="cc-v3-top-priority-head"><span class="cc-v3-top-priority-label">Top priority</span><span class="cc-v3-top-priority-stage">{{ priority_feature.current_stage|default:"Review" }}</span></div>
+          <div class="cc-v3-top-priority-body">
+            <div class="cc-v3-top-priority-context"><h3 id="top-priority-title">{{ priority_feature.title }}</h3><div class="cc-v3-top-priority-meta"><span>{{ priority_feature.counterparty|default:"Counterparty pending" }}</span><span>{{ priority_feature.contract_type|default:"Contract" }}</span></div></div>
+            <div class="cc-v3-top-priority-detail"><span>Blocking issue</span><strong>{{ priority_feature.blocking_issue|default:priority_feature.attention_explanation }}</strong></div>
+            <div class="cc-v3-top-priority-detail cc-v3-top-priority-next"><span>Recommended action</span><strong>{{ priority_feature.recommendation }}</strong></div>
+          </div>
         </article>
         {% else %}
         <div class="cc-v3-top-priority cc-v3-top-priority--empty"><div class="cc-v3-top-priority-label">Top priority</div><h3>No contract needs immediate attention</h3><p>As contracts enter review, their next governed action will appear here.</p></div>

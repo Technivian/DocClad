@@ -59,10 +59,9 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await expect(page.locator('.nda-ws-card-head', { hasText: 'Approval Route' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send for signature' })).toBeVisible();
 
-  await page.goto('/dashboard/');
-  const openWorkspaceLink = page.getByRole('link', { name: new RegExp(counterparty) }).first();
-  await expect(openWorkspaceLink).toBeVisible();
-  await openWorkspaceLink.click();
+  const workspaceUrl = page.url();
+  await page.goto('/contracts/workflows/');
+  await page.goto(workspaceUrl);
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
 });

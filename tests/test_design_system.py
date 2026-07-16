@@ -300,6 +300,7 @@ class DesignSystemTests(TestCase):
         self.assertIn('class="topbar-page-context"', base)
         self.assertIn('block authenticated_page_title', base)
         self.assertIn('dc-ds-header-promoted', base)
+        self.assertIn('.workspace-main-head .workspace-title', base)
         self.assertIn('.topbar-page-context', premium)
         self.assertIn('height: var(--space-96)', premium)
 
@@ -355,6 +356,37 @@ class DesignSystemTests(TestCase):
             content = (template_root / relative_path).read_text()
             self.assertIn('dc-ds-scaffold--with-rail', content, relative_path)
             self.assertIn('dc-ds-summary--vertical', content, relative_path)
+
+    def test_legacy_workspaces_and_document_views_inherit_command_center_layout_rules(self):
+        root = Path(settings.BASE_DIR)
+        templates = root / 'theme' / 'templates' / 'contracts'
+        premium = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        ).read_text()
+
+        # These routes retain specialised workflow content, but their layout,
+        # actions, cards, and breakpoints must stay governed by the shared
+        # compatibility layer.
+        for selector in (
+            '.dpa-ws, .nda-ws',
+            '.dpa-ws-header, .nda-ws-header, .dpa-ws-timeline, .nda-ws-timeline, .dpa-ws-card, .nda-ws-card',
+            '.dpa-ws-grid, .nda-ws-grid',
+            '.page-actions, .arch-header-right, .workspace-tools',
+            '.dash-grid-4, .dash-grid-3, .dash-grid-2, .contract-status-grid',
+            'grid-template-columns: repeat(7, minmax(88px, 1fr))',
+        ):
+            self.assertIn(selector, premium)
+
+        for relative_path in (
+            'document_detail.html',
+            'document_compare.html',
+            'document_ocr_review.html',
+            'reports_dashboard.html',
+        ):
+            content = (templates / relative_path).read_text()
+            with self.subTest(template=relative_path):
+                self.assertIn('block authenticated_page_title', content)
+                self.assertIn('block authenticated_page_subtitle', content)
 
     def test_command_center_styles_do_not_override_shared_navigation_shell(self):
         root = Path(settings.BASE_DIR)

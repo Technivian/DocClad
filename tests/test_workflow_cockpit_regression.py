@@ -70,9 +70,13 @@ class WorkflowCockpitRegressionTests(TestCase):
         wt = get_msa_workflow_template()
         ids = {f.key: f.id for f in FieldDefinition.objects.filter(workflow_template=wt)}
         return {
+            f'field_{ids["payrollminds_contracting_entity"]}': 'Payrollminds B.V.',
             f'field_{ids["counterparty"]}': 'Reference MSA Counterparty',
             f'field_{ids["start_date"]}': '2026-09-01',
             f'field_{ids["contract_owner"]}': 'Avery Brooks',
+            f'field_{ids["client_contact_name"]}': 'Jordan Lee',
+            f'field_{ids["client_contact_email"]}': 'jordan.lee@example.com',
+            f'field_{ids["consultant_service_type"]}': 'Managed logistics platform',
             f'field_{ids["business_unit"]}': 'Revenue Operations',
             f'field_{ids["internal_reference"]}': 'MSA-REF-001',
             f'field_{ids["value"]}': '350000',
@@ -114,7 +118,7 @@ class WorkflowCockpitRegressionTests(TestCase):
                 'msa',
                 reverse('contracts:msa_workflow_builder'),
                 self._msa_payload(),
-                'Generated MSA Draft',
+                'MSA Commercial Review Workflow',
                 'MSA',
                 get_msa_workflow_template,
             ),

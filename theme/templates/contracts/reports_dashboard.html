@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load clmone_format %}
 {% block title %}Reports & Analytics – CLM One{% endblock %}
+{% block authenticated_page_title %}Reports &amp; analytics{% endblock %}
+{% block authenticated_page_subtitle %}Contract-flow performance, workload, and financial overview.{% endblock %}
 
 {% block extra_css %}
 <style nonce="{{ csp_nonce }}">

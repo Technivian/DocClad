@@ -1313,6 +1313,48 @@ body:has(.cc-v3) .top-bar .global-search-input {
 .cc-v3-portfolio-actions .is-secondary { color: color-mix(in srgb, var(--clmone-white) 90%, transparent); font-size: 12px; font-weight: 650; text-decoration: none; }
 .cc-v3-portfolio-actions .is-secondary:hover { color: var(--clmone-white); text-decoration: underline; }
 
+/* Portfolio health is a decision surface, not a compressed dashboard within
+   a dashboard. Keep the score, five health signals, and the one next action
+   in distinct bands with enough type size to scan at normal desktop zoom. */
+.cc-v3-portfolio-hero {
+  grid-template-columns: minmax(0, 1fr) 144px;
+  gap: var(--space-20) var(--space-24);
+  padding: var(--space-28) var(--space-28) var(--space-24);
+}
+.cc-v3-portfolio-hero h2 { margin: var(--space-8) 0; font-size: 26px; line-height: 1.18; }
+.cc-v3-portfolio-summary { max-width: 680px; font-size: 14px; line-height: 1.5; }
+.cc-v3-portfolio-score { width: 140px; height: 140px; box-shadow: 0 0 0 7px color-mix(in srgb, var(--clmone-white) 7%, transparent); }
+.cc-v3-portfolio-score::after { inset: 10px; }
+.cc-v3-portfolio-score .cc-v3-score-copy strong { font-size: 46px; }
+.cc-v3-portfolio-score .cc-v3-score-copy span { margin-top: 6px; font-size: 13px; }
+.cc-v3-portfolio-score .cc-v3-score-copy em { margin-top: 6px; font-size: 10px; }
+.cc-v3-portfolio-signals { gap: var(--space-10); }
+.cc-v3-portfolio-signal { min-height: 84px; padding: var(--space-12); border-radius: var(--radius-subpanel); }
+.cc-v3-portfolio-signal > span,
+.cc-v3-portfolio-signal > small { font-size: 11px; line-height: 1.35; }
+.cc-v3-portfolio-signal > strong { margin: 6px 0 4px; font-size: 24px; }
+.cc-v3-top-priority { display: block; padding: 0; overflow: hidden; border-color: color-mix(in srgb, var(--clmone-white) 18%, transparent); background: color-mix(in srgb, #061727 42%, transparent); }
+.cc-v3-top-priority-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); padding: var(--space-12) var(--space-16); border-bottom: 1px solid color-mix(in srgb, var(--clmone-white) 13%, transparent); }
+.cc-v3-top-priority-label { color: #75ded9; font-size: 11px; }
+.cc-v3-top-priority-stage { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--space-8); border: 1px solid color-mix(in srgb, var(--clmone-white) 19%, transparent); border-radius: var(--radius-pill); color: color-mix(in srgb, var(--clmone-white) 84%, transparent); font-size: 11px; font-weight: 650; }
+.cc-v3-top-priority-body { display: grid; grid-template-columns: minmax(220px, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-20); padding: var(--space-16); }
+.cc-v3-top-priority-context { min-width: 0; }
+.cc-v3-top-priority-title-row h3,
+.cc-v3-top-priority-context h3 { margin: 0; color: var(--clmone-white); font-size: 18px; line-height: 1.3; }
+.cc-v3-top-priority-meta { display: flex; flex-wrap: wrap; gap: var(--space-8); align-self: auto; margin-top: var(--space-8); font-size: 12px; line-height: 1.35; }
+.cc-v3-top-priority-meta span + span { margin-top: 0; color: #75ded9; }
+.cc-v3-top-priority-detail { padding-left: var(--space-16); border-left: 1px solid color-mix(in srgb, var(--clmone-white) 13%, transparent); }
+.cc-v3-top-priority-detail span { margin-bottom: 6px; font-size: 11px; }
+.cc-v3-top-priority-detail strong { font-size: 13px; line-height: 1.45; }
+.cc-v3-top-priority-next strong { color: #dffbf8; }
+.cc-v3-portfolio-actions { margin-top: var(--space-4); }
+.cc-v3-portfolio-actions .is-primary { min-height: 40px; font-size: 13px; }
+
+@media (max-width: 1040px) {
+  .cc-v3-top-priority-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cc-v3-top-priority-context { grid-column: 1 / -1; }
+}
+
 @media (min-width: 1221px) {
   .cc-v3-hero.cc-v3-portfolio-hero { height: auto; min-height: 0; }
   .cc-v3-rail { grid-template-rows: auto auto; }
@@ -1324,6 +1366,9 @@ body:has(.cc-v3) .top-bar .global-search-input {
   .cc-v3-portfolio-signals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cc-v3-top-priority { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .cc-v3-top-priority-title-row { grid-column: 1 / -1; }
+  .cc-v3-top-priority-body { grid-template-columns: 1fr; gap: var(--space-12); }
+  .cc-v3-top-priority-context { grid-column: auto; }
+  .cc-v3-top-priority-detail { padding: var(--space-12) 0 0; border-top: 1px solid color-mix(in srgb, var(--clmone-white) 13%, transparent); border-left: 0; }
 }
 
 @media (max-width: 640px) {

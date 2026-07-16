@@ -418,6 +418,129 @@ body[data-design-system="casefile"] :is(.modal, .dialog, .drawer, [role="dialog"
   box-shadow: var(--shadow-overlay);
 }
 
+/* Cross-page operational layout contract. Older views use a mix of page,
+   workspace, dashboard and document classes; these adapters deliberately
+   resolve them to the same Command Center hierarchy without changing their
+   workflows or data density. */
+body[data-design-system="casefile"] :is(.page-header, .arch-header, .workspace-main-head, .dpa-ws-title-row, .nda-ws-title-row) {
+  align-items: flex-start;
+}
+
+body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools) > :is(a, button) {
+  min-height: var(--control-height);
+}
+
+body[data-design-system="casefile"] :is(.dash-grid, .contract-status-grid, .uac-form-grid, .cform-section-grid) {
+  gap: var(--space-16);
+}
+
+body[data-design-system="casefile"] :is(.dash-grid-2, .dash-grid-3, .dash-grid-4) > * {
+  min-width: 0;
+}
+
+body[data-design-system="casefile"] :is(.page-header, .arch-header, .workspace-main-head) > :first-child {
+  min-width: 0;
+}
+
+body[data-design-system="casefile"] :is(.page-title, .arch-title, .workspace-title, .dpa-ws-title, .nda-ws-title) {
+  overflow-wrap: anywhere;
+}
+
+body[data-design-system="casefile"] :is(.version-list, .divide-rows) > * {
+  border-color: var(--line);
+}
+
+body[data-design-system="casefile"] :is(.file-hash-code, .ocr-pre, .pre-code) {
+  border-color: var(--line);
+  border-radius: var(--radius-control);
+  background: var(--well);
+  color: var(--ink-600);
+}
+
+/* DPA and NDA workspaces are rendered inside the shared workflow route. Keep
+   their specialised content, but use the standard surface, action and
+   information-density language instead of isolated legacy values. */
+body[data-design-system="casefile"] :is(.dpa-ws, .nda-ws) {
+  padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-header, .nda-ws-header, .dpa-ws-timeline, .nda-ws-timeline, .dpa-ws-card, .nda-ws-card) {
+  border-color: var(--color-border-soft);
+  border-radius: var(--radius-subpanel);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-header, .nda-ws-header) {
+  padding: var(--space-24);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-title, .nda-ws-title) {
+  color: var(--ink-900);
+  font: var(--text-title);
+  letter-spacing: 0;
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-subtitle, .nda-ws-subtitle) {
+  color: var(--ink-500);
+  font: var(--text-small);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-meta-grid, .nda-ws-meta-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-12);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-meta, .nda-ws-meta, .dpa-clause, .nda-clause, .dpa-risk-card, .nda-risk-card, .dpa-approval-card, .nda-approval-card, .dpa-audit-row, .nda-audit-row) {
+  border-color: var(--line);
+  border-radius: var(--radius-card);
+  background: var(--well);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-cta, .nda-ws-cta) {
+  min-height: var(--control-height);
+  border-color: var(--seal);
+  border-radius: var(--radius-control);
+  background: var(--seal);
+  color: var(--clmone-white);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--seal-dark) 18%, transparent);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-action-secondary, .nda-ws-action-secondary) {
+  border-color: var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink-700);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-action-teal, .nda-ws-action-teal) {
+  border-color: var(--color-status-success-border);
+  border-radius: var(--radius-control);
+  background: var(--seal-bg);
+  color: var(--seal-dark);
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-track, .nda-ws-track) {
+  min-width: max-content;
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-timeline, .nda-ws-timeline) {
+  overflow-x: auto;
+}
+
+body[data-design-system="casefile"] :is(.dpa-ws-grid, .nda-ws-grid) {
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, .55fr);
+  gap: var(--grid-gutter);
+}
+
 @media (max-width: 1024px) {
   :root {
     --page-padding-x: var(--space-24);
@@ -435,6 +558,14 @@ body[data-design-system="casefile"] :is(.modal, .dialog, .drawer, [role="dialog"
 
   body[data-design-system="casefile"] .main-area > .top-bar > .topbar-page-context + .topbar-flex {
     max-width: 280px;
+  }
+
+  body[data-design-system="casefile"] :is(.dash-grid-4, .dash-grid-3) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-design-system="casefile"] :is(.dpa-ws-grid, .nda-ws-grid) {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -500,6 +631,36 @@ body[data-design-system="casefile"] :is(.modal, .dialog, .drawer, [role="dialog"
 
   body[data-design-system="casefile"] .topbar-new-contract .topbar-new-label {
     display: none;
+  }
+
+  body[data-design-system="casefile"] :is(.page-header, .arch-header, .workspace-main-head, .dpa-ws-title-row, .nda-ws-title-row) {
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) > :is(a, button) {
+    flex: 1 1 160px;
+  }
+
+  body[data-design-system="casefile"] :is(.dash-grid-4, .dash-grid-3, .dash-grid-2, .contract-status-grid) {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-design-system="casefile"] :is(.dpa-ws, .nda-ws) {
+    padding-inline: var(--space-16);
+  }
+
+  body[data-design-system="casefile"] :is(.dpa-ws-header, .nda-ws-header, .dpa-ws-timeline, .nda-ws-timeline) {
+    padding: var(--space-16);
+  }
+
+  body[data-design-system="casefile"] :is(.dpa-ws-track, .nda-ws-track) {
+    grid-template-columns: repeat(7, minmax(88px, 1fr));
   }
 }
 

@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Review Extracted Text – CLM One{% endblock %}
+{% block authenticated_page_title %}Review text extraction{% endblock %}
+{% block authenticated_page_subtitle %}{{ form.instance.document.title }} · Confirm the extracted text before it is used in review work.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .ocr-pre {
