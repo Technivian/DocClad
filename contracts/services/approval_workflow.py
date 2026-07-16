@@ -152,6 +152,14 @@ def _audit_approval_decision(
         from contracts.middleware import log_action
         from contracts.models import AuditLog
 
+        # Approval decisions are tenant events. Resolve the tenant explicitly
+        # instead of relying on a request context (service calls also occur
+        # from jobs and tests), and do not emit a malformed system-chain row
+        # for an incomplete in-memory object.
+        organization_id = getattr(ar, 'organization_id', None) or getattr(ar.contract, 'organization_id', None)
+        if not isinstance(organization_id, int):
+            return
+
         action_map = {
             'approve': AuditLog.Action.APPROVE,
             'reject': AuditLog.Action.REJECT,
@@ -163,6 +171,7 @@ def _audit_approval_decision(
             'ApprovalRequest',
             object_id=ar.pk,
             object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
+            organization_id=organization_id,
             changes={
                 'event': f'approval_{action}_{"succeeded" if allowed else "blocked"}',
                 'contract_id': ar.contract_id,
@@ -230,19 +239,29 @@ class ApprovalWorkflowService:
         actor: User,
         reviewer: User,
         *,
+        approval_step: str = 'LEGAL',
+        rule: ApprovalRule | None = None,
         comment: str = '',
         request=None,
     ) -> ApprovalRequestDTO:
-        """Submit or resubmit a draft into one accountable review step."""
+        """Submit a draft/pending contract into one accountable review step.
+
+        ``approval_step`` and ``rule`` keep the generic workflow as the single
+        approval mechanism while allowing governed MSA routes to submit Legal
+        and Finance requests independently.
+        """
         from contracts.middleware import log_action
         from contracts.models import OrganizationMembership
         from contracts.permissions import ContractAction, can_access_contract_action
-        from contracts.services.contract_lifecycle import get_contract_lifecycle_service
+        from contracts.services.contract_lifecycle import (
+            get_contract_lifecycle_service,
+            record_contract_grounded_check,
+        )
 
         if not can_access_contract_action(actor, contract, ContractAction.EDIT):
             raise ApprovalAccessDenied('Only the contract owner or a workspace admin can submit it.', 403)
-        if contract.status != Contract.Status.DRAFT:
-            raise ValueError(f'Only a draft can be submitted; current status is {contract.status}.')
+        if contract.status not in {Contract.Status.DRAFT, Contract.Status.PENDING}:
+            raise ValueError(f'Only a draft or pending contract can be submitted; current status is {contract.status}.')
         if reviewer.pk == (contract.owner_id or contract.created_by_id):
             raise ApprovalAccessDenied('The reviewer must be different from the contract owner.', 400)
         if not OrganizationMembership.objects.filter(
@@ -254,16 +273,35 @@ class ApprovalWorkflowService:
 
         with transaction.atomic():
             locked_contract = Contract.objects.select_for_update().get(pk=contract.pk)
-            if locked_contract.status != Contract.Status.DRAFT:
-                raise ValueError(f'Only a draft can be submitted; current status is {locked_contract.status}.')
-            approval = ApprovalRequest.objects.create(
+            if locked_contract.status not in {Contract.Status.DRAFT, Contract.Status.PENDING}:
+                raise ValueError(
+                    f'Only a draft or pending contract can be submitted; current status is {locked_contract.status}.'
+                )
+            # Submission always records a deterministic field/risk check against
+            # the locked record, so the review workflow never relies on a stale
+            # page-level result.
+            record_contract_grounded_check(
+                locked_contract,
+                actor,
+                request=request,
+                trigger='before_submission',
+            )
+            approval, created = ApprovalRequest.objects.get_or_create(
                 organization=locked_contract.organization,
                 contract=locked_contract,
-                approval_step='LEGAL',
+                approval_step=approval_step,
                 status=ApprovalRequest.Status.PENDING,
-                assigned_to=reviewer,
-                comments=comment.strip(),
+                defaults={
+                    'rule': rule,
+                    'assigned_to': reviewer,
+                    'comments': comment.strip(),
+                    'due_date': timezone.now() + timedelta(hours=rule.sla_hours if rule else 48),
+                },
             )
+            if not created:
+                return _to_dto(
+                    ApprovalRequest.objects.select_related('contract', 'assigned_to', 'rule').get(pk=approval.pk)
+                )
             dpa_pack = locked_contract.dpa_review_packs.order_by('-created_at').first()
             if dpa_pack and not dpa_pack.reviewer_id:
                 dpa_pack.reviewer = reviewer
@@ -278,17 +316,19 @@ class ApprovalWorkflowService:
                     'contract_id': locked_contract.pk,
                     'previous_state': None,
                     'new_state': ApprovalRequest.Status.PENDING,
+                    'approval_step': approval_step,
                     'assigned_to_id': reviewer.pk,
                     'comment': comment.strip(),
                 },
             )
-            get_contract_lifecycle_service().transition(
-                locked_contract,
-                Contract.Status.PENDING,
-                actor,
-                reason='Submitted for approval',
-                request=request,
-            )
+            if locked_contract.status == Contract.Status.DRAFT:
+                get_contract_lifecycle_service().transition(
+                    locked_contract,
+                    Contract.Status.PENDING,
+                    actor,
+                    reason='Submitted for approval',
+                    request=request,
+                )
         return _to_dto(
             ApprovalRequest.objects.select_related('contract', 'assigned_to', 'rule').get(pk=approval.pk)
         )
@@ -339,8 +379,12 @@ class ApprovalWorkflowService:
                 ar.decided_at = timezone.now()
                 ar.decided_by = actor
                 ar.save(update_fields=['status', 'comments', 'decided_at', 'decided_by'])
+                pending_other_approvals = ApprovalRequest.objects.filter(
+                    contract_id=ar.contract_id,
+                    status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
+                ).exclude(pk=ar.pk).exists()
                 target_contract_status = {
-                    'approve': Contract.Status.APPROVED,
+                    'approve': Contract.Status.PENDING if pending_other_approvals else Contract.Status.APPROVED,
                     'reject': Contract.Status.CANCELLED,
                     'request_changes': Contract.Status.DRAFT,
                 }[action]
@@ -360,14 +404,18 @@ class ApprovalWorkflowService:
                             actor_type=AuditLog.ActorType.HUMAN,
                             reason='Normalized legacy approval submission',
                         )
-                    lifecycle.transition(
-                        ar.contract,
-                        target_contract_status,
-                        actor,
-                        system=True,
-                        actor_type=AuditLog.ActorType.HUMAN,
-                        reason=comments,
-                    )
+                    if target_contract_status != ar.contract.status:
+                        lifecycle.transition(
+                            ar.contract,
+                            target_contract_status,
+                            actor,
+                            system=True,
+                            actor_type=AuditLog.ActorType.HUMAN,
+                            reason=comments or (
+                                'Approval recorded; waiting for other required approvers.'
+                                if pending_other_approvals else 'All required approvals recorded.'
+                            ),
+                        )
                     if action == 'approve':
                         Contract.objects.filter(pk=ar.contract_id).update(
                             approved_by=actor,

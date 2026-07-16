@@ -14,15 +14,14 @@
     .legal-page a { color: var(--primary); text-decoration: underline; }
     .legal-nav { position: fixed; top: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
     .legal-nav-inner { max-width: 720px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-    .nav-brand { color: var(--text-primary); }
+    .legal-logo { display: block; width: auto; height: 28px; max-width: 100%; object-fit: contain; }
     .nav-back { color: var(--text-secondary); }
 </style>
 
 <nav class="legal-nav">
     <div class="legal-nav-inner">
-        <a href="/" class="flex items-center gap-2 text-sm font-bold nav-brand">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            CLM One
+        <a href="/" aria-label="CLM One home">
+            <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="legal-logo">
         </a>
         <a href="/" class="text-sm nav-back">← Back to home</a>
     </div>

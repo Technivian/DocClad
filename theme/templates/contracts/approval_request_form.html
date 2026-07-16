@@ -1,26 +1,105 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Approval Request – CLM One{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <h1 class="page-title">{{ object|yesno:"Edit,New" }} Approval Request</h1>
+<style nonce="{{ csp_nonce }}">
+  .approval-request-page { max-width: 1320px; }
+  .approval-request-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  .approval-request-panel { min-width: 0; }
+  .approval-request-form { display: grid; gap: 20px; }
+  .approval-request-field { min-width: 0; }
+  .approval-request-field .form-label { display: block; margin-bottom: 7px; }
+  .approval-request-field .form-control { min-height: 42px; }
+  .approval-request-field textarea.form-control { min-height: 112px; }
+  .approval-request-help { margin: 6px 0 0; color: var(--text-muted); font-size: 12px; line-height: 18px; }
+  .approval-request-error { margin: 6px 0 0; color: var(--color-danger, #c4423d); font-size: 12px; line-height: 18px; }
+  .approval-request-status { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid var(--status-pending-border, var(--border)); border-radius: 10px; background: var(--status-pending-bg, var(--surface)); }
+  .approval-request-status-icon { display: inline-flex; width: 30px; height: 30px; flex: 0 0 30px; align-items: center; justify-content: center; border-radius: 8px; color: var(--status-pending-fg, var(--primary)); background: var(--card-bg); border: 1px solid var(--status-pending-border, var(--border)); }
+  .approval-request-status-title { margin: 0; color: var(--text-primary); font-size: 14px; font-weight: 700; line-height: 20px; }
+  .approval-request-status-copy { margin: 2px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 18px; }
+  .approval-request-actions { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--card-border); margin-top: 4px; padding-top: 20px; }
+  .approval-request-actions .btn-primary-grad, .approval-request-actions .btn-ghost { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
+  .approval-request-rail { display: grid; gap: 16px; }
+  .approval-request-rail .panel-inner { padding: 18px; }
+  .approval-request-rail-title { margin: 0 0 6px; color: var(--text-primary); font-size: 14px; font-weight: 700; }
+  .approval-request-rail-copy { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+  .approval-request-steps { display: grid; gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .approval-request-steps li { display: flex; align-items: flex-start; gap: 9px; color: var(--text-secondary); font-size: 12px; line-height: 18px; }
+  .approval-request-step-number { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; background: var(--primary-subtle); color: var(--primary); font-weight: 700; font-size: 11px; }
+  @media (max-width: 980px) { .approval-request-layout { grid-template-columns: 1fr; } .approval-request-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .approval-request-rail { grid-template-columns: 1fr; } .approval-request-actions { flex-direction: column-reverse; } .approval-request-actions > * { width: 100%; } }
+</style>
+
+<div class="page-wrap approval-request-page">
+  <div class="arch-header">
+    <div class="arch-header-left">
+      <div class="arch-title-row">
+        <h1 class="arch-title">{{ object|yesno:"Edit,New" }} Approval Request</h1>
+      </div>
+      <p class="arch-subtitle">Create a clear, traceable decision record for the contract team.</p>
+    </div>
   </div>
-  <div class="max-w-3xl">
-    <form method="post" enctype="multipart/form-data" class="panel panel-inner space-y-4">
-      {% csrf_token %}
-      {% for field in form %}
-      <div>
-        <label for="{{ field.id_for_label }}" class="form-label block mb-1">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
+
+  <div class="approval-request-layout">
+    <section class="panel approval-request-panel" aria-labelledby="approval-request-details-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="approval-request-details-title" class="panel-title">Request details</h2>
+          <p class="approval-request-rail-copy">Give the reviewer the contract, decision type, owner, and context they need to act.</p>
+        </div>
       </div>
-      {% endfor %}
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Save</button>
-        <a href="{% url 'contracts:approval_request_list' %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm border btn-ghost">Cancel</a>
-      </div>
-    </form>
+      <form method="post" enctype="multipart/form-data" class="panel-inner approval-request-form">
+        {% csrf_token %}
+
+        {% if not object %}
+        <div class="approval-request-status" role="status" aria-label="Initial request status">
+          <span class="approval-request-status-icon" aria-hidden="true">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </span>
+          <div>
+            <p class="approval-request-status-title">Pending — set automatically</p>
+            <p class="approval-request-status-copy">A new request starts pending. The assigned reviewer records the final decision after review.</p>
+          </div>
+        </div>
+        {% endif %}
+
+        {% for field in form %}
+          {% if object or field.name != 'status' %}
+          <div class="approval-request-field">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<p class="approval-request-help">{{ field.help_text }}</p>{% endif %}
+            {% if field.errors %}<p class="approval-request-error">{{ field.errors|join:", " }}</p>{% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if form.non_field_errors %}<p class="approval-request-error">{{ form.non_field_errors|join:", " }}</p>{% endif %}
+        <div class="approval-request-actions">
+          <a href="{% url 'contracts:approval_request_list' %}" class="btn-ghost">Cancel</a>
+          <button type="submit" class="btn-primary-grad">{{ object|yesno:"Save changes,Create approval request" }}</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="approval-request-rail" aria-label="Approval request guidance">
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="approval-request-rail-title">What happens next</h2>
+          <p class="approval-request-rail-copy">The selected reviewer receives a governed request linked to this contract. Each decision is recorded in the approval history.</p>
+          <ol class="approval-request-steps">
+            <li><span class="approval-request-step-number">1</span><span>Select the contract and the review required.</span></li>
+            <li><span class="approval-request-step-number">2</span><span>Assign an accountable reviewer and, if needed, a due date.</span></li>
+            <li><span class="approval-request-step-number">3</span><span>The request remains pending until the reviewer approves, rejects, or requests changes.</span></li>
+          </ol>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-inner">
+          <h2 class="approval-request-rail-title">Recommended request wording</h2>
+          <p class="approval-request-rail-copy">“Please review the payment terms and confirm whether the proposed exception is acceptable before we progress this agreement.”</p>
+        </div>
+      </section>
+    </aside>
   </div>
 </div>
 {% endblock %}

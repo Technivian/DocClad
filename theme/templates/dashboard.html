@@ -9,58 +9,43 @@
 <main class="command-center cc-v3" id="CLMOneDashboard" data-command-center>
   <div class="cc-v3-layout">
     <div class="cc-v3-primary">
-      <section class="cc-v3-hero dc-ds-surface--feature{% if not priority_feature %} cc-v3-hero--empty dc-ds-surface--feature-clear{% endif %}" aria-labelledby="priority-matter-title">
+      <section class="cc-v3-hero cc-v3-portfolio-hero dc-ds-surface--feature" aria-labelledby="portfolio-health-title">
+        <div class="cc-v3-portfolio-intro">
+          <div class="cc-v3-hero-kicker"><span class="cc-v3-badge">Governance overview</span></div>
+          <h2 id="portfolio-health-title">Contract portfolio health</h2>
+          <p class="cc-v3-portfolio-summary">{{ portfolio_health_summary }}</p>
+        </div>
+        <div class="cc-v3-score cc-v3-portfolio-score" data-risk-score="{{ portfolio_health_score }}" role="img" aria-label="Portfolio health score {{ portfolio_health_score }} out of 100, {{ portfolio_health_band }}">
+          <div class="cc-v3-score-copy"><strong>{{ portfolio_health_score }}</strong><span>/100</span><em>{{ portfolio_health_band }}</em></div>
+        </div>
+        <div class="cc-v3-portfolio-signals" aria-label="Portfolio health signals">
+          <div class="cc-v3-portfolio-signal{% if clm_pending_approvals_count %} is-warning{% endif %}"><span>Pending approvals</span><strong>{{ clm_pending_approvals_count }}</strong><small>{% if clm_pending_approvals_count %}Awaiting a decision{% else %}No approvals waiting{% endif %}</small></div>
+          <div class="cc-v3-portfolio-signal{% if clm_high_severity_count %} is-critical{% endif %}"><span>High-risk findings</span><strong>{{ clm_high_severity_count }}</strong><small>{% if clm_high_severity_count %}Need active attention{% else %}No high-risk findings{% endif %}</small></div>
+          <div class="cc-v3-portfolio-signal{% if clm_renewals_count or clm_deadline_overdue_count %} is-warning{% endif %}"><span>Upcoming deadlines</span><strong>{{ clm_renewals_count }}</strong><small>{% if clm_deadline_overdue_count %}{{ clm_deadline_overdue_count }} overdue{% else %}Due within 30 days{% endif %}</small></div>
+          <div class="cc-v3-portfolio-signal{% if clm_policy_exception_count %} is-warning{% endif %}"><span>Policy exceptions</span><strong>{{ clm_policy_exception_count }}</strong><small>{% if clm_policy_exception_count %}Accepted risk to monitor{% else %}No open exceptions{% endif %}</small></div>
+          <div class="cc-v3-portfolio-signal{% if clm_conflict_count %} is-critical{% endif %}"><span>Cross-document conflicts</span><strong>{{ clm_conflict_count }}</strong><small>{% if clm_conflict_count %}Require reconciliation{% else %}No conflicts detected{% endif %}</small></div>
+        </div>
         {% if priority_feature %}
-        <div class="cc-v3-hero-kicker">
-          <span class="cc-v3-badge">Priority matter</span>
-          <span class="cc-v3-priority-reason">{{ priority_feature_reason }}</span>
-        </div>
-        <h2 id="priority-matter-title">{{ priority_feature.title }}</h2>
-        <div class="cc-v3-hero-pills" aria-label="Priority matter summary">
-          <span>{{ priority_feature.current_stage|default:"Legal Review" }}</span>
-          <span>{{ priority_feature.counterparty|default:"Counterparty pending" }}</span>
-          <span>{{ priority_feature_band }} risk</span>
-        </div>
-        <div class="cc-v3-hero-grid">
-          <div class="cc-v3-hero-fact"><span class="cc-v3-hero-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span><div><small>Why this needs attention</small><strong>{{ priority_feature.attention_explanation }}</strong></div></div>
-          <div class="cc-v3-hero-fact"><span class="cc-v3-hero-icon" aria-hidden="true">{% include "design_system/icon.html" with name="workflow" %}</span><div><small>Approval stage</small><strong>{{ priority_feature.current_stage|default:"Legal Review" }}</strong></div></div>
-          <div class="cc-v3-hero-fact"><span class="cc-v3-hero-icon" aria-hidden="true">{% include "design_system/icon.html" with name="building" %}</span><div><small>Counterparty</small><strong>{{ priority_feature.counterparty|default:"No counterparty recorded" }}</strong></div></div>
-          <div class="cc-v3-hero-fact"><span class="cc-v3-hero-icon" aria-hidden="true">{% include "design_system/icon.html" with name="arrow-right" %}</span><div><small>Recommended action</small><strong>{{ priority_feature.recommendation }}</strong></div></div>
-        </div>
-        <div class="cc-v3-score" data-risk-score="{{ priority_feature_score }}" role="img" aria-label="Explainable risk score {{ priority_feature_score }} out of 100, {{ priority_feature_band }}">
-          <div class="cc-v3-score-copy"><strong>{{ priority_feature_score }}</strong><span>/100</span><em>{{ priority_feature_band }}</em></div>
-        </div>
-        <div class="cc-v3-score-detail">
-          <span>Score contributors · {{ priority_feature_history_label }}</span>
-          <div class="cc-v3-score-signals">
-            {% for signal in priority_feature_contributors %}<div class="cc-v3-score-signal"><strong>{{ signal.value }}</strong><span>{{ signal.label }}</span></div>{% endfor %}
-          </div>
-          <div class="cc-v3-score-additional">{% for signal in priority_feature_additional_contributors %}{{ signal.value }} {{ signal.label }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
-          <div class="cc-v3-resolution">Resolution path: {{ priority_feature.recommendation }}</div>
-        </div>
-        <div class="cc-v3-hero-actions">
-          <a class="is-primary" href="{{ priority_feature.workspace_href }}">Resolve next step <span aria-hidden="true">→</span></a>
-        </div>
+        <article class="cc-v3-top-priority" aria-labelledby="top-priority-title">
+          <div class="cc-v3-top-priority-label">Top priority</div>
+          <div class="cc-v3-top-priority-title-row"><h3 id="top-priority-title">{{ priority_feature.title }}</h3><span>{{ priority_feature.current_stage|default:"Review" }}</span></div>
+          <div class="cc-v3-top-priority-meta"><span>{{ priority_feature.counterparty|default:"Counterparty pending" }}</span><span>{{ priority_feature.contract_type|default:"Contract" }}</span></div>
+          <div class="cc-v3-top-priority-detail"><span>Blocking issue</span><strong>{{ priority_feature.blocking_issue|default:priority_feature.attention_explanation }}</strong></div>
+          <div class="cc-v3-top-priority-detail"><span>Next action</span><strong>{{ priority_feature.recommendation }}</strong></div>
+        </article>
         {% else %}
-        <div class="cc-v3-empty-hero-copy">
-          <div class="cc-v3-hero-kicker"><span class="cc-v3-badge">Workspace status · {% if clm_setup_required_count %}Setup required{% else %}Clear{% endif %}</span></div>
-          <h2 id="priority-matter-title">{% if clm_setup_required_count %}Governance setup is incomplete{% else %}Contract control is clear{% endif %}</h2>
-          <p>{% if clm_setup_required_count %}Complete the setup items in the Action queue to expand governance coverage.{% else %}Monitoring is active and no issue requires attention.{% endif %}</p>
-          <div class="cc-v3-empty-hero-actions">
-            <a class="is-primary" href="{% url 'contracts:contract_template_picker' %}">Import agreement <span aria-hidden="true">→</span></a>
-          </div>
-        </div>
-        <div class="cc-v3-empty-hero-status" aria-label="Governance readiness summary">
-          <span class="is-clear"><strong>Monitored queues</strong><em>Clear</em></span>
-          <span class="{% if clm_setup_required_count %}is-setup-required{% else %}is-clear{% endif %}"><strong>Governance coverage</strong><em>{% if clm_setup_required_count %}Setup required{% else %}Clear{% endif %}</em></span>
-        </div>
+        <div class="cc-v3-top-priority cc-v3-top-priority--empty"><div class="cc-v3-top-priority-label">Top priority</div><h3>No contract needs immediate attention</h3><p>As contracts enter review, their next governed action will appear here.</p></div>
         {% endif %}
+        <div class="cc-v3-hero-actions cc-v3-portfolio-actions">
+          <a class="is-primary" href="{% url 'contracts:repository' %}">Review priority actions <span aria-hidden="true">→</span></a>
+          <a class="is-secondary" href="{% url 'contracts:repository' %}">View all contracts</a>
+        </div>
       </section>
 
       <section class="cc-v3-kpis" aria-label="Operational queues">
         <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:approval_request_list' %}?status=PENDING" aria-label="Pending approvals"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="circle-check" %}</span><span class="cc-v3-kpi-label">Pending approvals</span></div><strong class="cc-v3-kpi-value {% if clm_my_approvals_count %}is-action-required{% elif not approval_path_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_my_approvals_count %}Action required{% elif not approval_path_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_my_approvals_count %}<span class="cc-v3-kpi-meta">{{ clm_my_approvals_count }} awaiting review</span>{% elif not approval_path_configured %}<span class="cc-v3-kpi-meta">Configure approval authority</span>{% endif %}</a>
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:risk_log_list' %}?risk_level=HIGH" aria-label="Risk deviations"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span><span class="cc-v3-kpi-label">Risk deviations</span></div><strong class="cc-v3-kpi-value {% if clm_high_severity_count %}is-action-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_high_severity_count %}Action required{% else %}Clear{% endif %}</strong>{% if clm_high_severity_count %}<span class="cc-v3-kpi-meta">{{ clm_high_severity_count }} high-risk finding{{ clm_high_severity_count|pluralize }}</span>{% endif %}</a>
-        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:dpa_review_pack_list' %}" aria-label="DPA conflicts"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="shield" %}</span><span class="cc-v3-kpi-label">DPA conflicts</span></div><strong class="cc-v3-kpi-value {% if clm_conflict_count %}is-action-required{% elif not dpa_monitoring_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_conflict_count %}Action required{% elif not dpa_monitoring_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_conflict_count %}<span class="cc-v3-kpi-meta">{{ clm_conflict_count }} conflict{{ clm_conflict_count|pluralize }} to resolve</span>{% elif not dpa_monitoring_configured %}<span class="cc-v3-kpi-meta">Configure monitoring</span>{% endif %}</a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:risk_log_list' %}?risk_level=HIGH" aria-label="Risk findings"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="alert-triangle" %}</span><span class="cc-v3-kpi-label">Risk findings</span></div><strong class="cc-v3-kpi-value {% if clm_high_severity_count %}is-action-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_high_severity_count %}Action required{% else %}Clear{% endif %}</strong>{% if clm_high_severity_count %}<span class="cc-v3-kpi-meta">{{ clm_high_severity_count }} high-risk finding{{ clm_high_severity_count|pluralize }}</span>{% endif %}</a>
+        <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:dpa_review_pack_list' %}" aria-label="Cross-document conflicts"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="shield" %}</span><span class="cc-v3-kpi-label">Cross-document conflicts</span></div><strong class="cc-v3-kpi-value {% if clm_conflict_count %}is-action-required{% elif not dpa_monitoring_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_conflict_count %}Action required{% elif not dpa_monitoring_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_conflict_count %}<span class="cc-v3-kpi-meta">{{ clm_conflict_count }} conflict{{ clm_conflict_count|pluralize }} to resolve</span>{% elif not dpa_monitoring_configured %}<span class="cc-v3-kpi-meta">Configure monitoring</span>{% endif %}</a>
         <a class="cc-v3-card cc-v3-kpi dc-ds-metric dc-ds-metric--expressive dc-ds-metric--interactive" href="{% url 'contracts:deadline_list' %}" aria-label="Deadlines"><div class="cc-v3-kpi-top"><span class="cc-v3-kpi-icon" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-kpi-label">Deadlines</span></div><strong class="cc-v3-kpi-value {% if clm_renewals_count or clm_deadline_overdue_count %}is-action-required{% elif not deadline_tracking_configured %}is-setup-required{% else %}is-clear dc-ds-metric__value--clear{% endif %}">{% if clm_renewals_count or clm_deadline_overdue_count %}Action required{% elif not deadline_tracking_configured %}Setup required{% else %}Clear{% endif %}</strong>{% if clm_renewals_count or clm_deadline_overdue_count %}<span class="cc-v3-kpi-meta">{{ clm_renewals_count }} due · {{ clm_deadline_overdue_count }} overdue</span>{% elif not deadline_tracking_configured %}<span class="cc-v3-kpi-meta">Configure tracking</span>{% endif %}</a>
       </section>
 
@@ -95,7 +80,7 @@
       <section class="cc-v3-card cc-v3-rail-card cc-v3-actions dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recommended-actions-title">
         <div class="cc-v3-section-head"><h2 id="recommended-actions-title">Action queue</h2>{% if clm_recommended_actions %}<a href="{% url 'contracts:repository' %}">View all</a>{% endif %}</div>
         <div class="cc-v3-rail-body cc-v3-rail-list">
-          {% for action in clm_recommended_actions %}
+          {% for action in clm_recommended_actions|slice:":2" %}
           <a class="cc-v3-action-row" href="{{ action.href }}"><span class="cc-v3-action-copy"><strong>{{ action.title }}{% if action.count > 1 %} · {{ action.count }} contracts{% endif %}</strong><span class="cc-v3-action-explanation">{{ action.explanation }}</span><span class="cc-v3-action-entities">{{ action.category|default:action.counterparty_text }}</span></span><span class="cc-v3-action-date">{% if action.due_label %}{{ action.due_label }}{% else %}Open{% endif %} →</span></a>
           {% empty %}<div class="cc-v3-rail-state"><span>No active issues</span><strong class="is-clear">Monitored queues are clear.</strong></div>{% endfor %}
           {% if clm_setup_required_count %}<div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="cc-v3-setup-list dc-ds-setup-list">{% if not approval_path_configured %}{% url 'contracts:approval_rule_list' as approval_rules_url %}{% include "design_system/setup_action.html" with href=approval_rules_url icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}{% endif %}{% if not dpa_monitoring_configured %}{% url 'contracts:dpa_review_pack_list' as dpa_reviews_url %}{% include "design_system/setup_action.html" with href=dpa_reviews_url icon="file-text" label="Configure DPA reviews" copy="Enable cross-document monitoring." %}{% endif %}{% if reviewer_setup_required %}{% url 'contracts:organization_team' as organization_team_url %}{% include "design_system/setup_action.html" with href=organization_team_url icon="user-plus" label="Invite a reviewer" copy="Add a legal, privacy, or finance owner." %}{% endif %}</div></div>{% endif %}

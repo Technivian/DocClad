@@ -78,13 +78,14 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await page.fill('textarea[name="content"]', 'Automated E2E contract body');
   await submitOwningForm(page, 'input[name="title"]');
 
-  await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
+  await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
   await expect(page.getByRole('link', { name: title })).toBeVisible();
 
   await page.getByRole('link', { name: title }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await expect(page.locator('.page-wrap.reveal-stagger').first()).toBeVisible();
   await expect(page.locator('.arch-detail-grid').first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Workflow' }).click();
   await expect(page.locator('.lc-track').first()).toBeVisible();
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
@@ -94,7 +95,7 @@ test('critical contract create and edit flow works', async ({ page }) => {
   // to ACTIVE (see CONTRACT_STATUS_TRANSITIONS in contract_lifecycle.py).
   await page.selectOption('select[name="status"]', 'PENDING');
   await submitOwningForm(page, 'select[name="status"]');
-  await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
+  await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
 });
 
 test('critical invoice and time-entry submissions accept valid precision', async ({ page }) => {
@@ -153,7 +154,7 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await page.fill('textarea[name="content"]', 'Workflow path contract body');
   await submitOwningForm(page, 'input[name="title"]');
 
-  await expect(page).toHaveURL(/\/contracts\/?(\?.*)?$/);
+  await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
   await expect(page.getByRole('link', { name: contractTitle })).toBeVisible();
 
   await page.goto('/contracts/workflows/');

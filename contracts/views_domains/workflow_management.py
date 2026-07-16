@@ -15,8 +15,10 @@ from contracts.models import (
     ApprovalRequest,
     ApprovalRoute,
     ApprovalRule,
+    AuditLog,
     Contract,
     DraftDocument,
+    FieldDefinition,
     FieldValue,
     RiskSignal,
     Workflow,
@@ -506,7 +508,7 @@ def workflow_detail(request, pk):
     workflow = get_object_or_404(_scope_workflows_for_organization(organization), pk=pk)
     if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract workflow.')
-    return render(request, 'contracts/workflow_detail.html', _workflow_detail_context(workflow))
+    return render(request, 'contracts/workflow_detail.html', _workflow_detail_context(workflow, actor=request.user))
 
 
 @login_required
@@ -1018,12 +1020,26 @@ def _msa_risk_detail_for_signal(signal):
             'approval_impact': 'Finance approval required before signature.',
             'section_anchor': 'fees-payment',
         },
+        'nonstandard_payment_terms': {
+            'title': 'Payment-term deviation',
+            'source': 'Commercial terms · Payment terms',
+            'recommended_action': 'Confirm why the draft deviates from standard Net 30 terms before approval.',
+            'approval_impact': 'Finance approval required before signature.',
+            'section_anchor': 'fees-payment',
+        },
         'liability_cap_nonstandard': {
             'title': 'Liability cap deviation',
             'source': 'AI Smart Questions · Liability cap position',
             'recommended_action': 'Review fallback liability clause against the MSA commercial playbook.',
             'approval_impact': 'Legal approval required before the workflow can advance.',
             'section_anchor': 'liability',
+        },
+        'client_paper_review_required': {
+            'title': 'Client-paper review',
+            'source': 'AI Smart Questions · Paper source',
+            'recommended_action': 'Review third-party template terms against the approved Payrollminds playbook.',
+            'approval_impact': 'Legal approval required before signature.',
+            'section_anchor': 'generated-msa-draft',
         },
         'msa_dpa_review_required': {
             'title': 'DPA / privacy review signal',
@@ -1075,7 +1091,31 @@ def _msa_risk_detail_for_signal(signal):
     }
 
 
-def _msa_approval_cards(workflow, values, risk_codes):
+def _msa_approval_cards(workflow, values, risk_codes, actor=None):
+    from contracts.services.approval_workflow import actor_can_decide
+
+    requests_by_step = {
+        request.approval_step: request
+        for request in ApprovalRequest.objects.filter(contract=workflow.contract)
+        .select_related('assigned_to')
+        .order_by('-created_at')
+    }
+
+    def _with_request(card, step=None):
+        request = requests_by_step.get(step) if step else None
+        if request is None:
+            return card
+        card.update({
+            'id': request.pk,
+            'status': request.get_status_display(),
+            'assigned_to': (
+                request.assigned_to.get_full_name() or request.assigned_to.username
+                if request.assigned_to else 'Unassigned'
+            ),
+            'can_decide': bool(actor and actor_can_decide(request, actor, 'approve')),
+        })
+        return card
+
     cards = [
         {
             'name': 'Contract owner',
@@ -1084,24 +1124,25 @@ def _msa_approval_cards(workflow, values, risk_codes):
             'trigger': 'Workflow instance created',
         },
     ]
-    if {'liability_cap_nonstandard', 'msa_dpa_review_required', 'nonstandard_ip_ownership', 'nonpreferred_governing_law'} & risk_codes:
-        cards.append({
+    if {'liability_cap_nonstandard', 'client_paper_review_required', 'msa_dpa_review_required', 'nonstandard_ip_ownership', 'nonpreferred_governing_law'} & risk_codes:
+        cards.append(_with_request({
             'name': 'Legal',
             'status': 'Triggered',
             'reason': 'Fallback positions, privacy scope, IP ownership, or governing law require legal control.',
             'trigger': 'Commercial and legal risk rules',
-        })
-    if 'finance_approval_required' in risk_codes:
-        cards.append({
+        }, 'LEGAL'))
+    if {'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes:
+        cards.append(_with_request({
             'name': 'Finance',
             'status': 'Triggered',
-            'reason': 'Contract value is above the finance approval threshold.',
-            'trigger': 'Finance approval threshold',
-        })
+            'reason': 'Contract value or payment terms require finance review.',
+            'trigger': 'Finance threshold or non-standard payment terms',
+        }, 'FINANCE'))
     return cards
 
 
-def _msa_document_sections(draft_content, values):
+def _msa_document_sections(draft_content, values, risk_codes=None):
+    risk_codes = risk_codes or set()
     content = draft_content or ''
     paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
     sections = []
@@ -1119,9 +1160,9 @@ def _msa_document_sections(draft_content, values):
             section_id = 'services'
         elif '2. Fees and Payment' in paragraph:
             title = 'Fees and Payment'
-            source = 'Approved template'
+            source = 'Risk-triggered fallback' if 'nonstandard_payment_terms' in risk_codes else 'Approved template'
             source_detail = 'Commercial terms field mapping'
-            tone = 'template'
+            tone = 'risk' if 'nonstandard_payment_terms' in risk_codes else 'template'
             fields = ['Contract value', 'Currency', 'Payment terms']
             section_id = 'fees-payment'
         elif '3. Term and Renewal' in paragraph:
@@ -1175,18 +1216,45 @@ def _msa_document_sections(draft_content, values):
 
 
 def _msa_audit_preview(workflow):
-    timestamp = workflow.created_at
+    """Render the persisted tamper-evident audit history, never a projection."""
+    approval_ids = workflow.contract.approval_requests.values_list('pk', flat=True)
+    document_ids = workflow.contract.documents.values_list('pk', flat=True)
+    deadline_ids = workflow.contract.deadlines.values_list('pk', flat=True)
+    audit_filter = (
+        Q(model_name='Workflow', object_id=workflow.pk)
+        | Q(model_name='Contract', object_id=workflow.contract_id)
+        | Q(model_name='ApprovalRequest', object_id__in=approval_ids)
+        | Q(model_name='Document', object_id__in=document_ids)
+        | Q(model_name='Deadline', object_id__in=deadline_ids)
+    )
+    entries = (
+        AuditLog.objects.filter(organization=workflow.organization)
+        .filter(audit_filter)
+        .select_related('user')
+        .order_by('-timestamp')[:12]
+    )
     return [
-        {'event': 'Workflow created', 'meta': 'MSA Commercial Review Workflow instance opened', 'timestamp': timestamp},
-        {'event': 'Approved template applied', 'meta': 'Enterprise Services MSA · Netherlands · B2B', 'timestamp': timestamp},
-        {'event': 'Field values captured', 'meta': 'Required MSA fields and smart questions stored', 'timestamp': timestamp},
-        {'event': 'Risk checks run', 'meta': 'Finance, liability, privacy, renewal, IP, and governing law checks evaluated', 'timestamp': timestamp},
-        {'event': 'Approval route generated', 'meta': 'Contract owner plus conditional Legal and Finance routing prepared', 'timestamp': timestamp},
+        {
+            'event': (entry.event_type or entry.get_action_display()).replace('.', ' ').replace('_', ' ').title(),
+            'meta': entry.object_repr or (entry.user.get_full_name() or entry.user.username if entry.user else 'System'),
+            'timestamp': entry.timestamp,
+        }
+        for entry in entries
     ]
 
 
-def _msa_workspace_context(workflow):
+def _msa_workspace_context(workflow, actor=None):
     values = _field_values_by_key(workflow)
+    required_definitions = list(
+        FieldDefinition.objects.filter(
+            workflow_template=workflow.template,
+            is_required=True,
+        ).only('key')
+    )
+    required_completed_count = sum(
+        values.get(field.key) not in (None, '', [], {})
+        for field in required_definitions
+    )
     risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
     risk_codes = {signal.code for signal in risk_signals}
     draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
@@ -1195,7 +1263,7 @@ def _msa_workspace_context(workflow):
     if current_step is None:
         current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
 
-    if 'finance_approval_required' in risk_codes:
+    if {'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes:
         next_action = 'Review Finance approval route'
     elif 'msa_dpa_review_required' in risk_codes:
         next_action = 'Review privacy scope and linked DPA need'
@@ -1213,13 +1281,17 @@ def _msa_workspace_context(workflow):
         'timeline': ['Intake', 'AI Draft', 'Commercial Review', 'Legal Review', 'Finance Approval', 'Signature', 'Repository'],
         'active_timeline_index': 2 if risk_signals else 1,
         'draft_document': draft_document,
-        'document_sections': _msa_document_sections(draft_document.content if draft_document else '', values),
+        'document_sections': _msa_document_sections(draft_document.content if draft_document else '', values, risk_codes),
         'risk_cards': [_msa_risk_detail_for_signal(signal) for signal in risk_signals],
-        'approval_cards': _msa_approval_cards(workflow, values, risk_codes),
-        'finance_approval_triggered': 'finance_approval_required' in risk_codes,
+        'approval_cards': _msa_approval_cards(workflow, values, risk_codes, actor=actor),
+        'finance_approval_triggered': bool({'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes),
         'template_routes': template_routes,
         'audit_preview': _msa_audit_preview(workflow),
         'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+        'required_field_progress': {
+            'completed': required_completed_count,
+            'total': len(required_definitions),
+        },
     }
 
 
@@ -1447,7 +1519,7 @@ def _nda_workspace_context(workflow):
     }
 
 
-def _workflow_detail_context(workflow, add_step_form=None):
+def _workflow_detail_context(workflow, add_step_form=None, actor=None):
     organization = workflow.organization
     steps = WorkflowStep.objects.filter(workflow=workflow).order_by('order')
     approval_requests = ApprovalRequest.objects.filter(organization=organization, contract=workflow.contract).select_related('assigned_to', 'delegated_to', 'rule').order_by('-created_at') if workflow.contract_id else ApprovalRequest.objects.none()
@@ -1471,7 +1543,7 @@ def _workflow_detail_context(workflow, add_step_form=None):
         context['dpa_workspace'] = _dpa_workspace_context(workflow)
     elif _workflow_is_msa(workflow):
         context['is_msa_workspace'] = True
-        context['msa_workspace'] = _msa_workspace_context(workflow)
+        context['msa_workspace'] = _msa_workspace_context(workflow, actor=actor)
     elif _workflow_is_nda(workflow):
         context['is_nda_workspace'] = True
         context['nda_workspace'] = _nda_workspace_context(workflow)

@@ -8,9 +8,6 @@
       <h1 class="page-title">Deadlines &amp; Calendar</h1>
       <p class="page-subtitle">{{ upcoming_count }} upcoming &middot; {{ overdue_count }} overdue</p>
     </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:deadline_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">New Deadline</a>
-    </div>
   </div>
 
   <div class="flex gap-2 mb-6">
@@ -20,9 +17,18 @@
     <a href="?show=all" class="chip {% if show == 'all' %}chip-active{% else %}chip-inactive{% endif %}">All</a>
   </div>
 
-  <div class="panel overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+  <section class="dc-ds-surface">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h2 class="dc-ds-surface__title">All deadlines</h2>
+        <p class="dc-ds-subtitle">Track renewal, notice, approval, and delivery dates across your contracts.</p>
+      </div>
+      <div class="dc-ds-surface__head-actions">
+        <a href="{% url 'contracts:deadline_create' %}" class="dc-ds-button dc-ds-button--primary">New Deadline</a>
+      </div>
+    </div>
+    <div class="dc-ds-table-wrap">
+      <table class="dc-ds-table">
         <thead class="tbl-head">
           <tr>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Deadline</th>
@@ -31,7 +37,7 @@
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-            <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+            <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -53,20 +59,26 @@
               {% elif deadline.is_overdue %}<span class="badge-sm badge-red">Overdue</span>
               {% else %}<span class="badge-sm badge-gray">{{ deadline.days_remaining }}d left</span>{% endif %}
             </td>
-            <td class="px-5 py-3.5 tbl-td text-right">
-              <div class="inline-flex items-center gap-2">
+            <td class="px-5 py-3.5 tbl-td wq-col-action">
+              <details class="wq-kebab">
+                <summary aria-label="Actions for {{ deadline.title|truncatechars:50 }}" class="wq-kebab-trigger">
+                  <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+                </summary>
+                <div class="wq-kebab-menu">
                 {% if not deadline.is_completed %}
                 <form method="post" action="{% url 'contracts:deadline_complete' deadline.pk %}">
                   {% csrf_token %}
-                  <button type="submit" class="text-xs font-medium c-link hover:opacity-80" aria-label="Mark {{ deadline.title|truncatechars:30 }} as complete">Complete</button>
+                  <button type="submit" class="wq-kebab-action" aria-label="Mark {{ deadline.title|truncatechars:30 }} as complete">Mark complete</button>
                 </form>
                 {% endif %}
-                <a href="{% url 'contracts:deadline_update' deadline.pk %}" class="text-xs font-medium c-muted hover:c-link">Edit</a>
+                <a href="{% url 'contracts:deadline_update' deadline.pk %}">Edit deadline</a>
+                <div class="wq-kebab-divider" role="separator"></div>
                 <form method="post" action="{% url 'contracts:deadline_delete' deadline.pk %}">
                   {% csrf_token %}
-                  <button type="submit" class="text-xs font-medium c-danger">Delete</button>
+                  <button type="submit" class="wq-kebab-action wq-kebab-action-danger">Delete deadline</button>
                 </form>
-              </div>
+                </div>
+              </details>
             </td>
           </tr>
           {% empty %}
@@ -76,6 +88,6 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

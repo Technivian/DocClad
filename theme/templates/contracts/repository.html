@@ -1,193 +1,98 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Repository – CLM One{% endblock %}
+{% block title %}Contracts – CLM One{% endblock %}
 {% block authenticated_page_title %}Contracts{% endblock %}
-{% block authenticated_page_subtitle %}Repository, workflow queues, and governed contract records.{% endblock %}
+{% block authenticated_page_subtitle %}A governed repository of contract records and their lifecycle activity.{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  /* ── Repository-owned rules only: behaviour the canonical .dc-ds-table /
-     .dc-ds-surface / .dc-ds-metric components don't express on their own.
-     Header/body cell padding, colour, borders, and hover now come from
-     .dc-ds-table itself (see #contracts-table below). ─────────────────── */
-
-  /* Canonical surfaces read flat here (hairline border, no ambient shadow) —
-     an existing, deliberate choice for this page, preserved through the
-     migration rather than switched to .dc-ds-surface's default shadow. */
   .repo-page .dc-ds-surface { box-shadow: none; }
-  .repo-page .repo-views-card { overflow: hidden; }
-
-  /* Sticky header needs an opaque fill so rows don't bleed through, and a
-     scroll container so 8 columns don't silently clip under ~1550px
-     (position:sticky only needs a scroll container, which the wrap already
-     provides via overflow-x:auto). */
-  .repo-page .table-sticky .tbl-head th { background: var(--card-bg); }
   .repo-page .table-sticky { overflow-y: hidden; }
-
-  /* Selected rows stay visible after the pointer moves away — same
-     treatment/token as the Dashboard's .wq-table selected-row state. Not
-     something .dc-ds-table expresses on its own. */
+  .repo-page .table-sticky .tbl-head th { background: var(--card-bg); }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
   .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
-
-  /* Document cell: strong ink title + muted 11px meta line. The JS renders
-     generic .font-medium/.text-sm utility classes for this, so the override
-     stays scoped here rather than forcing a JS rewrite for a styling-only
-     change. */
-  .repo-page #contracts-table tbody td .font-medium {
-    font-size: 13px; font-weight: 700; color: var(--text-primary);
-  }
-  .repo-page #contracts-table tbody td .text-sm {
-    font-size: 11px; color: var(--text-muted); margin-top: 2px;
-  }
-
-  /* JS-rendered muted text (pagination count, empty saved-views state) —
-     a class, not inline style="", so dynamically-injected HTML stays
-     CSP-clean (inline style attributes can't carry a nonce). */
-  .repo-page .repo-muted-text { color: var(--text-muted); }
-
-  .repo-page .repo-empty-state { border: 0; }
-
-  /* The repository's contextual links reuse the shared quiet-button
-     treatment; their wrapping is the page's only layout concern. */
-  .repo-page .repo-toolbar { justify-content: flex-start; margin: 0; }
-
-  /* Bulk-bar / pagination mini buttons: 8px radius controls */
-  .repo-page .repo-mini-btn { border-radius: 8px; }
-
-  /* Search + sort controls stay flat */
-  .repo-page .input-base, .repo-page .select-base { box-shadow: none; }
-
-  @media (max-width: 700px) {
-    .repo-page .repo-toolbar { width: 100%; }
-    .repo-page .repo-toolbar .dc-ds-button { flex: 1 1 auto; }
-  }
+  .repo-page #contracts-table tbody td .font-medium { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+  .repo-page #contracts-table tbody td .text-sm, .repo-muted-text { color: var(--text-muted); }
+  .repo-page #contracts-table tbody td .text-sm { font-size: 11px; margin-top: 2px; }
+  .repo-page .repo-filter-drawer { display: none; max-width: 400px; }
+  .repo-page .repo-filter-drawer.is-open { display: block; }
+  .repo-page .repo-filter-drawer__body { display: grid; gap: var(--space-12); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .repo-page .repo-filter-drawer label { display: grid; gap: 6px; color: var(--text-muted); font-size: 12px; font-weight: 650; }
+  .repo-page .repo-filter-drawer select { min-width: 0; }
+  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 4px 8px; }
+  .repo-page .repo-row-action:hover { color: var(--primary); }
+  @media (max-width: 700px) { .repo-page .repo-filter-drawer__body { grid-template-columns: 1fr; } }
 </style>
+
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow repo-page">
-    <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
-        <aside class="dc-ds-scaffold__rail">
-            <div class="repo-views-card dc-ds-surface">
-                <div class="dc-ds-rail-section">
-                <div class="views-rail-head dc-ds-rail-section__head">
-                    <p class="dc-ds-rail-section__title">Repository views</p>
-                    <button type="button" data-action="save-view" class="btn-ghost text-xs px-2 py-1">Save view</button>
-                </div>
-                <div class="views-rail-list dc-ds-rail-section__body">
-                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail active" data-rail-view="all" aria-pressed="true"><span>All documents</span><span class="views-rail-count">{{ total_documents }}</span></button>
-                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="active" aria-pressed="false"><span>Active paper</span><span class="views-rail-count">{{ active_documents }}</span></button>
-                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="draft" aria-pressed="false"><span>Draft paper</span><span class="views-rail-count">{{ draft_documents }}</span></button>
-                    <button type="button" class="views-rail-link dc-ds-choice dc-ds-choice--rail" data-rail-view="expiring_30d" aria-pressed="false"><span>30d attention</span><span class="views-rail-count">{{ expiring_documents }}</span></button>
-                </div>
-                </div>
-                <section class="dc-ds-rail-section" aria-labelledby="repo-saved-views-title">
-                <div class="dc-ds-rail-section__head">
-                    <h2 class="dc-ds-rail-section__title" id="repo-saved-views-title">Saved views</h2>
-                </div>
-                <div class="dc-ds-rail-section__body">
-                    <div id="saved-views"></div>
-                </div>
-                </section>
-                <section class="dc-ds-rail-section" aria-labelledby="repo-status-filters-title">
-                <div class="dc-ds-rail-section__head">
-                    <h2 class="dc-ds-rail-section__title" id="repo-status-filters-title">Status filters</h2>
-                </div>
-                <div class="dc-ds-rail-section__body flex flex-wrap gap-2">
-                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="" aria-pressed="true">All</button>
-                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="ACTIVE" aria-pressed="false">Active</button>
-                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="DRAFT" aria-pressed="false">Draft</button>
-                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="PENDING" aria-pressed="false">Pending</button>
-                    <button type="button" class="dc-ds-choice repo-status-filter" data-status-filter="EXPIRED" aria-pressed="false">Expired</button>
-                </div>
-                </section>
-            </div>
-        </aside>
-
-        <section class="dc-ds-scaffold__main dc-ds-page-flow">
-            <div class="dc-ds-page-actions">
-                <div class="dc-ds-actions repo-toolbar">
-                    <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--ghost">Workflow</a>
-                    <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-button dc-ds-button--ghost">Approvals</a>
-                    <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button dc-ds-button--ghost">Signatures</a>
-                    <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Risks</a>
-                    <a href="{% url 'contracts:audit_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Audit</a>
-                </div>
-                <a href="{% url 'contracts:document_create' %}" class="dc-ds-button dc-ds-button--primary">
-                    {% include "design_system/icon.html" with name="upload" %}
-                    Upload document
-                </a>
-            </div>
-
-            <div class="dc-ds-page-flow">
-                <div class="dc-ds-summary" aria-label="Contract repository summary">
-                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Total contracts</span><strong class="dc-ds-summary__value">{{ total_documents }}</strong></div>
-                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Active</span><strong class="dc-ds-summary__value">{{ active_documents }}</strong></div>
-                    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Draft</span><strong class="dc-ds-summary__value">{{ draft_documents }}</strong></div>
-                    <div class="dc-ds-summary__item {% if expiring_documents %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}"><span class="dc-ds-summary__label">Expiring in 30 days</span><strong class="dc-ds-summary__value">{% if expiring_documents %}{{ expiring_documents }} to review{% else %}Clear{% endif %}</strong></div>
-                </div>
-
-                <div class="dc-ds-filterbar">
-                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-center">
-                        <div class="xl:col-span-7 relative min-w-0">
-                            {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
-                            <input type="search" id="search-input" placeholder="Search repository documents" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
-                        </div>
-                        <div class="xl:col-span-3">
-                            <select id="sort-select" class="w-full px-3 py-2 text-sm rounded-lg border focus:outline-none select-base">
-                                <option value="updated_desc">Recently Updated</option>
-                                <option value="updated_asc">Oldest First</option>
-                                <option value="title">Title A-Z</option>
-                                <option value="status">Status</option>
-                            </select>
-                        </div>
-                        <div class="xl:col-span-2">
-                            <a href="{% url 'contracts:workflow_template_list' %}" class="w-full justify-center px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-2 btn-ghost-secondary">
-                                Templates
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="filter-chips" class="mb-4"></div>
-
-                <div id="bulk-action-bar" class="repo-bulk-bar">
-                    <div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button id="repo-bulk-status" class="repo-mini-btn">Change Status</button>
-                        <button id="repo-bulk-assign" class="repo-mini-btn" disabled title="Coming soon — contract-level assignment isn't available yet.">Assign to Me</button>
-                        <button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button>
-                        <button data-action="clear-selection" class="repo-mini-btn">Clear</button>
-                    </div>
-                </div>
-
-                <div class="dc-ds-table-wrap table-sticky">
-                    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server">
-                        <caption class="sr-only">Repository documents — sortable, filterable list of contracts with stage, assignee, activity, key date, value, and status.</caption>
-                        <thead class="tbl-head">
-                            <tr>
-                                <th class="tbl-th" scope="col"><input type="checkbox" id="select-all" aria-label="Select all"></th>
-                                <th class="tbl-th" scope="col">Document</th>
-                                <th class="tbl-th" scope="col">Stage</th>
-                                <th class="tbl-th" scope="col">Assigned to</th>
-                                <th class="tbl-th" scope="col">Latest activity</th>
-                                <th class="tbl-th wq-col-num" scope="col">Key date</th>
-                                <th class="tbl-th wq-col-num" scope="col">Value</th>
-                                <th class="tbl-th" scope="col">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contracts-tbody">
-                            <tr><td colspan="8" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading repository documents…</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="pagination-container" class="mt-4"></div>
-            </div>
-        </section>
+  <div class="dc-ds-page-actions">
+    <nav class="repo-view-tabs" aria-label="Contract operations">
+      <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
+      <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
+      <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
+      <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
+      <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
+    </nav>
+    <div class="dc-ds-actions">
+      <details class="relative">
+        <summary class="dc-ds-button dc-ds-button--primary cursor-pointer">Add contract</summary>
+        <div class="absolute right-0 z-20 mt-2 min-w-64 dc-ds-surface p-2">
+          <a href="{% url 'contracts:contract_template_picker' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Create from approved template</a>
+          <a href="{% url 'contracts:upload_signed_contract' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Upload existing agreement</a>
+        </div>
+      </details>
     </div>
+  </div>
 
-    <div id="details-drawer" class="repo-drawer"></div>
+  <div class="dc-ds-summary" aria-label="Contract repository summary">
+    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Total contracts</span><strong class="dc-ds-summary__value">{{ total_contracts }}</strong></div>
+    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Awaiting action</span><strong class="dc-ds-summary__value">{{ awaiting_action_contracts }}</strong></div>
+    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Active</span><strong class="dc-ds-summary__value">{{ active_contracts }}</strong></div>
+    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Expiring soon</span><strong class="dc-ds-summary__value">{{ expiring_contracts }}</strong></div>
+  </div>
+
+  <div class="dc-ds-filterbar">
+    <div class="flex gap-3 flex-wrap items-center">
+      <div class="relative flex-1 min-w-64">
+        {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
+        <input type="search" id="search-input" placeholder="Search contracts" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
+      </div>
+      <select id="sort-select" class="px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
+        <option value="updated_desc">Recently updated</option><option value="updated_asc">Oldest first</option><option value="title">Contract A–Z</option><option value="status">Status</option>
+      </select>
+      <button id="repo-filter-toggle" type="button" class="dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
+    </div>
+  </div>
+
+  <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-4" aria-label="Filters and views">
+    <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-semibold">Filters and views</h2><button type="button" data-action="clear-repository-filters" class="btn-ghost text-sm">Clear filters</button></div>
+    <div class="repo-filter-drawer__body">
+      <label>Status<select id="status-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
+      <label>Contract type<select id="type-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All contract types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Owner<select id="owner-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
+      <label>Counterparty<select id="counterparty-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
+      <label>Risk level<select id="risk-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Approval state<select id="approval-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any approval state</option>{% for value, label in approval_states %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Expiry<select id="expiry-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any key date</option><option value="30">Expiring in 30 days</option></select></label>
+      <div><p class="text-xs font-semibold c-muted mb-2">Views</p><div class="flex gap-2 flex-wrap"><button type="button" class="dc-ds-choice repo-quick-view chip-active" data-rail-view="all" aria-pressed="true">All contracts</button><button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="active" aria-pressed="false">Active contracts</button><button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="draft" aria-pressed="false">Draft contracts</button></div></div>
+    </div>
+  </section>
+
+  <div id="filter-chips"></div>
+  {# Saved views deliberately stay hidden until they are backed by workspace persistence. #}
+  <div id="bulk-action-bar" class="repo-bulk-bar"><div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div><div class="flex items-center gap-2 flex-wrap"><button id="repo-bulk-status" class="repo-mini-btn">Change status</button><button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button><button data-action="clear-selection" class="repo-mini-btn">Clear selection</button></div></div>
+
+  <div class="dc-ds-table-wrap table-sticky">
+    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server">
+      <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
+      <thead class="tbl-head"><tr><th class="tbl-th" scope="col"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th><th class="tbl-th" scope="col">Contract</th><th class="tbl-th" scope="col">Contract type</th><th class="tbl-th" scope="col">Counterparty</th><th class="tbl-th" scope="col">Stage</th><th class="tbl-th" scope="col">Assigned owner</th><th class="tbl-th" scope="col">Latest activity</th><th class="tbl-th wq-col-num" scope="col">Key date</th><th class="tbl-th wq-col-num" scope="col">Value</th><th class="tbl-th" scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+      <tbody id="contracts-tbody"><tr><td colspan="10" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading contracts…</td></tr></tbody>
+    </table>
+  </div>
+  <div id="pagination-container" class="mt-4"></div>
+  <div id="details-drawer" class="repo-drawer" aria-hidden="true"></div>
 </div>
-
 <script src="{% static 'js/clmone-repository.js' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}"></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 """Tests for the Repository consolidation block (reusing StageDots /
 AssigneeChip / ActivityLine on the Repository table).
 
-Covers: role rendering, saved-view/search/filter controls still present,
+Covers: role rendering, enterprise-safe search/filter controls,
 the contracts API payload carrying WorkQueue-aligned fields, no raw
 enums/ISO timestamps/model names/Dutch case_phase labels, empty state,
 cross-tenant isolation, and the legacy contract_list migration banner.
@@ -58,10 +58,20 @@ class RepositoryControlsPreservedTests(TestCase):
         )
         self.client.login(username='repo_controls', password='testpass123')
 
-    def test_saved_views_and_filter_controls_still_render(self):
+    def test_filter_controls_render_without_browser_local_saved_views(self):
+        Contract.objects.create(
+            organization=self.organization,
+            title='Repository filter contract',
+            counterparty='Atlas Workforce B.V.',
+            owner=self.user,
+            risk_level=Contract.RiskLevel.HIGH,
+            status=Contract.Status.PENDING,
+            created_by=self.user,
+        )
         response = self.client.get(reverse('contracts:repository'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'id="saved-views"')
+        self.assertNotContains(response, 'id="saved-views"')
+        self.assertNotContains(response, 'saved in this browser')
         self.assertContains(response, 'id="filter-chips"')
         self.assertContains(response, 'id="search-input"')
         self.assertContains(response, 'id="sort-select"')
@@ -70,11 +80,19 @@ class RepositoryControlsPreservedTests(TestCase):
         self.assertContains(response, 'id="bulk-action-bar"')
         self.assertContains(response, 'id="repo-bulk-status"')
         self.assertContains(response, 'id="repo-bulk-export"')
+        self.assertContains(response, 'id="owner-filter-select"')
+        self.assertContains(response, 'id="counterparty-filter-select"')
+        self.assertContains(response, 'id="risk-filter-select"')
+        self.assertContains(response, 'id="approval-filter-select"')
+        self.assertContains(response, f'value="{self.user.pk}"')
+        self.assertContains(response, 'Atlas Workforce B.V.')
+        self.assertContains(response, 'High')
+        self.assertContains(response, 'Pending')
 
     def test_new_stage_assignee_activity_columns_present(self):
         response = self.client.get(reverse('contracts:repository'))
         self.assertContains(response, 'Stage')
-        self.assertContains(response, 'Assigned to')
+        self.assertContains(response, 'Assigned owner')
         self.assertContains(response, 'Latest activity')
         self.assertContains(response, 'Key date')
 

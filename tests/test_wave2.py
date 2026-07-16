@@ -200,6 +200,8 @@ class ContractActivationGuardTests(TestCase):
 
     _VALID_FORM_BASE = {
         'contract_type': 'OTHER',
+        'counterparty': 'Acme Corp',
+        'governing_law': 'Delaware',
         'currency': 'USD',
         'risk_level': 'LOW',
         'lifecycle_stage': 'DRAFTING',

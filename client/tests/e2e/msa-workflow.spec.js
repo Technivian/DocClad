@@ -12,6 +12,31 @@ async function login(page) {
   await expect(page).not.toHaveURL(/\/login\/?$/);
 }
 
+async function reveal(locator) {
+  await locator.evaluate((element) => {
+    const section = element.closest('details');
+    if (section) section.open = true;
+  });
+}
+
+async function fillField(page, key, value) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.fill(value);
+}
+
+async function selectField(page, key, value) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.selectOption(value);
+}
+
+async function checkField(page, key) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.check();
+}
+
 test('MSA governed drafting cockpit generates a workflow workspace and dashboard queue row', async ({ page }) => {
   test.slow();
   await login(page);
@@ -20,45 +45,45 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   const counterparty = `E2E MSA Counterparty ${suffix}`;
 
   await page.goto('/contracts/new/start/');
-  await expect(page.getByRole('heading', { name: 'What are you creating?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'New Contract' })).toBeVisible();
   await page.locator('a[href="/contracts/new/msa/"]').click();
 
   await expect(page).toHaveURL(/\/contracts\/new\/msa\/?$/);
   await expect(page.getByRole('heading', { name: 'New MSA Draft' })).toBeVisible();
-  await expect(page.getByText('AI-assisted drafting from approved templates and playbooks.')).toBeVisible();
+  await expect(page.getByText('A focused, governed workspace for commercial terms, legal positions, and approval-ready drafting.')).toBeVisible();
   await expect(page.getByText('MSA Commercial Review Workflow')).toBeVisible();
-  await expect(page.getByText('Draft workspace')).toBeVisible();
-  await expect(page.getByText('Workflow controls')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Review triggers' })).toBeVisible();
+  await expect(page.getByText('Live contract preview')).toBeVisible();
+  await expect(page.getByText('Decision panel')).toBeVisible();
+  await expect(page.getByText('Review and generate')).toBeVisible();
 
-  await page.fill('[data-field-key="counterparty"]', counterparty);
-  await page.fill('[data-field-key="start_date"]', '2026-10-01');
-  await page.fill('[data-field-key="contract_owner"]', 'Avery Brooks');
-  await page.fill('[data-field-key="business_unit"]', 'Revenue Operations');
-  await page.fill('[data-field-key="internal_reference"]', `MSA-E2E-${suffix}`);
-  await page.fill('[data-field-key="value"]', '350000');
-  await page.selectOption('[data-field-key="currency"]', 'EUR');
-  await page.fill('[data-field-key="payment_terms"]', 'Net 30');
-  await page.fill('[data-field-key="initial_term"]', '24 months');
-  await page.selectOption('[data-field-key="renewal_type"]', 'Auto-renew');
-  await page.fill('[data-field-key="termination_notice_period"]', '60');
-  await page.fill('[data-field-key="services_description"]', 'Managed logistics platform and support services.');
-  await page.fill('[data-field-key="governing_law"]', 'Delaware');
-  await page.fill('[data-field-key="jurisdiction"]', 'Amsterdam');
-  await page.fill('[data-field-key="liability_cap"]', '2x annual fees');
-  await page.fill('[data-field-key="confidentiality_period"]', '5 years');
-  await page.selectOption('[data-field-key="ip_ownership"]', 'Customer');
+  await fillField(page, 'counterparty', counterparty);
+  await fillField(page, 'start_date', '2026-10-01');
+  await fillField(page, 'contract_owner', 'Avery Brooks');
+  await fillField(page, 'business_unit', 'Revenue Operations');
+  await fillField(page, 'internal_reference', `MSA-E2E-${suffix}`);
+  await fillField(page, 'value', '350000');
+  await selectField(page, 'currency', 'EUR');
+  await fillField(page, 'payment_terms', 'Net 30');
+  await fillField(page, 'initial_term', '24 months');
+  await selectField(page, 'renewal_type', 'Auto-renew');
+  await fillField(page, 'termination_notice_period', '60');
+  await fillField(page, 'services_description', 'Managed logistics platform and support services.');
+  await fillField(page, 'governing_law', 'Delaware');
+  await fillField(page, 'jurisdiction', 'Amsterdam');
+  await fillField(page, 'liability_cap', '2x annual fees');
+  await fillField(page, 'confidentiality_period', '5 years');
+  await selectField(page, 'ip_ownership', 'Customer');
 
-  await page.check('[data-field-key="sow_required"]');
-  await page.check('[data-field-key="deliverables_defined"]');
-  await page.check('[data-field-key="acceptance_criteria_required"]');
-  await page.check('[data-field-key="personal_data_involved"]');
-  await page.check('[data-field-key="value_above_threshold_confirmed"]');
-  await page.check('[data-field-key="liability_cap_nonstandard"]');
-  await page.check('[data-field-key="services_involve_personal_data"]');
-  await page.check('[data-field-key="auto_renewal_included"]');
-  await page.check('[data-field-key="ip_ownership_nonstandard"]');
-  await page.check('[data-field-key="governing_law_nonpreferred"]');
+  await checkField(page, 'sow_required');
+  await checkField(page, 'deliverables_defined');
+  await checkField(page, 'acceptance_criteria_required');
+  await checkField(page, 'personal_data_involved');
+  await checkField(page, 'value_above_threshold_confirmed');
+  await checkField(page, 'liability_cap_nonstandard');
+  await checkField(page, 'services_involve_personal_data');
+  await checkField(page, 'auto_renewal_included');
+  await checkField(page, 'ip_ownership_nonstandard');
+  await checkField(page, 'governing_law_nonpreferred');
 
   await expect(page.locator('#msa-draft-doc')).toContainText(counterparty);
   await expect(page.locator('#msa-draft-doc')).toContainText('Managed logistics platform and support services.');
@@ -89,7 +114,7 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page.locator('.msa-ws-card-head', { hasText: 'Audit Trail Preview' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send to Finance' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Generate MSA summary' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Download MSA summary' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Word' })).toBeVisible();
 
   await page.locator('[data-clause-link="data-protection"]').first().click();

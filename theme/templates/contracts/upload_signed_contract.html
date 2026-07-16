@@ -1,110 +1,163 @@
 {% extends "base.html" %}
-{% block title %}Upload Existing Agreement – CLM One{% endblock %}
+{% block title %}Upload & Review – CLM One{% endblock %}
+{% block authenticated_page_title %}Upload &amp; Review{% endblock %}
+{% block authenticated_page_subtitle %}Bring a signed agreement into CLM One and create traceable review work from the clauses that need attention.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  .usc-panel {
-    max-width: 640px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
-    padding: 28px; margin-top: 20px;
-  }
-  .usc-field { margin-bottom: 18px; }
-  .usc-field label { display: block; font-size: 12.5px; font-weight: 650; color: var(--text-primary); margin-bottom: 6px; }
-  .usc-field input[type="text"], .usc-field input[type="date"], .usc-field input[type="number"], .usc-field select {
-    width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--text-primary); font-size: 13.5px;
-  }
-  .usc-dropzone {
-    border: 1.5px dashed var(--border); border-radius: 10px; padding: 28px 18px; text-align: center;
-    background: var(--sidebar-hover); cursor: pointer; transition: border-color .15s, background .15s;
-  }
-  .usc-dropzone:hover, .usc-dropzone.is-dragover { border-color: var(--primary); background: var(--primary-subtle); }
-  .usc-dropzone svg { width: 28px; height: 28px; color: var(--primary); margin-bottom: 8px; }
-  .usc-dropzone-title { font-size: 13.5px; font-weight: 650; color: var(--text-primary); }
-  .usc-dropzone-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
-  .usc-filename { margin-top: 10px; font-size: 12.5px; color: var(--primary); font-weight: 650; }
-  .usc-actions { margin-top: 22px; display: flex; align-items: center; gap: 10px; }
-  .usc-submit {
-    padding: 10px 16px; border-radius: 8px; border: 1px solid var(--primary-hover); font-size: 13px; font-weight: 700;
-    color: #FFFFFF; background: var(--btn-gradient); cursor: pointer;
-  }
-  .usc-submit:disabled { opacity: 0.55; cursor: not-allowed; }
-  .usc-status { margin-top: 16px; font-size: 12.5px; padding: 10px 12px; border-radius: 8px; display: none; }
-  .usc-status.is-success { display: block; background: var(--primary-subtle); color: var(--primary); }
-  .usc-status.is-error { display: block; background: rgba(196,60,60,0.12); color: #C43C3C; }
-  .usc-status a { color: inherit; text-decoration: underline; font-weight: 650; }
+  .uac-layout { display: grid; grid-template-columns: minmax(0, 1fr) 304px; gap: var(--space-24); align-items: start; }
+  .uac-main { display: grid; gap: var(--space-16); min-width: 0; }
+  .uac-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); }
+  .uac-field { min-width: 0; }
+  .uac-field--full { grid-column: 1 / -1; }
+  .uac-field input, .uac-field select { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-control); font: var(--text-small); }
+  .uac-value { display: grid; grid-template-columns: minmax(0, 1fr) 122px; gap: var(--space-8); }
+  .uac-field label { display: block; margin-bottom: 7px; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
+  .uac-field-help { margin: 6px 0 0; color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
+  .uac-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
+  .uac-check input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--seal); }
+  .uac-check strong { display: block; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
+  .uac-check span { display: block; margin-top: 2px; color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
+  .uac-check--spaced { margin-top: var(--space-16); }
+  .uac-dropzone { display: grid; justify-items: center; gap: var(--space-8); min-height: 164px; padding: var(--space-24); border: 1.5px dashed var(--line-strong); border-radius: var(--radius-subpanel); background: var(--well); text-align: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+  .uac-dropzone:hover, .uac-dropzone.is-dragover { border-color: var(--seal); background: var(--seal-bg); }
+  .uac-dropzone-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: var(--radius-control); color: var(--seal); background: var(--card); border: 1px solid var(--line); }
+  .uac-dropzone-icon svg { width: 18px; height: 18px; }
+  .uac-dropzone-title { color: var(--ink-900); font: var(--text-small); font-weight: 700; }
+  .uac-dropzone-copy { color: var(--ink-500); font: var(--text-meta); line-height: 1.45; }
+  .uac-filename { min-height: 18px; color: var(--seal-dark); font: var(--text-meta); font-weight: 700; }
+  .uac-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-12); padding: var(--space-16) var(--space-24); border-top: 1px solid var(--line); }
+  .uac-status { display: none; margin: 0 var(--space-24) var(--space-20); padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); font: var(--text-small); line-height: 1.45; }
+  .uac-status.is-success { display: block; color: var(--status-positive-fg); border-color: var(--color-status-success-border); background: var(--status-positive-bg); }
+  .uac-status.is-error { display: block; color: var(--status-danger-fg); border-color: var(--color-status-error-border); background: var(--status-danger-bg); }
+  .uac-status a { color: inherit; font-weight: 700; }
+  .uac-rail { display: grid; gap: var(--space-16); }
+  .uac-rail-title { margin: 0; color: var(--ink-900); font: var(--text-heading); }
+  .uac-rail-copy { margin: var(--space-8) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.5; }
+  .uac-status-pill { display: inline-flex; align-items: center; min-height: 24px; margin-top: var(--space-12); padding: 0 8px; border-radius: var(--radius-pill); background: var(--status-progress-bg); color: var(--status-progress-fg); font: var(--text-meta); font-weight: 700; }
+  .uac-steps { display: grid; gap: var(--space-12); margin: var(--space-16) 0 0; padding: 0; list-style: none; }
+  .uac-steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--space-8); color: var(--ink-600); font: var(--text-meta); line-height: 1.45; }
+  .uac-step { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--seal-bg); color: var(--seal-dark); font-size: 11px; font-weight: 800; }
+  .uac-rail-list { display: grid; gap: var(--space-8); margin: var(--space-12) 0 0; padding: 0; list-style: none; color: var(--ink-600); font: var(--text-meta); line-height: 1.45; }
+  .uac-rail-list li { padding-left: 14px; position: relative; }
+  .uac-rail-list li::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--seal); }
+  @media (max-width: 980px) { .uac-layout { grid-template-columns: 1fr; } .uac-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .uac-form-grid, .uac-rail { grid-template-columns: 1fr; } .uac-value { grid-template-columns: 1fr; } .uac-actions { align-items: stretch; flex-direction: column-reverse; } .uac-actions .dc-ds-button { width: 100%; } }
 </style>
 
-<div class="page-wrap">
-  <a href="{% url 'contracts:legal_front_door' %}" class="arch-back">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    New legal work
-  </a>
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <h1 class="arch-title">Upload Existing Agreement</h1>
-      <p class="arch-subtitle">Create a draft contract record from an existing file. CLM One stores the document and metadata together in the repository.</p>
-    </div>
+<div class="dc-ds-page dc-ds-page-flow">
+  <div class="dc-ds-page-actions">
+    <a href="{% url 'contracts:legal_front_door' %}" class="dc-ds-button dc-ds-button--ghost">← New legal work</a>
   </div>
 
-  <div class="usc-panel">
-    <form id="usc-form">
-      <div class="usc-field">
-        <label for="usc-title">Title</label>
-        <input type="text" id="usc-title" name="title" required placeholder="e.g. Acme Corp Master Services Agreement — signed">
-      </div>
-      <div class="usc-field">
-        <label for="usc-contract-type">Contract type</label>
-        <select id="usc-contract-type" required>
-          <option value="">Select contract type</option>
-          {% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="usc-field">
-        <label for="usc-counterparty">Counterparty</label>
-        <input type="text" id="usc-counterparty" required>
-      </div>
-      <div class="usc-field">
-        <label for="usc-owner">Contract owner</label>
-        <select id="usc-owner" required>
-          {% for owner in owners %}<option value="{{ owner.pk }}"{% if owner == request.user %} selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="usc-field">
-        <label for="usc-value">Contract value</label>
-        <input type="number" id="usc-value" min="0" step="0.01">
-        <select id="usc-currency">
-          {% for value, label in currencies %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="usc-field">
-        <label for="usc-effective-date">Effective date</label>
-        <input type="date" id="usc-effective-date" required>
-      </div>
-      <div class="usc-field">
-        <label for="usc-expiry-date">Expiry date</label>
-        <input type="date" id="usc-expiry-date" required>
-      </div>
-      <div class="usc-field">
-        <label for="usc-governing-law">Governing law</label>
-        <input type="text" id="usc-governing-law" required placeholder="e.g. England & Wales">
-      </div>
-      <div class="usc-field">
-        <label><input type="checkbox" id="usc-dpa-attached"> Contains a DPA</label>
-      </div>
-      <div class="usc-field">
-        <label>Document</label>
-        <div class="usc-dropzone" id="usc-dropzone" tabindex="0" role="button" aria-label="Choose a file to upload">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-          <div class="usc-dropzone-title">Click to choose a file, or drag it here</div>
-          <div class="usc-dropzone-sub">PDF, DOCX, TXT, MD, CSV, HTML, XML, JSON — up to 50MB</div>
-          <div class="usc-filename" id="usc-filename"></div>
+  <div class="uac-layout">
+    <form id="usc-form" class="uac-main">
+      <section class="dc-ds-surface" aria-labelledby="uac-details-title">
+        <div class="dc-ds-surface__head">
+          <div>
+            <h2 id="uac-details-title" class="dc-ds-surface__title">Agreement details</h2>
+            <p class="uac-rail-copy">Add the minimum record information needed to own and track this agreement.</p>
+          </div>
         </div>
-        <input type="file" id="usc-file-input" name="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" style="display:none;">
-      </div>
-      <div class="usc-actions">
-        <button type="submit" class="usc-submit" id="usc-submit" disabled>Upload contract</button>
-      </div>
-      <div class="usc-status" id="usc-status"></div>
+        <div class="dc-ds-surface__body uac-form-grid">
+          <div class="uac-field uac-field--full">
+            <label for="usc-title">Agreement title</label>
+            <input type="text" id="usc-title" name="title" required placeholder="e.g. Acme Corp Master Services Agreement — signed">
+          </div>
+          <div class="uac-field">
+            <label for="usc-contract-type">Contract type</label>
+            <select id="usc-contract-type" required>
+              <option value="">Select contract type</option>
+              {% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="uac-field">
+            <label for="usc-counterparty">Counterparty</label>
+            <input type="text" id="usc-counterparty" required placeholder="e.g. Acme Corp">
+          </div>
+          <div class="uac-field">
+            <label for="usc-owner">Contract owner</label>
+            <select id="usc-owner" required>
+              {% for owner in owners %}<option value="{{ owner.pk }}"{% if owner == request.user %} selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="uac-field">
+            <label for="usc-value">Contract value <span class="uac-field-help">Optional</span></label>
+            <div class="uac-value">
+              <input type="number" id="usc-value" min="0" step="0.01" placeholder="0.00">
+              <select id="usc-currency" aria-label="Contract value currency">{% for value, label in currencies %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+            </div>
+          </div>
+          <div class="uac-field">
+            <label for="usc-effective-date">Effective date</label>
+            <input type="date" id="usc-effective-date" required>
+          </div>
+          <div class="uac-field">
+            <label for="usc-expiry-date">Expiry date</label>
+            <input type="date" id="usc-expiry-date" required>
+          </div>
+          <div class="uac-field uac-field--full">
+            <label for="usc-governing-law">Governing law</label>
+            <input type="text" id="usc-governing-law" required placeholder="e.g. England & Wales">
+          </div>
+          <label class="uac-check uac-field--full" for="usc-dpa-attached">
+            <input type="checkbox" id="usc-dpa-attached">
+            <span><strong>Contains a data processing agreement</strong>This starts the existing DPA review workflow after the agreement is stored.</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="dc-ds-surface" aria-labelledby="uac-review-title">
+        <div class="dc-ds-surface__head">
+          <div>
+            <h2 id="uac-review-title" class="dc-ds-surface__title">Source document and review</h2>
+            <p class="uac-rail-copy">Upload the signed agreement. CLM One retains the source file and reviews readable clause text.</p>
+          </div>
+        </div>
+        <div class="dc-ds-surface__body">
+          <div class="uac-dropzone" id="usc-dropzone" tabindex="0" role="button" aria-label="Choose a file to upload">
+            <span class="uac-dropzone-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"/></svg></span>
+            <div class="uac-dropzone-title">Choose a signed agreement or drag it here</div>
+            <div class="uac-dropzone-copy">PDF, DOCX, TXT, MD, CSV, HTML, XML, or JSON · up to 50 MB</div>
+            <div class="uac-filename" id="usc-filename" aria-live="polite"></div>
+          </div>
+          <input type="file" id="usc-file-input" name="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.xml,.json" hidden>
+          <label class="uac-check uac-check--spaced" for="usc-run-ai-review">
+            <input type="checkbox" id="usc-run-ai-review" checked>
+            <span><strong>Run AI clause review after upload</strong>Potential issues are added to the Risk Register and Action Queue with quoted evidence. No agreement is approved, rejected, or changed automatically.</span>
+          </label>
+        </div>
+        <div class="uac-status" id="usc-status" role="status" aria-live="polite"></div>
+        <div class="uac-actions">
+          <a href="{% url 'contracts:legal_front_door' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary" id="usc-submit" disabled>Upload and review</button>
+        </div>
+      </section>
     </form>
+
+    <aside class="uac-rail" aria-label="Upload and review guidance">
+      <section class="dc-ds-surface">
+        <div class="dc-ds-surface__body">
+          <h2 class="uac-rail-title">AI review, with control</h2>
+          <p class="uac-rail-copy">The review creates governed suggestions—not legal decisions—for the agreement owner to assess.</p>
+          <span class="uac-status-pill">Human review required</span>
+          <ol class="uac-steps">
+            <li><span class="uac-step">1</span><span>CLM One extracts readable clause text from the uploaded file.</span></li>
+            <li><span class="uac-step">2</span><span>AI identifies potentially risky or uncertain clauses with a direct quote.</span></li>
+            <li><span class="uac-step">3</span><span>Each finding becomes a trackable risk and Action Queue item.</span></li>
+          </ol>
+        </div>
+      </section>
+      <section class="dc-ds-surface">
+        <div class="dc-ds-surface__body">
+          <h2 class="uac-rail-title">Before you upload</h2>
+          <ul class="uac-rail-list">
+            <li>Use the signed or most recent version of the agreement.</li>
+            <li>Confirm the owner can make decisions about follow-up.</li>
+            <li>Scanned image-only PDFs may need manual text review.</li>
+          </ul>
+        </div>
+      </section>
+    </aside>
   </div>
 </div>
 
@@ -127,29 +180,36 @@
         filenameEl.textContent = file.name;
         submitBtn.disabled = false;
     }
+    function showStatus(kind, message, contractUrl) {
+        statusEl.className = 'uac-status ' + kind;
+        statusEl.replaceChildren(document.createTextNode(message));
+        if (contractUrl) {
+            statusEl.appendChild(document.createTextNode(' '));
+            var link = document.createElement('a');
+            link.href = contractUrl;
+            link.textContent = 'Open contract';
+            statusEl.appendChild(link);
+        }
+    }
 
     dropzone.addEventListener('click', function () { fileInput.click(); });
-    dropzone.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+    dropzone.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); fileInput.click(); } });
     fileInput.addEventListener('change', function () { setFile(fileInput.files[0]); });
-    dropzone.addEventListener('dragover', function (e) { e.preventDefault(); dropzone.classList.add('is-dragover'); });
+    dropzone.addEventListener('dragover', function (event) { event.preventDefault(); dropzone.classList.add('is-dragover'); });
     dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('is-dragover'); });
-    dropzone.addEventListener('drop', function (e) {
-        e.preventDefault();
+    dropzone.addEventListener('drop', function (event) {
+        event.preventDefault();
         dropzone.classList.remove('is-dragover');
-        if (e.dataTransfer.files.length) {
-            fileInput.files = e.dataTransfer.files;
-            setFile(fileInput.files[0]);
-        }
+        if (event.dataTransfer.files.length) { fileInput.files = event.dataTransfer.files; setFile(fileInput.files[0]); }
     });
 
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
         if (!fileInput.files.length) return;
-        statusEl.className = 'usc-status';
-        statusEl.textContent = '';
+        statusEl.className = 'uac-status';
+        statusEl.replaceChildren();
         submitBtn.disabled = true;
         submitBtn.textContent = 'Uploading…';
-
         var body = new FormData();
         body.append('file', fileInput.files[0]);
         body.append('document_type', 'CONTRACT');
@@ -164,34 +224,24 @@
         body.append('end_date', document.getElementById('usc-expiry-date').value);
         body.append('governing_law', document.getElementById('usc-governing-law').value.trim());
         if (document.getElementById('usc-dpa-attached').checked) body.append('dpa_attached', '1');
-
-        fetch('{% url "contracts:document_upload_api" %}', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': getCsrfToken() },
-            body: body,
-        })
+        if (document.getElementById('usc-run-ai-review').checked) body.append('run_ai_review', '1');
+        fetch('{% url "contracts:document_upload_api" %}', { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: body })
             .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
             .then(function (result) {
                 if (result.ok && result.data.ok) {
-                    statusEl.className = 'usc-status is-success';
-                    statusEl.innerHTML = 'Uploaded "' + result.data.title + '". <a href="' + result.data.contract_url + '">Open contract</a>';
+                    var review = result.data.ai_review || {};
+                    var reviewMessage = review.requested && review.message ? ' ' + review.message : '';
+                    showStatus('is-success', 'Uploaded “' + result.data.title + '”.' + reviewMessage, result.data.contract_url);
                     submitBtn.textContent = 'Upload another';
-                    submitBtn.disabled = true;
                     form.reset();
                     filenameEl.textContent = '';
                 } else {
-                    statusEl.className = 'usc-status is-error';
-                    statusEl.textContent = (result.data && result.data.error) || 'Upload failed. Please try again.';
+                    showStatus('is-error', (result.data && result.data.error) || 'Upload failed. Please try again.');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Upload contract';
+                    submitBtn.textContent = 'Upload and review';
                 }
             })
-            .catch(function () {
-                statusEl.className = 'usc-status is-error';
-                statusEl.textContent = 'Upload failed. Please check your connection and try again.';
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Upload contract';
-            });
+            .catch(function () { showStatus('is-error', 'Upload failed. Please check your connection and try again.'); submitBtn.disabled = false; submitBtn.textContent = 'Upload and review'; });
     });
 })();
 </script>

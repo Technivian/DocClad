@@ -502,32 +502,29 @@ textarea.form-control { min-height: 90px; resize: vertical; }
 .form-check-input {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   margin: 0;
   flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--input-bg);
   cursor: pointer;
-  display: inline-grid;
-  place-content: center;
-  transition: background 0.15s, border-color 0.15s;
-}
-.form-check-input::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  transform: scale(0);
-  transition: transform 0.12s ease-in-out;
-  box-shadow: inset 1em 1em #fff;
-  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  background-image: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 11px 11px;
+  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 .form-check-input:checked {
-  background: var(--primary);
-  border-color: var(--primary);
+  /* base.html intentionally normalizes all inputs to a white surface with
+     !important; selected checkboxes must explicitly override that reset. */
+  background-color: var(--color-brand-primary) !important;
+  border-color: var(--color-brand-primary) !important;
+  /* A background SVG is reliable on the replaced input element, unlike a
+     pseudo-element, and remains legible at the compact control size. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.3 4.6 9 10 3' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
-.form-check-input:checked::before { transform: scale(1); }
 .form-check-input:focus-visible {
   outline: none;
   border-color: var(--primary);

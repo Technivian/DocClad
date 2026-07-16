@@ -14,9 +14,6 @@
 
 <div id="obligations-workspace-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow obligations-page">
   {% url 'contracts:deadline_create' as new_obligation_url %}
-  <div class="dc-ds-page-actions">
-    <div class="dc-ds-actions"><a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">New Obligation</a></div>
-  </div>
 
   <div class="dc-ds-scaffold dc-ds-scaffold--with-rail">
   <section class="dc-ds-scaffold__main dc-ds-surface obligations-table" aria-labelledby="all-obligations-title">
@@ -24,6 +21,9 @@
       <div>
         <h2 class="dc-ds-surface__title" id="all-obligations-title">All obligations</h2>
         <p class="dc-ds-subtitle">Every tracked obligation across your contracts and matters, earliest due date first.</p>
+      </div>
+      <div class="dc-ds-surface__head-actions">
+        <a class="dc-ds-button dc-ds-button--primary" href="{{ new_obligation_url }}">New Obligation</a>
       </div>
     </div>
     <div class="dc-ds-surface__body dc-ds-table-wrap">

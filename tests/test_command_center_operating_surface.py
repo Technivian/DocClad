@@ -74,6 +74,11 @@ class CommandCenterServiceTests(TestCase):
         with_history = explainable_risk_score('HIGH', {}, history=[{'score': 60}])
         self.assertTrue(with_history['has_history'])
 
+    def test_high_risk_finding_cannot_render_as_low_attention(self):
+        result = explainable_risk_score('LOW', {'high_risk_deviations': 1})
+        self.assertEqual(result['score'], 65)
+        self.assertEqual(result['band'], 'High attention')
+
     def test_duplicate_recommendations_group_and_order(self):
         now = timezone.now()
         finance_issue = 'Contract value exceeds the finance approval threshold of 250,000.'
@@ -160,8 +165,8 @@ class CommandCenterProductionSurfaceTests(TestCase):
 
     def test_empty_command_center_state_is_intentional(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Governance setup is incomplete')
-        self.assertContains(response, 'Complete the setup items in the Action queue')
+        self.assertContains(response, 'No contract needs immediate attention')
+        self.assertContains(response, 'Review priority actions')
         self.assertContains(response, 'No active issues')
         self.assertContains(response, 'Monitored queues are clear.')
         action_queue_header = response.content.decode().split('id="recommended-actions-title"', 1)[1].split('</div>', 1)[0]

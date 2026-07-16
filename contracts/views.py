@@ -161,7 +161,11 @@ from .views_domains.contracts import (
     upload_signed_contract,
 )
 from .views_domains.dpa_workflow import DPAWorkflowBuilderView
-from .views_domains.msa_workflow import MSAWorkflowBuilderView
+from .views_domains.msa_workflow import (
+    MSAWorkflowBuilderView,
+    msa_export_document,
+    msa_submit_for_review,
+)
 from .views_domains.nda_workflow import NDAWorkflowBuilderView
 from .views_domains.dpa_review import (
     DPAPlaybookListView,

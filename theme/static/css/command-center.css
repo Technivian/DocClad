@@ -34,7 +34,6 @@ body:has(.cc-v3) #djDebug { display: none !important; }
 .cc-v3-score-copy span { display: block; margin-top: var(--space-8); font-size: 14px; }
 .cc-v3-score-copy em { display: block; margin-top: var(--space-4); color: var(--casefile-blue-50); font: var(--text-eyebrow); font-style: normal; }
 .cc-v3-score-detail { position: absolute; z-index: 2; right: var(--space-16); top: 218px; width: 260px; }
-.cc-v3-score-detail > span { display: block; margin-bottom: var(--space-8); color: var(--casefile-blue-50); font: var(--text-eyebrow); }
 .cc-v3-score-signals { display: flex; gap: var(--space-8); }
 .cc-v3-score-signal { min-width: 0; flex: 1; padding: var(--space-8); border: 1px solid color-mix(in srgb, var(--clmone-white) 20%, transparent); border-radius: var(--radius-control); background: color-mix(in srgb, var(--casefile-blue-700) 35%, transparent); text-align: center; }
 .cc-v3-score-signal strong,
@@ -1207,11 +1206,11 @@ body:has(.cc-v3) .top-bar .global-search-input {
   .cc-v3-hero--empty,
   .cc-v3-actions {
     box-sizing: border-box;
-    height: calc(var(--feature-surface-min-height) - var(--space-40));
-    min-height: calc(var(--feature-surface-min-height) - var(--space-40));
+    height: var(--feature-surface-min-height);
+    min-height: var(--feature-surface-min-height);
   }
   .cc-v3-rail {
-    grid-template-rows: calc(var(--feature-surface-min-height) - var(--space-40)) auto;
+    grid-template-rows: var(--feature-surface-min-height) auto;
   }
   .cc-v3-kpis {
     grid-auto-rows: calc(var(--space-96) + var(--space-32));
@@ -1256,4 +1255,82 @@ body:has(.cc-v3) .top-bar .global-search-input {
     flex-basis: 64px;
     padding-inline: var(--space-16);
   }
+}
+
+/* Portfolio intelligence hero — a deliberately restrained navy-to-teal
+   surface. It summarizes the portfolio; the cards below remain the detail
+   layer for each operational queue. */
+.cc-v3-portfolio-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 164px;
+  gap: var(--space-16) var(--space-24);
+  height: auto;
+  min-height: 0;
+  padding: var(--space-24) var(--space-28);
+  border-color: color-mix(in srgb, var(--clmone-white) 14%, transparent);
+  background:
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--seal) 48%, transparent) 0, transparent 28%),
+    linear-gradient(122deg, #0b1b33 0%, #102d46 53%, #0d5c62 100%);
+  box-shadow: var(--shadow-feature);
+}
+.cc-v3-portfolio-hero::before { right: 6%; top: -295px; border-color: color-mix(in srgb, var(--clmone-white) 5%, transparent); }
+.cc-v3-portfolio-hero::after { opacity: .18; }
+.cc-v3-portfolio-intro,
+.cc-v3-portfolio-score,
+.cc-v3-portfolio-signals,
+.cc-v3-top-priority,
+.cc-v3-portfolio-actions { position: relative; z-index: 2; }
+.cc-v3-portfolio-intro { min-width: 0; }
+.cc-v3-portfolio-hero h2 { max-width: none; margin: var(--space-8) 0 var(--space-8); color: var(--clmone-white); font: var(--text-section); }
+.cc-v3-portfolio-summary { max-width: 630px; margin: 0; color: color-mix(in srgb, var(--clmone-white) 78%, transparent); font: var(--text-small); line-height: 1.5; }
+.cc-v3-portfolio-score { position: relative; inset: auto; align-self: center; justify-self: end; width: 152px; height: 152px; box-shadow: 0 0 0 8px color-mix(in srgb, var(--clmone-white) 5%, transparent); }
+.cc-v3-portfolio-score::after { background: #102b42; }
+.cc-v3-portfolio-score .cc-v3-score-copy em { color: color-mix(in srgb, var(--clmone-white) 72%, transparent); }
+.cc-v3-portfolio-signals { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-8); }
+.cc-v3-portfolio-signal { min-width: 0; padding: var(--space-10) var(--space-12); border: 1px solid color-mix(in srgb, var(--clmone-white) 13%, transparent); border-radius: var(--radius-card); background: color-mix(in srgb, #071726 30%, transparent); }
+.cc-v3-portfolio-signal > span,
+.cc-v3-portfolio-signal > small { display: block; color: color-mix(in srgb, var(--clmone-white) 70%, transparent); font-size: 10px; line-height: 1.3; }
+.cc-v3-portfolio-signal > strong { display: block; margin: 3px 0; color: var(--clmone-white); font-size: 20px; line-height: 1; font-weight: 650; }
+.cc-v3-portfolio-signal.is-warning { border-color: color-mix(in srgb, var(--status-pending-fg) 45%, transparent); background: color-mix(in srgb, var(--status-pending-fg) 11%, transparent); }
+.cc-v3-portfolio-signal.is-warning > strong { color: #ffd27b; }
+.cc-v3-portfolio-signal.is-critical { border-color: color-mix(in srgb, var(--status-danger-fg) 52%, transparent); background: color-mix(in srgb, var(--status-danger-fg) 12%, transparent); }
+.cc-v3-portfolio-signal.is-critical > strong { color: #ffaaa1; }
+.cc-v3-top-priority { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(160px, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-12) var(--space-20); padding: var(--space-16); border: 1px solid color-mix(in srgb, var(--clmone-white) 16%, transparent); border-radius: var(--radius-subpanel); background: color-mix(in srgb, #061727 34%, transparent); }
+.cc-v3-top-priority-label { grid-column: 1 / -1; color: #75ded9; font: var(--text-eyebrow); letter-spacing: .08em; text-transform: uppercase; }
+.cc-v3-top-priority-title-row h3 { margin: 0; color: var(--clmone-white); font: var(--text-heading); overflow-wrap: anywhere; }
+.cc-v3-top-priority-title-row > span { display: inline-flex; margin-top: var(--space-8); padding: 3px var(--space-8); border: 1px solid color-mix(in srgb, var(--clmone-white) 18%, transparent); border-radius: var(--radius-pill); color: color-mix(in srgb, var(--clmone-white) 82%, transparent); font-size: 10px; }
+.cc-v3-top-priority-meta { align-self: end; color: color-mix(in srgb, var(--clmone-white) 72%, transparent); font-size: 11px; }
+.cc-v3-top-priority-meta span { display: block; }
+.cc-v3-top-priority-meta span + span { margin-top: var(--space-4); color: #75ded9; }
+.cc-v3-top-priority-detail { min-width: 0; }
+.cc-v3-top-priority-detail span { display: block; margin-bottom: var(--space-4); color: color-mix(in srgb, var(--clmone-white) 64%, transparent); font-size: 10px; }
+.cc-v3-top-priority-detail strong { display: block; color: var(--clmone-white); font-size: 11px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.cc-v3-top-priority--empty { display: block; }
+.cc-v3-top-priority--empty h3 { margin: 0; color: var(--clmone-white); font: var(--text-heading); }
+.cc-v3-top-priority--empty p { margin: var(--space-4) 0 0; color: color-mix(in srgb, var(--clmone-white) 74%, transparent); font: var(--text-small); }
+.cc-v3-portfolio-actions { position: relative; inset: auto; grid-column: 1 / -1; display: flex; align-items: center; gap: var(--space-16); margin: 0; }
+.cc-v3-portfolio-actions .is-primary { background: var(--clmone-white); color: #0b2638; }
+.cc-v3-portfolio-actions .is-secondary { color: color-mix(in srgb, var(--clmone-white) 90%, transparent); font-size: 12px; font-weight: 650; text-decoration: none; }
+.cc-v3-portfolio-actions .is-secondary:hover { color: var(--clmone-white); text-decoration: underline; }
+
+@media (min-width: 1221px) {
+  .cc-v3-hero.cc-v3-portfolio-hero { height: auto; min-height: 0; }
+  .cc-v3-rail { grid-template-rows: auto auto; }
+}
+
+@media (max-width: 900px) {
+  .cc-v3-portfolio-hero { grid-template-columns: minmax(0, 1fr) 144px; }
+  .cc-v3-portfolio-score { position: relative; top: auto; left: auto; right: auto; width: 144px; height: 144px; }
+  .cc-v3-portfolio-signals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cc-v3-top-priority { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cc-v3-top-priority-title-row { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .cc-v3-portfolio-hero { display: block; min-height: 0; padding: var(--space-20); }
+  .cc-v3-portfolio-score { margin: var(--space-20) 0; }
+  .cc-v3-portfolio-signals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-v3-top-priority { display: grid; grid-template-columns: 1fr; margin-top: var(--space-16); }
+  .cc-v3-top-priority-title-row { grid-column: auto; }
+  .cc-v3-portfolio-actions { margin-top: var(--space-16); }
 }

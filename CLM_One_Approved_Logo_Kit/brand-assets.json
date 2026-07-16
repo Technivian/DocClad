@@ -1,0 +1,23 @@
+{
+  "brand": "CLM One",
+  "approved_master": "source/clm-one-approved-master.png",
+  "master_dimensions": {
+    "width": 1672,
+    "height": 941
+  },
+  "primary_logo_dimensions": {
+    "width": 1393,
+    "height": 344
+  },
+  "brand_mark_dimensions": {
+    "width": 290,
+    "height": 315
+  },
+  "usage": {
+    "primary": "logo/clm-one-logo-transparent.webp",
+    "png_fallback": "logo/clm-one-logo-transparent.png",
+    "compact_mark": "mark/clm-one-mark-transparent.webp",
+    "favicon": "icons/favicon.ico"
+  },
+  "note": "Assets are derived directly from the approved raster master. No wordmark font or symbol has been recreated."
+}

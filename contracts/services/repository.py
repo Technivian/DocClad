@@ -78,6 +78,8 @@ class DjangoRepositoryService:
             value_display=money(contract.value, getattr(contract, 'currency', 'USD') or 'USD'),
             end_date_display=date_filter(end_date, 'd M Y') if end_date else None,
             due_overdue=due_overdue,
+            contract_type_display=contract.get_contract_type_display(),
+            stage_display=contract.get_lifecycle_stage_display(),
         )
         if content is not None:
             kwargs['content'] = content
@@ -126,6 +128,18 @@ class DjangoRepositoryService:
         if params.contract_type:
             if hasattr(Contract, 'contract_type'):
                 queryset = queryset.filter(contract_type__in=params.contract_type)
+
+        # Repository filters only expose fields that are backed by the
+        # contract record or its approval route. Keep them server-side so
+        # counts, pagination, and exported results all describe the same set.
+        if params.owner:
+            queryset = queryset.filter(owner_id__in=params.owner)
+        if params.counterparty:
+            queryset = queryset.filter(counterparty__in=params.counterparty)
+        if params.risk_level:
+            queryset = queryset.filter(risk_level__in=params.risk_level)
+        if params.approval_state:
+            queryset = queryset.filter(approval_requests__status__in=params.approval_state).distinct()
         
         # Apply sorting
         if params.sort == 'updated_desc':

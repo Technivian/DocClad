@@ -106,11 +106,25 @@ def build_contract_audit_changes(before_contract, after_contract, tracked_fields
 def build_contract_lifecycle_guidance(contract, today=None):
     today = today or timezone.localdate()
 
+    stage_guidance = {
+        'DRAFTING': ('Drafting', 'Submit for review when the record is ready.', 'INTERNAL_REVIEW'),
+        'INTERNAL_REVIEW': ('Internal review', 'Resolve reviewer feedback and move into negotiation.', 'NEGOTIATION'),
+        'NEGOTIATION': ('Negotiation', 'Resolve open commercial and legal positions before approval.', 'APPROVAL'),
+        'APPROVAL': ('Approval', 'Collect the required approvals before signature routing.', 'SIGNATURE'),
+        'SIGNATURE': ('Signature', 'Track signatures and activate only when the packet is complete.', 'EXECUTED'),
+        'EXECUTED': ('Executed', 'Confirm obligations and renewal dates for ongoing management.', 'OBLIGATION_TRACKING'),
+        'OBLIGATION_TRACKING': ('Obligation tracking', 'Monitor obligations and prepare the next renewal decision.', 'RENEWAL'),
+        'RENEWAL': ('Renewal', 'Decide whether to renew, amend, terminate, or archive the agreement.', 'DRAFTING'),
+    }
+    state, action, next_stage = stage_guidance.get(
+        getattr(contract, 'lifecycle_stage', None),
+        ('Lifecycle review', 'Confirm the next accountable workflow step.', getattr(contract, 'lifecycle_stage', None)),
+    )
     guidance = {
-        'state': 'Active',
+        'state': state,
         'severity': 'low',
-        'action': 'No immediate lifecycle action required.',
-        'next_stage': getattr(contract, 'lifecycle_stage', None),
+        'action': action,
+        'next_stage': next_stage,
         'detail': '',
         'signals': [],
     }
@@ -128,7 +142,16 @@ def build_contract_lifecycle_guidance(contract, today=None):
         })
         return guidance
 
-    if contract.end_date:
+    # Renewal, expiry and termination signals become operational only after a
+    # contract is executed/active.  Applying them while a record is still
+    # drafting or under review makes the page claim two incompatible next
+    # stages (for example, Drafting and Renewal at the same time).
+    operational_lifecycle = (
+        contract.status == 'ACTIVE'
+        or contract.lifecycle_stage in {'EXECUTED', 'OBLIGATION_TRACKING', 'RENEWAL'}
+    )
+
+    if operational_lifecycle and contract.end_date:
         days_until_end = (contract.end_date - today).days
         guidance['signals'].append(
             f'End date is in {days_until_end} day(s) on {contract.end_date.isoformat()}.'
@@ -148,7 +171,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'next_stage': 'RENEWAL',
             })
 
-    if contract.renewal_date:
+    if operational_lifecycle and contract.renewal_date:
         days_until_renewal = (contract.renewal_date - today).days
         guidance['signals'].append(
             f'Renewal date is in {days_until_renewal} day(s) on {contract.renewal_date.isoformat()}.'
@@ -161,7 +184,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
                 'next_stage': 'RENEWAL',
             })
 
-    if contract.auto_renew:
+    if operational_lifecycle and contract.auto_renew:
         guidance['signals'].append('Auto-renew is enabled.')
         if guidance['severity'] == 'low':
             guidance.update({
@@ -173,7 +196,7 @@ def build_contract_lifecycle_guidance(contract, today=None):
         else:
             guidance['action'] = f"{guidance['action']} Auto-renew is enabled."
 
-    if contract.termination_notice_date:
+    if operational_lifecycle and contract.termination_notice_date:
         days_until_notice = (contract.termination_notice_date - today).days
         guidance['signals'].append(
             f'Termination notice date is in {days_until_notice} day(s) on {contract.termination_notice_date.isoformat()}.'
@@ -194,6 +217,65 @@ def build_contract_lifecycle_guidance(contract, today=None):
         })
 
     return guidance
+
+
+def get_signature_routing_blockers(contract):
+    """Return truthful prerequisites for creating a new signature request.
+
+    This helper is deliberately used by both the detail-page action model and
+    the form endpoint so a hidden or stale UI cannot bypass the workflow.
+    """
+    from contracts.models import ApprovalRequest, Contract, RiskLog
+
+    blockers = []
+    if contract.status != Contract.Status.APPROVED:
+        blockers.append('The contract must be fully approved before signature routing.')
+
+    approvals = ApprovalRequest.objects.filter(contract=contract)
+    if not approvals.exists():
+        blockers.append('At least one approval is required before signature routing.')
+    elif approvals.exclude(status=ApprovalRequest.Status.APPROVED).exists():
+        blockers.append('All requested approvals must be completed before signature routing.')
+
+    if RiskLog.objects.filter(
+        contract=contract,
+        status__in=[RiskLog.Status.OPEN, RiskLog.Status.IN_PROGRESS],
+        risk_level__in=[RiskLog.RiskLevel.HIGH, RiskLog.RiskLevel.CRITICAL],
+    ).exists():
+        blockers.append('Resolve high or critical open risk findings before signature routing.')
+    return blockers
+
+
+def record_contract_grounded_check(contract, actor, *, request=None, trigger='manual'):
+    """Persist evidence that deterministic contract fields were checked.
+
+    A check is an audit event, not an AI claim.  The detail view compares this
+    timestamp with ``contract.updated_at`` to mark it stale after data changes.
+    """
+    from contracts.middleware import log_action
+    from contracts.models import AuditLog, RiskLog
+
+    open_risk_count = RiskLog.objects.filter(
+        contract=contract,
+        status__in=[RiskLog.Status.OPEN, RiskLog.Status.IN_PROGRESS],
+    ).count()
+    log_action(
+        actor,
+        AuditLog.Action.UPDATE,
+        'Contract',
+        object_id=contract.pk,
+        object_repr=str(contract)[:300],
+        organization=contract.organization,
+        request=request,
+        event_type='contract.grounded_check_completed',
+        changes={
+            'event': 'contract.grounded_check_completed',
+            'trigger': trigger,
+            'status': contract.status,
+            'risk_level': contract.risk_level,
+            'open_risk_count': open_risk_count,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

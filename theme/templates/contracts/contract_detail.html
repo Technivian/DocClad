@@ -2,6 +2,9 @@
 {% load clmone_format %}
 {% load clmone_components %}
 {% block title %}{{ contract.title }} – CLM One{% endblock %}
+{% block authenticated_page_title %}Contracts{% endblock %}
+{% block authenticated_page_subtitle %}Contract record, lifecycle status, and governed activity.{% endblock %}
+{% block authenticated_page_back %}{% endblock %}
 {% block content %}
 {% url 'contracts:document_create' as attach_document_url %}
 <style nonce="{{ csp_nonce }}">
@@ -19,6 +22,29 @@
   .wf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .wf-row:last-child { border-bottom: none; }
   .wf-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .arch-detail-grid { grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr); gap: 24px; }
+  .contract-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .contract-document-summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    min-height: 88px; padding: 16px; border: 1px solid var(--card-border);
+    border-radius: var(--radius-control); background: var(--well);
+  }
+  .contract-note-dialog {
+    width: min(560px, calc(100vw - 32px)); margin: auto; padding: 0;
+    border: 1px solid var(--color-border-soft); border-radius: var(--radius-subpanel);
+    background: var(--card); color: var(--color-brand-foundation); box-shadow: var(--shadow-drawer);
+  }
+  .contract-note-dialog::backdrop { background: rgba(11, 23, 40, .38); }
+  .contract-note-dialog__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--hairline); }
+  .contract-note-dialog__title { margin: 0; font: var(--text-section); }
+  .contract-note-dialog__copy { margin: 4px 0 0; color: var(--ink-500); font: var(--text-small); }
+  .contract-note-dialog__close { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--ink-600); cursor: pointer; }
+  .contract-note-dialog__form { display: grid; gap: 16px; padding: 20px 24px 24px; }
+  .contract-note-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  .deadline-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .deadline-item:last-child { border-bottom: 0; padding-bottom: 0; }
+  @media (max-width: 960px) { .arch-detail-grid { grid-template-columns: 1fr; } .contract-status-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .contract-document-summary { align-items: flex-start; flex-direction: column; } .contract-note-dialog__head, .contract-note-dialog__form { padding-inline: 16px; } }
 </style>
 <div class="page-wrap reveal-stagger">
 
@@ -70,22 +96,28 @@
         <span class="arch-meta-item">{{ contract.notice_period_days }}-day notice</span>
         {% endif %}
       </div>
-      <div class="arch-header-chips">
-        {% stage_dots contract %}
-        {% assignee_chip owner %}
+      <div class="arch-header-chips text-sm c-secondary">
+        <span><strong class="c-primary">Owner:</strong> {% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</span>
+        <span><strong class="c-primary">Stage:</strong> {{ contract.get_lifecycle_stage_display }}</span>
       </div>
     </div>
     <div class="arch-header-right">
       <div class="arch-action-bar">
+        {% if can_submit_for_review %}
+        <button type="button" class="btn-cta" data-open-workflow>Submit for review</button>
+        {% elif can_decide_approval and open_approval %}
+        <button type="button" class="btn-cta" data-open-workflow>Record review decision</button>
+        {% elif can_route_for_signature %}
+        <a href="{% url 'contracts:signature_request_create' %}" class="btn-cta">Prepare signature request</a>
+        {% elif can_edit %}
+        <button type="button" id="run-grounded-check" class="btn-cta">Run grounded check</button>
+        {% endif %}
         {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>{% endif %}
-        {% if can_submit_for_review %}<button type="button" class="btn-quiet" data-open-workflow>Submit for review</button>{% endif %}
-        <a href="{% url 'contracts:signature_request_create' %}" class="btn-quiet">Send for signature</a>
-        <button type="button" id="run-grounded-check" class="btn-cta">
+        {% if can_edit and can_submit_for_review %}<button type="button" id="run-grounded-check" class="btn-quiet">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
           </svg>
-          Run grounded check
-        </button>
+          Run grounded check</button>{% endif %}
       </div>
     </div>
   </div>
@@ -111,44 +143,85 @@
       <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel">
         <div class="space-y-6">
 
-          {# Lifecycle stage strip #}
+          {# Current state — compact operational summary; the full tracker lives in Workflow. #}
           <div class="card-l2">
-            <div class="arch-section-label">Lifecycle</div>
-            {% lifecycle_steps contract as lc_steps %}
-            <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
-              {% for step in lc_steps %}
-              <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-                <span class="lc-dot" aria-hidden="true"></span>
-                <span class="lc-label">{{ step.label }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% if lifecycle_guidance %}
-            <div class="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap gap-4 text-sm">
+            <div class="contract-status-grid text-sm">
               <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next step</span>
-                <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
+                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Current state</span>
+                <div class="mt-1 font-semibold c-primary">{{ contract.get_lifecycle_stage_display }} · {{ contract.get_status_display }}</div>
               </div>
               <div>
                 <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next stage</span>
                 <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage|event_label }}</div>
               </div>
+              <div>
+                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Grounded check</span>
+                <div class="mt-1 c-primary">{{ grounded_check.label }}{% if grounded_check.last_run_at %} · {{ grounded_check.last_run_at|date:"M d, H:i" }}{% endif %}</div>
+              </div>
             </div>
-            {% endif %}
+            <div class="mt-3 pt-3 border-t border-[var(--border)] text-sm">
+              <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next action</span>
+              <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
+              {% if signature_routing_blockers %}<p class="mt-2 text-xs c-muted">Signature routing is blocked until approvals are complete and open high-risk findings are resolved.</p>{% endif %}
+            </div>
           </div>
 
-          {# Primary draft #}
+          {# Agreement family — master agreement and its governed child records. #}
+          {% if contract.parent_contract_id or contract.linked_contracts.exists %}
           <div class="card-l1">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-700 c-primary">Primary Draft</h2>
+              <div>
+                <h2 class="text-base font-700 c-primary">Agreement family</h2>
+                <p class="text-sm c-muted mt-1">Related contract records governed by the same commercial relationship.</p>
+              </div>
+              <span class="badge-sm badge-blue">Linked records</span>
+            </div>
+            <div class="divide-y divide-[var(--border)]">
+              {% if contract.parent_contract %}
+              <a href="{% url 'contracts:contract_detail' contract.parent_contract.pk %}" class="cdoc-row no-underline">
+                <div class="min-w-0">
+                  <div class="font-semibold c-primary">{{ contract.parent_contract.title }}</div>
+                  <div class="text-xs c-muted mt-1">Governing agreement · {{ contract.parent_contract.get_contract_type_display }}</div>
+                </div>
+                <span class="badge-sm {{ contract.parent_contract.status|status_badge_class }}">{{ contract.parent_contract.get_status_display }}</span>
+              </a>
+              {% endif %}
+              {% for linked_contract in contract.linked_contracts.all %}
+              <a href="{% url 'contracts:contract_detail' linked_contract.pk %}" class="cdoc-row no-underline">
+                <div class="min-w-0">
+                  <div class="font-semibold c-primary">{{ linked_contract.title }}</div>
+                  <div class="text-xs c-muted mt-1">
+                    {{ linked_contract.get_contract_type_display }}
+                    {% if linked_contract.end_date %} · Key date {{ linked_contract.end_date|date:"M d, Y" }}{% endif %}
+                  </div>
+                </div>
+                <span class="badge-sm {{ linked_contract.status|status_badge_class }}">{{ linked_contract.get_status_display }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {# Authoritative source document #}
+          <div class="card-l1">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-700 c-primary">Source document</h2>
               <span class="badge-sm badge-blue">Source of truth</span>
             </div>
-            {% if contract.content %}
-            <div class="content-surface">
-              <div class="content-prose">{{ contract.content }}</div>
+            {% if primary_document %}
+            <div class="contract-document-summary">
+              <div>
+                <div class="font-semibold c-primary">{{ primary_document.title }}</div>
+                <div class="text-sm c-muted mt-1">{{ primary_document.get_document_type_display }} · v{{ primary_document.version }} · {{ primary_document.get_status_display }}</div>
+                <div class="text-xs c-muted mt-1">Added {{ primary_document.created_at|date:"M d, Y" }} by {% if primary_document.uploaded_by %}{{ primary_document.uploaded_by.get_full_name|default:primary_document.uploaded_by.username }}{% else %}—{% endif %}</div>
+              </div>
+              <a href="{% url 'contracts:document_detail' primary_document.pk %}" class="btn-soft-primary text-sm flex-shrink-0">Open document</a>
             </div>
             {% else %}
-            <div class="empty-state text-sm c-muted">No contract body has been added yet.</div>
+            <div class="empty-state text-sm c-muted">
+              <p>No document has been generated yet.</p>
+              <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary mt-3 text-sm">Upload source document</a>
+            </div>
             {% endif %}
           </div>
 
@@ -157,7 +230,7 @@
           <div class="card-l1">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-base font-700 c-primary">Negotiation Notes</h2>
-              <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-quiet text-xs px-2.5 py-1.5">Add note</a>
+              {% if can_comment %}<button type="button" class="btn-quiet text-xs px-2.5 py-1.5" data-open-note-dialog>Add note</button>{% endif %}
             </div>
             <div class="divide-y divide-[var(--border)]">
               {% for note in negotiation_threads %}
@@ -167,7 +240,7 @@
                   <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
                 </div>
                 <div class="text-sm c-secondary">{{ note.content|truncatechars:220 }}</div>
-                <div class="text-xs c-muted mt-2">{{ note.created_by.get_full_name|default:"—" }}</div>
+                <div class="text-xs c-muted mt-2">{% if note.created_by %}{{ note.created_by.get_full_name|default:note.created_by.username }}{% else %}—{% endif %}</div>
               </div>
               {% endfor %}
             </div>
@@ -175,7 +248,7 @@
           {% else %}
           <div class="card-l2 text-center">
             <p class="text-sm c-muted">No negotiation notes yet.</p>
-            <a href="{% url 'contracts:add_negotiation_note' contract.pk %}" class="btn-soft-primary mt-3 text-sm">Add first note</a>
+            {% if can_comment %}<button type="button" class="btn-soft-primary mt-3 text-sm" data-open-note-dialog>Add first note</button>{% endif %}
           </div>
           {% endif %}
 
@@ -226,7 +299,7 @@
               </div>
               <div class="flex items-center gap-4 flex-shrink-0">
                 <div class="text-right hidden sm:block">
-                  <div class="text-xs c-secondary">{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username|default:"—" }}</div>
+                  <div class="text-xs c-secondary">{% if doc.uploaded_by %}{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}{% else %}—{% endif %}</div>
                   <div class="text-xs c-muted">{{ doc.created_at|date:"M d, Y" }}</div>
                 </div>
                 <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -354,6 +427,25 @@
       {# ── WORKFLOW ─────────────────────────────────────────── #}
       <div id="tab-workflow" class="arch-tab-panel" role="tabpanel">
         <div class="space-y-6">
+
+          <div class="card-l2">
+            <div class="arch-section-label">Lifecycle tracker</div>
+            {% lifecycle_steps contract as lc_steps %}
+            <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
+              {% for step in lc_steps %}
+              <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+                <span class="lc-dot" aria-hidden="true"></span>
+                <span class="lc-label">{{ step.label }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% if signature_routing_blockers %}
+            <div class="mt-4 pt-4 border-t border-[var(--border)]">
+              <div class="text-xs c-muted uppercase tracking-wide font-semibold">Blockers</div>
+              <ul class="mt-2 text-sm c-secondary list-disc pl-5 space-y-1">{% for blocker in signature_routing_blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
+            </div>
+            {% endif %}
+          </div>
 
           {# Approvals #}
           <div class="card-l1">
@@ -508,9 +600,13 @@
         <div class="arch-section-label">Deadlines</div>
         <div class="detail-stack">
           {% for dl in deadlines %}
-          <div class="detail-row">
-            <span class="detail-label">{{ dl.title }}</span>
-            <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+          <div class="deadline-item">
+            <div class="flex items-start justify-between gap-3">
+              <span class="detail-label font-medium">{{ dl.title }}</span>
+              <span class="badge-sm {% if dl.is_overdue %}badge-red{% elif dl.days_remaining <= 7 %}badge-yellow{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+            </div>
+            <div class="text-xs c-muted mt-1">Due {{ dl.due_date|date:"M d, Y" }} · {{ dl.get_deadline_type_display }}</div>
+            <div class="text-xs c-muted mt-1">Owner: {% if dl.assigned_to %}{{ dl.assigned_to.get_full_name|default:dl.assigned_to.username }}{% else %}Unassigned{% endif %}{% if dl.contract %} · {{ dl.contract.title }}{% endif %}</div>
           </div>
           {% endfor %}
         </div>
@@ -543,6 +639,33 @@
 
   </div>{# /arch-detail-grid #}
 </div>{# /page-wrap #}
+
+{% if can_comment %}
+<dialog class="contract-note-dialog" id="contract-note-dialog" aria-labelledby="contract-note-dialog-title">
+  <div class="contract-note-dialog__head">
+    <div>
+      <h2 class="contract-note-dialog__title" id="contract-note-dialog-title">Add negotiation note</h2>
+      <p class="contract-note-dialog__copy">Capture the decision, context, or a teammate mention without leaving this contract.</p>
+    </div>
+    <button type="button" class="contract-note-dialog__close" data-close-note-dialog aria-label="Close note form">×</button>
+  </div>
+  <form method="post" action="{% url 'contracts:add_negotiation_note' contract.pk %}" class="contract-note-dialog__form">
+    {% csrf_token %}
+    <div>
+      <label for="negotiation-note-title" class="form-label">Title</label>
+      <input id="negotiation-note-title" name="title" type="text" class="input-base w-full" maxlength="200" required>
+    </div>
+    <div>
+      <label for="negotiation-note-content" class="form-label">Note</label>
+      <textarea id="negotiation-note-content" name="content" class="input-base w-full" rows="5" required placeholder="Add context, a decision, or mention a teammate with @username"></textarea>
+    </div>
+    <div class="contract-note-dialog__actions">
+      <button type="button" class="btn-quiet" data-close-note-dialog>Cancel</button>
+      <button type="submit" class="btn-cta">Save note</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
 
 {# ── Tab switcher JS ──────────────────────────────────────── #}
 <script nonce="{{ csp_nonce }}">
@@ -578,6 +701,19 @@
             activateTab('overview');
             reviewDetails.open = true;
             reviewDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    const noteDialog = document.getElementById('contract-note-dialog');
+    if (noteDialog) {
+        document.querySelectorAll('[data-open-note-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                noteDialog.showModal();
+                noteDialog.querySelector('#negotiation-note-title')?.focus();
+            });
+        });
+        noteDialog.querySelectorAll('[data-close-note-dialog]').forEach((button) => {
+            button.addEventListener('click', () => noteDialog.close());
         });
     }
 })();

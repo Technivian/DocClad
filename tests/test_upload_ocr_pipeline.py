@@ -302,8 +302,13 @@ class TestContractAiExtractApiView(unittest.TestCase):
         }
 
         with (
-            patch('contracts.api.views.get_user_organization') as mock_org,
-            patch('contracts.api.views.Contract') as MockContract,
+            patch('contracts.api.documents_ai.get_user_organization') as mock_org,
+            patch('contracts.api.documents_ai.Contract') as MockContract,
+            patch('contracts.api.documents_ai.can_access_contract_action', return_value=True),
+            patch(
+                'contracts.api.documents_ai.OrgPolicy.objects.get_or_create',
+                return_value=(MagicMock(ai_features_enabled=True), True),
+            ),
             patch('contracts.services.ai_extraction.get_spans_summary', return_value=mock_summary),
         ):
             mock_org.return_value = MagicMock()

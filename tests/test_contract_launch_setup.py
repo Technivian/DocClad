@@ -218,19 +218,25 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
         self.assertNotIn('Contract Launch Setup data', content)
 
     def test_collapsible_sections_present_and_collapsed_by_default(self):
-        """Contract identity stays visible; Legal posture, Lifecycle
-        control, and Draft brief are collapsible and start closed."""
+        """Contract identity stays visible; Legal posture and Draft brief
+        start closed, while Lifecycle control stays open because it holds the
+        required launch fields."""
         response = self._get()
         content = response.content.decode()
         self.assertIn('data-collapsible="legal-posture"', content)
         self.assertIn('data-collapsible="lifecycle-control"', content)
         self.assertIn('data-collapsible="draft-brief"', content)
-        for key in ('legal-posture', 'lifecycle-control', 'draft-brief'):
+        for key in ('legal-posture', 'draft-brief'):
             idx = content.index(f'data-collapsible="{key}"')
             # The <details ...> tag itself must not carry the `open` attribute.
             tag_start = content.rindex('<details', 0, idx + 1)
             tag_end = content.index('>', tag_start)
             self.assertNotIn(' open', content[tag_start:tag_end])
+
+        lifecycle_idx = content.index('data-collapsible="lifecycle-control"')
+        lifecycle_tag_start = content.rindex('<details', 0, lifecycle_idx + 1)
+        lifecycle_tag_end = content.index('>', lifecycle_tag_start)
+        self.assertIn(' open', content[lifecycle_tag_start:lifecycle_tag_end])
 
     def test_sticky_support_rail_cards_present(self):
         response = self._get()
@@ -245,11 +251,14 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
             'content': 'Body',
             'status': Contract.Status.DRAFT,
             'counterparty': 'Acme Corp',
+            'owner': self.user.pk,
             'currency': Contract.Currency.USD,
             'governing_law': 'State of Delaware',
             'jurisdiction': 'New York',
             'risk_level': Contract.RiskLevel.LOW,
             'lifecycle_stage': 'DRAFTING',
+            'start_date': '2026-07-15',
+            'end_date': '2027-07-15',
         })
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Contract.objects.filter(title='Launch Setup Regression Contract').exists())

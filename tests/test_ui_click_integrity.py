@@ -120,6 +120,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             reverse('contracts:trademark_request_list'),
             reverse('contracts:due_diligence_list'),
             reverse('contracts:workflow_dashboard'),
+            reverse('contracts:approval_request_list'),
             reverse('contracts:repository'),
             reverse('contracts:reports_dashboard'),
             reverse('contracts:organization_team'),
@@ -130,9 +131,15 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         for page in pages:
             response = self.client.get(page)
             self.assertEqual(response.status_code, 200, msg=f'Page failed: {page}')
+            content = response.content.decode('utf-8')
+            back_link = '<a href="/dashboard/" class="topbar-back-link" data-workspace-back'
+            if page == reverse('dashboard'):
+                self.assertNotIn(back_link, content)
+            else:
+                self.assertIn(back_link, content)
 
             parser = _InteractiveElementParser()
-            parser.feed(response.content.decode('utf-8'))
+            parser.feed(content)
 
             for href in parser.links:
                 target_path = self._normalize_internal_path(href, page)
@@ -161,11 +168,10 @@ class UIButtonAndFlowIntegrityTests(TestCase):
     def test_case_flow_semantics_on_high_traffic_pages(self):
         dashboard_response = self.client.get(reverse('dashboard'))
         self.assertEqual(dashboard_response.status_code, 200)
-        # setUp's contract is DRAFT (not PENDING/IN_REVIEW), so "Needs Legal
-        # Review" is genuinely zero and shows its meaningful zero-state
-        # headline rather than a bare "0".
+        # setUp's contract is DRAFT (not PENDING/IN_REVIEW), so the dashboard
+        # should show the current zero-state hero copy rather than a bare "0".
         self.assertContains(dashboard_response, 'dc-ds-metric__value--clear')
-        self.assertContains(dashboard_response, 'Workspace status')
+        self.assertContains(dashboard_response, 'Top priority')
         self.assertContains(dashboard_response, 'Action queue')
 
         list_response = self.client.get(reverse('contracts:contract_list'))

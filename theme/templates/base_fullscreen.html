@@ -7,21 +7,22 @@
     <title>{% block title %}CLM One{% endblock %}</title>
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
-    <link rel="icon" type="image/svg+xml" href="{% static 'img/brand/favicon.svg' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
-    <link rel="manifest" href="{% static 'site.webmanifest' %}">
-    <meta name="theme-color" content="#F5F7F8">
+    <link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'brand/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'brand/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'brand/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'brand/site.webmanifest' %}">
+    <meta name="theme-color" content="#06204F">
     <meta property="og:title" content="CLM One">
-    <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta property="og:image" content="{% static 'brand/clm-one-logo-transparent.png' %}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta name="twitter:image" content="{% static 'brand/clm-one-logo-transparent.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    <link href="{% static 'brand/clm-one-brand.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script src="{% static 'js/clmone-ui.js' %}" defer></script>
     <script nonce="{{ csp_nonce }}">
@@ -70,15 +71,6 @@
         .theme-toggle:hover { color: var(--text-primary); border-color: var(--primary); }
         [data-theme="light"] .icon-sun { display: none; }
         [data-theme="light"] .icon-moon { display: block; }
-
-        /* ── Brand logo theme switching ────────────────────────────────────── */
-        [data-theme="light"] .brand-logo-dark  { display: none; }
-
-        /* ── Brand logo sizing (SVGs have transparent backgrounds — no crop needed) ── */
-        .logo-left-dark   { height: var(--clmone-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
-        .logo-left-light  { height: var(--clmone-logo-header-height, 48px); width: auto; display: block; object-fit: contain; }
-        .logo-right-dark  { height: 38px; width: auto; display: block; object-fit: contain; }
-        .logo-right-light { height: 38px; width: auto; display: block; object-fit: contain; }
 
         /* ── Auth pages (login / register) ─────────────────────────────────── */
         .login-panel-left  { background: var(--surface); }

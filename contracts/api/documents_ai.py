@@ -302,6 +302,15 @@ def document_upload_api(request):
     except Exception:
         pass
 
+    review_requested = request.POST.get('run_ai_review') in {'1', 'true', 'True', 'on'}
+    ai_review = {'requested': False, 'status': 'not-requested', 'finding_count': 0}
+    if review_requested and contract is not None:
+        ai_review = _run_uploaded_contract_review(
+            request=request,
+            organization=organization,
+            document=document,
+        )
+
     return JsonResponse(
         {
             'ok': True,
@@ -318,6 +327,7 @@ def document_upload_api(request):
                 'confidence': confidence,
                 'source': ocr_source,
             },
+            'ai_review': ai_review,
         },
         status=201,
     )
@@ -342,6 +352,96 @@ def _cleanup_orphaned_upload(document):
             'orphan_cleanup_failed key_suffix=%r',
             getattr(document.file, 'name', '?').split('/')[-1],
         )
+
+
+def _run_uploaded_contract_review(*, request, organization, document):
+    """Run an optional AI review after the agreement has been safely stored."""
+    review = {
+        'requested': True,
+        'status': 'unavailable',
+        'finding_count': 0,
+        'message': 'AI review is not available for this workspace.',
+    }
+
+    def record_outcome():
+        log_action(
+            request.user,
+            AuditLog.Action.CREATE,
+            'Document',
+            document.pk,
+            str(document),
+            organization=organization,
+            request=request,
+            event_type='ai.uploaded_contract_review',
+            outcome=AuditLog.Outcome.SUCCESS if review['status'] == 'completed' else AuditLog.Outcome.FAILURE,
+            changes={
+                'event': 'ai.uploaded_contract_review',
+                'review_status': review['status'],
+                'finding_count': review['finding_count'],
+                'document_id': document.pk,
+            },
+        )
+
+    policy, _ = OrgPolicy.objects.get_or_create(organization=organization)
+    if not policy.ai_features_enabled:
+        review['message'] = 'AI-assisted features are disabled for this workspace.'
+        record_outcome()
+        return review
+
+    try:
+        text = document.ocr_review.extracted_text or ''
+    except Exception:
+        text = ''
+    if not text.strip():
+        review.update({
+            'status': 'needs-readable-text',
+            'message': 'The agreement was uploaded, but no readable text was found for AI review.',
+        })
+        record_outcome()
+        return review
+
+    from contracts.services.ai_contract_review import (
+        AIContractReviewUnavailable,
+        review_uploaded_contract,
+    )
+    from contracts.services.ai_extraction import AIExtractionError
+
+    try:
+        result = review_uploaded_contract(
+            document=document,
+            organization=organization,
+            text=text,
+            user=request.user,
+        )
+    except AIContractReviewUnavailable as exc:
+        review['message'] = str(exc)
+    except AIExtractionError:
+        logger.exception('uploaded_contract_ai_review_invalid_response document=%s', document.pk)
+        review.update({
+            'status': 'failed',
+            'message': 'AI review could not validate a provider response. The agreement is safely stored.',
+        })
+    except Exception:
+        logger.exception('uploaded_contract_ai_review_failed document=%s', document.pk)
+        review.update({
+            'status': 'failed',
+            'message': 'AI review could not be completed. The agreement is safely stored.',
+        })
+    else:
+        review.update({
+            'status': 'completed',
+            'finding_count': result.flags_created,
+            'citation_count': result.spans_reviewed,
+            'model': result.model,
+            'message': (
+                f'{result.flags_created} potential issue(s) were added to the risk register for human review.'
+                if result.flags_created else
+                'No potential issues were found in the clauses reviewed. Human review is still required.'
+            ),
+        })
+
+    record_outcome()
+    return review
 
 
 def _resolve_ai_contract(request, contract_id, *, action=ContractAction.AI, require_provider=False):

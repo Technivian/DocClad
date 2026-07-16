@@ -57,7 +57,7 @@ class DesignSystemTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'CLM One')
-        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'Risk findings')
         self.assertContains(response, 'css/command-center.css')
 
     def test_dashboard_loads_with_feature_flag_disabled(self):
@@ -318,7 +318,7 @@ class DesignSystemTests(TestCase):
         components = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
         ).read_text()
-        self.assertIn('dc-ds-scaffold dc-ds-scaffold--with-rail', repository)
+        self.assertNotIn('dc-ds-scaffold--with-rail', repository)
         self.assertIn('grid-template-columns: minmax(0, 1fr) 296px', components)
         self.assertIn('.dc-ds-scaffold__rail { min-width: 0; order: 2; }', components)
         self.assertNotIn('Repository Control Center', repository)
@@ -348,7 +348,7 @@ class DesignSystemTests(TestCase):
             self.assertIn('dc-ds-page-flow', content, relative_path)
 
         repository = (template_root / 'repository.html').read_text()
-        self.assertIn('dc-ds-choice dc-ds-choice--rail', repository)
+        self.assertIn('repo-filter-drawer', repository)
         self.assertIn('dc-ds-summary', repository)
 
         for relative_path in ('dpa_review_pack_list.html', 'obligations_workspace.html'):

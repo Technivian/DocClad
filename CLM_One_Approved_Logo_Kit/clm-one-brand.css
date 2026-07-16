@@ -1,0 +1,35 @@
+/* CLM One approved logo integration
+   The image itself is the brand artwork. Never recreate it with live text or CSS shapes. */
+
+.clm-one-logo {
+  display: block;
+  width: auto;
+  height: 28px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.clm-one-logo--auth {
+  height: 42px;
+}
+
+.clm-one-logo--document {
+  height: 48px;
+}
+
+.clm-one-mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .clm-one-logo--responsive {
+    display: none;
+  }
+
+  .clm-one-mark--responsive {
+    display: block;
+  }
+}

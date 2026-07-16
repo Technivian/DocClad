@@ -6,19 +6,20 @@
 class CLMOneRepository {
     constructor() {
         this.selectedContracts = new Set();
-        this.viewStorageKey = 'clmone-saved-views';
         this.contractCache = new Map();
         this.filters = {
             q: '',
             status: [],
             contract_type: [],
+            owner: [],
+            counterparty: [],
+            risk_level: [],
+            approval_state: [],
             sort: 'updated_desc',
             page: 1,
             page_size: 25,
             expiring_within_days: null
         };
-        this.savedViews = this.loadSavedViews();
-        this.activeSavedViewName = '';
         this.currentUser = { role: 'admin' };
         
         this.init();
@@ -26,7 +27,6 @@ class CLMOneRepository {
     
     init() {
         this.setupEventListeners();
-        this.renderSavedViews();
         this.setupKeyboardShortcuts();
         this.loadFromURL();
         this.syncControlsToFilters();
@@ -73,6 +73,42 @@ class CLMOneRepository {
             button.addEventListener('click', () => this.applyRailView(button.dataset.railView || 'all'));
         });
 
+        const filterToggle = document.getElementById('repo-filter-toggle');
+        const filterDrawer = document.getElementById('repository-filters');
+        if (filterToggle && filterDrawer) {
+            filterToggle.addEventListener('click', () => {
+                const open = filterDrawer.classList.toggle('is-open');
+                filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        }
+
+        const bindSelectFilter = (id, apply) => {
+            const control = document.getElementById(id);
+            if (control) control.addEventListener('change', (event) => apply(event.target.value));
+        };
+        bindSelectFilter('status-filter-select', (value) => this.applyStatusFilter(value));
+        bindSelectFilter('type-filter-select', (value) => {
+            this.filters.contract_type = value ? [value] : [];
+            this.filters.page = 1;
+            this.renderFilterChips(); this.updateURL(); this.loadContracts();
+        });
+        ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
+            bindSelectFilter(`${filterName.replace('_level', '').replace('_state', '')}-filter-select`, (value) => {
+                this.filters[filterName] = value ? [value] : [];
+                this.filters.page = 1;
+                this.renderFilterChips(); this.updateURL(); this.loadContracts();
+            });
+        });
+        bindSelectFilter('expiry-filter-select', (value) => {
+            this.filters.expiring_within_days = value ? Number(value) : null;
+            this.filters.page = 1;
+            this.renderFilterChips(); this.updateQuickFilterState(); this.updateURL(); this.loadContracts();
+        });
+
+        document.querySelectorAll('[data-action="clear-repository-filters"]').forEach((button) => {
+            button.addEventListener('click', () => this.clearRepositoryFilters());
+        });
+
         // Select all checkbox
         const selectAllCheckbox = document.getElementById('select-all');
         if (selectAllCheckbox) {
@@ -107,10 +143,6 @@ class CLMOneRepository {
             bulkExportButton.addEventListener('click', () => this.exportSelectedContracts());
         }
 
-        document.querySelectorAll('[data-action="save-view"]').forEach((btn) => {
-            btn.addEventListener('click', () => this.saveCurrentView());
-        });
-
         document.querySelectorAll('[data-action="clear-selection"]').forEach((btn) => {
             btn.addEventListener('click', () => this.clearSelection());
         });
@@ -130,7 +162,7 @@ class CLMOneRepository {
             
             if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
                 e.preventDefault();
-                window.location.href = '/contracts/create/';
+                window.location.href = '/contracts/new/';
             }
         });
     }
@@ -141,6 +173,10 @@ class CLMOneRepository {
         // Load filters from URL
         if (params.get('q')) this.filters.q = params.get('q');
         if (params.getAll('status').length) this.filters.status = params.getAll('status');
+        if (params.getAll('contract_type').length) this.filters.contract_type = params.getAll('contract_type');
+        ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
+            if (params.getAll(filterName).length) this.filters[filterName] = params.getAll(filterName);
+        });
         if (params.get('sort')) this.filters.sort = params.get('sort');
         if (params.get('page')) this.filters.page = parseInt(params.get('page'));
         if (params.get('expiring_within_days')) this.filters.expiring_within_days = parseInt(params.get('expiring_within_days'));
@@ -162,6 +198,20 @@ class CLMOneRepository {
         if (sortSelect) {
             sortSelect.value = this.filters.sort;
         }
+        const statusSelect = document.getElementById('status-filter-select');
+        if (statusSelect) statusSelect.value = this.filters.status.length === 1 ? this.filters.status[0] : '';
+        const typeSelect = document.getElementById('type-filter-select');
+        if (typeSelect) typeSelect.value = this.filters.contract_type.length === 1 ? this.filters.contract_type[0] : '';
+        const ownerSelect = document.getElementById('owner-filter-select');
+        if (ownerSelect) ownerSelect.value = this.filters.owner.length === 1 ? this.filters.owner[0] : '';
+        const counterpartySelect = document.getElementById('counterparty-filter-select');
+        if (counterpartySelect) counterpartySelect.value = this.filters.counterparty.length === 1 ? this.filters.counterparty[0] : '';
+        const riskSelect = document.getElementById('risk-filter-select');
+        if (riskSelect) riskSelect.value = this.filters.risk_level.length === 1 ? this.filters.risk_level[0] : '';
+        const approvalSelect = document.getElementById('approval-filter-select');
+        if (approvalSelect) approvalSelect.value = this.filters.approval_state.length === 1 ? this.filters.approval_state[0] : '';
+        const expirySelect = document.getElementById('expiry-filter-select');
+        if (expirySelect) expirySelect.value = this.filters.expiring_within_days ? String(this.filters.expiring_within_days) : '';
     }
 
     applyStatusFilter(status) {
@@ -174,11 +224,8 @@ class CLMOneRepository {
         this.loadContracts();
     }
 
-    // The saved-view rail (All documents / Active paper / Draft paper /
-    // 30d attention) is just a friendlier front for the same status and
-    // expiring_within_days filters the Status filters panel uses — one
-    // filter state, two entry points, kept in sync by
-    // updateQuickFilterState() so neither ever shows a stale active state.
+    // Quick views are a compact front for the same status and expiry filters
+    // available in the Filters and views drawer.
     applyRailView(key) {
         if (key === 'active') {
             this.filters.status = ['ACTIVE'];
@@ -229,6 +276,10 @@ class CLMOneRepository {
         
         if (this.filters.q) params.set('q', this.filters.q);
         this.filters.status.forEach(s => params.append('status', s));
+        this.filters.contract_type.forEach(t => params.append('contract_type', t));
+        ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
+            this.filters[filterName].forEach((value) => params.append(filterName, value));
+        });
         if (this.filters.sort !== 'updated_desc') params.set('sort', this.filters.sort);
         if (this.filters.page !== 1) params.set('page', this.filters.page.toString());
         if (this.filters.expiring_within_days) params.set('expiring_within_days', this.filters.expiring_within_days.toString());
@@ -245,6 +296,9 @@ class CLMOneRepository {
             if (this.filters.q) params.set('q', this.filters.q);
             this.filters.status.forEach(s => params.append('status', s));
             this.filters.contract_type.forEach(t => params.append('contract_type', t));
+            ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
+                this.filters[filterName].forEach((value) => params.append(filterName, value));
+            });
             params.set('sort', this.filters.sort);
             params.set('page', this.filters.page.toString());
             params.set('page_size', this.filters.page_size.toString());
@@ -312,10 +366,14 @@ class CLMOneRepository {
                 this.filters.q
                 || this.filters.status.length
                 || this.filters.contract_type.length
+                || this.filters.owner.length
+                || this.filters.counterparty.length
+                || this.filters.risk_level.length
+                || this.filters.approval_state.length
                 || this.filters.expiring_within_days
             );
             tbody.innerHTML = `
-                <tr><td colspan="8">
+                <tr><td colspan="10">
                     <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state">
                         <h2 class="dc-ds-empty__title">${hasActiveFilters ? 'No contracts match this view' : 'Your repository is ready'}</h2>
                         <p class="dc-ds-empty__copy">${hasActiveFilters
@@ -327,7 +385,7 @@ class CLMOneRepository {
                         <div class="dc-ds-actions dc-ds-empty__actions">
                             ${hasActiveFilters
                                 ? '<button type="button" class="dc-ds-button dc-ds-button--primary" data-action="clear-repository-filters">Clear filters</button>'
-                                : '<a href="/contracts/documents/new/" class="dc-ds-button dc-ds-button--primary">Upload first contract</a>'}
+                            : '<a href="/contracts/new/" class="dc-ds-button dc-ds-button--primary">Add contract</a>'}
                         </div>
                     </div>
                 </td></tr>
@@ -346,10 +404,16 @@ class CLMOneRepository {
                 </td>
                 <td class="px-3 py-2">
                     <div class="font-medium">${this.escapeHtml(contract.title)}</div>
-                    <div class="text-sm text-muted">${this.escapeHtml(contract.counterparty || 'No counterparty')}</div>
+                    <div class="text-sm text-muted">${this.escapeHtml(contract.status_display || contract.status)}</div>
                 </td>
                 <td class="px-3 py-2">
-                    ${this.renderStageDots(contract.stage_steps)}
+                    ${this.escapeHtml(contract.contract_type_display || 'Other')}
+                </td>
+                <td class="px-3 py-2">
+                    ${this.escapeHtml(contract.counterparty || '—')}
+                </td>
+                <td class="px-3 py-2">
+                    <span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">${this.escapeHtml(contract.stage_display || 'Drafting')}</span>
                 </td>
                 <td class="px-3 py-2">
                     ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
@@ -364,9 +428,7 @@ class CLMOneRepository {
                     ${contract.value_display || '—'}
                 </td>
                 <td class="px-3 py-2">
-                    <span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">
-                        ${this.escapeHtml(contract.status_display || contract.status)}
-                    </span>
+                    <a href="/contracts/${contract.id}/" class="repo-row-action" aria-label="Open ${this.escapeHtml(contract.title)}">⋯</a>
                 </td>
             </tr>
         `).join('');
@@ -374,9 +436,9 @@ class CLMOneRepository {
         // Add click handlers
         tbody.querySelectorAll('.contract-row').forEach(row => {
             row.addEventListener('click', (e) => {
-                if (!e.target.matches('input[type="checkbox"]')) {
+                if (!e.target.closest('input, a, button')) {
                     const contractId = row.dataset.contractId;
-                    this.openDetailsDrawer(contractId);
+                    window.location.href = `/contracts/${contractId}/`;
                 }
             });
         });
@@ -434,12 +496,14 @@ class CLMOneRepository {
         this.filters.q = '';
         this.filters.status = [];
         this.filters.contract_type = [];
+        this.filters.owner = [];
+        this.filters.counterparty = [];
+        this.filters.risk_level = [];
+        this.filters.approval_state = [];
         this.filters.expiring_within_days = null;
         this.filters.page = 1;
-        this.activeSavedViewName = '';
         this.syncControlsToFilters();
         this.renderFilterChips();
-        this.renderSavedViews();
         this.updateQuickFilterState();
         this.updateURL();
         this.loadContracts();
@@ -570,9 +634,8 @@ class CLMOneRepository {
                     </div>
                 </div>
 
-                <div class="mt-6 pt-4 border-t flex space-x-2">
-                    <a href="/contracts/${contract.id}/" class="btn-primary">Edit Contract</a>
-                    <button onclick="window.clmoneRepository.duplicateContract('${contract.id}')" class="btn-outline">Duplicate</button>
+                <div class="mt-6 pt-4 border-t">
+                    <a href="/contracts/${contract.id}/" class="btn-primary">Open contract</a>
                 </div>
             </div>
         `;
@@ -586,6 +649,20 @@ class CLMOneRepository {
         const params = new URLSearchParams(window.location.search);
         params.delete('contractId');
         window.history.replaceState({}, '', '?' + params.toString());
+    }
+
+    filterDisplayValue(filterName, value) {
+        const controlIds = {
+            status: 'status-filter-select',
+            contract_type: 'type-filter-select',
+            owner: 'owner-filter-select',
+            counterparty: 'counterparty-filter-select',
+            risk_level: 'risk-filter-select',
+            approval_state: 'approval-filter-select',
+        };
+        const control = document.getElementById(controlIds[filterName]);
+        const option = control && Array.from(control.options).find((entry) => entry.value === value);
+        return option ? option.textContent.trim() : value;
     }
     
     renderFilterChips() {
@@ -624,7 +701,7 @@ class CLMOneRepository {
 
         this.filters.status.forEach((status) => {
             chips.push({
-                label: `Status: ${status}`,
+                label: `Status: ${this.filterDisplayValue('status', status)}`,
                 onClick: () => {
                     this.filters.status = this.filters.status.filter((value) => value !== status);
                     this.filters.page = 1;
@@ -653,7 +730,7 @@ class CLMOneRepository {
 
         this.filters.contract_type.forEach((contractType) => {
             chips.push({
-                label: `Type: ${contractType}`,
+                label: `Type: ${this.filterDisplayValue('contract_type', contractType)}`,
                 onClick: () => {
                     this.filters.contract_type = this.filters.contract_type.filter((value) => value !== contractType);
                     this.filters.page = 1;
@@ -661,6 +738,28 @@ class CLMOneRepository {
                     this.updateURL();
                     this.loadContracts();
                 }
+            });
+        });
+
+        const filterLabels = {
+            owner: 'Owner',
+            counterparty: 'Counterparty',
+            risk_level: 'Risk',
+            approval_state: 'Approval',
+        };
+        Object.entries(filterLabels).forEach(([filterName, label]) => {
+            this.filters[filterName].forEach((value) => {
+                chips.push({
+                    label: `${label}: ${this.filterDisplayValue(filterName, value)}`,
+                    onClick: () => {
+                        this.filters[filterName] = this.filters[filterName].filter((entry) => entry !== value);
+                        this.filters.page = 1;
+                        this.syncControlsToFilters();
+                        this.renderFilterChips();
+                        this.updateURL();
+                        this.loadContracts();
+                    }
+                });
             });
         });
 
@@ -686,113 +785,6 @@ class CLMOneRepository {
                 button.addEventListener('click', chip.onClick);
             }
         });
-    }
-    
-    renderSavedViews() {
-        const container = document.getElementById('saved-views');
-        if (!container) return;
-
-        if (!this.savedViews.length) {
-            container.innerHTML = `
-                <div class="dc-ds-empty dc-ds-empty--compact repo-saved-views-empty">
-                    <h2 class="dc-ds-empty__title">No saved views yet</h2>
-                    <p class="dc-ds-empty__copy">No views have been saved in this browser.</p>
-                    <p class="dc-ds-empty__how">Saved views appear here after you preserve the current search, filters, and sort order.</p>
-                    <div class="dc-ds-actions dc-ds-empty__actions"><button type="button" class="dc-ds-button dc-ds-button--primary" data-action="save-empty-view">Save current view</button></div>
-                </div>
-            `;
-            container.querySelector('[data-action="save-empty-view"]')
-                ?.addEventListener('click', () => this.saveCurrentView());
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="flex items-center gap-2 flex-wrap">
-                ${this.savedViews.map((view, index) => `
-                    <span class="repo-saved-view-wrap">
-                        <button type="button" class="repo-saved-view dc-ds-choice ${this.activeSavedViewName === view.name ? 'chip-active' : ''}" data-saved-view-index="${index}" aria-pressed="${this.activeSavedViewName === view.name ? 'true' : 'false'}">
-                            ${view.name}
-                        </button>
-                        <button type="button" class="repo-saved-view-delete" data-saved-view-delete-index="${index}" aria-label="Delete saved view ${view.name}">
-                            ×
-                        </button>
-                    </span>
-                `).join('')}
-            </div>
-        `;
-
-        container.querySelectorAll('[data-saved-view-index]').forEach((button) => {
-            const index = Number(button.dataset.savedViewIndex);
-            button.addEventListener('click', () => this.applySavedView(index));
-        });
-
-        container.querySelectorAll('[data-saved-view-delete-index]').forEach((button) => {
-            const index = Number(button.dataset.savedViewDeleteIndex);
-            button.addEventListener('click', (event) => {
-                event.stopPropagation();
-                this.deleteSavedView(index);
-            });
-        });
-    }
-    
-    loadSavedViews() {
-        try {
-            const parsed = JSON.parse(localStorage.getItem(this.viewStorageKey) || '[]');
-            return Array.isArray(parsed) ? parsed : [];
-        } catch {
-            return [];
-        }
-    }
-
-    persistSavedViews() {
-        localStorage.setItem(this.viewStorageKey, JSON.stringify(this.savedViews));
-        this.renderSavedViews();
-    }
-
-    saveCurrentView() {
-        const name = window.prompt('Name this saved view', this.filters.q ? `Search: ${this.filters.q}` : 'Saved view');
-        if (!name) return;
-
-        const trimmedName = name.trim();
-        if (!trimmedName) return;
-
-        this.savedViews = [
-            {
-                name: trimmedName,
-                filters: JSON.parse(JSON.stringify(this.filters)),
-                created_at: new Date().toISOString(),
-            },
-            ...this.savedViews.filter((view) => view.name !== trimmedName),
-        ];
-        this.persistSavedViews();
-    }
-
-    applySavedView(index) {
-        const savedView = this.savedViews[index];
-        if (!savedView) return;
-
-        this.filters = {
-            q: savedView.filters.q || '',
-            status: Array.isArray(savedView.filters.status) ? [...savedView.filters.status] : [],
-            contract_type: Array.isArray(savedView.filters.contract_type) ? [...savedView.filters.contract_type] : [],
-            sort: savedView.filters.sort || 'updated_desc',
-            page: 1,
-            page_size: savedView.filters.page_size || 25,
-            expiring_within_days: savedView.filters.expiring_within_days || null,
-        };
-
-        this.syncControlsToFilters();
-        this.renderFilterChips();
-        this.updateQuickFilterState();
-        this.updateURL();
-        this.loadContracts();
-        this.activeSavedViewName = savedView.name;
-        this.renderSavedViews();
-    }
-
-    deleteSavedView(index) {
-        this.savedViews = this.savedViews.filter((_, savedViewIndex) => savedViewIndex !== index);
-        this.persistSavedViews();
     }
     
     showLoading() {
@@ -829,11 +821,6 @@ class CLMOneRepository {
         }
     }
     
-    async duplicateContract(contractId) {
-        // Placeholder for contract duplication
-        alert('Contract duplication feature coming soon');
-    }
-
     async bulkChangeStatus() {
         if (!this.selectedContracts.size) {
             window.alert('Select one or more contracts first.');

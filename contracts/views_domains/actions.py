@@ -137,17 +137,21 @@ def profile(request):
     form = None
     mfa_required = False
     mfa_admin_user = False
+    membership = None
+    security_error = ''
     recovery_codes_preview = request.session.pop('mfa_recovery_codes_preview', None)
     if request.user.is_authenticated:
         profile_obj, _ = UserProfile.objects.get_or_create(user=request.user)
         organization = get_user_organization(request.user)
         mfa_required = bool(getattr(organization, 'require_mfa', False)) if organization else False
-        mfa_admin_user = bool(organization and OrganizationMembership.objects.filter(
+        membership = OrganizationMembership.objects.filter(
             organization=organization,
             user=request.user,
-            role__in=[OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN],
             is_active=True,
-        ).exists())
+        ).first() if organization else None
+        mfa_admin_user = bool(membership and membership.role in [
+            OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN,
+        ])
         if request.method == 'POST':
             action = request.POST.get('action', 'save')
             form = UserProfileForm(request.POST, instance=profile_obj)
@@ -183,10 +187,17 @@ def profile(request):
                 request.user.first_name = form.cleaned_data.get('first_name', '')
                 request.user.last_name = form.cleaned_data.get('last_name', '')
                 request.user.email = form.cleaned_data.get('email', '')
-                enrollment_code = (form.cleaned_data.get('mfa_enrollment_code') or '').strip()
-                recovery_code = (form.cleaned_data.get('mfa_recovery_code') or '').strip()
-                enable_mfa = bool(form.cleaned_data.get('mfa_enabled'))
-                if enable_mfa:
+                # Preserve legacy API compatibility for existing integrations
+                # posting these values while keeping them out of the account UI.
+                if 'bio' in request.POST:
+                    profile_obj.bio = request.POST.get('bio', '')
+                profile_obj.save()
+                request.user.save()
+
+                security_action = action == 'verify_mfa' or 'mfa_enabled' in request.POST
+                if security_action:
+                    enrollment_code = (request.POST.get('mfa_enrollment_code') or '').strip()
+                    recovery_code = (request.POST.get('mfa_recovery_code') or '').strip()
                     already_enrolled = bool(profile_obj.mfa_enabled and profile_obj.mfa_verified_at)
                     if recovery_code:
                         from contracts.services.recovery_codes import consume_recovery_code
@@ -194,18 +205,15 @@ def profile(request):
                             profile_obj.mfa_enabled = True
                             profile_obj.mfa_verified_at = timezone.now()
                             profile_obj.save()
-                            request.user.save()
                             messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
                             return redirect('profile')
+                        security_error = 'The recovery code could not be verified. Try another code or request new recovery codes.'
                     if already_enrolled and not enrollment_code:
-                        profile_obj.save()
-                        request.user.save()
-                        messages.success(request, 'Profile updated successfully.')
+                        messages.success(request, 'Account updated successfully.')
                         return redirect('profile')
                     if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
-                        form.add_error('mfa_enrollment_code', 'Enter the 6-digit verification code sent to your email.')
+                        security_error = security_error or 'Enter the 6-digit verification code sent to your email.'
                     else:
-                        request.user.save()
                         # Completing enrollment verifies this session.
                         request.session['mfa_verified'] = True
                         log_action(
@@ -226,34 +234,20 @@ def profile(request):
                         messages.success(request, 'Profile updated successfully and MFA enrolled.')
                         return redirect('profile')
                 else:
-                    profile_obj.mfa_enabled = False
-                    profile_obj.mfa_verified_at = None
-                    profile_obj.mfa_enrollment_code_hash = ''
-                    profile_obj.mfa_enrollment_code_expires_at = None
-                    profile_obj.mfa_enrollment_code_sent_at = None
-                    profile_obj.mfa_recovery_code_hashes = []
-                    profile_obj.save()
-                    request.user.save()
-                    log_action(
-                        request.user,
-                        AuditLog.Action.UPDATE,
-                        'UserProfile',
-                        object_id=profile_obj.id,
-                        object_repr=str(profile_obj),
-                        changes={'event': 'mfa_disabled', 'organization_id': getattr(organization, 'id', None)},
-                        request=request,
-                    )
-                    try:
-                        from contracts.services.notifications import send_mfa_disabled_notification
-                        send_mfa_disabled_notification(request.user)
-                    except Exception:
-                        import logging
-                        logging.getLogger(__name__).exception('mfa_disabled_notification failed user=%s', request.user.pk)
-                    messages.success(request, 'Profile updated successfully.')
+                    messages.success(request, 'Account updated successfully.')
                     return redirect('profile')
         else:
             form = UserProfileForm(instance=profile_obj)
-    return render(request, 'profile.html', {'form': form, 'profile': profile_obj, 'mfa_required': mfa_required, 'mfa_admin_user': mfa_admin_user, 'recovery_codes_preview': recovery_codes_preview})
+    return render(request, 'profile.html', {
+        'form': form,
+        'profile': profile_obj,
+        'organization': organization if request.user.is_authenticated else None,
+        'membership': membership,
+        'mfa_required': mfa_required,
+        'mfa_admin_user': mfa_admin_user,
+        'security_error': security_error,
+        'recovery_codes_preview': recovery_codes_preview,
+    })
 
 
 @login_required

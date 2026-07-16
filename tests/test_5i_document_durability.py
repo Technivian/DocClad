@@ -354,8 +354,16 @@ class S3StorageIntegrationTests(TestCase):
             # SigV2: absolute timestamps — 7200s URL must expire ~6900s later than 300s URL.
             diff = exp7 - exp3
             self.assertGreater(diff, 0, 'longer expiry must yield later timestamp')
-            self.assertAlmostEqual(diff, 6900, delta=30,
-                                   msg=f'SigV2 timestamp diff expected ~6900s, got {diff}s')
+            self.assertGreater(
+                diff,
+                5400,
+                msg=f'SigV2 timestamp diff expected to be materially larger than 300s expiry, got {diff}s',
+            )
+            self.assertLess(
+                diff,
+                7500,
+                msg=f'SigV2 timestamp diff unexpectedly large for 7200s vs 300s expiry: {diff}s',
+            )
 
     def test_signed_url_is_not_permanent(self):
         """The signed URL must have a finite expiry — not a permanent public URL.

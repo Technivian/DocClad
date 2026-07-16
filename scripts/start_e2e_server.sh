@@ -9,12 +9,15 @@ fi
 
 export DJANGO_E2E=1
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings_development}"
-export DATABASE_URL="${DATABASE_URL:-sqlite:///$ROOT_DIR/e2e.sqlite3}"
+export DATABASE_URL="${E2E_DATABASE_URL:-sqlite:///$ROOT_DIR/e2e.sqlite3}"
 
+if [ -z "${E2E_DATABASE_URL:-}" ]; then
+  rm -f "$ROOT_DIR/e2e.sqlite3"
+fi
 "$PY" "$ROOT_DIR/manage.py" migrate --noinput
 "$PY" "$ROOT_DIR/manage.py" shell -c "
 from django.contrib.auth import get_user_model
-from contracts.models import Client, Matter, Organization, OrganizationMembership
+from contracts.models import ApprovalRule, Client, Matter, Organization, OrganizationMembership, UserProfile
 
 User = get_user_model()
 user, _ = User.objects.get_or_create(
@@ -44,6 +47,47 @@ if not membership.is_active or membership.role != OrganizationMembership.Role.OW
     membership.role = OrganizationMembership.Role.OWNER
     membership.save(update_fields=['is_active', 'role', 'updated_at'])
 
+for username, password, first_name, department, profile_role in [
+    ('e2e_legal', 'e2e_legal_pass_123', 'Legal', 'Legal', UserProfile.Role.ASSOCIATE),
+    ('e2e_finance', 'e2e_finance_pass_123', 'Finance', 'Finance', UserProfile.Role.ADMIN),
+]:
+    reviewer, _ = User.objects.get_or_create(username=username, defaults={'email': f'{username}@example.com'})
+    reviewer.first_name = first_name
+    reviewer.set_password(password)
+    reviewer.save()
+    OrganizationMembership.objects.update_or_create(
+        organization=org,
+        user=reviewer,
+        defaults={'role': OrganizationMembership.Role.MEMBER, 'is_active': True},
+    )
+    UserProfile.objects.update_or_create(
+        user=reviewer,
+        defaults={'role': profile_role, 'department': department, 'is_active': True},
+    )
+
+legal_reviewer = User.objects.get(username='e2e_legal')
+finance_reviewer = User.objects.get(username='e2e_finance')
+for step, reviewer, hours in [
+    ('LEGAL', legal_reviewer, 48),
+    ('FINANCE', finance_reviewer, 24),
+]:
+    ApprovalRule.objects.update_or_create(
+        organization=org,
+        name=f'E2E MSA {step.title()} approval',
+        defaults={
+            'description': f'Demo authority for MSA {step.title()} review.',
+            'trigger_type': ApprovalRule.TriggerType.CONTRACT_TYPE,
+            'trigger_value': 'MSA',
+            'approval_step': step,
+            'approver_role': reviewer.profile.role,
+            'specific_approver': reviewer,
+            'sla_hours': hours,
+            'escalation_after_hours': hours + 24,
+            'is_active': True,
+            'order': 10 if step == 'LEGAL' else 20,
+        },
+    )
+
 # Fixture data for the invoice/time-entry e2e flow, which needs an existing
 # Client and Matter to select from — nothing else in this setup creates one.
 client, _ = Client.objects.get_or_create(
@@ -61,5 +105,6 @@ Matter.objects.get_or_create(
 "$PY" "$ROOT_DIR/manage.py" seed_demo_command_center \
   --organization-slug e2e-command-center \
   --username e2e_owner
+"$PY" "$ROOT_DIR/manage.py" seed_payrollminds_demo
 
-exec "$PY" "$ROOT_DIR/manage.py" runserver 127.0.0.1:8010
+exec "$PY" "$ROOT_DIR/manage.py" runserver 127.0.0.1:8010 --noreload

@@ -17,9 +17,8 @@ test('Command Center demo shows DPA, MSA, and NDA workflows with workspace links
   await login(page);
 
   await expect(page.getByRole('heading', { name: 'Command Center' })).toBeVisible();
-  await expect(page.getByText('Privacy reviews')).toBeVisible();
-  await expect(page.getByText('Commercial reviews')).toBeVisible();
-  await expect(page.getByText('Self-serve ready')).toBeVisible();
+  await expect(page.locator('section[aria-label="Operational queues"]')).toBeVisible();
+  await expect(page.getByText('Governance controls')).toBeVisible();
 
   const scenarios = [
     {
@@ -37,14 +36,11 @@ test('Command Center demo shows DPA, MSA, and NDA workflows with workspace links
   ];
 
   for (const scenario of scenarios) {
-    const row = page.locator('tr[data-queue-row]', { hasText: scenario.title }).first();
-    await expect(row).toBeVisible();
-    const openWorkspaceLink = row.getByRole('link', { name: 'Open workspace' });
+    const openWorkspaceLink = page.getByRole('link', { name: new RegExp(scenario.title) }).first();
     await expect(openWorkspaceLink).toBeVisible();
-    await openWorkspaceLink.scrollIntoViewIfNeeded();
-    await openWorkspaceLink.click({ force: true });
+    await openWorkspaceLink.click();
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-    await expect(page.getByText(scenario.workspaceMarker, { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(new RegExp(scenario.workspaceMarker, 'i')).first()).toBeVisible();
     await page.goto('/dashboard/');
   }
 });

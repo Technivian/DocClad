@@ -1,38 +1,41 @@
-/* profile.html — page-scoped layout, token-backed only.
-   Not a shared primitive: sized specifically for the profile page identity
-   header and MFA recovery-code preview, which do not appear elsewhere.
-   Loaded through base.html's {% block page_css %} outlet, after
-   clmone-tokens.css and dist/styles.css. */
-.profile-page-avatar {
-  width: 64px;
-  height: 64px;
-  background: var(--avatar-gradient);
-  border-radius: var(--radius-panel);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+/* Account experience: uses the Command Center shell gutters as the source
+   of truth so the page edges line up with the rest of the product. */
+.profile-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  padding: var(--space-32) var(--space-32) var(--space-48);
 }
-
-.profile-page-avatar__initial {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.profile-recovery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.profile-recovery-code {
-  border-radius: var(--radius-sm);
-  background: var(--card);
-  border: 1px solid var(--line);
-  padding: 8px 12px;
-  font-size: 0.875rem;
-  font-family: var(--mono);
-  color: var(--status-positive-fg);
-}
+.profile-page__hero { display: flex; align-items: center; gap: var(--space-16); margin-bottom: var(--space-24); }
+.profile-page__hero h1 { margin: var(--space-4) 0; color: var(--ink-900); font: var(--text-title); }
+.profile-page__hero > div > p:last-child { margin: 0; color: var(--ink-500); font: var(--text-small); }
+.profile-page-avatar { width: 56px; height: 56px; display: grid; place-items: center; flex: 0 0 auto; border-radius: var(--radius-control); background: var(--avatar-gradient); box-shadow: var(--shadow-card); }
+.profile-page-avatar__initial { color: var(--clmone-white); font: var(--text-section); font-weight: 700; }
+.profile-page__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-24); align-items: start; }
+.profile-page__card { min-width: 0; border-radius: var(--radius-surface); box-shadow: var(--shadow-surface-expressive); }
+.profile-page__card .dc-ds-surface__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-16); }
+.profile-page__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-16); }
+.profile-page__field--wide { grid-column: 1 / -1; }
+.profile-page__actions { display: flex; justify-content: flex-end; margin-top: var(--space-24); padding-top: var(--space-16); border-top: 1px solid var(--line); }
+.profile-page__stack { display: grid; gap: var(--space-16); }
+.profile-page__security-row { display: flex; gap: var(--space-12); padding-bottom: var(--space-16); border-bottom: 1px solid var(--line); }
+.profile-page__security-row strong, .profile-page__security-row span { display: block; }
+.profile-page__security-row strong { color: var(--ink-900); font: var(--text-meta); font-weight: 700; }
+.profile-page__security-row span, .profile-page__muted { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.5; }
+.profile-page__security-form, .profile-page__verify-form { display: flex; align-items: end; gap: var(--space-12); flex-wrap: wrap; }
+.profile-page__verify-form label { display: grid; gap: var(--space-8); color: var(--ink-700); font: var(--text-meta); font-weight: 650; }
+.profile-page__verify-form .form-control { width: 180px; }
+.profile-status { display: inline-flex; align-items: center; min-height: 26px; padding: 0 var(--space-8); border: 1px solid var(--color-status-neutral-border); border-radius: var(--radius-pill); background: var(--status-neutral-bg); color: var(--status-neutral-fg); font: var(--text-meta); font-weight: 700; white-space: nowrap; }
+.profile-status--clear { border-color: var(--color-status-success-border); background: var(--status-positive-bg); color: var(--status-positive-fg); }
+.profile-status--attention { border-color: var(--color-status-warning-border); background: var(--status-pending-bg); color: var(--status-pending-fg); }
+.profile-page__details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-12); margin: 0; }
+.profile-page__details div { min-width: 0; padding: var(--space-12); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--well); }
+.profile-page__details dt { color: var(--ink-500); font: var(--text-meta); }
+.profile-page__details dd { margin: var(--space-4) 0 0; color: var(--ink-900); font: var(--text-small); font-weight: 650; overflow-wrap: anywhere; }
+.profile-page__text-link { width: fit-content; color: var(--seal-dark); font: var(--text-small); font-weight: 700; text-decoration: none; }
+.profile-page__text-link:hover { color: var(--seal); text-decoration: underline; }
+.profile-recovery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-8); margin-top: var(--space-12); }
+.profile-recovery-code { padding: var(--space-8) var(--space-12); border: 1px solid var(--color-status-success-border); border-radius: var(--radius-card); background: var(--card); color: var(--status-positive-fg); font-family: var(--font-mono); font-size: 13px; }
+@media (max-width: 1024px) { .profile-page { padding: var(--space-24) var(--space-24) var(--space-40); } .profile-page__grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .profile-page { padding: var(--space-24) var(--space-16) var(--space-40); } .profile-page__fields, .profile-page__details { grid-template-columns: 1fr; } .profile-page__field--wide { grid-column: auto; } .profile-page__hero { align-items: flex-start; } .profile-page__card .dc-ds-surface__head { align-items: flex-start; } }

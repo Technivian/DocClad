@@ -38,7 +38,6 @@ class PrivacyDashboardLayoutTests(TestCase):
         # this template — it now shares the same PageHeader pattern as
         # Dashboard/Repository instead of inventing its own.
         self.assertNotIn('page-header"', html)
-        self.assertNotIn('page-title"', html)
 
     def test_metric_strip_is_compact_not_default_kpi_grid(self):
         response = self._get()

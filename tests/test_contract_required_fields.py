@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from contracts.forms import ClauseTemplateForm, ContractForm
 from contracts.models import ClauseCategory, ClausePlaybook, ClauseTemplate, ClauseVariant, Contract, Organization, OrganizationMembership
@@ -30,6 +31,14 @@ class ContractRequiredFieldPolicyTests(TestCase):
         self.assertIn('jurisdiction', form.errors)
 
     def test_msa_with_required_fields_is_valid(self):
+        organization = Organization.objects.create(name='Required Fields Org', slug='required-fields-org')
+        user = User.objects.create_user(username='required-fields-owner', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=organization,
+            user=user,
+            role=OrganizationMembership.Role.OWNER,
+            is_active=True,
+        )
         form = ContractForm(
             data={
                 'title': 'MSA',
@@ -37,12 +46,17 @@ class ContractRequiredFieldPolicyTests(TestCase):
                 'content': 'Services terms.',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'State of Delaware',
                 'jurisdiction': 'New York',
                 'risk_level': Contract.RiskLevel.MEDIUM,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
             }
+            ,
+            organization=organization,
         )
 
         self.assertTrue(form.is_valid(), form.errors)
@@ -157,11 +171,14 @@ class ContractDraftingTests(TestCase):
                 'content': '',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': self.user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'EU',
                 'jurisdiction': 'Netherlands',
                 'risk_level': Contract.RiskLevel.HIGH,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
                 'clause_templates': [self.template.pk],
             },
             organization=self.organization,
@@ -185,11 +202,14 @@ class ContractDraftingTests(TestCase):
                 'content': '',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': self.user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'EU',
                 'jurisdiction': 'Netherlands',
                 'risk_level': Contract.RiskLevel.HIGH,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
                 'clause_templates': [self.template.pk],
             },
         )
@@ -212,11 +232,14 @@ class ContractDraftingTests(TestCase):
                 'content': '',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': self.user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'EU',
                 'jurisdiction': 'Netherlands',
                 'risk_level': Contract.RiskLevel.HIGH,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
                 'clause_templates': [self.template.pk],
                 'preview_draft': '1',
             },
@@ -234,6 +257,21 @@ class ContractDraftingTests(TestCase):
         self.assertContains(response, 'Open playbook context', html=False)
         self.assertFalse(Contract.objects.filter(title='Preview Only').exists())
 
+    def test_invalid_contract_preview_renders_validation_errors_without_server_error(self):
+        self.client.login(username='draft-owner', password='testpass123')
+
+        response = self.client.post(
+            reverse('contracts:contract_create'),
+            data={
+                'title': '',
+                'contract_type': Contract.ContractType.MSA,
+                'preview_draft': '1',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This field is required.')
+
     def test_contract_create_saves_edited_preview_sections_in_order(self):
         form = ContractForm(
             data={
@@ -242,11 +280,14 @@ class ContractDraftingTests(TestCase):
                 'content': '',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': self.user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'EU',
                 'jurisdiction': 'Netherlands',
                 'risk_level': Contract.RiskLevel.HIGH,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
                 'draft_section_count': '3',
                 'draft_section_0_include': 'on',
                 'draft_section_0_order': '2',
@@ -282,11 +323,14 @@ class ContractDraftingTests(TestCase):
                 'content': '',
                 'status': Contract.Status.DRAFT,
                 'counterparty': 'Acme Corp',
+                'owner': self.user.pk,
                 'currency': Contract.Currency.USD,
                 'governing_law': 'EU',
                 'jurisdiction': 'Netherlands',
                 'risk_level': Contract.RiskLevel.HIGH,
                 'lifecycle_stage': 'DRAFTING',
+                'start_date': timezone.localdate(),
+                'end_date': timezone.localdate(),
                 'draft_section_count': '2',
                 'draft_section_0_include': 'on',
                 'draft_section_0_order': '2',

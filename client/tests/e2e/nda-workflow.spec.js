@@ -60,14 +60,9 @@ test('NDA self-serve cockpit generates a governed workspace and dashboard row', 
   await expect(page.getByRole('button', { name: 'Send for signature' })).toBeVisible();
 
   await page.goto('/dashboard/');
-  const queueRow = page.locator('tr[data-queue-row]', { hasText: counterparty }).first();
-  await expect(queueRow).toBeVisible();
-  await expect(queueRow).toContainText('NDA');
-  await expect(queueRow).toContainText('Self-serve eligible');
-  const openWorkspaceLink = queueRow.getByRole('link', { name: 'Open workspace' });
+  const openWorkspaceLink = page.getByRole('link', { name: new RegExp(counterparty) }).first();
   await expect(openWorkspaceLink).toBeVisible();
-  await openWorkspaceLink.scrollIntoViewIfNeeded();
-  await openWorkspaceLink.click({ force: true });
+  await openWorkspaceLink.click();
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
 });

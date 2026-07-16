@@ -29,11 +29,11 @@ class RepositorySavedViewsTests(TestCase):
             created_by=self.user,
         )
 
-    def test_repository_page_renders_saved_view_controls(self):
+    def test_repository_hides_unpersisted_saved_views(self):
         self.client.login(username='repo-user', password='testpass123')
 
         response = self.client.get(reverse('contracts:repository'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'id="saved-views"', html=False)
+        self.assertNotContains(response, 'id="saved-views"', html=False)
         self.assertContains(response, 'id="filter-chips"', html=False)

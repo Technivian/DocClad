@@ -7,29 +7,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&display=swap" rel="stylesheet">
 <style nonce="{{ csp_nonce }}">
     /* ── Landing is CLM One's "Ledger" language on a marketing surface —
-       see CLMONE_DESIGN_SYSTEM.md. Cool paper, navy ink, copper action
-       accent; teal is reserved for the trust/verification signal (the
-       IOLTA proof card, the footer mark). The one marketing-only latitude
+       see CLMONE_DESIGN_SYSTEM.md. Cool paper, navy ink, teal action and
+       the Command Center's blue feature surface. The one marketing-only latitude
        is a serif accent face (Fraunces) — the product itself never uses
        it. No glows, no gradient text, no backdrop-filter — color is
        reserved for meaning. */
     .landing-page {
-        --lp-paper: #F3F5F7;
-        --lp-paper-deep: #EDF0F4;
+        --lp-paper: #F7F9FC;
+        --lp-paper-deep: #F3F6F8;
         --lp-card: #FFFFFF;
-        --lp-ink: #0B1330;
-        --lp-ink-soft: #46536F;
-        --lp-mute: #5F6B85;
-        --lp-line: #DEE2EA;
-        --lp-line-soft: #EBEEF3;
-        --lp-navy: #B5502E;
-        --lp-navy-deep: #8A3A1E;
-        --lp-seal: #0A7264;
-        --lp-green: #3F569B;
-        --lp-green-deep: #33447A;
-        --lp-amber: #8A5A14;
-        --lp-sand: #EAD9AE;
-        --lp-sand-deep: #8A5A14;
+        --lp-ink: #0B1728;
+        --lp-ink-soft: #667085;
+        --lp-mute: #667085;
+        --lp-line: #DCE2E8;
+        --lp-line-soft: #ECEEF0;
+        --lp-navy: #168C8C;
+        --lp-navy-deep: #12706F;
+        --lp-seal: #168C8C;
+        --lp-green: #3478C7;
+        --lp-green-deep: #2A5FA0;
+        --lp-amber: #D99A2B;
+        --lp-sand: #E9F1FB;
+        --lp-sand-deep: #2A5FA0;
         background: var(--lp-paper);
         color: var(--lp-ink);
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -98,18 +97,68 @@
     .lp-hero-ctas { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
     @media (min-width: 640px) { .lp-hero-ctas { flex-direction: row; } }
 
-    /* Product frame — the real (dark) app window on paper */
+    /* Product frame — a faithful, lightweight Command Center preview. */
     .lp-shot-wrap { max-width: 980px; margin: 84px auto 0; }
     .lp-shot {
         border-radius: 14px; overflow: hidden;
         border: 1px solid var(--lp-line);
-        box-shadow: 0 2px 6px rgba(19,32,51,0.08), 0 28px 56px rgba(19,32,51,0.18);
+        box-shadow: 0 2px 6px rgba(19,32,51,0.08), 0 28px 56px rgba(19,32,51,0.14);
+        transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
     }
     .lp-shot-chrome { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #161B22; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .lp-shot-url { flex: 1; margin: 0 16px; border-radius: 6px; padding: 4px 12px; font-size: 11px; text-align: center; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); max-width: 240px; margin-left: auto; margin-right: auto; }
     .lp-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     .lp-dot-red { background: #FF5F57; } .lp-dot-yellow { background: #FFBD2E; } .lp-dot-green { background: #28C840; }
     .lp-shot-svg { display: block; width: 100%; background: #0D1117; }
+    .lp-command-preview {
+        display: grid; grid-template-columns: 166px minmax(0, 1fr); min-height: 458px;
+        background: var(--lp-paper); color: var(--lp-ink); text-align: left;
+    }
+    .lp-command-preview + .lp-shot-svg { display: none; }
+    .lp-command-sidebar { padding: 22px 14px; background: #0B1728; color: #DCE7F7; }
+    .lp-command-brand { display: flex; align-items: center; gap: 9px; margin: 0 0 28px; color: #fff; font-size: 13px; font-weight: 750; }
+    .lp-command-brand-mark { width: 24px; height: 24px; object-fit: contain; }
+    .lp-command-nav { display: grid; gap: 4px; }
+    .lp-command-nav span { display: block; padding: 9px 10px; border-radius: 7px; color: #AAB8CD; font-size: 11px; font-weight: 600; }
+    .lp-command-nav .is-active { background: #1B365F; color: #fff; }
+    .lp-command-nav-label { margin: 22px 10px 7px; color: #7385A0; font-size: 8px; font-weight: 750; letter-spacing: .11em; }
+    .lp-command-main { padding: 22px; min-width: 0; }
+    .lp-command-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .lp-command-top strong { font-size: 15px; letter-spacing: -.015em; }
+    .lp-command-top span { color: var(--lp-ink-soft); font-size: 10px; }
+    .lp-command-user { display: flex; align-items: center; gap: 7px; color: var(--lp-ink-soft); font-size: 10px; }
+    .lp-command-avatar { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #E3F5F4; color: #12706F; font-size: 9px; font-weight: 800; }
+    .lp-command-hero { position: relative; overflow: hidden; min-height: 144px; padding: 21px; border-radius: 12px; background: linear-gradient(118deg, #0CB2E3, #0870D5 62%, #0B59C6); color: #fff; }
+    .lp-command-hero::after { content: ""; position: absolute; right: -36px; top: -48px; width: 168px; height: 168px; border: 20px solid rgba(255,255,255,.15); border-radius: 50%; }
+    .lp-command-hero small { position: relative; z-index: 1; display: block; margin-bottom: 8px; font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    .lp-command-hero h3 { position: relative; z-index: 1; max-width: 310px; margin: 0; font-size: clamp(18px, 2.2vw, 25px); line-height: 1.1; letter-spacing: -.025em; }
+    .lp-command-hero p { position: relative; z-index: 1; max-width: 300px; margin: 8px 0 0; color: rgba(255,255,255,.84); font-size: 10px; line-height: 1.45; }
+    .lp-command-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 16px 0; }
+    .lp-command-metric { min-height: 74px; padding: 12px; border: 1px solid var(--lp-line); border-radius: 10px; background: #fff; }
+    .lp-command-metric span { display: block; color: var(--lp-ink-soft); font-size: 9px; line-height: 1.25; }
+    .lp-command-metric strong { display: block; margin-top: 8px; color: var(--lp-ink); font-size: 22px; line-height: 1; letter-spacing: -.035em; }
+    .lp-command-metric:nth-child(1) strong { color: #168C8C; }
+    .lp-command-metric:nth-child(2) strong { color: #3478C7; }
+    .lp-command-metric:nth-child(3) strong { color: #D99A2B; }
+    .lp-command-metric:nth-child(4) strong { color: #C4423D; }
+    .lp-command-grid { display: grid; grid-template-columns: 1.3fr .9fr; gap: 12px; }
+    .lp-command-panel { overflow: hidden; border: 1px solid var(--lp-line); border-radius: 10px; background: #fff; }
+    .lp-command-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--lp-line-soft); }
+    .lp-command-panel-head strong { font-size: 11px; }
+    .lp-command-panel-head span { color: #12706F; font-size: 9px; font-weight: 700; }
+    .lp-command-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--lp-line-soft); }
+    .lp-command-row:last-child { border-bottom: 0; }
+    .lp-command-row strong { display: block; font-size: 10px; }
+    .lp-command-row small { display: block; margin-top: 3px; color: var(--lp-ink-soft); font-size: 8px; }
+    .lp-command-pill { align-self: center; padding: 4px 7px; border-radius: 999px; background: #E3F5F4; color: #12706F; font-size: 8px; font-weight: 750; white-space: nowrap; }
+    .lp-command-pill.is-warning { background: #FBF1DE; color: #A76500; }
+    @media (max-width: 640px) {
+        .lp-command-preview { grid-template-columns: 1fr; }
+        .lp-command-sidebar { display: none; }
+        .lp-command-main { padding: 16px; }
+        .lp-command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lp-command-grid { grid-template-columns: 1fr; }
+    }
 
     /* Section headers */
     .lp-kicker { color: var(--lp-navy); margin-bottom: 14px; display: block; }
@@ -121,7 +170,7 @@
     .lp-proof-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 48px; }
     @media (min-width: 640px)  { .lp-proof-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (min-width: 1024px) { .lp-proof-grid { grid-template-columns: repeat(4, 1fr); } }
-    .lp-proof-card { border-radius: 14px; padding: 26px 24px 24px; min-height: 210px; display: flex; flex-direction: column; }
+    .lp-proof-card { border-radius: 14px; padding: 26px 24px 24px; min-height: 210px; display: flex; flex-direction: column; transition: transform 180ms ease, box-shadow 180ms ease; }
     .lp-proof-card .lp-eyebrow { display: inline-block; padding: 5px 10px; border-radius: 999px; margin-bottom: auto; align-self: flex-start; }
     .lp-proof-big { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; margin: 26px 0 8px; line-height: 1; }
     .lp-proof-sub { font-size: 13px; line-height: 1.55; }
@@ -139,7 +188,7 @@
     .lp-proof-ink .lp-proof-sub { color: rgba(255,255,255,0.75); }
 
     /* Lifecycle stepper — the product's real nine stages */
-    .lp-life-card { background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 16px; padding: 40px 32px 32px; margin-top: 48px; }
+    .lp-life-card { background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 16px; padding: 40px 32px 32px; margin-top: 48px; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
     .lp-life-track { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 0 12px; }
     .lp-life-step { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1 1 0; min-width: 84px; position: relative; }
     .lp-life-step::before { content: ""; position: absolute; top: 8px; right: 50%; width: 100%; height: 2px; background: var(--lp-line); }
@@ -159,8 +208,8 @@
 
     /* Feature cards */
     /* Capability ledger — a bordered index, not an icon-card grid */
-    .lp-cap-ledger { text-align: left; margin-top: 48px; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; }
-    .lp-cap-row { display: flex; gap: 20px; align-items: flex-start; padding: 26px 30px; border-bottom: 1px solid var(--lp-line-soft); }
+    .lp-cap-ledger { text-align: left; margin-top: 48px; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; transition: border-color 180ms ease, box-shadow 180ms ease; }
+    .lp-cap-row { display: flex; gap: 20px; align-items: flex-start; padding: 26px 30px; border-bottom: 1px solid var(--lp-line-soft); transition: background-color 160ms ease, padding-left 160ms ease; }
     .lp-cap-row:last-child { border-bottom: none; }
     .lp-cap-tag {
         flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; margin-top: 2px;
@@ -174,7 +223,7 @@
 
     /* Module table — the same convention the product's own repository
        table uses (mono uppercase headers, hairline rows, no icon tiles). */
-    .lp-mod-table-wrap { margin-top: 48px; text-align: left; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; }
+    .lp-mod-table-wrap { margin-top: 48px; text-align: left; background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 14px; overflow: hidden; transition: border-color 180ms ease, box-shadow 180ms ease; }
     .lp-mod-table { width: 100%; border-collapse: collapse; }
     .lp-mod-table thead th {
         font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
@@ -184,15 +233,16 @@
     }
     .lp-mod-table td { padding: 14px 28px; border-bottom: 1px solid var(--lp-line-soft); }
     .lp-mod-table tr:last-child td { border-bottom: none; }
+    .lp-mod-table tbody tr { transition: background-color 160ms ease; }
     .lp-mname { font-size: 14px; font-weight: 700; color: var(--lp-ink); }
     .lp-mname.seal { color: var(--lp-seal); }
     .lp-msub { font-size: 13px; color: var(--lp-mute); }
 
     /* Security */
-    .lp-sec-card { background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 18px; padding: 52px 32px; margin-top: 0; }
+    .lp-sec-card { background: var(--lp-card); border: 1px solid var(--lp-line); border-radius: 18px; padding: 52px 32px; margin-top: 0; transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
     .lp-sec-stats { display: grid; grid-template-columns: 1fr; gap: 14px; max-width: 640px; margin: 40px auto 0; }
     @media (min-width: 640px) { .lp-sec-stats { grid-template-columns: repeat(3, 1fr); } }
-    .lp-sec-stat { border: 1px solid var(--lp-line); border-radius: 12px; padding: 20px 16px; background: var(--lp-paper); }
+    .lp-sec-stat { border: 1px solid var(--lp-line); border-radius: 12px; padding: 20px 16px; background: var(--lp-paper); transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease; }
     .lp-sec-stat-big { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; color: var(--lp-navy); }
     .lp-sec-stat .lp-eyebrow { color: var(--lp-mute); display: block; margin-top: 8px; }
 
@@ -208,9 +258,8 @@
     .lp-footer-grid { display: grid; grid-template-columns: 1fr; gap: 40px; padding-bottom: 56px; }
     @media (min-width: 640px) { .lp-footer-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (min-width: 900px) { .lp-footer-grid { grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 32px; } }
-    .lp-footer-brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800; color: var(--lp-ink); }
-    .lp-footer-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--lp-seal); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .lp-footer-mark svg { width: 15px; height: 15px; color: #fff; }
+    .lp-footer-brand { display: flex; align-items: center; }
+    .lp-footer-logo { display: block; width: auto; height: 28px; max-width: 100%; object-fit: contain; }
     .lp-footer-tag { font-size: 13px; line-height: 1.65; color: var(--lp-mute); max-width: 300px; margin: 16px 0 0; }
     .lp-footer-col .lp-eyebrow { color: var(--lp-mute); display: block; margin-bottom: 16px; }
     .lp-footer-col ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
@@ -220,6 +269,21 @@
     @media (min-width: 640px) { .lp-footer-legal { flex-direction: row; } }
     .lp-footer-legal p { font-size: 11.5px; color: var(--lp-mute); margin: 0; }
     .lp-footer-legal .lp-eyebrow { color: var(--lp-mute); }
+
+    @media (hover: hover) {
+        .lp-shot:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--lp-green) 42%, var(--lp-line)); box-shadow: 0 14px 34px rgba(11,23,40,.12), 0 34px 72px rgba(11,23,40,.14); }
+        .lp-proof-card:hover { transform: translateY(-4px); box-shadow: 0 14px 26px rgba(11,23,40,.12); }
+        .lp-life-card:hover,
+        .lp-sec-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lp-navy) 44%, var(--lp-line)); box-shadow: 0 14px 30px rgba(11,23,40,.07); }
+        .lp-cap-ledger:hover,
+        .lp-mod-table-wrap:hover { border-color: color-mix(in srgb, var(--lp-navy) 36%, var(--lp-line)); box-shadow: 0 12px 28px rgba(11,23,40,.055); }
+        .lp-cap-row:hover { padding-left: 34px; background: color-mix(in srgb, var(--lp-navy) 5%, var(--lp-card)); }
+        .lp-mod-table tbody tr:hover { background: color-mix(in srgb, var(--lp-green) 7%, var(--lp-card)); }
+        .lp-sec-stat:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lp-navy) 38%, var(--lp-line)); background: var(--lp-card); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .landing-page *, .landing-page *::before, .landing-page *::after { transition-duration: 0.01ms !important; }
+    }
 </style>
 
 <div class="landing-page">
@@ -227,7 +291,7 @@
     <nav class="lp-nav">
         <div class="lp-wrap lp-nav-inner">
             <a href="/" aria-label="CLM One">
-                <img src="{% static 'img/brand/clmone-logo-primary.svg' %}" alt="CLM One" class="lp-logo">
+                <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="CLM One" class="lp-logo">
             </a>
             <div class="lp-nav-links">
                 <a href="#lifecycle" class="lp-nav-link">Lifecycle</a>
@@ -269,6 +333,53 @@
                         <span class="lp-dot lp-dot-yellow"></span>
                         <span class="lp-dot lp-dot-green"></span>
                         <div class="lp-shot-url">app.clmone.com/dashboard</div>
+                    </div>
+                    <div class="lp-command-preview" role="img" aria-label="CLM One Command Center showing a workspace health feature panel, contract metrics, and a priority queue">
+                        <aside class="lp-command-sidebar" aria-hidden="true">
+                            <p class="lp-command-brand"><img src="{% static 'brand/clm-one-mark-reversed-tight.svg' %}" alt="" aria-hidden="true" class="lp-command-brand-mark">CLM One</p>
+                            <nav class="lp-command-nav">
+                                <span class="is-active">Command Center</span>
+                                <span>Contracts</span>
+                                <span>Workflows</span>
+                                <span>Approvals</span>
+                                <span>Documents</span>
+                            </nav>
+                            <p class="lp-command-nav-label">GOVERNANCE</p>
+                            <nav class="lp-command-nav">
+                                <span>Risk register</span>
+                                <span>Compliance</span>
+                                <span>Audit trail</span>
+                            </nav>
+                        </aside>
+                        <div class="lp-command-main" aria-hidden="true">
+                            <div class="lp-command-top">
+                                <div><strong>Command Center</strong><span> &nbsp;Your legal operations workspace</span></div>
+                                <span class="lp-command-user"><span class="lp-command-avatar">H</span>Haroon</span>
+                            </div>
+                            <section class="lp-command-hero">
+                                <small>Workspace health</small>
+                                <h3>Your contract operations are on track.</h3>
+                                <p>Stay ahead of approvals, renewal dates, and policy-backed governance from one place.</p>
+                            </section>
+                            <div class="lp-command-metrics">
+                                <div class="lp-command-metric"><span>Active contracts</span><strong>128</strong></div>
+                                <div class="lp-command-metric"><span>In review</span><strong>17</strong></div>
+                                <div class="lp-command-metric"><span>Renewals due</span><strong>14</strong></div>
+                                <div class="lp-command-metric"><span>Needs attention</span><strong>3</strong></div>
+                            </div>
+                            <div class="lp-command-grid">
+                                <section class="lp-command-panel">
+                                    <div class="lp-command-panel-head"><strong>Today’s legal priorities</strong><span>View queue</span></div>
+                                    <div class="lp-command-row"><div><strong>MSA with Acme Corp.</strong><small>Approval requested · due today</small></div><span class="lp-command-pill">Review</span></div>
+                                    <div class="lp-command-row"><div><strong>Renewal — Northstar Ltd.</strong><small>Contract expires in 23 days</small></div><span class="lp-command-pill is-warning">Renewal</span></div>
+                                </section>
+                                <section class="lp-command-panel">
+                                    <div class="lp-command-panel-head"><strong>Governance</strong><span>Healthy</span></div>
+                                    <div class="lp-command-row"><div><strong>Approvals on track</strong><small>17 active routes</small></div></div>
+                                    <div class="lp-command-row"><div><strong>Audit trail current</strong><small>All events captured</small></div></div>
+                                </section>
+                            </div>
+                        </div>
                     </div>
                     <svg viewBox="0 0 880 480" xmlns="http://www.w3.org/2000/svg" class="lp-shot-svg" role="img" aria-label="CLM One dashboard showing approvals, deadlines, and contract risk in one view">
                         <defs>
@@ -635,10 +746,7 @@
             <div class="lp-footer-grid">
                 <div>
                     <div class="lp-footer-brand">
-                        <span class="lp-footer-mark" aria-hidden="true">
-                            <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        </span>
-                        CLM One
+                        <img src="{% static 'brand/clm-one-logo-transparent.webp' %}" alt="" aria-hidden="true" class="lp-footer-logo">
                     </div>
                     <p class="lp-footer-tag">Contract lifecycle management for legal professionals — with IOLTA-compliant trust accounting built in.</p>
                 </div>

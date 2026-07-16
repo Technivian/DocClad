@@ -19,6 +19,10 @@ class ListParams:
     q: str = ""
     status: Optional[List[str]] = None
     contract_type: Optional[List[str]] = None
+    owner: Optional[List[str]] = None
+    counterparty: Optional[List[str]] = None
+    risk_level: Optional[List[str]] = None
+    approval_state: Optional[List[str]] = None
     sort: str = "updated_desc"
     page: int = 1
     page_size: int = 25
@@ -33,6 +37,14 @@ class ListParams:
             self.status = []
         if self.contract_type is None:
             self.contract_type = []
+        if self.owner is None:
+            self.owner = []
+        if self.counterparty is None:
+            self.counterparty = []
+        if self.risk_level is None:
+            self.risk_level = []
+        if self.approval_state is None:
+            self.approval_state = []
 
 @dataclass
 class ContractData:
@@ -64,6 +76,8 @@ class ContractData:
     value_display: str = ""
     end_date_display: Optional[str] = None
     due_overdue: bool = False
+    contract_type_display: str = ""
+    stage_display: str = ""
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization"""

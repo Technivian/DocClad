@@ -26,6 +26,7 @@ class LoginPresentationTests(TestCase):
         body = response.content.decode()
 
         self.assertEqual(body.count('alt="CLM One"'), 1)
+        self.assertIn('/static/brand/clm-one-logo-transparent.webp', body)
         for retired_copy in (
             'Protect your portfolio',
             'Empower your team',

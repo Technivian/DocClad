@@ -98,6 +98,11 @@ class SignatureRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin,
     success_url = reverse_lazy('contracts:signature_request_list')
     scoped_form_fields = {'contract': Contract, 'document': Document}
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['actor'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         response = super().form_valid(form)

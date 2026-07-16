@@ -69,11 +69,11 @@ class CommandCenterDashboardTests(TestCase):
         self.assertNotContains(response, 'Legal operations')
         self.assertNotContains(response, 'Live workspace')
         self.assertContains(response, 'Overview of contracts, approvals, and governance.')
-        # The compact header replaced the old oversized date <h1> + separate
-        # "Live portfolio overview" chip with a concise operational subtitle
-        # beside the title; the empty hero directs the user to the next setup
-        # action instead of restating zeroed-out metric cards.
-        self.assertContains(response, 'Complete the setup items in the Action queue')
+        # The compact header keeps the shell focused on the current empty
+        # state rather than repeating setup copy from the older layout.
+        self.assertContains(response, 'No contract needs immediate attention')
+        self.assertContains(response, 'Review priority actions')
+        self.assertContains(response, 'No active issues')
         self.assertNotContains(response, 'Attention needed:')
 
     def test_metric_cards_render(self):
@@ -94,9 +94,9 @@ class CommandCenterDashboardTests(TestCase):
             created_by=self.user,
         )
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Operational queues')
-        self.assertContains(response, 'DPA conflicts')
+        self.assertContains(response, 'Cross-document conflicts')
         self.assertContains(response, 'Governance controls')
         self.assertContains(response, 'Action queue')
         self.assertContains(response, 'Upcoming Deadlines')
@@ -153,7 +153,7 @@ class CommandCenterDashboardTests(TestCase):
         self.assertContains(response, 'MSA cap mismatch')
         self.assertContains(response, 'Counsel review')
         self.assertContains(response, 'Resolve')
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
 
     def test_refresh_projection_materializes_source_records(self):
         DPARiskItem.objects.create(

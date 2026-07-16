@@ -1,8 +1,0 @@
-<svg viewBox="0 0 48 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-  <!-- Document body: white on dark backgrounds -->
-  <path d="M4 0H34L48 14V52C48 54.2091 46.2091 56 44 56H4C1.79086 56 0 54.2091 0 52V4C0 1.79086 1.79086 0 4 0Z" fill="#FFFFFF"/>
-  <!-- Fold: teal -->
-  <path d="M34 0L48 14H40C36.6863 14 34 11.3137 34 8V0Z" fill="#11B39A"/>
-  <!-- C mark: dark navy on white body -->
-  <path d="M26.5 22.74A13 13 0 1 0 26.5 45.26" stroke="#0B1330" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-</svg>

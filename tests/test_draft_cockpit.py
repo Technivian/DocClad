@@ -210,6 +210,12 @@ class ContractTemplatePickerEntryCardsPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         for title in ('MSA', 'DPA', 'NDA', 'SOW', 'Supplier Agreement', 'Addendum'):
             self.assertContains(response, title)
+        for promotional_badge in (
+            'AI-powered drafting',
+            'Approved templates',
+            'Full audit trail',
+        ):
+            self.assertNotContains(response, promotional_badge)
 
     def test_selecting_a_type_still_shows_the_template_list(self):
         response = self.client_.get(reverse('contracts:contract_template_picker'), {'type': 'NDA'})

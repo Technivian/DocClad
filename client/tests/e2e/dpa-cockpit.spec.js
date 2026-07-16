@@ -12,6 +12,31 @@ async function login(page) {
   await expect(page).not.toHaveURL(/\/login\/?$/);
 }
 
+async function reveal(locator) {
+  await locator.evaluate((element) => {
+    const section = element.closest('details');
+    if (section) section.open = true;
+  });
+}
+
+async function fillField(page, key, value) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.fill(value);
+}
+
+async function selectField(page, key, value) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.selectOption(value);
+}
+
+async function checkField(page, key) {
+  const field = page.locator(`[data-field-key="${key}"]`);
+  await reveal(field);
+  await field.check();
+}
+
 test('New DPA Draft cockpit: fill, toggle smart questions, generate governed draft', async ({ page }) => {
   test.slow();
   await login(page);
@@ -27,29 +52,29 @@ test('New DPA Draft cockpit: fill, toggle smart questions, generate governed dra
   // 3 of the 12 required fields are yes/no toggles, which always count as
   // "answered" (checked or not) — so the empty form starts at 25%, not 0%.
   const progressPct = page.locator('#dpa-progress-pct');
-  await expect(progressPct).toHaveText('25%');
+  await expect(progressPct).toHaveText('25');
 
   // 2. Fill required fields.
-  await page.fill('[data-field-key="counterparty"]', counterparty);
-  await page.fill('[data-field-key="start_date"]', '2026-09-01');
-  await page.fill('[data-field-key="contract_owner"]', 'Avery Brooks');
-  await page.fill('[data-field-key="processing_purpose"]', 'Hosted logistics analytics.');
-  await page.fill('[data-field-key="personal_data_categories"]', 'Business contact details.');
-  await page.fill('[data-field-key="data_subjects"]', 'Customer administrators.');
-  await page.fill('[data-field-key="governing_law"]', 'State of Delaware');
-  await page.selectOption('[data-field-key="transfer_mechanism"]', 'SCC');
-  await page.fill('[data-field-key="breach_notification_hours"]', '48');
+  await fillField(page, 'counterparty', counterparty);
+  await fillField(page, 'start_date', '2026-09-01');
+  await fillField(page, 'contract_owner', 'Avery Brooks');
+  await fillField(page, 'processing_purpose', 'Hosted logistics analytics.');
+  await fillField(page, 'personal_data_categories', 'Business contact details.');
+  await fillField(page, 'data_subjects', 'Customer administrators.');
+  await fillField(page, 'governing_law', 'State of Delaware');
+  await selectField(page, 'transfer_mechanism', 'SCC');
+  await fillField(page, 'breach_notification_hours', '48');
 
   // Live draft should reflect the counterparty name as soon as it's typed.
   await expect(page.locator('#dpa-draft-doc')).toContainText(counterparty);
 
   // 3. Toggle the AI Smart Questions.
-  await page.check('[data-field-key="personal_data_involved"]');
-  await page.check('[data-field-key="cross_border_transfer"]');
-  await page.check('[data-field-key="subprocessors_used"]');
+  await checkField(page, 'personal_data_involved');
+  await checkField(page, 'cross_border_transfer');
+  await checkField(page, 'subprocessors_used');
 
   // Required fields now complete (all remaining requireds are booleans, always "answered").
-  await expect(progressPct).toHaveText('100%');
+  await expect(progressPct).toHaveText('100');
   await expect(page.locator('#dpa-progress-copy')).toContainText('ready to generate');
 
   // 4. Risk cards update live.

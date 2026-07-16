@@ -59,9 +59,9 @@ class RedesignComponentsTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'Risk findings')
         self.assertContains(response, 'Component Label Contract')
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Governance controls')
         self.assertContains(response, 'Action queue')
 

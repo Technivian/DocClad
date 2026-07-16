@@ -140,6 +140,10 @@ def contracts_api(request):
             q=request.GET.get('q', ''),
             status=[s for s in request.GET.getlist('status') if s],
             contract_type=[t for t in request.GET.getlist('contract_type') if t],
+            owner=[owner for owner in request.GET.getlist('owner') if owner],
+            counterparty=[party for party in request.GET.getlist('counterparty') if party],
+            risk_level=[level for level in request.GET.getlist('risk_level') if level],
+            approval_state=[state for state in request.GET.getlist('approval_state') if state],
             sort=request.GET.get('sort', 'updated_desc'),
             page=int(request.GET.get('page', 1)),
             page_size=int(request.GET.get('page_size', 25)),
@@ -176,6 +180,10 @@ def contracts_api_v1(request):
             q=request.GET.get('q', ''),
             status=[s for s in request.GET.getlist('status') if s],
             contract_type=[t for t in request.GET.getlist('contract_type') if t],
+            owner=[owner for owner in request.GET.getlist('owner') if owner],
+            counterparty=[party for party in request.GET.getlist('counterparty') if party],
+            risk_level=[level for level in request.GET.getlist('risk_level') if level],
+            approval_state=[state for state in request.GET.getlist('approval_state') if state],
             sort=request.GET.get('sort', 'updated_desc'),
             page=max(1, page),
             page_size=max(1, min(page_size, 100)),
@@ -379,5 +387,4 @@ def _version_to_dict(ver: ContractVersion) -> dict:
         'changed_by': ver.changed_by.username if ver.changed_by else None,
         'created_at': ver.created_at.isoformat() if ver.created_at else None,
     }
-
 

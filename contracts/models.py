@@ -850,6 +850,14 @@ class Contract(models.Model):
     ], default='DRAFTING')
     client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
     matter = models.ForeignKey('Matter', on_delete=models.SET_NULL, null=True, blank=True, related_name='contracts')
+    parent_contract = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='linked_contracts',
+        help_text='Master or governing agreement that this contract belongs to.',
+    )
     owner = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

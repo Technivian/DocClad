@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from contracts.models import AuditLog, Contract, Organization, OrganizationMembership, SignatureRequest
+from contracts.models import ApprovalRequest, AuditLog, Contract, Organization, OrganizationMembership, SignatureRequest
 
 
 User = get_user_model()
@@ -175,6 +175,15 @@ class SignatureWorkspaceTests(TestCase):
         self.assertContains(response, 'Current position')
 
     def test_signature_packet_creation_writes_audit_entry(self):
+        self.audit_contract.status = Contract.Status.APPROVED
+        self.audit_contract.save(update_fields=['status', 'updated_at'])
+        ApprovalRequest.objects.create(
+            organization=self.org,
+            contract=self.audit_contract,
+            approval_step='LEGAL',
+            status=ApprovalRequest.Status.APPROVED,
+            assigned_to=self.admin,
+        )
         self.client.login(username='signature-owner', password='testpass123')
         create_response = self.client.post(
             reverse('contracts:signature_request_create'),
@@ -196,6 +205,22 @@ class SignatureWorkspaceTests(TestCase):
                 changes__event='signature_packet_created',
             ).exists()
         )
+
+    def test_signature_packet_creation_rejects_unapproved_contract(self):
+        self.client.login(username='signature-owner', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:signature_request_create'),
+            data={
+                'contract': self.audit_contract.pk,
+                'signer_name': 'Blocked Signer',
+                'signer_email': 'blocked@example.com',
+                'status': SignatureRequest.Status.PENDING,
+                'order': 1,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'fully approved before signature routing')
+        self.assertFalse(SignatureRequest.objects.filter(contract=self.audit_contract).exists())
 
     def test_signature_packet_send_and_complete_write_audit_entries(self):
         self.client.login(username='signature-owner', password='testpass123')

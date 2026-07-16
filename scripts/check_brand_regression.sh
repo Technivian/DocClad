@@ -48,7 +48,8 @@
 set -euo pipefail
 
 LEGACY_APP_PATTERN='[Dd]oc[Cc]''lad|DOCC''LAD'
-FORBIDDEN_PATTERN="CMS Aegis|CMSAegis|CMS_AEGIS|cms-aegis|cmsaegis|${LEGACY_APP_PATTERN}"
+LEGACY_MODULAR_PATTERN='[Mm]odu[Cc]''lad|MODUC''LAD'
+FORBIDDEN_PATTERN="CMS Aegis|CMSAegis|CMS_AEGIS|cms-aegis|cmsaegis|${LEGACY_APP_PATTERN}|${LEGACY_MODULAR_PATTERN}"
 
 # Files with permitted technical remnants (exact paths from repo root)
 ALLOWLIST_FILES=(

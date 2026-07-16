@@ -128,7 +128,9 @@ class ContractLifecycleAuditTests(TestCase):
         self.contract.end_date = timezone.localdate() + timedelta(days=10)
         self.contract.renewal_date = timezone.localdate() + timedelta(days=10)
         self.contract.auto_renew = True
-        self.contract.save(update_fields=['end_date', 'renewal_date', 'auto_renew', 'updated_at'])
+        self.contract.status = Contract.Status.ACTIVE
+        self.contract.lifecycle_stage = 'EXECUTED'
+        self.contract.save(update_fields=['end_date', 'renewal_date', 'auto_renew', 'status', 'lifecycle_stage', 'updated_at'])
 
         self.client.login(username='owner-user', password='testpass123')
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.id}))

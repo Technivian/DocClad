@@ -7,16 +7,17 @@
     <meta name="build-sha" content="{{ BUILD_SHA|default:'unknown' }}">
     <meta name="build-label" content="{{ BUILD_LABEL|default:'commit unknown' }}">
     {% load static %}
-    <link rel="icon" type="image/svg+xml" href="{% static 'img/brand/favicon.svg' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/brand/apple-touch-icon.png' %}">
-    <link rel="manifest" href="{% static 'site.webmanifest' %}">
-    <meta name="theme-color" content="#F7F9FC">
+    <link rel="icon" href="{% static 'brand/favicon.ico' %}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'brand/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'brand/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'brand/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'brand/site.webmanifest' %}">
+    <meta name="theme-color" content="#06204F">
     <meta property="og:title" content="CLM One">
-    <meta property="og:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta property="og:image" content="{% static 'brand/clm-one-logo-transparent.png' %}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="{% static 'img/brand/og-image.png' %}">
+    <meta name="twitter:image" content="{% static 'brand/clm-one-logo-transparent.png' %}">
+    <link href="{% static 'brand/clm-one-brand.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     {% block page_css %}{% endblock %}
@@ -245,10 +246,11 @@
             align-items: center;
             padding: 0 var(--space-24);
             border: 0;
+            background: var(--color-shell-deep);
         }
         .sidebar-brand .logo-wordmark {
             display: block;
-            height: 36px;
+            height: 32px;
             width: auto;
             object-fit: contain;
         }
@@ -284,8 +286,8 @@
         body.nav-collapsed .nav-section { font-size: 0; padding-top: 8px; padding-bottom: 6px; }
         body.nav-collapsed .sidebar-brand { justify-content: center; padding: 0; }
         body.nav-collapsed .sidebar-brand .logo-wordmark { display: none; }
-        body.nav-collapsed .sidebar-brand .logo-mark { display: block; height: 34px; width: 34px; }
-        .sidebar-brand .logo-mark { display: none; }
+        body.nav-collapsed .sidebar-brand .logo-mark { display: block; }
+        .sidebar-brand .logo-mark { display: none; height: 32px; width: auto; object-fit: contain; }
         .sidebar-footer { padding: 0 var(--space-16) var(--space-16); border-top: 0; margin-top: auto; background: var(--sidebar-fixed-bg); }
         .sidebar-footer-org { font-size: 12px; font-weight: 600; color: #303236; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
         .sidebar-footer-collapse { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--sidebar-fixed-text); cursor: pointer; }
@@ -890,12 +892,20 @@
             .wq-col-action { text-align: right; white-space: nowrap; }
             .wq-col-action { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
             .wq-kebab { position: relative; }
-            .wq-kebab-trigger { list-style: none; cursor: pointer; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 16px; line-height: 1; }
+            .wq-kebab-trigger { list-style: none; cursor: pointer; width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 16px; line-height: 1; }
             .wq-kebab-trigger::-webkit-details-marker { display: none; }
             .wq-kebab-trigger:hover { background: var(--sidebar-hover); color: var(--text-primary); }
-            .wq-kebab-menu { position: absolute; right: 0; top: calc(100% + 4px); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; box-shadow: var(--shadow-overlay, 0 8px 24px rgba(0,0,0,0.12)); min-width: 120px; z-index: 20; padding: 4px; }
+            .wq-kebab-trigger svg { width: 17px; height: 17px; }
+            .wq-kebab[open] .wq-kebab-trigger { background: var(--primary-subtle); color: var(--primary); }
+            .wq-kebab-menu { position: absolute; right: 0; top: calc(100% + 4px); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; box-shadow: var(--shadow-overlay, 0 8px 24px rgba(0,0,0,0.12)); min-width: 160px; z-index: 20; padding: 4px; }
             .wq-kebab-menu a { display: block; padding: 7px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; }
             .wq-kebab-menu a:hover { background: var(--sidebar-hover); color: var(--text-primary); }
+            .wq-kebab-menu form { margin: 0; }
+            .wq-kebab-action { width: 100%; display: block; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 500; text-align: left; }
+            .wq-kebab-action:hover { background: var(--sidebar-hover); color: var(--text-primary); }
+            .wq-kebab-action-danger { color: var(--status-danger-fg, var(--msg-error-text)); }
+            .wq-kebab-action-danger:hover { background: var(--status-danger-bg, var(--sidebar-hover)); color: var(--status-danger-fg, var(--msg-error-text)); }
+            .wq-kebab-divider { height: 1px; background: var(--card-border); margin: 4px 2px; }
 
             /* Approve/Reject row actions (Approvals inbox) — token-backed
                success/danger tints, same shape language as .repo-mini-btn.
@@ -1196,21 +1206,29 @@
             .topbar-gap-sm { gap: 8px; }
             .rail-toggle-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-alt); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; }
             .rail-toggle-btn:hover { color: var(--text-primary); border-color: var(--primary); }
+            .rail-toggle-btn:focus-visible { outline: 2px solid var(--seal); outline-offset: 2px; }
+            .rail-toggle-btn .rail-toggle-expand-icon { display: none; }
+            body.nav-collapsed .rail-toggle-btn .rail-toggle-collapse-icon { display: none; }
+            body.nav-collapsed .rail-toggle-btn .rail-toggle-expand-icon { display: block; }
+            .sidebar-control-row { display: flex; justify-content: flex-end; padding: 0 14px 10px; border-bottom: 1px solid color-mix(in srgb, var(--clmone-white) 10%, transparent); }
+            .sidebar-control-row .rail-toggle-btn { border-color: color-mix(in srgb, var(--clmone-white) 16%, transparent); background: color-mix(in srgb, var(--clmone-white) 6%, transparent); color: color-mix(in srgb, var(--clmone-white) 72%, transparent); }
+            .sidebar-control-row .rail-toggle-btn:hover { border-color: color-mix(in srgb, var(--clmone-white) 28%, transparent); background: color-mix(in srgb, var(--clmone-white) 12%, transparent); color: var(--clmone-white); }
+            body.nav-collapsed .sidebar-control-row { justify-content: center; padding-left: 10px; padding-right: 10px; }
+            .topbar-page-context { min-width: 0; }
+            .topbar-page-context .topbar-back-link { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 2px; color: var(--text-secondary); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+            .topbar-page-context .topbar-back-link svg { width: 14px; height: 14px; }
+            .topbar-page-context .topbar-back-link:hover { color: var(--seal-dark); }
+            .topbar-back-link:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
             .global-search-form { display: inline-flex; align-items: center; gap: 8px; min-width: 280px; max-width: 460px; width: 42vw; }
             .global-search-wrap { position: relative; width: 100%; }
             .global-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted); pointer-events: none; }
             .global-search-input { width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary); border-radius: 8px; padding: 8px 10px 8px 32px; font-size: 12px; }
             .global-search-input:focus-visible { outline: none; border-color: var(--seal); box-shadow: 0 0 0 3px var(--focus-ring); }
             .logo-link        { display: flex; align-items: center; text-decoration: none; overflow: hidden; }
-            .logo-wordmark    { height: var(--clmone-logo-header-height, 38px); width: auto; object-fit: contain; display: block; }
-            .logo-mark        { width: var(--clmone-mark-size, 34px); height: var(--clmone-mark-size, 34px); object-fit: contain; display: none; }
-            .sidebar-brand .logo-wordmark:not(.logo-command-center) { display: none; }
-            .sidebar-brand .logo-command-center { display: block; height: 38px; }
+            .logo-wordmark    { height: 32px; width: auto; max-width: 100%; object-fit: contain; display: block; }
+            .logo-mark        { width: 28px; height: 28px; object-fit: contain; display: none; }
             body.nav-collapsed .logo-wordmark { display: none; }
             body.nav-collapsed .logo-mark     { display: block; }
-            /* Topbar follows the page theme; swap in the matching logo variant
-               regardless of collapsed state (see CLMONE_DESIGN_SYSTEM.md §6). */
-            [data-theme="light"] .logo-dark  { display: none !important; }
             .nav-icon-link { padding: 6px; color: var(--text-secondary); border-radius: 8px; transition: all 0.2s; text-decoration: none; }
             /* Search icon fallback: shown only when the inline search input is hidden (narrow screens). */
             .nav-icon-search { display: none; }
@@ -1338,7 +1356,7 @@
                 .sidebar-container { width: 64px; }
                 .sidebar-brand { height: 64px; justify-content: center; padding: 0; }
                 .sidebar-brand .logo-wordmark { display: none; }
-                .sidebar-brand .logo-mark { display: block; width: 32px; height: 32px; }
+                .sidebar-brand .logo-mark { display: block; }
                 .sidebar-workspace,
                 .sidebar-footer { display: none; }
                 .sidebar-padding { padding: 8px; }
@@ -1349,6 +1367,7 @@
                 .main-area { min-width: 0; }
             }
             @media (max-width: 900px) {
+                .sidebar-control-row { display: none; }
                 .sidebar-container {
                     position: fixed;
                     inset: 0 auto 0 0;
@@ -1359,9 +1378,9 @@
                     box-shadow: 18px 0 40px rgba(8, 18, 35, .22);
                 }
                 body.mobile-nav-open .sidebar-container { transform: translateX(0); }
-                .sidebar-brand { height: 76px; justify-content: flex-start; padding: 0 24px; }
-                .sidebar-brand .logo-wordmark { display: block; }
-                .sidebar-brand .logo-mark { display: none; }
+                .sidebar-brand { height: 76px; justify-content: center; padding: 0; }
+                .sidebar-brand .logo-wordmark { display: none; }
+                .sidebar-brand .logo-mark { display: block; }
                 .sidebar-workspace { display: none; }
                 .sidebar-footer { display: block; }
                 .sidebar-padding { padding: 10px 20px 20px; }
@@ -1412,35 +1431,54 @@
                 flex-shrink: 0;
                 padding: 0 24px;
             }
-            .sidebar-brand .logo-command-center { height: 38px; }
-            .sidebar-padding { padding: 8px 16px 24px; overflow-y: auto; }
+            .sidebar-padding {
+                display: grid;
+                align-content: start;
+                gap: var(--space-4);
+                padding: var(--space-16) var(--space-14, 14px) var(--space-24);
+                overflow-y: auto;
+            }
             .nav-link {
-                min-height: 54px;
-                margin: 0 0 1px;
-                padding: 0 16px;
-                border-radius: var(--radius-control);
-                gap: 16px;
+                min-height: 48px;
+                margin: 0;
+                padding: 0 var(--space-14, 14px);
+                border-radius: var(--radius-surface);
+                gap: var(--space-14, 14px);
                 color: color-mix(in srgb, var(--clmone-white) 68%, transparent);
                 font-size: 14px;
-                font-weight: 540;
+                font-weight: 560;
                 letter-spacing: 0;
                 transition: color var(--transition-base), background-color var(--transition-base);
             }
-            .nav-link svg { width: 21px; height: 21px; padding: 0; border-radius: 0; background: transparent; color: currentColor; opacity: 1; }
+            .nav-link svg {
+                width: 20px;
+                height: 20px;
+                flex: 0 0 20px;
+                padding: 0;
+                border-radius: 0;
+                background: transparent;
+                color: currentColor;
+                opacity: 1;
+            }
             .nav-link:hover { background: color-mix(in srgb, var(--clmone-white) 5%, transparent); color: var(--clmone-white); transform: none; }
-            .nav-link.active { background: color-mix(in srgb, var(--clmone-white) 7%, transparent); color: var(--clmone-white); font-weight: 650; }
-            .nav-link.active::before { left: -16px; top: 12px; bottom: 12px; border-radius: 0 3px 3px 0; }
-            .nav-link--action { margin: 9px 0 10px; color: color-mix(in srgb, var(--clmone-white) 90%, transparent); }
+            .nav-link.active { background: color-mix(in srgb, var(--clmone-white) 8%, transparent); color: var(--clmone-white); font-weight: 650; }
+            .nav-link.active::before { left: 0; top: 10px; bottom: 10px; border-radius: 0 var(--radius-pill) var(--radius-pill) 0; }
+            .nav-link--action { color: color-mix(in srgb, var(--clmone-white) 90%, transparent); }
             .nav-link--action svg { color: var(--seal); }
-            .nav-group { margin: 1px 0; }
-            .nav-group-items { gap: 1px; padding: 3px 0 7px 40px; }
+            .nav-group { margin: 0; }
+            .nav-group-items { gap: var(--space-2); padding: var(--space-4) 0 var(--space-8) 48px; }
             .nav-group-trigger .nav-group-chevron { color: color-mix(in srgb, var(--clmone-white) 55%, transparent); }
             .nav-sub-link { position: relative; min-height: 32px; padding: 0 8px; border-radius: 6px; color: color-mix(in srgb, var(--clmone-white) 55%, transparent); font-size: 12px; }
             .nav-sub-link:hover { background: color-mix(in srgb, var(--clmone-white) 4%, transparent); color: var(--clmone-white); }
             .nav-sub-link.active { color: var(--clmone-white); }
             .nav-sub-link.active::before { content: ""; position: absolute; left: -13px; width: 4px; height: 4px; border-radius: 50%; background: var(--seal); }
-            .sidebar-footer { padding: 12px 16px 16px; background: var(--color-shell-deep); }
-            .sidebar-profile { min-height: 60px; height: auto; padding: 8px 10px; border-radius: 7px; gap: 12px; color: color-mix(in srgb, var(--clmone-white) 92%, transparent); }
+            .sidebar-footer {
+                margin: 0 var(--space-14, 14px) var(--space-14, 14px);
+                padding: var(--space-12) 0 0;
+                border-top: 1px solid color-mix(in srgb, var(--clmone-white) 10%, transparent);
+                background: var(--color-shell-deep);
+            }
+            .sidebar-profile { min-height: 56px; height: auto; padding: 8px 10px; border-radius: var(--radius-surface); gap: 12px; color: color-mix(in srgb, var(--clmone-white) 92%, transparent); }
             .sidebar-profile-avatar { width: 38px; height: 38px; border: 2px solid color-mix(in srgb, var(--clmone-white) 12%, transparent); background: var(--gradient-avatar-expressive); box-shadow: var(--shadow-avatar-expressive); }
             .sidebar-profile-name { font-size: 13px; color: var(--clmone-white); }
             .sidebar-profile-role { font-size: 12px; color: color-mix(in srgb, var(--clmone-white) 48%, transparent); }
@@ -1458,10 +1496,10 @@
                     box-shadow: 18px 0 40px rgba(8, 18, 35, .22);
                 }
                 body.mobile-nav-open .sidebar-container { transform: translateX(0); }
-                .sidebar-brand { height: 76px; flex-basis: 76px; padding: 0 28px; }
+                .sidebar-brand { height: 76px; flex-basis: 76px; justify-content: center; padding: 0; }
                 .sidebar-padding { padding: 8px 16px 20px; }
                 .nav-link { min-height: 44px; justify-content: flex-start; padding: 0 10px; font-size: 13px; }
-                .nav-link.active::before { left: -16px; }
+                .nav-link.active::before { left: 0; }
                 .sidebar-footer { display: block; }
             }
         </style>
@@ -1476,10 +1514,7 @@
             </button>
             {% endif %}
             <a href="{% url 'dashboard' %}" class="logo-link" aria-label="CLM One — go to dashboard">
-                <img src="{% static 'img/brand/clmone-logo-white.svg' %}" alt="CLM One" class="logo-wordmark logo-dark">
-                <img src="{% static 'img/brand/clmone-logo-primary.svg' %}" alt="CLM One" class="logo-wordmark logo-light">
-                <img src="{% static 'img/brand/clmone-mark-white.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-dark">
-                <img src="{% static 'img/brand/clmone-mark-primary.svg' %}" alt="" aria-hidden="true" class="logo-mark logo-light">
+                <img src="{% static 'brand/clm-one-logo-header-tight.svg' %}" alt="CLM One" class="logo-wordmark">
             </a>
             {% if user.is_authenticated %}
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
@@ -1553,10 +1588,15 @@
     <div class="main-layout">
         <nav class="sidebar-container" id="sidebar" aria-label="Primary navigation">
             <a href="{% url 'dashboard' %}" class="sidebar-brand" aria-label="CLM One — go to dashboard">
-                <img src="{% static 'img/brand/clmone-logo-black.svg' %}" alt="CLM One" class="logo-wordmark">
-                <img src="{% static 'img/brand/clmone-logo-command-center.svg' %}" alt="CLM One" class="logo-wordmark logo-command-center">
-                <img src="{% static 'img/brand/clmone-mark-black.svg' %}" alt="" aria-hidden="true" class="logo-mark">
+                <img src="{% static 'brand/clm-one-logo-reversed-tight.svg' %}" alt="CLM One" class="logo-wordmark">
+                <img src="{% static 'brand/clm-one-mark-reversed-tight.svg' %}" alt="" aria-hidden="true" class="logo-mark">
             </a>
+            <div class="sidebar-control-row">
+                <button type="button" id="rail-toggle" class="rail-toggle-btn" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">
+                    {% include "design_system/icon.html" with name="panel-left-close" class_name="nav-icon-svg rail-toggle-collapse-icon" %}
+                    {% include "design_system/icon.html" with name="panel-left-open" class_name="nav-icon-svg rail-toggle-expand-icon" %}
+                </button>
+            </div>
             {% if CURRENT_ORGANIZATION %}
             <div class="sidebar-workspace">
                 <span class="sidebar-workspace-icon" aria-hidden="true">
@@ -1618,6 +1658,14 @@
                     {% include "design_system/icon.html" with name="menu" %}
                 </button>
                 <div class="topbar-page-context" aria-label="Current page">
+                    {% block authenticated_page_back %}
+                    {% if request.resolver_match.url_name != 'dashboard' %}
+                    <a href="{% url 'dashboard' %}" class="topbar-back-link" data-workspace-back aria-label="Back to Command Center" title="Back to Command Center">
+                        {% include "design_system/icon.html" with name="arrow-left" %}
+                        <span>Command Center</span>
+                    </a>
+                    {% endif %}
+                    {% endblock %}
                     <h1 class="topbar-page-title">{% block authenticated_page_title %}{% endblock %}</h1>
                     <p class="topbar-page-subtitle">{% block authenticated_page_subtitle %}{% endblock %}</p>
                 </div>
@@ -1719,10 +1767,20 @@
         if (localStorage.getItem(STORAGE_KEY) === '1') {
             document.body.classList.add('nav-collapsed');
         }
+        function syncRailToggle() {
+            var isCollapsed = document.body.classList.contains('nav-collapsed');
+            [railToggle, railToggleFooter].filter(Boolean).forEach(function (toggle) {
+                toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+                toggle.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                toggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            });
+        }
         function toggleRail() {
             document.body.classList.toggle('nav-collapsed');
             localStorage.setItem(STORAGE_KEY, document.body.classList.contains('nav-collapsed') ? '1' : '0');
+            syncRailToggle();
         }
+        syncRailToggle();
         if (railToggle) railToggle.addEventListener('click', toggleRail);
         if (railToggleFooter) railToggleFooter.addEventListener('click', toggleRail);
     })();
@@ -1776,6 +1834,22 @@
             if (e.key === 'Escape') {
                 closeMenu();
             }
+        });
+    })();
+
+    (function () {
+        document.querySelectorAll('[data-workspace-back]').forEach(function (link) {
+            link.addEventListener('click', function (event) {
+                if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                if (!document.referrer || window.history.length < 2) return;
+                try {
+                    if (new URL(document.referrer).origin !== window.location.origin) return;
+                } catch (error) {
+                    return;
+                }
+                event.preventDefault();
+                window.history.back();
+            });
         });
     })();
 

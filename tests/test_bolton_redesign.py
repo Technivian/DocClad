@@ -61,17 +61,17 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
 
-        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'Risk findings')
         self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'Configure monitoring')
         self.assertContains(response, 'Configure tracking')
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
 
     def test_dashboard_empty_state_is_intentional(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Governance setup is incomplete')
-        self.assertContains(response, 'Import agreement')
+        self.assertContains(response, 'Contract portfolio health')
+        self.assertContains(response, 'Review priority actions')
         self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'No active issues')
 
@@ -103,7 +103,7 @@ class BoltonRedesignTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Governance controls')
         self.assertContains(response, 'Action queue')
         self.assertContains(response, 'Upcoming Deadlines')
@@ -122,8 +122,8 @@ class BoltonRedesignTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Governance setup is incomplete')
-        self.assertContains(response, 'Complete the setup items in the Action queue')
+        self.assertContains(response, 'Contract portfolio health')
+        self.assertContains(response, 'Add your first contract to establish a portfolio health baseline')
 
     def test_single_filter_system_no_duplicate_rows(self):
         # There must be exactly one filter system: saved-view tabs plus a
@@ -147,9 +147,9 @@ class BoltonRedesignTestCase(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-risk-score')
-        self.assertContains(response, 'Why this needs attention')
-        self.assertContains(response, 'Recommended action')
-        self.assertContains(response, 'Resolution path')
+        self.assertContains(response, 'Portfolio health signals')
+        self.assertContains(response, 'Blocking issue')
+        self.assertContains(response, 'Next action')
 
     def test_contracts_table_structure(self):
         Contract.objects.create(

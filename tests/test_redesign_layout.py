@@ -82,10 +82,10 @@ class RedesignLayoutTests(TestCase):
         )
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'Command Center')
-        self.assertContains(response, 'Risk deviations')
+        self.assertContains(response, 'Risk findings')
         self.assertContains(response, 'Configure monitoring')
         self.assertContains(response, 'Configure tracking')
-        self.assertContains(response, 'Priority matter')
+        self.assertContains(response, 'Top priority')
         self.assertContains(response, 'Layout Contract')
 
     def test_dashboard_right_rail(self):

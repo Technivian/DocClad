@@ -35,6 +35,8 @@ async function createOverdueContract(page, title) {
       currency: 'USD',
       risk_level: 'LOW',
       lifecycle_stage: 'EXECUTED',
+      owner: '1',
+      start_date: '2019-01-01',
       end_date: '2020-01-01',
       renewal_date: '2020-01-01',
     },
@@ -42,12 +44,12 @@ async function createOverdueContract(page, title) {
   });
   expect([200, 302]).toContain(response.status());
 
-  const listResponse = await page.request.get(`/contracts/?q=${encodeURIComponent(title)}`);
-  expect(listResponse.ok()).toBeTruthy();
-  const html = await listResponse.text();
-  const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const idMatch = html.match(new RegExp(`href="/contracts/(\\d+)/"[^>]*>\\s*${escapedTitle}`));
-  expect(idMatch, `created contract "${title}" should be findable in the list HTML`).toBeTruthy();
+  await page.goto(`/contracts/repository/?q=${encodeURIComponent(title)}`);
+  const contractLink = page.getByRole('link', { name: title });
+  await expect(contractLink).toBeVisible();
+  const href = await contractLink.getAttribute('href');
+  const idMatch = href && href.match(/\/contracts\/(\d+)\//);
+  expect(idMatch, `created contract "${title}" should be findable in the repository`).toBeTruthy();
   return idMatch[1];
 }
 

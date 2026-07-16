@@ -2,6 +2,9 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
+  // The local E2E server uses one SQLite workspace. Serial execution keeps
+  // lifecycle mutations deterministic and avoids cross-test data races.
+  workers: 1,
   timeout: 30000,
   expect: {
     timeout: 5000,

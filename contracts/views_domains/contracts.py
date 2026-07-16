@@ -70,7 +70,11 @@ from contracts.services.draft_cockpit import get_governance_panel
 from contracts.templatetags.clmone_format import status_badge_class
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
-from contracts.services.contract_lifecycle import build_contract_audit_changes
+from contracts.services.contract_lifecycle import (
+    build_contract_audit_changes,
+    get_signature_routing_blockers,
+    record_contract_grounded_check,
+)
 from contracts.services.ai_policy import evaluate_prompt
 from contracts.services.ai_actions import build_action_plan, execute_action_plan
 from config.feature_flags import is_feature_redesign_enabled
@@ -212,6 +216,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             .all()[:10]
         )
         ctx['case_documents'] = ctx['documents']
+        ctx['primary_document'] = ctx['documents'][0] if ctx['documents'] else None
         ctx['deadlines'] = case_record.deadlines.filter(is_completed=False)[:5]
         ctx['case_deadlines'] = ctx['deadlines']
         ctx['negotiation_threads'] = case_record.negotiation_threads.all()[:10]
@@ -253,6 +258,7 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             'first_name', 'last_name', 'username',
         )
         ctx['can_edit'] = can_access_contract_action(self.request.user, case_record, ContractAction.EDIT)
+        ctx['can_comment'] = can_access_contract_action(self.request.user, case_record, ContractAction.COMMENT)
         policy = OrgPolicy.objects.filter(organization=org).first()
         ctx['ai_features_enabled'] = policy.ai_features_enabled if policy else True
         ctx['ai_provider_configured'] = bool(
@@ -267,6 +273,20 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             len(document.ai_extraction_spans.all()) for document in ctx['documents']
         )
         ctx['can_submit_for_review'] = ctx['can_edit'] and case_record.status == Contract.Status.DRAFT
+        check_log = AuditLog.objects.filter(
+            organization=org,
+            model_name='Contract',
+            object_id=case_record.pk,
+            event_type='contract.grounded_check_completed',
+        ).order_by('-timestamp').first()
+        check_is_current = bool(check_log and check_log.timestamp >= case_record.updated_at)
+        ctx['grounded_check'] = {
+            'last_run_at': check_log.timestamp if check_log else None,
+            'is_current': check_is_current,
+            'label': 'Current' if check_is_current else 'Needs refresh',
+        }
+        ctx['signature_routing_blockers'] = get_signature_routing_blockers(case_record)
+        ctx['can_route_for_signature'] = ctx['can_edit'] and not ctx['signature_routing_blockers']
         ctx['open_approval'] = case_record.approval_requests.filter(
             status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
         ).select_related('assigned_to').order_by('-created_at').first()
@@ -481,6 +501,11 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         )
 
     def post(self, request, *args, **kwargs):
+        # BaseCreateView normally initializes ``self.object`` before building
+        # a form.  The preview branch intentionally bypasses that base
+        # implementation, so initialise it here as well; otherwise an invalid
+        # preview submission crashes while rendering its validation errors.
+        self.object = None
         if 'preview_draft' in request.POST:
             form = self.get_form()
             if form.is_valid():
@@ -733,8 +758,9 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         org = get_user_organization(self.request.user)
         tenant_contracts = scope_queryset_for_organization(Contract.objects.all(), org)
         expiry_cutoff = timezone.localdate() + timedelta(days=30)
-        doc_stats = tenant_contracts.aggregate(
+        contract_stats = tenant_contracts.aggregate(
             total=Count('id'),
+            awaiting_action=Count('id', filter=Q(status__in=[Contract.Status.PENDING, Contract.Status.IN_REVIEW])),
             active=Count('id', filter=Q(status=Contract.Status.ACTIVE)),
             draft=Count('id', filter=Q(status=Contract.Status.DRAFT)),
             expiring=Count(
@@ -746,10 +772,34 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
                 ),
             ),
         )
-        ctx['total_documents'] = doc_stats['total']
-        ctx['active_documents'] = doc_stats['active']
-        ctx['draft_documents'] = doc_stats['draft']
-        ctx['expiring_documents'] = doc_stats['expiring']
+        ctx['total_contracts'] = contract_stats['total']
+        ctx['awaiting_action_contracts'] = contract_stats['awaiting_action']
+        ctx['active_contracts'] = contract_stats['active']
+        ctx['draft_contracts'] = contract_stats['draft']
+        ctx['expiring_contracts'] = contract_stats['expiring']
+        # Compatibility context keys retained for downstream integrations/tests;
+        # templates use the contract-oriented names above.
+        ctx['total_documents'] = ctx['total_contracts']
+        ctx['active_documents'] = ctx['active_contracts']
+        ctx['draft_documents'] = ctx['draft_contracts']
+        ctx['expiring_documents'] = ctx['expiring_contracts']
+        ctx['contract_types'] = Contract.ContractType.choices
+        ctx['risk_levels'] = Contract.RiskLevel.choices
+        ctx['approval_states'] = ApprovalRequest.Status.choices
+        ctx['repository_owners'] = (
+            User.objects.filter(
+                organization_memberships__organization=org,
+                organization_memberships__is_active=True,
+            )
+            .distinct()
+            .order_by('first_name', 'last_name', 'username')
+        )
+        ctx['repository_counterparties'] = list(
+            tenant_contracts.exclude(counterparty='')
+            .order_by('counterparty')
+            .values_list('counterparty', flat=True)
+            .distinct()
+        )
         return ctx
 
 
@@ -865,6 +915,7 @@ def contract_ai_assistant(request, pk):
         },
         request=request,
     )
+    record_contract_grounded_check(contract, request.user, request=request, trigger='manual')
     return JsonResponse(
         {
             'ok': True,
@@ -1272,6 +1323,7 @@ def dashboard(request):
     clm_top_conflicts = []
     clm_needs_review_count = 0
     clm_my_approvals_count = 0
+    clm_pending_approvals_count = 0
     clm_renewals_count = 0
     clm_high_severity_count = 0
     clm_approval_overdue_count = 0
@@ -1313,6 +1365,7 @@ def dashboard(request):
         clm_needs_review_count = case_qs.filter(status__in=['PENDING', 'IN_REVIEW']).count()
 
         clm_my_approvals_count = approvals_qs.filter(status='PENDING', assigned_to=request.user).count()
+        clm_pending_approvals_count = approvals_qs.filter(status='PENDING').count()
         clm_approval_overdue_count = approvals_qs.filter(
             status='PENDING', assigned_to=request.user, due_date__lt=timezone.now(),
         ).count()
@@ -1549,9 +1602,9 @@ def dashboard(request):
         priority_feature_band = score_data['band']
         priority_feature_history_label = score_data['history_label']
         priority_feature_contributors = [
-            {'value': feature_deviation_count, 'label': 'high-risk deviations'},
+            {'value': feature_deviation_count, 'label': 'high-risk findings'},
             {'value': feature_approval_count, 'label': 'pending approvals'},
-            {'value': feature_conflict_count, 'label': 'DPA conflicts'},
+            {'value': feature_conflict_count, 'label': 'cross-document conflicts'},
         ]
         priority_feature_additional_contributors = [item for item in [
             {'value': score_data['contributors']['unresolved_blockers'], 'label': 'unresolved blockers'},
@@ -1590,6 +1643,29 @@ def dashboard(request):
         approval_path_percent,
         governing_law_percent,
     )) / 5)
+    if contract_count:
+        portfolio_health_penalty = (
+            min(clm_high_severity_count * 12, 42)
+            + min(clm_pending_approvals_count * 5, 20)
+            + min((clm_renewals_count + clm_deadline_overdue_count) * 4, 16)
+            + min(clm_policy_exception_count * 6, 12)
+            + min(clm_conflict_count * 9, 18)
+        )
+        portfolio_health_score = max(0, 100 - portfolio_health_penalty)
+    else:
+        portfolio_health_score = workspace_health_percent
+    if not contract_count:
+        portfolio_health_band = 'Getting started'
+        portfolio_health_summary = 'Add your first contract to establish a portfolio health baseline and begin governed monitoring.'
+    elif portfolio_health_score >= 85:
+        portfolio_health_band = 'Healthy'
+        portfolio_health_summary = 'Portfolio controls are healthy. Keep monitoring the items below so routine work stays on track.'
+    elif portfolio_health_score >= 65:
+        portfolio_health_band = 'Needs attention'
+        portfolio_health_summary = 'Most portfolio controls are in place, but the highlighted actions need follow-through to protect the current posture.'
+    else:
+        portfolio_health_band = 'At risk'
+        portfolio_health_summary = 'Multiple portfolio signals require attention. Start with the priority contract, then clear the remaining governed actions.'
     audit_event_count = AuditLog.objects.filter(organization=org).count() if org else 0
     audit_ready_count = AuditLog.objects.filter(organization=org).exclude(entry_hash='').count() if org else 0
     audit_readiness_percent = _percent(audit_ready_count, audit_event_count)
@@ -1928,6 +2004,7 @@ def dashboard(request):
         'clm_top_conflicts': clm_top_conflicts,
         'clm_needs_review_count': clm_needs_review_count,
         'clm_my_approvals_count': clm_my_approvals_count,
+        'clm_pending_approvals_count': clm_pending_approvals_count,
         'clm_renewals_count': clm_renewals_count,
         'clm_high_severity_count': clm_high_severity_count,
         'clm_approval_overdue_count': clm_approval_overdue_count,
@@ -1958,6 +2035,9 @@ def dashboard(request):
         'reviewer_setup_required': reviewer_setup_required,
         'clm_setup_required_count': clm_setup_required_count,
         'workspace_health_percent': workspace_health_percent,
+        'portfolio_health_score': portfolio_health_score,
+        'portfolio_health_band': portfolio_health_band,
+        'portfolio_health_summary': portfolio_health_summary,
         'contracts_with_owner_percent': contracts_with_owner_percent,
         'renewal_dates_percent': renewal_dates_percent,
         'playbook_coverage_percent': playbook_coverage_percent,

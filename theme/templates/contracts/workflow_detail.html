@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{ workflow.title }}{% endblock %}
+{% block authenticated_page_title %}{{ workflow.title }}{% endblock %}
+{% block authenticated_page_subtitle %}{% if workflow.contract %}{{ workflow.get_status_display }} workflow · {{ workflow.contract.get_contract_type_display }}{% else %}{{ workflow.get_status_display }} workflow{% endif %}{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .step-icon-green  { width:32px; height:32px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; flex-shrink:0; }

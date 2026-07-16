@@ -10,8 +10,12 @@ workspace redirect.
 from __future__ import annotations
 
 import re
+from calendar import monthrange
+from datetime import date, timedelta
+from io import BytesIO
 from typing import Dict, List, Optional
 
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
@@ -19,11 +23,14 @@ from django.utils import timezone
 from contracts.middleware import log_action
 from contracts.models import (
     ApprovalRoute,
+    AuditLog,
     ClauseTemplate,
     CommandCenterWorkItem,
     Contract,
     ContractTemplate,
+    Deadline,
     DraftDocument,
+    Document,
     FieldDefinition,
     FieldValue,
     RiskSignal,
@@ -39,6 +46,7 @@ WORKFLOW_TEMPLATE_NAME = 'MSA Commercial Review Workflow'
 TEMPLATE_LABEL = 'Enterprise Services MSA · Netherlands · B2B'
 PLAYBOOK_LABEL = 'MSA Commercial Playbook'
 FINANCE_APPROVAL_THRESHOLD = 250000
+STANDARD_PAYMENT_TERM_DAYS = 30
 
 SECTION_ORDER = [
     FieldDefinition.Section.BASIC_DETAILS,
@@ -49,6 +57,160 @@ SECTION_ORDER = [
 ]
 
 _TOKEN_RE = re.compile(r'\{\{\s*(\w+)\s*\}\}')
+
+
+def _add_months(value, months: int):
+    """Return a calendar-month offset without requiring another dependency."""
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    return value.replace(day=min(value.day, monthrange(year, month)[1]), year=year, month=month)
+
+
+def _renewal_notice_due_date(cleaned_values: dict):
+    """Derive the first renewal notice date from the governed MSA intake."""
+    start_date = cleaned_values.get('start_date')
+    if isinstance(start_date, str):
+        try:
+            start_date = date.fromisoformat(start_date)
+        except ValueError:
+            return None
+    initial_term = str(cleaned_values.get('initial_term') or '')
+    match = re.search(r'(\d+)\s*months?', initial_term, re.IGNORECASE)
+    if start_date is None or match is None:
+        return None
+    try:
+        notice_days = int(cleaned_values.get('termination_notice_period') or 0)
+    except (TypeError, ValueError):
+        return None
+    if notice_days <= 0:
+        return None
+    return _add_months(start_date, int(match.group(1))) - timedelta(days=notice_days)
+
+
+def create_msa_renewal_obligation(*, contract: Contract, workflow: Workflow, cleaned_values: dict, user, request=None):
+    """Create one auditable, assigned renewal notice obligation when applicable."""
+    is_auto_renew = bool(cleaned_values.get('auto_renewal_included')) or (
+        str(cleaned_values.get('renewal_type') or '').lower() == 'auto-renew'
+    )
+    due_date = _renewal_notice_due_date(cleaned_values) if is_auto_renew else None
+    if due_date is None:
+        return None
+
+    title = f'Renewal notice — {contract.title}'
+    deadline, created = Deadline.objects.get_or_create(
+        contract=contract,
+        title=title,
+        defaults={
+            'description': (
+                f'Give notice by {due_date.isoformat()} or review the auto-renewal terms for '
+                f'{contract.title}.'
+            ),
+            'deadline_type': Deadline.DeadlineType.RENEWAL,
+            'auto_generated': True,
+            'generation_source': 'INTAKE',
+            'priority': Deadline.Priority.HIGH,
+            'due_date': due_date,
+            'reminder_days': min(max(int(cleaned_values.get('termination_notice_period') or 7), 7), 90),
+            'assigned_to': contract.owner or user,
+            'created_by': user,
+        },
+    )
+    if created:
+        log_action(
+            user,
+            AuditLog.Action.CREATE,
+            'Deadline',
+            deadline.pk,
+            str(deadline),
+            organization=contract.organization,
+            request=request,
+            event_type='obligation.auto_created',
+            changes={
+                'event': 'obligation.auto_created',
+                'contract_id': contract.pk,
+                'workflow_id': workflow.pk,
+                'deadline_type': deadline.deadline_type,
+                'due_date': due_date.isoformat(),
+            },
+        )
+    return deadline
+
+
+def create_msa_document_artifact(*, workflow: Workflow, user, artifact_type: str, request=None) -> Document:
+    """Persist a genuine DOCX artifact for the generated MSA or its summary."""
+    from docx import Document as WordDocument
+
+    if artifact_type not in {'summary', 'word'}:
+        raise ValueError('Unsupported MSA document artifact.')
+    draft = workflow.draft_documents.filter(is_current=True).order_by('-version').first()
+    if draft is None:
+        raise ValueError('No generated MSA draft is available to export.')
+
+    word_document = WordDocument()
+    if artifact_type == 'summary':
+        word_document.add_heading('MSA Review Summary', level=0)
+        word_document.add_paragraph(f'Contract: {workflow.contract.title}')
+        word_document.add_paragraph(f'Counterparty: {workflow.contract.counterparty or "Not captured"}')
+        word_document.add_paragraph(f'Contract value: {workflow.contract.value or "Not captured"} {workflow.contract.currency or ""}'.strip())
+        word_document.add_heading('Active risk signals', level=1)
+        signals = list(workflow.risk_signals.order_by('-severity', 'detected_at'))
+        if signals:
+            for signal in signals:
+                word_document.add_paragraph(signal.description, style='List Bullet')
+        else:
+            word_document.add_paragraph('No active risk signals were detected.')
+        word_document.add_heading('Approval status', level=1)
+        approvals = workflow.contract.approval_requests.select_related('assigned_to').order_by('created_at')
+        if approvals:
+            for approval in approvals:
+                assignee = approval.assigned_to.get_full_name() or approval.assigned_to.username if approval.assigned_to else 'Unassigned'
+                word_document.add_paragraph(f'{approval.approval_step}: {approval.get_status_display()} — {assignee}', style='List Bullet')
+        else:
+            word_document.add_paragraph('No approval requests have been submitted.')
+    else:
+        word_document.add_heading('Master Services Agreement', level=0)
+        for paragraph in (draft.content or '').split('\n\n'):
+            if paragraph.strip():
+                word_document.add_paragraph(paragraph.strip())
+
+    payload = BytesIO()
+    word_document.save(payload)
+    suffix = 'summary' if artifact_type == 'summary' else 'draft'
+    document = Document(
+        organization=workflow.organization,
+        contract=workflow.contract,
+        title=f'{workflow.contract.title} — {suffix.title()}',
+        document_type=Document.DocType.MEMO if artifact_type == 'summary' else Document.DocType.CONTRACT,
+        status=Document.Status.DRAFT,
+        description=f'Generated from MSA workflow {workflow.pk}.',
+        uploaded_by=user,
+        tags=f'msa-workflow:{workflow.pk},{artifact_type}',
+    )
+    document.file.save(
+        _docx_download_filename(contract=workflow.contract, artifact_type=artifact_type),
+        ContentFile(payload.getvalue()),
+        save=False,
+    )
+    document.mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    document.save()
+    log_action(
+        user,
+        AuditLog.Action.EXPORT,
+        'Document',
+        document.pk,
+        str(document),
+        organization=workflow.organization,
+        request=request,
+        event_type=f'msa.{artifact_type}_exported',
+        changes={
+            'event': f'msa.{artifact_type}_exported',
+            'contract_id': workflow.contract_id,
+            'workflow_id': workflow.pk,
+            'document_id': document.pk,
+        },
+    )
+    return document
 
 
 def get_msa_workflow_template() -> Optional[WorkflowTemplate]:
@@ -106,6 +268,32 @@ def _as_moneyish(value):
     return _format_value(value) if value not in (None, '') else ''
 
 
+def _payment_term_days(value) -> Optional[int]:
+    """Extract the first day count from common demo terms such as Net 30."""
+    if value in (None, ''):
+        return None
+    match = re.search(r'(\d+)', str(value))
+    if match is None:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def payment_terms_are_nonstandard(value) -> bool:
+    days = _payment_term_days(value)
+    return days is not None and days != STANDARD_PAYMENT_TERM_DAYS
+
+
+def _docx_download_filename(*, contract: Contract, artifact_type: str) -> str:
+    """Return the Payrollminds MVP naming convention for generated Word files."""
+    client = re.sub(r'[^A-Za-z0-9]+', '_', contract.counterparty or 'Client').strip('_') or 'Client'
+    generated_on = timezone.localdate().isoformat()
+    suffix = '_Summary' if artifact_type == 'summary' else ''
+    return f'Payrollminds_{contract.contract_type}_{client}_{generated_on}{suffix}.docx'
+
+
 def render_msa_live_preview(template_body: Optional[str], field_values_by_key: dict) -> str:
     if not template_body:
         return ''
@@ -154,10 +342,24 @@ def detect_msa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> Li
             RiskSignal.Severity.HIGH,
         ))
 
+    if payment_terms_are_nonstandard(field_values_by_key.get('payment_terms')):
+        signals.append((
+            'nonstandard_payment_terms',
+            f'Payment terms deviate from the standard Net {STANDARD_PAYMENT_TERM_DAYS} playbook position.',
+            RiskSignal.Severity.HIGH,
+        ))
+
     if field_values_by_key.get('liability_cap_nonstandard'):
         signals.append((
             'liability_cap_nonstandard',
             'Liability cap deviates from the standard MSA playbook position.',
+            RiskSignal.Severity.HIGH,
+        ))
+
+    if field_values_by_key.get('client_paper'):
+        signals.append((
+            'client_paper_review_required',
+            'Client paper is selected; third-party terms require Legal review before approval.',
             RiskSignal.Severity.HIGH,
         ))
 
@@ -215,7 +417,7 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
     top_signal = max(risk_signals, key=lambda signal: severity_rank.get(signal.severity, 0)) if risk_signals else None
     current_stage = current_step.name if current_step else 'Intake'
 
-    if top_signal and top_signal.code == 'finance_approval_required':
+    if top_signal and top_signal.code in {'finance_approval_required', 'nonstandard_payment_terms'}:
         next_action = 'Review Finance approval route'
     elif top_signal and top_signal.code == 'msa_dpa_review_required':
         next_action = 'Review privacy scope and linked DPA need'
@@ -321,6 +523,28 @@ def create_msa_workflow_instance(*, organization, user, cleaned_values: dict, re
         is_current=True,
         created_by=user,
     )
+    log_action(
+        user,
+        AuditLog.Action.CREATE,
+        'Workflow',
+        workflow.pk,
+        str(workflow),
+        organization=organization,
+        request=request,
+        event_type='msa.template_applied',
+        changes={'event': 'msa.template_applied', 'contract_id': contract.pk},
+    )
+    log_action(
+        user,
+        AuditLog.Action.CREATE,
+        'Workflow',
+        workflow.pk,
+        str(workflow),
+        organization=organization,
+        request=request,
+        event_type='msa.fields_captured',
+        changes={'event': 'msa.fields_captured', 'contract_id': contract.pk, 'field_count': len(field_defs)},
+    )
 
     risk_signals = detect_msa_risk_signals(workflow, cleaned_values)
     if any(signal.severity in {RiskSignal.Severity.HIGH, RiskSignal.Severity.CRITICAL} for signal in risk_signals):
@@ -328,6 +552,28 @@ def create_msa_workflow_instance(*, organization, user, cleaned_values: dict, re
     elif risk_signals:
         contract.risk_level = Contract.RiskLevel.MEDIUM
     contract.save(update_fields=['risk_level', 'auto_renew', 'updated_at'])
+    log_action(
+        user,
+        AuditLog.Action.CREATE,
+        'Workflow',
+        workflow.pk,
+        str(workflow),
+        organization=organization,
+        request=request,
+        event_type='msa.risks_evaluated',
+        changes={
+            'event': 'msa.risks_evaluated',
+            'contract_id': contract.pk,
+            'risk_signal_count': len(risk_signals),
+        },
+    )
+    create_msa_renewal_obligation(
+        contract=contract,
+        workflow=workflow,
+        cleaned_values=cleaned_values,
+        user=user,
+        request=request,
+    )
 
     sync_command_center_work_item_for_workflow(workflow)
 

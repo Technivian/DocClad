@@ -1,81 +1,70 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Profile – CLM One{% endblock %}
-{% block page_css %}
-<link rel="stylesheet" href="{% static 'css/profile.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}">
-{% endblock %}
+{% block title %}Account – CLM One{% endblock %}
+{% block authenticated_page_title %}Account{% endblock %}
+{% block authenticated_page_subtitle %}Manage your identity, workspace access, and security settings.{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/profile.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}">{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl">
-    <div class="mb-6">
-        <div class="dc-ds-page-hero">
-            <div class="flex items-center gap-4">
-                <div class="profile-page-avatar">
-                    <span class="profile-page-avatar__initial">{{ user.first_name.0|default:user.username.0|upper }}</span>
-                </div>
-                <div>
-                    <h1 class="dc-ds-title">{{ user.get_full_name|default:user.username }}</h1>
-                    <p class="dc-ds-subtitle">{{ user.email }} &middot; Member since {{ user.date_joined|date:"F Y" }}</p>
-                </div>
-            </div>
-        </div>
+<main class="profile-page" aria-labelledby="account-heading">
+  <header class="profile-page__hero">
+    <div class="profile-page-avatar" aria-hidden="true"><span class="profile-page-avatar__initial">{{ user.first_name.0|default:user.username.0|upper }}</span></div>
+    <div>
+      <p class="dc-ds-eyebrow">CLM One account</p>
+      <h1 id="account-heading">{{ user.get_full_name|default:user.username }}</h1>
+      <p>{{ user.email }} <span aria-hidden="true">·</span> Member since {{ user.date_joined|date:"F Y" }}</p>
     </div>
-    <form method="post" class="dc-ds-surface">
+  </header>
+
+  {% if form %}
+  <div class="profile-page__grid">
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="account-card-title">
+      <div class="dc-ds-surface__head"><div><p class="dc-ds-eyebrow">Identity</p><h2 class="dc-ds-surface__title" id="account-card-title">Account</h2></div></div>
+      <form method="post" class="dc-ds-surface__body profile-page__form">
         {% csrf_token %}
-        {% if form %}
-        <div class="dc-ds-surface__body space-y-4">
-        {% if mfa_required and not profile.mfa_enabled %}
-        <div class="dc-ds-alert dc-ds-alert--attention">
-            <div>
-                <strong>MFA required</strong>
-                <div>Your organization requires MFA. Request a verification code, then confirm enrollment from this page before returning to other areas of the app.</div>
-            </div>
+        {% if form.non_field_errors %}{% include "design_system/form_errors.html" with errors=form.non_field_errors %}{% endif %}
+        <div class="profile-page__fields">
+          {% include "design_system/form_field.html" with field=form.first_name %}
+          {% include "design_system/form_field.html" with field=form.last_name %}
+          {% include "design_system/form_field.html" with field=form.email %}
+          {% include "design_system/form_field.html" with field=form.phone %}
+          {% include "design_system/form_field.html" with field=form.department class_name="profile-page__field--wide" %}
         </div>
-        {% endif %}
-        {% if mfa_admin_user %}
-        <div class="dc-ds-alert">
-            <div>
-                <strong>Admin MFA enrollment</strong>
-                <div>Use the verification code flow below to confirm MFA before changing protected organization settings.</div>
-            </div>
-        </div>
-        {% endif %}
-        {% if recovery_codes_preview %}
-        <div class="dc-ds-alert dc-ds-alert--success">
-            <div>
-                <strong>Recovery codes</strong>
-                <div>Save these now. They will not be shown again.</div>
-                <div class="profile-recovery-grid">
-                    {% for code in recovery_codes_preview %}
-                    <div class="profile-recovery-code">{{ code }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        <div class="dc-ds-alert">
-            <div>
-                <strong>Security</strong>
-                <div>Request a one-time code, optionally generate recovery codes, and then enter the verification code to confirm MFA enrollment.</div>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {% for field in form %}
-            {% if field.name == 'bio' or field.name == 'mfa_enrollment_code' or field.name == 'mfa_recovery_code' %}
-              {% include "design_system/form_field.html" with field=field class_name="md:col-span-2" %}
-            {% else %}
-              {% include "design_system/form_field.html" with field=field %}
-            {% endif %}
-            {% endfor %}
-        </div>
-        <div class="flex flex-wrap gap-3 pt-4">
-            <button type="submit" name="action" value="send_mfa_code" class="btn-quiet">Send verification code</button>
-            <button type="submit" name="action" value="generate_mfa_recovery_codes" class="btn-soft">Generate recovery codes</button>
-            <button type="submit" class="btn-cta">Save Changes</button>
-        </div>
-        </div>
+        <div class="profile-page__actions"><button type="submit" class="dc-ds-button dc-ds-button--primary">Save account</button></div>
+      </form>
+    </section>
+
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="security-card-title">
+      <div class="dc-ds-surface__head"><div><p class="dc-ds-eyebrow">Protection</p><h2 class="dc-ds-surface__title" id="security-card-title">Security</h2></div><span class="profile-status {% if profile.mfa_enabled %}profile-status--clear{% else %}profile-status--attention{% endif %}">{% if profile.mfa_enabled %}MFA active{% else %}MFA not enrolled{% endif %}</span></div>
+      <div class="dc-ds-surface__body profile-page__stack">
+        {% if mfa_required and not profile.mfa_enabled %}<div class="dc-ds-alert dc-ds-alert--attention"><strong>MFA required</strong><span>Your workspace requires MFA before protected areas are available.</span></div>{% endif %}
+        {% if security_error %}<div class="dc-ds-alert dc-ds-alert--attention">{{ security_error }}</div>{% endif %}
+        {% if recovery_codes_preview %}<div class="dc-ds-alert dc-ds-alert--success"><strong>Recovery codes</strong><span>Save these now. They will not be shown again.</span><div class="profile-recovery-grid">{% for code in recovery_codes_preview %}<code class="profile-recovery-code">{{ code }}</code>{% endfor %}</div></div>{% endif %}
+        <div class="profile-page__security-row"><div><strong>{% if profile.mfa_enabled %}Authenticator protection is enabled{% else %}Set up multi-factor authentication{% endif %}</strong><span>{% if profile.mfa_enabled %}Verified {{ profile.mfa_verified_at|date:"j M Y" }}.{% else %}Use a one-time code sent to your account email.{% endif %}</span></div></div>
+        {% if not profile.mfa_enabled %}
+        <form method="post" class="profile-page__security-form">{% csrf_token %}<input type="hidden" name="action" value="send_mfa_code"><button type="submit" class="dc-ds-button dc-ds-button--secondary">Send verification code</button></form>
+        <form method="post" class="profile-page__verify-form">{% csrf_token %}<input type="hidden" name="action" value="verify_mfa"><label for="mfa_enrollment_code">Verification code</label><input class="form-control" id="mfa_enrollment_code" name="mfa_enrollment_code" autocomplete="one-time-code" inputmode="numeric"><button type="submit" class="dc-ds-button dc-ds-button--primary">Verify and enroll</button></form>
         {% else %}
-        <p class="dc-ds-surface__body c-muted">Please log in to view your profile.</p>
+        <form method="post" class="profile-page__security-form">{% csrf_token %}<input type="hidden" name="action" value="generate_mfa_recovery_codes"><button type="submit" class="dc-ds-button dc-ds-button--secondary">Generate recovery codes</button></form>
         {% endif %}
-    </form>
-</div>
+        {% if mfa_admin_user %}<a class="profile-page__text-link" href="{% url 'organization_session_audit' %}">Review workspace sessions <span aria-hidden="true">→</span></a>{% endif %}
+      </div>
+    </section>
+
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="workspace-card-title">
+      <div class="dc-ds-surface__head"><div><p class="dc-ds-eyebrow">Access</p><h2 class="dc-ds-surface__title" id="workspace-card-title">Workspace access</h2></div><span class="profile-status profile-status--neutral">{{ membership.get_role_display|default:"Member" }}</span></div>
+      <div class="dc-ds-surface__body profile-page__stack">
+        <dl class="profile-page__details"><div><dt>Workspace</dt><dd>{{ organization.name|default:"No workspace assigned" }}</dd></div><div><dt>Workspace role</dt><dd>{{ membership.get_role_display|default:"Member" }}</dd></div><div><dt>Product role</dt><dd>{{ profile.get_role_display }}</dd></div></dl>
+        <p class="profile-page__muted">Roles and reviewer assignments are managed by workspace administrators.</p>
+        {% if mfa_admin_user %}<a class="profile-page__text-link" href="{% url 'contracts:organization_team' %}">Manage workspace access <span aria-hidden="true">→</span></a>{% endif %}
+      </div>
+    </section>
+
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="preferences-card-title">
+      <div class="dc-ds-surface__head"><div><p class="dc-ds-eyebrow">Experience</p><h2 class="dc-ds-surface__title" id="preferences-card-title">Preferences</h2></div></div>
+      <div class="dc-ds-surface__body profile-page__stack"><div class="profile-page__security-row"><div><strong>Notifications</strong><span>Contract and workflow notifications are sent to {{ user.email }}.</span></div></div><p class="profile-page__muted">Language and time-zone preferences are not configured for this workspace.</p></div>
+    </section>
+  </div>
+  {% else %}<div class="dc-ds-surface"><p class="dc-ds-surface__body c-muted">Please log in to manage your account.</p></div>{% endif %}
+</main>
 {% endblock %}

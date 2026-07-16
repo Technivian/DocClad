@@ -187,6 +187,11 @@ def explainable_risk_score(risk_level, contributors, history=None):
     score += min(counts['unresolved_blockers'] * 10, 20)
     score += min(counts['expired_exceptions'] * 12, 24)
     score += min(counts['missing_approval_authority'] * 8, 8)
+    # A persisted high-severity finding must never be summarized as low or
+    # moderate attention just because the parent contract's coarse risk label
+    # has not been promoted yet.
+    if counts['high_risk_deviations']:
+        score = max(score, 65)
     score = min(score, 100)
     band = 'Critical attention' if score >= 85 else 'High attention' if score >= 65 else 'Moderate attention' if score >= 35 else 'Low attention'
     history = history or []

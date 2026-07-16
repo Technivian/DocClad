@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load dpa_workflow_tags %}
 {% block title %}MSA Commercial Review Workflow – CLM One{% endblock %}
+{% block authenticated_page_title %}New MSA Draft{% endblock %}
+{% block authenticated_page_subtitle %}Set commercial terms, apply governed positions, and generate a review-ready agreement.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .page-wrap.msa-workflow-page { max-width: 1480px; margin: 0 auto; padding: 24px 28px 40px; }
@@ -129,6 +131,76 @@
   .msa-command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .msa-stage-name { white-space: normal; overflow-wrap: anywhere; }
 }
+
+/* Command Center-aligned drafting composition. Shared dc-ds surface, button,
+   typography, divider, and token primitives provide the visual contract. */
+.page-wrap.msa-workflow-page { max-width: none; padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom); }
+.msa-workflow-page { color: var(--ink-900); }
+.msa-page-head { margin: 0; min-height: 36px; align-items: center; }
+.msa-head-copy { gap: 0; }
+.msa-page-breadcrumb { margin: 0; color: var(--ink-500); font: var(--text-small); }
+.msa-page-breadcrumb a { color: inherit; text-decoration: none; }
+.msa-page-breadcrumb a:hover { color: var(--seal); }
+.msa-head-actions { gap: var(--space-8); }
+.msa-summary-card { display: grid; grid-template-columns: minmax(250px, .85fr) minmax(0, 1.55fr); gap: var(--space-24); padding: var(--space-24); }
+.msa-summary-title { margin: 0; color: var(--ink-900); font: var(--text-heading); }
+.msa-summary-copy { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); line-height: var(--line-height-normal); }
+.msa-summary-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-16); align-content: start; }
+.msa-summary-fact { min-width: 0; }
+.msa-summary-fact span { display: block; color: var(--ink-500); font: var(--text-eyebrow); }
+.msa-summary-fact strong { display: block; margin-top: var(--space-4); overflow-wrap: anywhere; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
+.msa-stage-track { grid-column: 1 / -1; padding-top: var(--space-8); border-top: 1px solid var(--line); }
+.msa-stage-name { font-size: var(--font-size-meta); }
+.msa-stage-step.is-active .msa-stage-name { color: var(--seal-dark); font-weight: 800; }
+.msa-workspace-grid { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(440px, 1.35fr) minmax(280px, .78fr); gap: var(--space-24); align-items: start; margin-top: var(--space-24); }
+.msa-workspace-grid > * { min-width: 0; }
+.msa-workspace-grid > :is(.arch-workspace-main, .arch-workspace-draft, .arch-workspace-sidebar) { grid-column: auto; }
+.msa-workspace-grid > .arch-workspace-sidebar { position: sticky; top: var(--space-24); }
+.msa-intake-card, .msa-preview-card, .msa-decision-card { overflow: hidden; border-radius: var(--radius-surface); }
+.msa-intake-head, .msa-preview-head, .msa-decision-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-12); padding: var(--space-20) var(--space-24); border-bottom: 1px solid var(--line); }
+.msa-intake-head h2, .msa-preview-head h2, .msa-decision-head h2 { margin: 0; color: var(--ink-900); font: var(--text-heading); }
+.msa-intake-head p, .msa-preview-head p, .msa-decision-head p { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); }
+.msa-completion { color: var(--seal-dark); font: var(--text-small); font-weight: 700; white-space: nowrap; }
+.msa-accordion { padding: var(--space-8) var(--space-16) var(--space-16); }
+.msa-accordion-section { border-bottom: 1px solid var(--line); }
+.msa-accordion-section:last-child { border-bottom: 0; }
+.msa-accordion-section > summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); padding: var(--space-16) var(--space-8); cursor: pointer; list-style: none; }
+.msa-accordion-section > summary::-webkit-details-marker { display: none; }
+.msa-accordion-section > summary::after { content: '⌄'; color: var(--ink-500); font-size: 18px; transition: transform var(--transition-base); }
+.msa-accordion-section[open] > summary::after { transform: rotate(180deg); color: var(--seal); }
+.msa-accordion-title { display: flex; align-items: center; gap: var(--space-12); min-width: 0; color: var(--ink-900); font: var(--text-small); font-weight: 750; }
+.msa-accordion-num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--well); color: var(--ink-600); font-size: var(--font-size-meta); font-weight: 800; flex: 0 0 auto; }
+.msa-accordion-section[open] .msa-accordion-num { background: var(--seal-bg); color: var(--seal-dark); }
+.msa-accordion-state { color: var(--ink-500); font: var(--text-meta); }
+.msa-accordion-body { padding: 0 var(--space-8) var(--space-20); }
+.cform-section-grid { row-gap: var(--space-16); column-gap: var(--space-16); }
+.cform-field .form-label { color: var(--ink-700); font-size: 13px; font-weight: 650; margin-bottom: var(--space-4); }
+.cform-field input:not([type="checkbox"]), .cform-field select, .cform-field textarea { border-radius: var(--radius-control); border-color: var(--line); background: var(--card); }
+.cform-checkbox-card { border-color: var(--line); border-radius: var(--radius-control); background: var(--well); }
+.msa-preview-card { background: var(--card); }
+.msa-preview-head { position: static; background: var(--card); }
+.msa-preview-status { color: var(--ink-500); font: var(--text-meta); white-space: nowrap; }
+.cform-doc-canvas { padding: var(--space-24); background: var(--well); }
+.cform-doc { border-color: var(--line); border-radius: var(--radius-control); padding: 40px 18px 52px; box-shadow: var(--shadow-card); }
+.cform-var-empty { background: var(--well); color: var(--ink-500); }
+[data-theme="light"] .cform-var-empty { background: var(--well); color: var(--ink-500); }
+.cform-clause { border-color: transparent; border-radius: var(--radius-control); background: transparent; margin: 0 10px var(--space-12); }
+.cform-clause:hover { background: var(--well); }
+.msa-decision-body { padding: 0 var(--space-24) var(--space-24); }
+.msa-decision-section { padding: var(--space-20) 0; border-bottom: 1px solid var(--line); }
+.msa-decision-section:last-child { border-bottom: 0; padding-bottom: 0; }
+.msa-decision-section h3 { margin: 0 0 var(--space-8); color: var(--ink-900); font: var(--text-small); font-weight: 750; }
+.msa-next-action { border-color: var(--color-status-success-border); border-radius: var(--radius-control); background: var(--seal-bg); padding: var(--space-16); }
+.msa-next-action-label { color: var(--seal-dark); }
+.msa-secondary-actions { grid-template-columns: 1fr; margin-top: var(--space-12); }
+.msa-rail-btn { border-color: var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--ink-700); }
+.cform-gov-item { border-bottom-color: var(--line); }
+.msa-sources { padding: 0; border: 0; background: transparent; }
+.msa-sources > summary { cursor: pointer; color: var(--ink-700); font: var(--text-small); font-weight: 700; }
+.msa-sources-body { padding-top: var(--space-12); }
+@media (max-width: 1320px) { .msa-workspace-grid { grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); } .msa-workspace-grid > .arch-workspace-sidebar { grid-column: 1 / -1; position: static; } .msa-summary-card { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .msa-workspace-grid { grid-template-columns: 1fr; } .msa-summary-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .page-wrap.msa-workflow-page { padding-inline: var(--space-16); } .msa-summary-card, .msa-intake-head, .msa-preview-head, .msa-decision-head { padding-inline: var(--space-16); } .msa-decision-body { padding-inline: var(--space-16); } .msa-summary-facts { grid-template-columns: 1fr; } .cform-doc-canvas { padding: var(--space-16); } }
 </style>
 
 <div class="page-wrap page-wrap-fluid msa-workflow-page">
@@ -136,63 +208,46 @@
     {% csrf_token %}
     <div class="msa-page-head">
       <div class="msa-head-copy">
-        <a href="{% url 'contracts:contract_template_picker' %}" class="msa-back-link">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-          Contract type
-        </a>
-        <h1 class="msa-title">New MSA Draft</h1>
-        <p class="msa-subtitle">AI-assisted drafting from approved templates and playbooks.</p>
+        <p class="msa-page-breadcrumb"><a href="{% url 'contracts:contract_template_picker' %}">Contract types</a> / Master Service Agreement</p>
       </div>
       <div class="msa-head-actions">
-        <a href="{% url 'contracts:contract_template_picker' %}" class="btn-link">Cancel</a>
-        <button type="submit" class="btn-cta" id="submit-msa-btn">Generate governed draft</button>
+        <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-msa-btn">Generate governed draft</button>
       </div>
     </div>
 
-    <section class="msa-command-panel" aria-label="Workflow command summary">
-      <div class="msa-command-main">
+    <section class="msa-summary-card dc-ds-surface" aria-label="Workflow summary">
+      <div>
         <div>
-          <h2 class="msa-command-title">MSA Commercial Review Workflow</h2>
-          <p class="msa-command-copy">Governed workflow instance for commercial terms, legal fallbacks, finance routing, and approval control.</p>
+          <h2 class="msa-summary-title">MSA Commercial Review Workflow</h2>
+          <p class="msa-summary-copy">A focused, governed workspace for commercial terms, legal positions, and approval-ready drafting.</p>
         </div>
-        <div class="msa-command-metrics">
-          <div class="msa-command-metric"><span class="msa-command-label">Stage</span><span class="msa-command-value" id="msa-command-stage">Intake</span></div>
-          <div class="msa-command-metric"><span class="msa-command-label">Risk</span><span class="msa-command-value" id="msa-command-risk">Monitoring</span></div>
-          <div class="msa-command-metric"><span class="msa-command-label">Route</span><span class="msa-command-value" id="msa-command-route">Owner -> Signature</span></div>
-          <div class="msa-command-metric"><span class="msa-command-label">Next action</span><span class="msa-command-value" id="msa-command-action">Complete inputs</span></div>
-        </div>
+      </div>
+      <div class="msa-summary-facts">
+        <div class="msa-summary-fact"><span>Current stage</span><strong id="msa-command-stage">Intake</strong></div>
+        <div class="msa-summary-fact"><span>Required fields</span><strong id="msa-guide-count">Checking inputs</strong></div>
+        <div class="msa-summary-fact"><span>Active exceptions</span><strong id="msa-command-risk">0 active</strong></div>
+        <div class="msa-summary-fact"><span>Contract owner</span><strong id="msa-command-owner">Unassigned</strong></div>
+        <div class="msa-summary-fact"><span>Next action</span><strong id="msa-command-action">Complete inputs</strong></div>
+        <div class="msa-summary-fact"><span>Approval route</span><strong id="msa-command-route">Owner → Signature</strong></div>
       </div>
       <div class="msa-stage-track" aria-label="MSA workflow stages">
         <div class="msa-stage-step is-active"><span class="msa-stage-dot">1</span><span class="msa-stage-name">Intake</span></div>
-        <div class="msa-stage-step is-ready"><span class="msa-stage-dot">2</span><span class="msa-stage-name">Draft</span></div>
+        <div class="msa-stage-step"><span class="msa-stage-dot">2</span><span class="msa-stage-name">Draft generation</span></div>
         <div class="msa-stage-step"><span class="msa-stage-dot">3</span><span class="msa-stage-name">Commercial review</span></div>
         <div class="msa-stage-step"><span class="msa-stage-dot">4</span><span class="msa-stage-name">Legal approval</span></div>
         <div class="msa-stage-step"><span class="msa-stage-dot">5</span><span class="msa-stage-name">Signature</span></div>
       </div>
     </section>
 
-    <div class="arch-workspace-grid">
+    <div class="msa-workspace-grid">
       <div class="arch-workspace-main">
-        <section class="msa-guide-panel" aria-label="Guided intake sections">
-          <div class="msa-guide-head">
-            <h2 class="msa-guide-title">Drafting inputs</h2>
-            <span class="msa-guide-count" id="msa-guide-count">5 sections</span>
-          </div>
-          <div class="msa-guide-list">
-            <div class="msa-guide-item is-current"><span class="msa-guide-index">1</span><span class="msa-guide-name">Contract setup</span><span class="msa-guide-state">Required</span></div>
-            <div class="msa-guide-item"><span class="msa-guide-index">2</span><span class="msa-guide-name">Commercial terms</span><span class="msa-guide-state">Required</span></div>
-            <div class="msa-guide-item"><span class="msa-guide-index">3</span><span class="msa-guide-name">Service scope</span><span class="msa-guide-state">Governed</span></div>
-            <div class="msa-guide-item"><span class="msa-guide-index">4</span><span class="msa-guide-name">Legal positions</span><span class="msa-guide-state">Fallbacks</span></div>
-            <div class="msa-guide-item"><span class="msa-guide-index">5</span><span class="msa-guide-name">Review triggers</span><span class="msa-guide-state">Routing</span></div>
-          </div>
-        </section>
-
-        <section class="cform-intake-panel">
-          <div class="cform-panel-head">
-            <div class="cform-panel-head-title-row"><span class="cform-panel-num">1</span><h2 class="cform-panel-title">Counterparty and ownership</h2></div>
-            <span class="cform-panel-meta is-required">Required</span>
-          </div>
-          <div class="cform-panel-body"><div class="cform-section-grid">
+        <section class="msa-intake-card dc-ds-surface" aria-label="Drafting steps">
+          <div class="msa-intake-head"><div><h2>Drafting steps</h2><p>Complete the setup, then review commercial and legal positions.</p></div></div>
+          <div class="msa-accordion">
+          <details class="msa-accordion-section" open>
+            <summary><span class="msa-accordion-title"><span class="msa-accordion-num">1</span>Contract setup</span><span class="msa-accordion-state">Required</span></summary>
+            <div class="msa-accordion-body"><div class="cform-section-grid">
             {% for field in fields_by_section.BASIC_DETAILS %}
             <div class="cform-field{% if errors|get_item:field.key %} is-invalid{% endif %}">
               <label class="form-label">{{ field.label }}{% if field.is_required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}</label>
@@ -200,12 +255,12 @@
               {% if errors|get_item:field.key %}<p class="cform-field-error">{{ errors|get_item:field.key }}</p>{% endif %}
             </div>
             {% endfor %}
-          </div></div>
-        </section>
+            </div></div>
+          </details>
 
-        <section class="cform-intake-panel">
-          <div class="cform-panel-head"><div class="cform-panel-head-title-row"><span class="cform-panel-num">2</span><h2 class="cform-panel-title">Value, term, and notice</h2></div></div>
-          <div class="cform-panel-body"><div class="cform-section-grid">
+          <details class="msa-accordion-section">
+            <summary><span class="msa-accordion-title"><span class="msa-accordion-num">2</span>Commercial terms</span><span class="msa-accordion-state">Required</span></summary>
+            <div class="msa-accordion-body"><div class="cform-section-grid">
             {% for field in fields_by_section.COMMERCIAL_TERMS %}
             <div class="cform-field{% if field.field_type == 'TEXTAREA' %} cform-field-full{% elif field.field_type == 'NUMBER' or field.field_type == 'SELECT' %} cform-field-third{% endif %}{% if errors|get_item:field.key %} is-invalid{% endif %}">
               <label class="form-label">{{ field.label }}{% if field.is_required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}</label>
@@ -213,12 +268,12 @@
               {% if errors|get_item:field.key %}<p class="cform-field-error">{{ errors|get_item:field.key }}</p>{% endif %}
             </div>
             {% endfor %}
-          </div></div>
-        </section>
+            </div></div>
+          </details>
 
-        <section class="cform-intake-panel">
-          <div class="cform-panel-head"><div class="cform-panel-head-title-row"><span class="cform-panel-num">3</span><h2 class="cform-panel-title">Service definition controls</h2></div></div>
-          <div class="cform-panel-body"><div class="cform-section-grid">
+          <details class="msa-accordion-section">
+            <summary><span class="msa-accordion-title"><span class="msa-accordion-num">3</span>Services and scope</span><span class="msa-accordion-state">Governed</span></summary>
+            <div class="msa-accordion-body"><div class="cform-section-grid">
             {% for field in fields_by_section.SERVICES_SCOPE %}
             <div class="cform-field{% if field.field_type == 'TEXTAREA' or field.field_type == 'BOOLEAN' %} cform-field-full{% endif %}{% if errors|get_item:field.key %} is-invalid{% endif %}">
               {% if field.field_type == 'BOOLEAN' %}
@@ -233,12 +288,12 @@
               {% endif %}
             </div>
             {% endfor %}
-          </div></div>
-        </section>
+            </div></div>
+          </details>
 
-        <section class="cform-intake-panel">
-          <div class="cform-panel-head"><div class="cform-panel-head-title-row"><span class="cform-panel-num">4</span><h2 class="cform-panel-title">Fallbacks and jurisdiction</h2></div></div>
-          <div class="cform-panel-body"><div class="cform-section-grid">
+          <details class="msa-accordion-section">
+            <summary><span class="msa-accordion-title"><span class="msa-accordion-num">4</span>Legal positions</span><span class="msa-accordion-state">Fallbacks</span></summary>
+            <div class="msa-accordion-body"><div class="cform-section-grid">
             {% for field in fields_by_section.LEGAL_POSITION %}
             <div class="cform-field{% if field.field_type == 'BOOLEAN' or field.field_type == 'TEXTAREA' %} cform-field-full{% endif %}{% if errors|get_item:field.key %} is-invalid{% endif %}">
               {% if field.field_type == 'BOOLEAN' %}
@@ -254,12 +309,12 @@
               {% endif %}
             </div>
             {% endfor %}
-          </div></div>
-        </section>
+            </div></div>
+          </details>
 
-        <section class="cform-intake-panel">
-          <div class="cform-panel-head"><div class="cform-panel-head-title-row"><span class="cform-panel-num">5</span><h2 class="cform-panel-title">Review triggers</h2></div></div>
-          <div class="cform-panel-body">
+          <details class="msa-accordion-section">
+            <summary><span class="msa-accordion-title"><span class="msa-accordion-num">5</span>Review and generate</span><span class="msa-accordion-state">Routing</span></summary>
+            <div class="msa-accordion-body">
             <div class="cform-section-grid">
               {% for field in fields_by_section.SMART_QUESTIONS %}
               <div class="cform-field cform-field-full{% if errors|get_item:field.key %} is-invalid{% endif %}">
@@ -273,62 +328,68 @@
               </div>
               {% endfor %}
             </div>
+            </div>
+          </details>
           </div>
         </section>
       </div>
 
       <div class="arch-workspace-draft">
-        <div class="cform-draft-panel">
-          <div class="msa-draft-topbar">
-            <div class="msa-draft-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-              Draft workspace
-            </div>
-            <div class="msa-draft-meta" aria-label="Draft controls">
-              <span class="msa-source-pill">Template source locked</span>
-              <span class="msa-source-pill">Playbook matched</span>
-              <span class="msa-source-pill">Fallbacks ready</span>
-            </div>
+        <section class="msa-preview-card dc-ds-surface" aria-labelledby="msa-preview-title">
+          <div class="msa-preview-head">
+            <div><h2 id="msa-preview-title">Live contract preview</h2><p>Input values are linked directly to the relevant clause.</p></div>
+            <span class="msa-preview-status">Draft updates as you work</span>
           </div>
           <div class="cform-doc-canvas"><div class="cform-doc" id="msa-draft-doc"></div></div>
-        </div>
+        </section>
       </div>
 
       <div class="arch-workspace-sidebar">
-        <div class="cform-rail-card">
-          <div class="cform-rail-head">
-            <div class="arch-completion-label">Workflow controls</div>
+        <section class="msa-decision-card dc-ds-surface" aria-labelledby="msa-decision-title">
+          <div class="msa-decision-head">
+            <div><h2 id="msa-decision-title">Decision panel</h2><p>Actions and governance for this draft.</p></div>
             <span class="msa-status-chip" id="msa-primary-status">Intake</span>
           </div>
-          <div class="cform-rail-body">
-            <div class="msa-action-stack">
+          <div class="msa-decision-body">
+            <section class="msa-decision-section">
+              <h3>Next action</h3>
+              <div class="msa-action-stack">
               <div class="msa-next-action">
-                <div class="msa-next-action-label">Primary next action</div>
+                <div class="msa-next-action-label">Recommended</div>
                 <div class="msa-next-action-copy" id="msa-next-action">Complete drafting inputs</div>
               </div>
               <div class="msa-secondary-actions">
                 <button type="button" class="msa-rail-btn">Review route</button>
-                <button type="button" class="msa-rail-btn">Clause sources</button>
               </div>
-            </div>
-            <div class="cform-gov-group-label">Template &amp; playbook</div>
-            <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span><div><div class="cform-gov-title">Template selected</div><div class="cform-gov-copy">Enterprise Services MSA · Netherlands · B2B</div></div></div>
-            <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg></span><div><div class="cform-gov-title">Playbook applied</div><div class="cform-gov-copy">MSA Commercial Playbook</div></div></div>
-            <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg></span><div><div class="cform-gov-title">Clause library active</div><div class="cform-gov-copy">{{ clause_library_count }} approved clause{{ clause_library_count|pluralize }} for MSA</div></div></div>
-            <div class="cform-gov-group-label">Risk &amp; compliance</div>
-            <div class="cform-gov-item"><span class="cform-gov-icon tone-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span><div><div class="cform-gov-title">Risk checks active</div><div class="cform-gov-copy" id="msa-gov-risk-checks">Finance, liability, renewal, privacy, and jurisdiction rules are monitoring this draft</div></div></div>
-            <div class="cform-risk-list" id="msa-risk-signal-list" aria-live="polite"></div>
-            <div class="cform-gov-group-label">Approval &amp; audit</div>
-            <div class="cform-gov-item">
+              </div>
+            </section>
+            <section class="msa-decision-section">
+              <h3>Governance checks</h3>
+              <div class="cform-gov-item"><span class="cform-gov-icon tone-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span><div><div class="cform-gov-title">Monitoring active</div><div class="cform-gov-copy" id="msa-gov-risk-checks">Finance, liability, renewal, privacy, and jurisdiction rules are monitoring this draft.</div></div></div>
+              <div class="cform-risk-list" id="msa-risk-signal-list" aria-live="polite"></div>
+            </section>
+            <section class="msa-decision-section">
+              <h3>Approval route</h3>
+              <div class="cform-gov-item">
               <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
               <div>
                 <div class="cform-gov-title">Approval route</div>
                 <div class="cform-gov-copy" id="msa-gov-approval-route">{% for step in approval_route %}{{ step.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div>
                 <div class="cform-gov-reasons" id="msa-gov-approval-reasons"></div>
               </div>
-            </div>
+            </section>
+            <section class="msa-decision-section">
+              <details class="msa-sources">
+                <summary>Sources and governance</summary>
+                <div class="msa-sources-body">
+                  <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span><div><div class="cform-gov-title">Template</div><div class="cform-gov-copy">Enterprise Services MSA · Netherlands · B2B</div></div></div>
+                  <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg></span><div><div class="cform-gov-title">Playbook</div><div class="cform-gov-copy">MSA Commercial Playbook</div></div></div>
+                  <div class="cform-gov-item"><span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg></span><div><div class="cform-gov-title">Clause library</div><div class="cform-gov-copy">{{ clause_library_count }} approved clause{{ clause_library_count|pluralize }} for MSA</div></div></div>
+                </div>
+              </details>
+            </section>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   </form>
@@ -394,7 +455,12 @@
   function describeParagraph(text, index) {
     if (index === 1) return { id: 'generated-msa-draft', title: 'Generated MSA Draft', source: 'Approved template', tone: 'template' };
     if (/1\. Services/.test(text)) return { id: 'services', title: 'Services', source: 'Approved template', tone: 'template' };
-    if (/2\. Fees and Payment/.test(text)) return { id: 'fees-payment', title: 'Fees and Payment', source: boolValue('value_above_threshold_confirmed') ? 'Risk-triggered fallback' : 'Approved template', tone: boolValue('value_above_threshold_confirmed') ? 'risk' : 'template' };
+    if (/2\. Fees and Payment/.test(text)) {
+      const paymentTerm = String(fieldRawValue(fieldEl('payment_terms')) || '');
+      const paymentDays = paymentTerm.match(/(\d+)/);
+      const paymentRisk = paymentDays && parseInt(paymentDays[1], 10) !== 30;
+      return { id: 'fees-payment', title: 'Fees and Payment', source: (boolValue('value_above_threshold_confirmed') || paymentRisk) ? 'Risk-triggered fallback' : 'Approved template', tone: (boolValue('value_above_threshold_confirmed') || paymentRisk) ? 'risk' : 'template' };
+    }
     if (/3\. Term and Renewal/.test(text)) return { id: 'term-renewal', title: 'Term and Renewal', source: 'Approved clause library', tone: 'library' };
     if (/4\. Liability/.test(text)) return { id: 'liability', title: 'Liability', source: boolValue('liability_cap_nonstandard') ? 'Risk-triggered fallback' : 'Approved clause library', tone: boolValue('liability_cap_nonstandard') ? 'risk' : 'library' };
     if (/5\. Intellectual Property/.test(text)) return { id: 'intellectual-property', title: 'Intellectual Property', source: 'Approved template', tone: 'template' };
@@ -443,7 +509,11 @@
     const valueEl = fieldEl('value');
     const valueNum = valueEl && valueEl.value ? parseFloat(valueEl.value) : 0;
     if (boolValue('value_above_threshold_confirmed') || valueNum >= 250000) signals.push({ tone: 'high', text: 'Finance approval signal: contract value is above the approval threshold.', link: 'fees-payment' });
+    const paymentTerm = String(fieldRawValue(fieldEl('payment_terms')) || '');
+    const paymentDays = paymentTerm.match(/(\d+)/);
+    if (paymentDays && parseInt(paymentDays[1], 10) !== 30) signals.push({ tone: 'high', text: 'Finance approval signal: payment terms deviate from the standard Net 30 position.', link: 'fees-payment' });
     if (boolValue('liability_cap_nonstandard')) signals.push({ tone: 'high', text: 'Legal risk signal: liability cap deviates from the standard playbook.', link: 'liability' });
+    if (boolValue('client_paper')) signals.push({ tone: 'high', text: 'Legal review signal: client paper is selected.', link: 'generated-msa-draft' });
     if (boolValue('personal_data_involved') || boolValue('services_involve_personal_data')) signals.push({ tone: 'warn', text: 'DPA/privacy review signal: services involve personal data processing.', link: 'data-protection' });
     if (boolValue('auto_renewal_included') || String(fieldRawValue(fieldEl('renewal_type'))).toLowerCase() === 'auto-renew') signals.push({ tone: 'warn', text: 'Renewal notice signal: auto-renewal terms need notice-window review.', link: 'term-renewal' });
     if (boolValue('ip_ownership_nonstandard')) signals.push({ tone: 'high', text: 'Legal review signal: IP ownership is non-standard.', link: 'intellectual-property' });
@@ -463,7 +533,7 @@
     const reasons = [];
     if (signals.some(s => /Finance approval/.test(s.text))) {
       approvals.push('Finance');
-      reasons.push('<div class="cform-gov-reason"><strong>Finance required:</strong> contract value exceeds the approval threshold.</div>');
+      reasons.push('<div class="cform-gov-reason"><strong>Finance required:</strong> contract value or payment terms deviate from the standard route.</div>');
     }
     if (signals.some(s => /Legal risk|DPA\/privacy review|Legal review|Legal escalation/.test(s.text))) {
       approvals.push('Legal');
@@ -492,13 +562,15 @@
     const nextActionEl = document.getElementById('msa-next-action');
     const primaryStatusEl = document.getElementById('msa-primary-status');
     const guideCountEl = document.getElementById('msa-guide-count');
-    if (commandRiskEl) commandRiskEl.textContent = riskText;
+    const ownerEl = document.getElementById('msa-command-owner');
+    if (commandRiskEl) commandRiskEl.textContent = activeSignals.length + ' active';
     if (commandRouteEl) commandRouteEl.textContent = routeCompact;
     if (commandStageEl) commandStageEl.textContent = stage;
     if (commandActionEl) commandActionEl.textContent = nextAction;
     if (nextActionEl) nextActionEl.textContent = nextAction;
     if (primaryStatusEl) primaryStatusEl.textContent = stage;
     if (guideCountEl) guideCountEl.textContent = completionText;
+    if (ownerEl) ownerEl.textContent = fieldRawValue(fieldEl('contract_owner')) || 'Unassigned';
 
     const submitBtn = document.getElementById('submit-msa-btn');
     if (submitBtn) {
@@ -516,6 +588,15 @@
     document.querySelectorAll('.cform-clause.is-linked').forEach(node => node.classList.remove('is-linked'));
     target.classList.add('is-linked');
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  form.querySelectorAll('.msa-accordion-section').forEach(function (section) {
+    section.addEventListener('toggle', function () {
+      if (!section.open) return;
+      form.querySelectorAll('.msa-accordion-section[open]').forEach(function (other) {
+        if (other !== section) other.open = false;
+      });
+    });
   });
 
   form.addEventListener('input', function () { renderLivePreview(); updateReadiness(); });

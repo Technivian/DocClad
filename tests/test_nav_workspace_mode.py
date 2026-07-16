@@ -22,6 +22,7 @@ User = get_user_model()
 STANDARD_NAV_LABELS = [
     'Command Center',
     'New Contract',
+    'Upload &amp; Review',
     'Contracts',
     'DPA Reviews',
     'Obligations',

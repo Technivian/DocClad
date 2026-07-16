@@ -6,7 +6,7 @@ from .permissions import can_manage_organization
 from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
 from .services.contract_policies import get_required_fields_for_contract_type
-from .services.contract_lifecycle import can_transition_lifecycle_stage
+from .services.contract_lifecycle import can_transition_lifecycle_stage, get_signature_routing_blockers
 from .services.workflow_execution import _CONDITION_PATTERN, _FIELD_ALIASES
 from .tenancy import scope_queryset_for_organization
 from .models import (
@@ -46,31 +46,32 @@ TAILWIND_FILE = FORM_FILE
 
 
 class UserProfileForm(forms.ModelForm):
-    # Canonical token-backed controls (no hardcoded Tailwind strings).
+    """Self-service identity and contact details.
+
+    Workspace roles and legacy professional/billing fields remain in the data
+    model for compatibility, but are intentionally not editable from the
+    product account experience.
+    """
     first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
     last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': FORM_CONTROL}))
-    mfa_enrollment_code = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': FORM_CONTROL, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
-    )
-    mfa_recovery_code = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': FORM_CONTROL, 'autocomplete': 'one-time-code', 'inputmode': 'numeric'}),
-    )
 
     class Meta:
         model = UserProfile
-        fields = ['role', 'phone', 'bar_number', 'department', 'hourly_rate', 'bio', 'mfa_enabled']
+        fields = ['phone', 'department']
         widgets = {
-            'role': forms.Select(attrs={'class': FORM_CONTROL}),
             'phone': forms.TextInput(attrs={'class': FORM_CONTROL}),
-            'bar_number': forms.TextInput(attrs={'class': FORM_CONTROL}),
             'department': forms.TextInput(attrs={'class': FORM_CONTROL}),
-            'hourly_rate': forms.NumberInput(attrs={'class': FORM_CONTROL, 'step': '0.01'}),
-            'bio': forms.Textarea(attrs={'class': FORM_CONTROL, 'rows': 3}),
-            'mfa_enabled': forms.CheckboxInput(attrs={'class': FORM_CHECK}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user_id and not self.is_bound:
+            self.initial.update({
+                'first_name': self.instance.user.first_name,
+                'last_name': self.instance.user.last_name,
+                'email': self.instance.user.email,
+            })
 
 
 class OrganizationIdentitySettingsForm(forms.ModelForm):
@@ -1098,6 +1099,18 @@ class SignatureRequestForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        contract = cleaned_data.get('contract')
+        document = cleaned_data.get('document')
+        if not self.instance.pk and contract:
+            from .permissions import ContractAction, can_access_contract_action
+
+            if not can_access_contract_action(self.actor, contract, ContractAction.EDIT):
+                self.add_error('contract', 'You do not have permission to route this contract for signature.')
+            for blocker in get_signature_routing_blockers(contract):
+                self.add_error('contract', blocker)
+            if document and document.contract_id != contract.pk:
+                self.add_error('document', 'The signing document must belong to the selected contract.')
+
         new_status = cleaned_data.get('status')
         if not self.instance.pk or not new_status:
             return cleaned_data
@@ -1276,9 +1289,43 @@ class ApprovalRuleForm(forms.ModelForm):
 
 
 class ApprovalRequestForm(forms.ModelForm):
+    APPROVAL_STEP_CHOICES = (
+        ('', 'Select a review type'),
+        ('LEGAL', 'Legal review'),
+        ('FINANCE', 'Finance review'),
+        ('PRIVACY', 'Privacy review'),
+        ('EXECUTIVE', 'Executive approval'),
+        ('COMPLIANCE', 'Compliance review'),
+    )
+
     def __init__(self, *args, **kwargs):
         self.actor = kwargs.pop('actor', None)
         super().__init__(*args, **kwargs)
+
+        self.fields['contract'].label = 'Contract to review'
+        self.fields['contract'].help_text = 'Choose the contract that needs a recorded decision.'
+        self.fields['approval_step'].label = 'Review type'
+        self.fields['approval_step'].help_text = 'Choose the specialist decision required for this contract.'
+        self.fields['assigned_to'].label = 'Primary reviewer'
+        self.fields['assigned_to'].help_text = 'This person owns the decision and receives the request.'
+        self.fields['delegated_to'].label = 'Delegate to'
+        self.fields['delegated_to'].help_text = 'Optional. Use this when the request should start with a delegate.'
+        self.fields['comments'].label = 'Context for the reviewer'
+        self.fields['comments'].help_text = 'Summarise the decision needed, material terms, or any concern to resolve.'
+        self.fields['due_date'].label = 'Decision due'
+        self.fields['due_date'].help_text = 'Optional. Set a clear deadline for the reviewer.'
+
+        # ApprovalRequest historically stores the review step as a free text
+        # value. Present the governed steps as a select for new requests while
+        # preserving any legacy value when an older request is edited.
+        step_choices = list(self.APPROVAL_STEP_CHOICES)
+        if self.instance.pk and self.instance.approval_step and self.instance.approval_step not in dict(step_choices):
+            step_choices.insert(1, (self.instance.approval_step, self.instance.approval_step.replace('_', ' ').title()))
+        self.fields['approval_step'].widget = forms.Select(
+            choices=step_choices,
+            attrs={'class': TAILWIND_SELECT},
+        )
+
         if not self.instance.pk:
             # A new approval request always starts PENDING. The outcome is
             # decided later through the approval service (approve/reject/
@@ -1289,13 +1336,31 @@ class ApprovalRequestForm(forms.ModelForm):
             # POST cannot smuggle a different status in.
             self.initial['status'] = ApprovalRequest.Status.PENDING
             self.fields['status'].disabled = True
+            self.fields['status'].label = 'Status'
+            self.fields['status'].help_text = 'New requests always begin pending. A reviewer records the outcome after review.'
+        else:
+            # A requester cannot create a terminal outcome or manually
+            # escalate a request. Keep only the live status and the decisions
+            # that the approval service can actually process from this state.
+            allowed = [self.instance.status]
+            if self.instance.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED):
+                allowed.extend((
+                    ApprovalRequest.Status.CHANGES_REQUESTED,
+                    ApprovalRequest.Status.APPROVED,
+                    ApprovalRequest.Status.REJECTED,
+                ))
+            self.fields['status'].choices = [
+                (value, ApprovalRequest.Status(value).label)
+                for value in dict.fromkeys(allowed)
+            ]
+            self.fields['status'].help_text = 'Only available workflow decisions are shown.'
 
     class Meta:
         model = ApprovalRequest
         fields = ['contract', 'approval_step', 'status', 'assigned_to', 'delegated_to', 'comments', 'due_date']
         widgets = {
             'contract': forms.Select(attrs={'class': TAILWIND_SELECT}),
-            'approval_step': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+            'approval_step': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'status': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'assigned_to': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'delegated_to': forms.Select(attrs={'class': TAILWIND_SELECT}),

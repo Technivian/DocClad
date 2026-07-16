@@ -164,7 +164,12 @@ class AdminJourneys(_Base):
         r = c.post(reverse('contracts:contract_create'), {
             'title': 'Admin Made', 'contract_type': 'OTHER', 'content': '',
             'status': 'ACTIVE', 'counterparty': 'X', 'value': '0', 'currency': 'USD',
-            'risk_level': 'LOW', 'lifecycle_stage': 'DRAFTING'})
+            'risk_level': 'LOW', 'lifecycle_stage': 'DRAFTING',
+            # New contracts require an accountable owner and effective/expiry
+            # dates. Keep the walkthrough representative of the real form.
+            'owner': self.admin_a.pk, 'governing_law': 'England and Wales',
+            'start_date': '2026-01-01', 'end_date': '2027-01-01',
+        })
         self.assertIn(r.status_code, (302, 200))
         made = Contract.objects.filter(organization=self.org_a, title='Admin Made').first()
         self.assertIsNotNone(made)

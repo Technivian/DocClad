@@ -70,7 +70,7 @@ class ExpressiveDesignSystemContractTests(SimpleTestCase):
         css = (
             self.root / 'theme' / 'static' / 'css' / 'command-center.css'
         ).read_text()
-        reference_layer = css.split('/* Reference-led visual layer:', 1)[1]
+        reference_layer = css.split('/* Reference-led visual layer for the dashboard work surface.', 1)[1]
         hex_values = set(re.findall(r'#[0-9a-fA-F]{3,8}', reference_layer))
         self.assertEqual(hex_values, {'#000'})
 

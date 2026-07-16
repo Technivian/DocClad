@@ -143,7 +143,7 @@ class CreatorCannotSelfApprove(_Base):
         ar = self._approval(self._contract(creator), assigned_to=creator)
         api = self._api_approve(creator, ar)
         html = self._html_approve(creator, ar)
-        msg = 'You cannot decide on an approval for a contract you created.'
+        msg = 'You cannot decide on an approval for a contract you own.'
         self.assertIn(msg, api.json().get('error', ''))
         self.assertContains(html, msg)
 

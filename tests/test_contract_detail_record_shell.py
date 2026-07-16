@@ -16,6 +16,7 @@ from django.utils import timezone
 
 from contracts.models import (
     ApprovalRequest,
+    AuditLog,
     Contract,
     Deadline,
     Document,
@@ -63,6 +64,12 @@ class ContractDetailShellTests(TestCase):
         self.assertContains(response, 'arch-header')
         self.assertContains(response, 'arch-title')
 
+    def test_uses_compact_document_summary_and_inline_note_composer(self):
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertContains(response, 'contract-document-summary')
+        self.assertContains(response, 'data-open-note-dialog')
+        self.assertContains(response, 'id="contract-note-dialog"')
+
     def test_approved_tab_labels_present(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
@@ -86,6 +93,31 @@ class ContractDetailShellTests(TestCase):
         body = page_body(response.content.decode())
         self.assertIn('data-tab="compliance"', body)
         self.assertIn('Compliance', body)
+
+    def test_agreement_family_shows_governing_and_linked_contract_records(self):
+        order_confirmation = Contract.objects.create(
+            organization=self.organization,
+            title='Order Confirmation 2026',
+            contract_type=Contract.ContractType.PURCHASE_ORDER,
+            status=Contract.Status.PENDING,
+            parent_contract=self.contract,
+            created_by=self.user,
+        )
+
+        parent_response = self.client.get(
+            reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
+        )
+        parent_body = page_body(parent_response.content.decode())
+        self.assertIn('Agreement family', parent_body)
+        self.assertIn(order_confirmation.title, parent_body)
+        self.assertIn('Purchase Order', parent_body)
+
+        child_response = self.client.get(
+            reverse('contracts:contract_detail', kwargs={'pk': order_confirmation.pk}),
+        )
+        child_body = page_body(child_response.content.decode())
+        self.assertIn('Governing agreement', child_body)
+        self.assertIn(self.contract.title, child_body)
 
 
 class ContractDetailMetadataHeaderTests(TestCase):
@@ -140,18 +172,53 @@ class ContractDetailActionsTests(TestCase):
             status=Contract.Status.DRAFT, created_by=self.user,
         )
 
-    def test_primary_actions_link_to_real_working_endpoints(self):
+    def test_draft_has_one_submit_primary_and_no_signature_shortcut(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}), body)
-        self.assertIn(reverse('contracts:approval_request_create'), body)
-        self.assertIn(reverse('contracts:signature_request_create'), body)
+        self.assertIn('Submit for review', body)
+        self.assertNotIn(reverse('contracts:signature_request_create'), body)
         self.assertIn('Run grounded check', body)
+
+    def test_signature_action_appears_only_after_all_approvals(self):
+        reviewer = User.objects.create_user(username='cdetail_reviewer', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=reviewer,
+            role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        self.contract.status = Contract.Status.APPROVED
+        self.contract.save(update_fields=['status', 'updated_at'])
+        ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract,
+            approval_step='LEGAL', status=ApprovalRequest.Status.APPROVED,
+            assigned_to=reviewer,
+        )
+
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn(reverse('contracts:signature_request_create'), body)
+        self.assertIn('Prepare signature request', body)
 
     def test_grounded_check_endpoint_still_wired(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
         self.assertIn(reverse('contracts:contract_ai_assistant', kwargs={'pk': self.contract.pk}), body)
+
+    def test_manual_grounded_check_persists_freshness_evidence(self):
+        response = self.client.post(
+            reverse('contracts:contract_ai_assistant', kwargs={'pk': self.contract.pk}),
+            data='{"prompt": "check this contract"}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            model_name='Contract',
+            object_id=self.contract.pk,
+            event_type='contract.grounded_check_completed',
+        ).exists())
+        detail = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertEqual(detail.context['grounded_check']['label'], 'Current')
 
 
 class ContractDetailDocumentsTabTests(TestCase):
@@ -170,6 +237,7 @@ class ContractDetailDocumentsTabTests(TestCase):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
         self.assertIn('No documents attached yet.', body)
+        self.assertIn('No document has been generated yet.', body)
 
     def test_documents_tab_shows_uploaded_document_fields(self):
         Document.objects.create(

@@ -1,13 +1,20 @@
 """New Contract -> MSA governed drafting cockpit."""
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect, render
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
 from django.views import View
 
-from contracts.models import FieldDefinition
+from contracts.models import ApprovalRule, Contract, FieldDefinition, OrganizationMembership, Workflow, WorkflowStep
+from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.msa_workflow import (
+    create_msa_document_artifact,
     create_msa_workflow_instance,
     get_clause_library_count,
     get_field_definitions_by_section,
@@ -46,6 +53,11 @@ def _validate_msa_submission(post_data, workflow_template):
         value = _coerce_field_value(field, raw)
         if field.is_required and field.field_type != FieldDefinition.FieldType.BOOLEAN and (value is None or value == ''):
             errors[field.key] = f'{field.label} is required.'
+        if value and field.key.endswith('email'):
+            try:
+                validate_email(value)
+            except ValidationError:
+                errors[field.key] = f'Enter a valid email address for {field.label.lower()}.'
         cleaned[field.key] = value
     return cleaned, errors
 
@@ -89,3 +101,103 @@ class MSAWorkflowBuilderView(LoginRequiredMixin, View):
         )
         messages.success(request, f'"{workflow.title}" generated — it now appears in the Command Center Priority Queue.')
         return redirect(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+
+
+def _msa_review_rule(organization, approval_step):
+    """Return the explicitly configured MSA reviewer rule for this workspace."""
+    return (
+        ApprovalRule.objects.filter(
+            organization=organization,
+            is_active=True,
+            approval_step=approval_step,
+            trigger_type=ApprovalRule.TriggerType.CONTRACT_TYPE,
+            trigger_value__iexact=Contract.ContractType.MSA,
+        )
+        .select_related('specific_approver')
+        .order_by('order', 'id')
+        .first()
+    )
+
+
+@login_required
+@require_POST
+def msa_submit_for_review(request, pk, approval_step):
+    """Submit the generated MSA to its configured Legal or Finance reviewer."""
+    organization = get_user_organization(request.user)
+    workflow = get_object_or_404(
+        Workflow.objects.select_related('contract', 'organization'),
+        pk=pk,
+        organization=organization,
+        contract__contract_type=Contract.ContractType.MSA,
+    )
+    if not can_access_contract_action(request.user, workflow.contract, ContractAction.EDIT):
+        return HttpResponseForbidden('You do not have permission to submit this MSA for review.')
+
+    normalized_step = approval_step.upper()
+    if normalized_step not in {'LEGAL', 'FINANCE'}:
+        return HttpResponseForbidden('Unsupported MSA review route.')
+    rule = _msa_review_rule(organization, normalized_step)
+    reviewer = rule.specific_approver if rule else None
+    if reviewer is None or reviewer.pk == (workflow.contract.owner_id or workflow.contract.created_by_id):
+        messages.error(
+            request,
+            f'Configure a separate {normalized_step.title()} approver for the MSA approval rule before submitting.',
+        )
+        return redirect('contracts:workflow_detail', pk=workflow.pk)
+    if not OrganizationMembership.objects.filter(
+        organization=organization,
+        user=reviewer,
+        is_active=True,
+    ).exists():
+        messages.error(request, f'The configured {normalized_step.title()} approver is not an active workspace member.')
+        return redirect('contracts:workflow_detail', pk=workflow.pk)
+
+    from contracts.services.approval_workflow import ApprovalAccessDenied, get_approval_workflow_service
+
+    try:
+        approval = get_approval_workflow_service().submit_for_review(
+            workflow.contract,
+            request.user,
+            reviewer,
+            approval_step=normalized_step,
+            rule=rule,
+            comment=(request.POST.get('comment') or '').strip(),
+            request=request,
+        )
+    except (ApprovalAccessDenied, ValueError) as exc:
+        messages.error(request, str(exc))
+    else:
+        step_name = f'{normalized_step.title()} Review'
+        WorkflowStep.objects.filter(
+            workflow=workflow,
+            name=step_name,
+            status=WorkflowStep.Status.PENDING,
+        ).update(status=WorkflowStep.Status.IN_PROGRESS)
+        messages.success(request, f'MSA submitted to {approval.assigned_to_username or normalized_step.title()} for review.')
+    return redirect('contracts:workflow_detail', pk=workflow.pk)
+
+
+@login_required
+@require_POST
+def msa_export_document(request, pk, artifact_type):
+    """Create and download an auditable DOCX artifact from the current MSA draft."""
+    organization = get_user_organization(request.user)
+    workflow = get_object_or_404(
+        Workflow.objects.select_related('contract', 'organization'),
+        pk=pk,
+        organization=organization,
+        contract__contract_type=Contract.ContractType.MSA,
+    )
+    if not can_access_contract_action(request.user, workflow.contract, ContractAction.VIEW):
+        return HttpResponseForbidden('You do not have permission to export this MSA.')
+    try:
+        document = create_msa_document_artifact(
+            workflow=workflow,
+            user=request.user,
+            artifact_type=artifact_type,
+            request=request,
+        )
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect('contracts:workflow_detail', pk=workflow.pk)
+    return redirect('contracts:document_download', pk=document.pk)

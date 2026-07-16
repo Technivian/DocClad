@@ -1,7 +1,4 @@
-"""Tests for the Repository cleanup gate: the saved-view rail becoming
-functional (All documents / Active paper / Draft paper / 30d attention),
-and removal of the "Assign to Me" placeholder alert.
-"""
+"""Tests for the Repository cleanup gate and contract-first filters."""
 import json
 from datetime import date, timedelta
 
@@ -9,10 +6,10 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from contracts.models import Contract, Organization, OrganizationMembership
+from contracts.models import ApprovalRequest, Contract, Organization, OrganizationMembership
 
 
-class RepositoryRailMarkupTests(TestCase):
+class RepositoryFilterMarkupTests(TestCase):
     def setUp(self):
         self.organization = Organization.objects.create(name='Rail Firm', slug='rail-firm')
         self.user = User.objects.create_user(username='rail_user', password='testpass123', email='rail@example.com')
@@ -22,20 +19,19 @@ class RepositoryRailMarkupTests(TestCase):
         )
         self.client.login(username='rail_user', password='testpass123')
 
-    def test_rail_views_are_real_buttons_with_data_attributes(self):
+    def test_compact_views_are_real_buttons_with_data_attributes(self):
         response = self.client.get(reverse('contracts:repository'))
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        for key in ('all', 'active', 'draft', 'expiring_30d'):
+        for key in ('all', 'active', 'draft'):
             self.assertIn(f'data-rail-view="{key}"', html)
-        # No more fake "click here and nothing happens" anchors for these views.
-        self.assertNotIn('<a href="#" class="views-rail-link', html)
+        self.assertIn('id="repository-filters"', html)
+        self.assertNotIn('dc-ds-scaffold--with-rail', html)
 
-    def test_assign_to_me_is_disabled_with_no_alert_wiring(self):
+    def test_no_placeholder_assignment_control_is_rendered(self):
         response = self.client.get(reverse('contracts:repository'))
         html = response.content.decode()
-        self.assertIn('id="repo-bulk-assign"', html)
-        self.assertIn('disabled', html.split('id="repo-bulk-assign"')[1].split('>')[0])
+        self.assertNotIn('repo-bulk-assign', html)
 
         js_path = 'theme/static/js/clmone-repository.js'
         with open(js_path) as f:
@@ -53,10 +49,7 @@ class RepositoryRailMarkupTests(TestCase):
             'Clear filters',
             'No governed agreements have been added',
             'Uploaded agreements and governed drafts appear here automatically',
-            'Upload first contract',
-            'No views have been saved in this browser',
-            'Saved views appear here after you preserve',
-            'Save current view',
+            'Add contract',
         ):
             self.assertIn(copy, js)
 
@@ -64,7 +57,6 @@ class RepositoryRailMarkupTests(TestCase):
         response = self.client.get(reverse('contracts:repository'))
         html = response.content.decode()
         self.assertIn('data-rail-view="all" aria-pressed="true"', html)
-        self.assertIn('data-status-filter="" aria-pressed="true"', html)
 
         with open('theme/static/js/clmone-repository.js') as source:
             js = source.read()
@@ -129,3 +121,34 @@ class RepositoryExpiringFilterTests(TestCase):
         payload = json.loads(response.content)
         titles = [c['title'] for c in payload['contracts']]
         self.assertIn('Plain Draft', titles)
+
+    def test_owner_counterparty_risk_and_approval_filters_are_server_backed(self):
+        other_user = User.objects.create_user(username='rail_filter_other', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=other_user,
+            role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        matching = Contract.objects.create(
+            organization=self.organization, title='Atlas approval contract', content='seed',
+            counterparty='Atlas Workforce B.V.', owner=self.user, risk_level=Contract.RiskLevel.HIGH,
+            status=Contract.Status.PENDING, created_by=self.user,
+        )
+        Contract.objects.create(
+            organization=self.organization, title='Other contract', content='seed',
+            counterparty='Other Co', owner=other_user, risk_level=Contract.RiskLevel.LOW,
+            status=Contract.Status.DRAFT, created_by=other_user,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.organization, contract=matching, approval_step='LEGAL',
+            status=ApprovalRequest.Status.PENDING, assigned_to=self.user,
+        )
+
+        response = self.client.get(reverse('contracts:contracts_api'), {
+            'owner': str(self.user.pk),
+            'counterparty': 'Atlas Workforce B.V.',
+            'risk_level': Contract.RiskLevel.HIGH,
+            'approval_state': ApprovalRequest.Status.PENDING,
+        })
+        self.assertEqual(response.status_code, 200)
+        payload = json.loads(response.content)
+        self.assertEqual([row['title'] for row in payload['contracts']], ['Atlas approval contract'])
