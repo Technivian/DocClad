@@ -21,6 +21,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.generic import FormView, View
 from django.contrib.auth import get_user_model
@@ -205,6 +206,7 @@ class SignUpView(FormView):
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
+@method_decorator(never_cache, name='dispatch')
 class LoginView(FormView):
     form_class = LoginForm
     success_url = reverse_lazy('dashboard')
