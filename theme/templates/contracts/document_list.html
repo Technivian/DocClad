@@ -1,64 +1,56 @@
 {% extends "base.html" %}
 {% load clmone_format %}
 {% block title %}Documents – CLM One{% endblock %}
+{% block authenticated_page_title %}Document Management{% endblock %}
+{% block authenticated_page_subtitle %}Search, review, and maintain document records across matters.{% endblock %}
 {% block content %}
-<div class="page-wrap">
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Document Management</h1>
-        <p class="page-subtitle">Search, review, and maintain document records across matters.</p>
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
+<header class="dc-ds-page-hero dc-ds-list-header">
+    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
+        <h1 class="dc-ds-title">Document Management</h1>
+        <p class="dc-ds-subtitle">Search, review, and maintain document records across matters.</p>
     </div>
-    <div class="page-actions">
-        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">
+    <div class="dc-ds-actions">
+        <a href="{% url 'contracts:document_ocr_queue' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">
             Text Extraction Queue
         </a>
-        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+        <a href="{% url 'contracts:document_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
             Upload Document
         </a>
     </div>
-</div>
+</header>
 
-<form method="get" class="mb-4 flex items-center gap-2 flex-wrap">
-    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search documents..." class="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border form-input form-control">
-    <select name="type" class="px-3 py-2 text-sm rounded-lg border form-select" data-autosubmit>
-        <option value="">All Types</option>
-        <option value="CONTRACT">Contract</option>
-        <option value="COURT_FILING">Court Filing</option>
-        <option value="CORRESPONDENCE">Correspondence</option>
-        <option value="MEMO">Memorandum</option>
-        <option value="RESEARCH">Legal Research</option>
-    </select>
-    <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
-</form>
+{% include "design_system/filter_search_bar.html" with aria_label="Filter documents" search_id="document-search" search_value=request.GET.q placeholder="Search documents..." filters_template="contracts/document_list_filters.html" submit_label="Search" %}
 
-<div class="panel overflow-hidden">
-    <table class="w-full text-sm">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" data-table-core="server">
+        <caption class="sr-only">Document records and their current review status.</caption>
         <thead class="tbl-head">
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Version</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Uploaded</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Title</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                <th scope="col">Matter</th>
+                <th scope="col">Version</th>
+                <th scope="col">Uploaded</th>
+                <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for doc in documents %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     <a href="{% url 'contracts:document_detail' doc.pk %}" class="font-medium c-link">{{ doc.title|truncatechars:40 }}</a>
-                    {% if doc.is_privileged %}<span class="badge-sm badge-yellow ml-1">Privileged</span>{% endif %}
-                    {% if doc.is_confidential %}<span class="badge-sm badge-red ml-1">Confidential</span>{% endif %}
+                    {% if doc.is_privileged %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-yellow ml-1">Privileged</span>{% endif %}
+                    {% if doc.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-red ml-1">Confidential</span>{% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ doc.get_document_type_display }}</td>
-                <td class="px-5 py-3.5"><span class="badge-sm {{ doc.status|document_status_badge_class }}">{{ doc.get_status_display }}</span></td>
-                <td class="px-5 py-3.5 tbl-td">{{ doc.matter.matter_number|default:"—" }}</td>
-                <td class="px-5 py-3.5 tbl-td">v{{ doc.version }}</td>
-                <td class="px-5 py-3.5 tbl-td">{{ doc.created_at|date:"M d, Y" }}</td>
-                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a></td>
+                <td>{{ doc.get_document_type_display }}</td>
+                <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ doc.status|document_status_badge_tone }}">{{ doc.get_status_display }}</span></td>
+                <td>{{ doc.matter.matter_number|default:"—" }}</td>
+                <td data-numeric>v{{ doc.version }}</td>
+                <td>{{ doc.created_at|date:"M d, Y" }}</td>
+                <td class="text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a></td>
             </tr>
             {% empty %}
             {% url 'contracts:document_create' as document_create_url %}

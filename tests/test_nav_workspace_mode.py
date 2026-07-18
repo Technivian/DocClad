@@ -166,11 +166,40 @@ class StandardNavTests(TestCase):
         self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
         self.assertIn('Command Center', content)
 
+    def test_admin_group_uses_the_aligned_settings_icon(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        self.assertIn('nav-icon-svg--admin', content)
+
+    def test_sidebar_uses_distinct_nav_icons(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        for class_name in (
+            'nav-icon-svg--dashboard',
+            'nav-icon-svg--new-contract',
+            'nav-icon-svg--upload-review',
+            'nav-icon-svg--contracts',
+            'nav-icon-svg--dpa-reviews',
+            'nav-icon-svg--obligations',
+            'nav-icon-svg--admin',
+        ):
+            self.assertIn(class_name, content)
+        self.assertNotIn('nav-icon-svg--settings', content)
+
     def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         href = reverse('contracts:contract_template_picker')
         self.assertIn(f'href="{href}"', content)
+
+    def test_new_contract_request_has_one_active_navigation_item(self):
+        response = self.owner_client.get(reverse('contracts:contract_create'))
+        content = sidebar_html(response)
+
+        new_contract_href = reverse('contracts:contract_template_picker')
+        contracts_href = reverse('contracts:repository')
+        self.assertRegex(content, rf'<a href="{new_contract_href}" class="nav-link[^\"]*\bactive\b')
+        self.assertNotRegex(content, rf'<a href="{contracts_href}" class="nav-link[^\"]*\bactive\b')
 
     def test_contracts_links_to_the_canonical_repository(self):
         response = self.owner_client.get(reverse('dashboard'))

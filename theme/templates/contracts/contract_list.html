@@ -265,8 +265,8 @@
       </div>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:repository' %}" class="btn-quiet">Repository</a>
-      <a href="{% url 'contracts:contract_create' %}" class="btn-cta">
+      <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Repository</a>
+      <a href="{% url 'contracts:contract_create' %}" class="dc-ds-button dc-ds-button--primary btn-cta">
         {% include "design_system/icon.html" with name="plus" class_name="w-4 h-4" %}
         New Contract
       </a>
@@ -311,7 +311,7 @@
             <h2 id="active-contracts-heading" class="cw-table-title">Active contracts</h2>
             <p class="cw-table-subtitle">Contracts moving through review, approval, signature, and execution.</p>
           </div>
-          <span class="badge-sm badge-gray">{{ page_obj.paginator.count|default:total_contracts }} shown</span>
+          <span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-gray">{{ page_obj.paginator.count|default:total_contracts }} shown</span>
         </div>
         <div class="overflow-x-auto">
           <table class="cw-table">
@@ -381,7 +381,7 @@
                   {% endif %}
                 </td>
                 <td>
-                  <span class="badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }}</span>
+                  <span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }}</span>
                 </td>
                 <td class="text-right">
                   <a href="{% url 'contracts:contract_detail' contract.pk %}" class="cw-action">
@@ -423,11 +423,11 @@
         </p>
         <div class="flex items-center gap-1">
           {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="btn-quiet text-sm px-3 py-1.5">Previous</a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="dc-ds-button dc-ds-button--quiet btn-quiet text-sm px-3 py-1.5">Previous</a>
           {% endif %}
           <span class="px-3 py-1.5 text-sm rounded-lg font-semibold page-pill-active">{{ page_obj.number }}</span>
           {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="btn-quiet text-sm px-3 py-1.5">Next</a>
+          <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if current_status %}&status={{ current_status|urlencode }}{% endif %}{% if sort %}&sort={{ sort|urlencode }}{% endif %}" class="dc-ds-button dc-ds-button--quiet btn-quiet text-sm px-3 py-1.5">Next</a>
           {% endif %}
         </div>
       </div>
@@ -482,7 +482,7 @@
             <span class="cw-watch-copy">Active contracts with target dates in the next 30 days.</span>
           </span>
         </div>
-        <a href="{% url 'contracts:repository' %}" class="btn-quiet mt-3 w-full">Review repository record</a>
+        <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--quiet btn-quiet mt-3 w-full">Review repository record</a>
       </section>
     </aside>
   </div>

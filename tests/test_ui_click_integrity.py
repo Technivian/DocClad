@@ -73,7 +73,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             role=OrganizationMembership.Role.OWNER,
             is_active=True,
         )
-        Contract.objects.create(
+        self.contract = Contract.objects.create(
             organization=self.organization,
             title='UI Integrity Contract',
             content='Contract used for link/form target checks.',
@@ -108,6 +108,13 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             self.fail(f'Unresolvable target on {source_page}: {raw_target}')
 
     def test_click_targets_and_forms_are_wired_on_core_pages(self):
+        expected_back_links = {
+            reverse('contracts:contract_create'): reverse('contracts:repository'),
+            reverse('contracts:contract_template_picker'): reverse('contracts:repository'),
+            reverse('contracts:upload_signed_contract'): reverse('contracts:repository'),
+            reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}): reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
+        }
+
         pages = [
             reverse('dashboard'),
             reverse('contracts:contract_list'),
@@ -126,17 +133,23 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             reverse('contracts:organization_team'),
             reverse('contracts:notification_list'),
             reverse('contracts:privacy_dashboard'),
+            reverse('contracts:contract_create'),
+            reverse('contracts:contract_template_picker'),
+            reverse('contracts:upload_signed_contract'),
+            reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}),
         ]
 
         for page in pages:
             response = self.client.get(page)
             self.assertEqual(response.status_code, 200, msg=f'Page failed: {page}')
             content = response.content.decode('utf-8')
-            back_link = '<a href="/dashboard/" class="topbar-back-link" data-workspace-back'
+            self.assertIn('class="topbar-page-title-row"', content)
+            self.assertNotIn('<span>Back</span>', content)
             if page == reverse('dashboard'):
-                self.assertNotIn(back_link, content)
+                self.assertNotIn('class="topbar-back-link"', content)
             else:
-                self.assertIn(back_link, content)
+                expected_href = expected_back_links.get(page, reverse('dashboard'))
+                self.assertIn(f'<a href="{expected_href}" class="topbar-back-link"', content)
 
             parser = _InteractiveElementParser()
             parser.feed(content)
@@ -186,8 +199,8 @@ class UIButtonAndFlowIntegrityTests(TestCase):
         detail_response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': Contract.objects.first().pk}))
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'Workflow')
-        self.assertContains(detail_response, 'Overview')
-        self.assertContains(detail_response, 'Activity')
+        self.assertContains(detail_response, 'Contract details')
+        self.assertContains(detail_response, 'Internal activity')
 
         search_response = self.client.get(reverse('contracts:global_search'), {'q': 'UI Integrity'})
         self.assertEqual(search_response.status_code, 200)

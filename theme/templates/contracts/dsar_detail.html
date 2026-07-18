@@ -8,8 +8,8 @@
 .dsar-field { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
 .dsar-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .dsar-value { margin-top: 4px; font-size: 13px; color: var(--text-primary); }
-.btn-quiet { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
-.btn-quiet:hover { background: var(--primary-hover); }
+.dc-ds-button dc-ds-button--quiet btn-quiet { padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
+.dc-ds-button dc-ds-button--quiet btn-quiet:hover { background: var(--primary-hover); }
 .dsar-panel { padding: 0 22px; }
 .dsar-field-last { border-bottom: none; }
 </style>
@@ -19,7 +19,7 @@
             <a href="{% url 'contracts:dsar_list' %}" class="dsar-back">&larr; Back to list</a>
             <div class="dsar-title">{{ object }}</div>
         </div>
-        <a href="{% url 'contracts:dsar_update' object.pk %}" class="btn-quiet">Edit</a>
+        <a href="{% url 'contracts:dsar_update' object.pk %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Edit</a>
     </div>
     <div class="panel dsar-panel">
             <div class="dsar-field"><span class="dsar-label">Reference</span><p class="dsar-value">{{ object.reference_number }}</p></div>

@@ -157,7 +157,7 @@ class RedesignComponentsTestCase(TestCase):
         response = self.client.get(reverse('contracts:repository'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Repository')
+        self.assertContains(response, 'Contracts')
         self.assertContains(response, 'id="search-input"')
         self.assertContains(response, 'id="sort-select"')
         self.assertContains(response, 'id="contracts-table"')

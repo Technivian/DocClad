@@ -8,9 +8,9 @@
             <p class="page-subtitle c-muted">{{ process.get_transaction_type_display }} &middot; {{ process.target_company }}</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:add_dd_item' process.pk %}" class="btn-primary-grad text-white">Add Task</a>
-            <a href="{% url 'contracts:add_dd_risk' process.pk %}" class="btn-ghost">Add Risk</a>
-            <a href="{% url 'contracts:due_diligence_update' process.pk %}" class="btn-ghost">Edit</a>
+            <a href="{% url 'contracts:add_dd_item' process.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">Add Task</a>
+            <a href="{% url 'contracts:add_dd_risk' process.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Add Risk</a>
+            <a href="{% url 'contracts:due_diligence_update' process.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
         </div>
     </div>
 
@@ -47,7 +47,7 @@
                     <div class="text-xs c-muted mt-0.5">{{ task.get_category_display }} &middot; {{ task.assigned_to.get_full_name|default:"Unassigned" }} &middot; Due {{ task.due_date|date:"M d" }}</div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="badge-sm {% if task.status == 'COMPLETED' %}badge-green{% elif task.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ task.get_status_display }}</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if task.status == 'COMPLETED' %}badge-green{% elif task.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ task.get_status_display }}</span>
                     <a href="{% url 'contracts:toggle_dd_item' task.pk %}" class="text-xs c-link">Toggle</a>
                 </div>
             </div>
@@ -65,7 +65,7 @@
             <div class="px-5 py-3">
                 <div class="flex items-center justify-between">
                     <div class="text-sm font-medium">{{ risk.title }}</div>
-                    <span class="badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
                 </div>
                 <div class="text-sm c-muted mt-1">{{ risk.description|truncatechars:100 }}</div>
             </div>

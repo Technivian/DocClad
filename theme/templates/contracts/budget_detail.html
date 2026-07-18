@@ -9,8 +9,8 @@
       <p class="page-subtitle">Allocated: ${{ budget.allocated_amount|floatformat:2 }}</p>
     </div>
     <div class="flex gap-2">
-      <a href="{% url 'contracts:add_expense' budget.pk %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">Add Expense</a>
-      <a href="{% url 'contracts:budget_update' budget.pk %}" class="btn-ghost px-4 py-2 text-sm font-medium rounded-lg">Edit</a>
+      <a href="{% url 'contracts:add_expense' budget.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">Add Expense</a>
+      <a href="{% url 'contracts:budget_update' budget.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-4 py-2 text-sm font-medium rounded-lg">Edit</a>
     </div>
   </div>
 

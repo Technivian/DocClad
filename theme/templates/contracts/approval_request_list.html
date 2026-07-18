@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load clmone_components %}
 {% block title %}Approvals — CLM One{% endblock %}
+{% block authenticated_page_title %}Approvals{% endblock %}
+{% block authenticated_page_subtitle %}What needs a decision from you or your team right now.{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   {% comment %}
   .approvals-page itself carries no layout now — it is a marker class only
-  (kept for test/selector stability). Shell width/padding come from the
-  shared .page-wrap / .page-wrap-fluid, same as Dashboard/Repository/
-  Privacy, instead of a fourth private recipe.
+  (kept for test/selector stability). Shell width, padding, and vertical
+  rhythm come from the shared .dc-ds-page list scaffold.
   {% endcomment %}
-  .approvals-header-row { margin-bottom: 16px; }
   .approvals-queue-card {
     background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
     overflow: hidden; box-sizing: border-box;
@@ -18,28 +18,26 @@
   .approvals-queue-body { overflow-x: auto; }
 </style>
 
-<div id="approvals-root" class="page-wrap page-wrap-fluid approvals-page">
+<div id="approvals-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page approvals-page">
 
   {# ── Page header: title + primary action ─────────────── #}
-  <div class="arch-header approvals-header-row">
-    <div class="arch-header-left">
-      <div class="arch-title-row">
-        <h1 class="arch-title">Approvals</h1>
-      </div>
-      <p class="arch-subtitle">What needs a decision from you or your team right now</p>
+  <header class="dc-ds-page-hero dc-ds-list-header">
+    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
+      <h1 class="dc-ds-title">Approvals</h1>
+      <p class="dc-ds-subtitle">What needs a decision from you or your team right now.</p>
     </div>
-    <div class="arch-header-right">
-      <a href="{% url 'contracts:approval_request_create' %}" class="btn-primary-grad">
+    <div class="dc-ds-actions">
+      <a href="{% url 'contracts:approval_request_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Approval Request
       </a>
     </div>
-  </div>
+  </header>
 
   {# ── Workflow queue (primary object) ───────────────────── #}
   <div class="approvals-queue-card">
     <div class="approvals-tabs-wrap">
-      <nav class="wq-tabs" role="tablist" aria-label="Approval queue views">
+      <nav class="wq-tabs dc-ds-list-tabs" role="tablist" aria-label="Approval queue views">
         {% for tab in queue_tabs %}
         <button type="button"
                 class="wq-tab{% if forloop.first %} wq-tab-active{% endif %}"
@@ -51,7 +49,7 @@
         {% endfor %}
       </nav>
     </div>
-    <div class="approvals-queue-body">
+    <div class="approvals-queue-body dc-ds-table-wrap">
       {% for tab in queue_tabs %}
         {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
       {% endfor %}

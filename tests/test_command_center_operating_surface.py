@@ -13,6 +13,7 @@ from contracts.models import (
     Deadline,
     Organization,
     OrganizationMembership,
+    RiskLog,
 )
 from contracts.services.command_center import (
     build_upcoming_deadlines,
@@ -165,8 +166,15 @@ class CommandCenterProductionSurfaceTests(TestCase):
 
     def test_empty_command_center_state_is_intentional(self):
         response = self.client_.get(reverse('dashboard'))
-        self.assertContains(response, 'No contract needs immediate attention')
-        self.assertContains(response, 'Review priority actions')
+        self.assertFalse(response.context['portfolio_health_available'])
+        self.assertIsNone(response.context['portfolio_health_score'])
+        self.assertContains(response, 'Establish your contract portfolio')
+        self.assertContains(response, 'Add your first contract to begin monitoring approvals, risks, deadlines, obligations and policy exceptions.')
+        self.assertContains(response, 'Health score unavailable')
+        self.assertContains(response, 'No contracts monitored yet')
+        self.assertContains(response, 'Add first contract')
+        self.assertContains(response, 'Upload existing agreement')
+        self.assertNotContains(response, 'Getting started')
         self.assertContains(response, 'No active issues')
         self.assertContains(response, 'Monitored queues are clear.')
         action_queue_header = response.content.decode().split('id="recommended-actions-title"', 1)[1].split('</div>', 1)[0]
@@ -177,6 +185,32 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertContains(response, 'No policy exceptions')
         self.assertNotContains(response, 'No intervention required')
         self.assertNotContains(response, 'Start DPA review')
+
+    def test_portfolio_score_requires_contract_data_and_uses_open_signals(self):
+        contract = Contract.objects.create(
+            organization=self.org, title='Measured Contract', content='x', created_by=self.user,
+        )
+        RiskLog.objects.create(
+            contract=contract,
+            title='High-risk term',
+            description='A material term needs review.',
+            risk_level=RiskLog.RiskLevel.HIGH,
+            created_by=self.user,
+        )
+        ApprovalRequest.objects.create(
+            organization=self.org,
+            contract=contract,
+            approval_step='Finance',
+            status=ApprovalRequest.Status.PENDING,
+            assigned_to=self.user,
+        )
+
+        response = self.client_.get(reverse('dashboard'))
+
+        self.assertTrue(response.context['portfolio_health_available'])
+        self.assertEqual(response.context['portfolio_health_score'], 83)
+        self.assertContains(response, 'Portfolio health score 83 out of 100, Needs attention')
+        self.assertContains(response, 'Review priority actions')
 
     def test_deadline_status_distinguishes_setup_from_clear(self):
         response = self.client_.get(reverse('dashboard'))

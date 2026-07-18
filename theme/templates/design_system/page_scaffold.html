@@ -1,5 +1,5 @@
 {# Additive design-system adapter partial. Include only in migrated pages. #}
-<div class="dc-ds-page{% if wide %} dc-ds-page--wide{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
+<div class="dc-ds-page{% if wide %} dc-ds-page--wide{% endif %}{% if flow %} dc-ds-page-flow{% endif %}{% if scaffold_class_name %} {{ scaffold_class_name }}{% elif class_name %} {{ class_name }}{% endif %}">
   <div class="dc-ds-scaffold{% if with_rail %} dc-ds-scaffold--with-rail{% endif %}">
     {% if main_template %}
       {% include main_template %}

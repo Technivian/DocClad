@@ -3,6 +3,11 @@
 {% block title %}Upload & Review – CLM One{% endblock %}
 {% block authenticated_page_title %}Upload &amp; Review{% endblock %}
 {% block authenticated_page_subtitle %}Bring a signed agreement into CLM One and create traceable review work from the clauses that need attention.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block page_css %}<link href="{% static 'css/upload-review.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">{% endblock %}
 {% block content %}
 <div class="dc-ds-page dc-ds-page-flow">
@@ -12,30 +17,38 @@
         <div class="dc-ds-surface__head">
           <div>
             <h2 id="uac-details-title" class="dc-ds-surface__title">Agreement details</h2>
-            <p class="uac-rail-copy">Add the minimum record information needed to own and track this agreement.</p>
+            <p class="uac-rail-copy">Add only the context the document cannot reliably provide. CLM One will extract the rest for your confirmation.</p>
           </div>
         </div>
         <div class="dc-ds-surface__body uac-form-grid">
           <div class="uac-field uac-field--full">
-            <label for="usc-title">Agreement title</label>
-            <input type="text" id="usc-title" name="title" required placeholder="e.g. Acme Corp Master Services Agreement — signed">
+            <label for="usc-title">Agreement title <span class="uac-field-help">Optional</span></label>
+            <input type="text" id="usc-title" name="title" placeholder="Use the file name, or add a clearer name">
           </div>
           <div class="uac-field">
-            <label for="usc-contract-type">Contract type</label>
-            <select id="usc-contract-type" required>
-              <option value="">Select contract type</option>
+            <label for="usc-contract-type">Contract type <span class="uac-field-help">Only if known</span></label>
+            <select id="usc-contract-type">
+              <option value="">Let CLM One classify it</option>
               {% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
             </select>
           </div>
           <div class="uac-field">
-            <label for="usc-counterparty">Counterparty</label>
-            <input type="text" id="usc-counterparty" required placeholder="e.g. Acme Corp">
+            <label for="usc-counterparty">Counterparty <span class="uac-field-help">Optional</span></label>
+            <input type="text" id="usc-counterparty" placeholder="CLM One will extract this if possible">
           </div>
           <div class="uac-field">
             <label for="usc-owner">Contract owner</label>
             <select id="usc-owner" required>
               {% for owner in owners %}<option value="{{ owner.pk }}"{% if owner == request.user %} selected{% endif %}>{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}
             </select>
+          </div>
+          <div class="uac-field">
+            <label for="usc-business-unit">Business unit <span class="uac-field-help">Optional</span></label>
+            <input type="text" id="usc-business-unit" placeholder="e.g. Operations">
+          </div>
+          <div class="uac-field">
+            <label for="usc-matter">Related matter <span class="uac-field-help">Optional</span></label>
+            <select id="usc-matter"><option value="">No related matter</option>{% for matter in matters %}<option value="{{ matter.pk }}">{{ matter.title }}</option>{% endfor %}</select>
           </div>
           <div class="uac-field">
             <label for="usc-value">Contract value <span class="uac-field-help">Optional</span></label>
@@ -45,16 +58,20 @@
             </div>
           </div>
           <div class="uac-field">
-            <label for="usc-effective-date">Effective date</label>
-            <input type="date" id="usc-effective-date" required>
+            <label for="usc-effective-date">Effective date <span class="uac-field-help">Optional</span></label>
+            <input type="date" id="usc-effective-date">
           </div>
           <div class="uac-field">
-            <label for="usc-expiry-date">Expiry date</label>
-            <input type="date" id="usc-expiry-date" required>
+            <label for="usc-expiry-date">Expiry date <span class="uac-field-help">Optional</span></label>
+            <input type="date" id="usc-expiry-date">
           </div>
           <div class="uac-field uac-field--full">
-            <label for="usc-governing-law">Governing law</label>
-            <input type="text" id="usc-governing-law" required placeholder="e.g. England & Wales">
+            <label for="usc-governing-law">Governing law <span class="uac-field-help">Optional</span></label>
+            <input type="text" id="usc-governing-law" placeholder="CLM One will extract this if possible">
+          </div>
+          <div class="uac-field uac-field--full">
+            <label for="usc-review-objective">Review objective <span class="uac-field-help">Optional</span></label>
+            <input type="text" id="usc-review-objective" placeholder="e.g. Identify privacy and liability deviations before procurement approval">
           </div>
           <label class="uac-check uac-field--full" for="usc-dpa-attached">
             <input type="checkbox" id="usc-dpa-attached">
@@ -91,6 +108,9 @@
           </label>
         </div>
         <div class="uac-status" id="usc-status" role="status" aria-live="polite"></div>
+        <ol class="uac-processing" id="usc-processing" aria-label="Review processing steps" hidden>
+          <li data-step="Uploaded">Uploaded</li><li data-step="Extracting">Extracting</li><li data-step="Classifying">Classifying</li><li data-step="Matching playbook">Matching playbook</li><li data-step="AI reviewing">AI reviewing</li><li data-step="Review ready">Review ready</li>
+        </ol>
         <div class="uac-actions">
           <a href="{% url 'contracts:legal_front_door' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
           <button type="submit" class="dc-ds-button dc-ds-button--primary" id="usc-submit" disabled>Upload and review</button>
@@ -101,13 +121,20 @@
     <aside class="uac-rail" aria-label="Upload and review guidance">
       <section class="dc-ds-surface">
         <div class="dc-ds-surface__body">
-          <h2 class="uac-rail-title">AI review, with control</h2>
-          <p class="uac-rail-copy">The review creates governed suggestions—not legal decisions—for the agreement owner to assess.</p>
-          {% if ai_review_available %}
-            <span class="uac-status-pill">AI review available · Human review required</span>
-          {% else %}
-            <span class="uac-status-pill">Manual review only</span>
-          {% endif %}
+          <div class="uac-rail-title-row">
+            <h2 class="uac-rail-title">AI review, with control</h2>
+            <details class="uac-review-info">
+              <summary aria-label="About AI review"><svg aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="1.8" d="M12 10.5v5M12 7.5h.01"/></svg></summary>
+              <div class="uac-review-info-panel">
+                <p>The review creates governed suggestions—not legal decisions—for the agreement owner to assess.</p>
+                {% if ai_review_available %}
+                  <span class="uac-status-pill">AI review available · Human review required</span>
+                {% else %}
+                  <span class="uac-status-pill">Manual review only</span>
+                {% endif %}
+              </div>
+            </details>
+          </div>
           <ol class="uac-steps">
             <li><span class="uac-step">1</span><span>CLM One extracts readable clause text from the uploaded file.</span></li>
             <li><span class="uac-step">2</span><span>AI identifies potentially risky or uncertain clauses with a direct quote.</span></li>
@@ -141,6 +168,7 @@
     var submitBtn = document.getElementById('usc-submit');
     var statusEl = document.getElementById('usc-status');
     var titleInput = document.getElementById('usc-title');
+    var processingEl = document.getElementById('usc-processing');
     if (!form || !dropzone || !fileInput) return;
 
     function setFile(file) {
@@ -148,16 +176,25 @@
         filenameEl.textContent = file.name;
         submitBtn.disabled = false;
     }
-    function showStatus(kind, message, contractUrl) {
+    function showStatus(kind, message, contractUrl, linkLabel) {
         statusEl.className = 'uac-status ' + kind;
         statusEl.replaceChildren(document.createTextNode(message));
         if (contractUrl) {
             statusEl.appendChild(document.createTextNode(' '));
             var link = document.createElement('a');
             link.href = contractUrl;
-            link.textContent = 'Open contract';
+            link.textContent = linkLabel || 'Open contract';
             statusEl.appendChild(link);
         }
+    }
+    function showProcessing(step) {
+        if (!processingEl) return;
+        processingEl.hidden = false;
+        var items = Array.prototype.slice.call(processingEl.querySelectorAll('li'));
+        var activeIndex = items.findIndex(function (item) { return item.dataset.step === step; });
+        items.forEach(function (item, index) {
+            item.className = index < activeIndex ? 'is-complete' : (index === activeIndex ? 'is-active' : '');
+        });
     }
 
     dropzone.addEventListener('click', function () { fileInput.click(); });
@@ -178,6 +215,7 @@
         statusEl.replaceChildren();
         submitBtn.disabled = true;
         submitBtn.textContent = 'Uploading…';
+        showProcessing('Uploaded');
         var body = new FormData();
         body.append('file', fileInput.files[0]);
         body.append('document_type', 'CONTRACT');
@@ -191,6 +229,9 @@
         body.append('start_date', document.getElementById('usc-effective-date').value);
         body.append('end_date', document.getElementById('usc-expiry-date').value);
         body.append('governing_law', document.getElementById('usc-governing-law').value.trim());
+        body.append('business_unit', document.getElementById('usc-business-unit').value.trim());
+        body.append('matter_id', document.getElementById('usc-matter').value);
+        body.append('review_objective', document.getElementById('usc-review-objective').value.trim());
         if (document.getElementById('usc-dpa-attached').checked) body.append('dpa_attached', '1');
         if (document.getElementById('usc-run-ai-review').checked) body.append('run_ai_review', '1');
         fetch('{% url "contracts:document_upload_api" %}', { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: body })
@@ -199,7 +240,17 @@
                 if (result.ok && result.data.ok) {
                     var review = result.data.ai_review || {};
                     var reviewMessage = review.requested && review.message ? ' ' + review.message : '';
-                    showStatus('is-success', 'Uploaded “' + result.data.title + '”.' + reviewMessage, result.data.contract_url);
+                    showProcessing(review.status === 'completed' ? 'Review ready' : 'AI reviewing');
+                    if (review.status === 'completed' && result.data.contract_review_url) {
+                        window.location.assign(result.data.contract_review_url);
+                        return;
+                    }
+                    showStatus(
+                        'is-success',
+                        'Uploaded “' + result.data.title + '”.' + reviewMessage,
+                        review.requested ? result.data.contract_review_url : result.data.contract_url,
+                        review.requested ? 'View review' : 'Open contract'
+                    );
                     submitBtn.textContent = 'Upload another';
                     form.reset();
                     filenameEl.textContent = '';

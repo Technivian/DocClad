@@ -1,26 +1,18 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Transfer Record – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Transfer Record{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:transfer_record_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to transfer records" title="Back to transfer records">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <h1 class="page-title">{{ object|yesno:"Edit,New" }} Transfer Record</h1>
-  </div>
-  <div class="max-w-3xl">
-    <form method="post" enctype="multipart/form-data" class="panel panel-inner space-y-4">
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
+    <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
       {% csrf_token %}
       {% for field in form %}
-      <div>
-        <label for="{{ field.id_for_label }}" class="form-label block mb-1">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
-      </div>
+      {% include "design_system/form_field.html" with field=field preserve_help=True %}
       {% endfor %}
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Save</button>
-        <a href="{% url 'contracts:transfer_record_list' %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm border btn-ghost">Cancel</a>
+      <div class="dc-ds-form-actions">
+        <a href="{% url 'contracts:transfer_record_list' %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Cancel</a>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Save</button>
       </div>
     </form>
-  </div>
-</div>
+</div></div>
 {% endblock %}

@@ -15,7 +15,7 @@
                 <p class="workspace-subtitle">Packet command center for contract signatures, failures, retries, and completion tracking.</p>
             </div>
             <div class="workspace-tools">
-                <a href="{% url 'contracts:signature_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                <a href="{% url 'contracts:signature_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
                     <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                     Add Request
                 </a>
@@ -69,15 +69,15 @@
                 <div>
                     <div class="flex items-center gap-2 flex-wrap">
                         <a href="{{ packet.detail_url }}" class="text-sm font-semibold c-link">{{ packet.contract_title }}</a>
-                        <span class="badge-sm badge-red">{{ packet.status_display }}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-red">{{ packet.status_display }}</span>
                     </div>
                     <div class="text-xs c-muted mt-1">{{ packet.packet_label }} · {{ packet.failed_count }} failed request(s) · {{ packet.provider_label }}</div>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <a href="{{ packet.detail_url }}" class="btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
+                    <a href="{{ packet.detail_url }}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
                     <form method="post" action="{{ packet.retry_url }}">
                         {% csrf_token %}
-                        <button type="submit" class="btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
+                        <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
                     </form>
                 </div>
             </div>
@@ -113,7 +113,7 @@
                     <td class="px-5 py-3 tbl-td">{{ packet.packet_label }}</td>
                     <td class="px-5 py-3 tbl-td">{{ packet.provider_label }}</td>
                     <td class="px-5 py-3">
-                            <span class="badge-sm {% if packet.status == 'SIGNED' %}badge-green{% elif packet.status == 'DECLINED' or packet.status == 'EXPIRED' or packet.status == 'CANCELLED' %}badge-red{% elif packet.status == 'VIEWED' %}badge-purple{% elif packet.status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">
+                            <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if packet.status == 'SIGNED' %}badge-green{% elif packet.status == 'DECLINED' or packet.status == 'EXPIRED' or packet.status == 'CANCELLED' %}badge-red{% elif packet.status == 'VIEWED' %}badge-purple{% elif packet.status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">
                             {{ packet.status_display }}
                         </span>
                         <div class="text-[11px] c-muted mt-1">{{ packet.completion_percent }}% complete</div>
@@ -123,21 +123,21 @@
                     <td class="px-5 py-3 tbl-td">{{ packet.signer_count }} total · {{ packet.completed_count }} signed</td>
                     <td class="px-5 py-3 text-right">
                         <div class="flex items-center justify-end gap-2 flex-wrap">
-                            <a href="{{ packet.detail_url }}" class="btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
+                            <a href="{{ packet.detail_url }}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-2 text-sm rounded-lg">Open</a>
                             {% if packet.status == 'PENDING' or packet.status == 'SENT' or packet.status == 'VIEWED' %}
                             <form method="post" action="{{ packet.resend_url }}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-ghost px-3 py-2 text-sm rounded-lg">Resend</button>
+                                <button type="submit" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-2 text-sm rounded-lg">Resend</button>
                             </form>
                             <form method="post" action="{{ packet.cancel_url }}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-ghost px-3 py-2 text-sm rounded-lg">Cancel</button>
+                                <button type="submit" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-2 text-sm rounded-lg">Cancel</button>
                             </form>
                             {% endif %}
                             {% if packet.failed_count %}
                             <form method="post" action="{{ packet.retry_url }}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
+                                <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-3 py-2 text-sm rounded-lg">Retry</button>
                             </form>
                             {% endif %}
                         </div>

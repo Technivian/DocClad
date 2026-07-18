@@ -28,6 +28,7 @@ TRACKED_CONTRACT_FIELDS = (
     'lifecycle_stage',
     'contract_type',
     'counterparty',
+    'paper_source',
     'value',
     'currency',
     'governing_law',

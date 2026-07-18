@@ -17,6 +17,10 @@ not fork their anatomy.
 | Empty state | `empty_state.html` | Clear condition and one recovery path |
 | Attention banner | `attention_banner.html` | Status message, not decoration |
 | Data table | `.dc-ds-table` | Semantic table markup and horizontal containment |
+| Table toolbar | `.dc-ds-table-toolbar` | Flat filter, sort, and action controls above a table |
+| Table selection | `.dc-ds-table-selection` | Announced selected-row actions; selection remains native checkbox behavior |
+| Table pagination | `.dc-ds-table-pagination` | Result count and labelled previous/next controls |
+| Table state | `.dc-ds-table-state` | Loading, empty, or recoverable-error content inside table geometry |
 | Timeline | `audit_timeline_item.html` | Actor/event/time sequence |
 | Command palette | `command_palette.html` | Keyboard and search navigation |
 | Toast region | `toast_region.html` | Transient non-blocking feedback |
@@ -71,6 +75,15 @@ use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 ## Tables
 
 - Left-align text; right-align numeric and monetary values.
+- Put every standard table in `.dc-ds-table-wrap`; it owns the 390px
+  horizontal-overflow contract. Give `.dc-ds-table` a real `caption` and use
+  `scope="col"` on column headers.
+- Use `.dc-ds-table-toolbar` with the shared `filter_search_bar.html` partial
+  for flat server-owned filters. Use `.dc-ds-table-selection` only when a
+  native checkbox selection model is available.
+- Use `.dc-ds-table-state` with `role="status"` for asynchronous loading.
+  Recoverable errors and no-result conditions use `empty_state.html` within a
+  spanning table cell, preserving the table's column geometry.
 - Use sticky headers only inside an explicit scroll container.
 - Sorting, filtering, selection, pagination, and column visibility require
   visible state and accessible names.

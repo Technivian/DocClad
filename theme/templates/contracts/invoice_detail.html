@@ -8,8 +8,8 @@
       <p class="page-subtitle">{{ invoice.client.name }}{% if invoice.matter %} &middot; {{ invoice.matter.matter_number }}{% endif %}</p>
     </div>
     <div class="page-actions flex gap-2">
-      <span class="badge-sm {% if invoice.status == 'PAID' %}badge-green{% elif invoice.status == 'OVERDUE' %}badge-red{% elif invoice.status == 'SENT' %}badge-blue{% else %}badge-gray{% endif %}">{{ invoice.get_status_display }}</span>
-      <a href="{% url 'contracts:invoice_update' invoice.pk %}" class="btn-ghost">Edit</a>
+      <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if invoice.status == 'PAID' %}badge-green{% elif invoice.status == 'OVERDUE' %}badge-red{% elif invoice.status == 'SENT' %}badge-blue{% else %}badge-gray{% endif %}">{{ invoice.get_status_display }}</span>
+      <a href="{% url 'contracts:invoice_update' invoice.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
     </div>
   </div>
 
@@ -43,4 +43,3 @@
   {% endif %}
 </div>
 {% endblock %}
-

@@ -1,19 +1,19 @@
 {% load dpa_workflow_tags %}
 {% with value=posted|get_item:field.key %}
 {% if field.field_type == 'TEXTAREA' %}
-<textarea name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} rows="3">{{ value|default_if_none:'' }}</textarea>
+<textarea id="field-{{ field.id }}" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %}{% if field.key == 'processing_purpose' %} aria-describedby="field-{{ field.id }}-help" placeholder="e.g. To provide, operate and support the service, including user authentication and customer support."{% endif %} rows="3">{{ value|default_if_none:'' }}</textarea>
 {% elif field.field_type == 'DATE' %}
-<input type="date" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
+<input id="field-{{ field.id }}" type="date" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
 {% elif field.field_type == 'NUMBER' %}
-<input type="number" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
+<input id="field-{{ field.id }}" type="number" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
 {% elif field.field_type == 'SELECT' %}
-<select name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %}>
+<select id="field-{{ field.id }}" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %}>
   <option value="">Select…</option>
   {% for option in field.options %}
   <option value="{{ option }}"{% if value == option %} selected{% endif %}>{{ option }}</option>
   {% endfor %}
 </select>
 {% else %}
-<input type="text" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
+<input id="field-{{ field.id }}" type="text" name="field_{{ field.id }}" data-field-key="{{ field.key }}"{% if field.is_required %} data-required="1"{% endif %} value="{{ value|default_if_none:'' }}">
 {% endif %}
 {% endwith %}

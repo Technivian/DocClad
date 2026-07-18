@@ -4,5 +4,5 @@
 {% block authenticated_page_subtitle %}Define who reviews and approves governed contract decisions.{% endblock %}
 
 {% block content %}
-{% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_list_content.html" wide=True %}
+{% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_list_content.html" wide=True flow=True scaffold_class_name="dc-ds-list-page" %}
 {% endblock %}

@@ -245,7 +245,10 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(pack.approval_status, DPAReviewPack.ApprovalStatus.APPROVED)
         self.assertEqual(DPAApprovalHistoryEntry.objects.filter(review_pack=pack).count(), 2)
 
-        self.assertContains(self.client.get(reverse('contracts:repository')), 'Total contracts')
+        repository = self.client.get(reverse('contracts:repository'))
+        self.assertNotContains(repository, 'Total contracts')
+        self.assertNotContains(repository, 'Awaiting action')
+        self.assertNotContains(repository, 'Expiring soon')
         self.assertContains(self.client.get(reverse('contracts:obligations_workspace')), 'Destroy confidential material')
         dpa_dashboard = self.client.get(reverse('contracts:dpa_review_pack_list'))
         self.assertEqual(dpa_dashboard.context['total_packs'], 1)
@@ -285,14 +288,19 @@ class MVPVerticalSliceTests(TestCase):
             'file': SimpleUploadedFile('acme.pdf', b'%PDF-1.4 demo agreement', content_type='application/pdf'),
         })
         self.assertEqual(response.status_code, 201)
-        contract = Contract.objects.get(pk=response.json()['contract_id'])
-        document = Document.objects.get(pk=response.json()['document_id'])
+        payload = response.json()
+        contract = Contract.objects.get(pk=payload['contract_id'])
+        document = Document.objects.get(pk=payload['document_id'])
         self.assertEqual(document.contract, contract)
         self.assertEqual(contract.owner, self.owner)
         self.assertEqual(contract.counterparty, 'Acme Inc.')
         self.assertEqual(str(contract.value), '90000.00')
         self.assertTrue(document.file_hash)
         self.assertEqual(document.organization, self.org)
+        self.assertEqual(
+            payload['contract_review_url'],
+            reverse('contracts:contract_review_workspace', args=[contract.pk]),
+        )
 
     def test_tenant_authorization_csrf_and_invalid_transition_are_server_enforced(self):
         other_org = Organization.objects.create(name='Other Workspace', slug='other-workspace')

@@ -15,7 +15,7 @@ here triggers DPA analysis or approval mutation.
     <div class="arch-header-left">
       <div class="arch-title-row">
         <h1 class="arch-title">{{ matter.title }}</h1>
-        <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
+        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
       </div>
       <p class="arch-subtitle">
         {{ matter.matter_number }}
@@ -24,7 +24,7 @@ here triggers DPA analysis or approval mutation.
       </p>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:matter_update' matter.pk %}" class="btn-ghost">Edit</a>
+      <a href="{% url 'contracts:matter_update' matter.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
     </div>
   </div>
 
@@ -64,7 +64,7 @@ here triggers DPA analysis or approval mutation.
           <span>
             <span class="ad-rail-item-title">
               {{ c.title }}
-              {% if c.contract_type == 'MSA' or c.contract_type == 'SOW' or c.contract_type == 'DPA' %}<span class="badge-sm badge-blue">{{ c.get_contract_type_display }}</span>{% endif %}
+              {% if c.contract_type == 'MSA' or c.contract_type == 'SOW' or c.contract_type == 'DPA' %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-blue">{{ c.get_contract_type_display }}</span>{% endif %}
             </span>
             <span class="ad-rail-item-meta">
               {{ c.get_contract_type_display }}{% if c.counterparty %} &middot; {{ c.counterparty }}{% endif %}
@@ -73,7 +73,7 @@ here triggers DPA analysis or approval mutation.
               {% if c.clm_pending_approval_count %} &middot; {{ c.clm_pending_approval_count }} pending approval{{ c.clm_pending_approval_count|pluralize }}{% endif %}
             </span>
           </span>
-          <span class="badge-sm {{ c.status|status_badge_class }}">{{ c.get_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ c.status|contract_status_badge_tone }}">{{ c.get_status_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No contracts linked to this matter yet.</div>
@@ -99,7 +99,7 @@ here triggers DPA analysis or approval mutation.
               {% if pack.review_memo_generated_at %} &middot; Memo generated {{ pack.review_memo_generated_at|date:"M j" }}{% endif %}
             </span>
           </span>
-          <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No DPA review packs linked to this matter yet.</div>
@@ -121,7 +121,7 @@ here triggers DPA analysis or approval mutation.
             <span class="ad-rail-item-title">{{ risk.title }}</span>
             <span class="ad-rail-item-meta">{{ risk.source }}{% if risk.owner %} &middot; {{ risk.owner.get_full_name|default:risk.owner.username }}{% endif %} &middot; {{ risk.status_display }}</span>
           </span>
-          <span class="badge-sm {% if risk.source == 'DPA Risk' %}{{ risk.severity|dpa_severity_badge_class }}{% else %}{{ risk.severity|contract_risk_badge_class }}{% endif %}">{{ risk.severity_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if risk.source == 'DPA Risk' %}{{ risk.severity|dpa_severity_badge_class }}{% else %}{{ risk.severity|contract_risk_badge_class }}{% endif %}">{{ risk.severity_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No open risks for this matter.</div>
@@ -140,7 +140,7 @@ here triggers DPA analysis or approval mutation.
             <span class="ad-rail-item-title">{{ doc.title }}</span>
             <span class="ad-rail-item-meta">{{ doc.get_document_type_display }} &middot; {{ doc.updated_at|date:"M d, Y" }}</span>
           </span>
-          <span class="badge-sm {{ doc.status|document_status_badge_class }}">{{ doc.get_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ doc.status|document_status_badge_tone }}">{{ doc.get_status_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No documents linked to this matter yet.</div>
@@ -166,7 +166,7 @@ here triggers DPA analysis or approval mutation.
               {% if approval.assigned_to %} &middot; {{ approval.assigned_to.get_full_name|default:approval.assigned_to.username }}{% endif %}
             </span>
           </span>
-          <span class="badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No open approvals for this matter.</div>
@@ -203,7 +203,7 @@ here triggers DPA analysis or approval mutation.
             <span class="ad-rail-item-title">{{ pack.contract.title }}</span>
             <span class="ad-rail-item-meta">Generated {{ pack.review_memo_generated_at|date:"M j, Y" }}</span>
           </span>
-          <span class="badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
+          <span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ pack.approval_status|dpa_approval_badge_class }}">{{ pack.get_approval_status_display }}</span>
         </a>
         {% empty %}
         <div class="ad-empty">No review memos generated yet.</div>
@@ -221,8 +221,8 @@ here triggers DPA analysis or approval mutation.
       <p class="page-subtitle">{{ matter.matter_number }} &middot; {{ matter.get_practice_area_display }} &middot; {{ matter.client.name }}</p>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:time_entry_create' %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Log Time</a>
-      <a href="{% url 'contracts:matter_update' matter.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border btn-ghost">Edit</a>
+      <a href="{% url 'contracts:time_entry_create' %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary btn-primary-grad">Log Time</a>
+      <a href="{% url 'contracts:matter_update' matter.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
     </div>
   </div>
 
@@ -232,7 +232,7 @@ here triggers DPA analysis or approval mutation.
     <div class="panel panel-inner">
       <h3 class="panel-title mb-3">Details</h3>
       <div class="space-y-2 text-sm">
-        <div><span class="c-muted">Status:</span> <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span></div>
+        <div><span class="c-muted">Status:</span> <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% elif matter.status == 'ON_HOLD' %}badge-yellow{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span></div>
         <div><span class="c-muted">Billing:</span> {{ matter.get_billing_type_display }}</div>
         <div><span class="c-muted">Opened:</span> {{ matter.open_date|date:"M d, Y" }}</div>
         {% if matter.budget_amount %}<div><span class="c-muted">Budget:</span> ${{ matter.budget_amount|floatformat:2 }}</div>{% endif %}
@@ -296,7 +296,7 @@ here triggers DPA analysis or approval mutation.
           <div class="text-sm">{{ dl.title }}</div>
           <div class="text-xs c-muted">{{ dl.due_date|date:"M d, Y" }}</div>
         </div>
-        <span class="badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
+        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if dl.is_overdue %}badge-red{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
       </div>
       {% empty %}
       <div class="empty-state">No active deadlines.</div>

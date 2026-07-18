@@ -1,0 +1,9 @@
+<label class="sr-only" for="document-type-filter">Document type</label>
+<select id="document-type-filter" name="type" class="dc-ds-control" data-autosubmit>
+  <option value="">All Types</option>
+  <option value="CONTRACT"{% if request.GET.type == "CONTRACT" %} selected{% endif %}>Contract</option>
+  <option value="COURT_FILING"{% if request.GET.type == "COURT_FILING" %} selected{% endif %}>Court Filing</option>
+  <option value="CORRESPONDENCE"{% if request.GET.type == "CORRESPONDENCE" %} selected{% endif %}>Correspondence</option>
+  <option value="MEMO"{% if request.GET.type == "MEMO" %} selected{% endif %}>Memorandum</option>
+  <option value="RESEARCH"{% if request.GET.type == "RESEARCH" %} selected{% endif %}>Legal Research</option>
+</select>

@@ -1,57 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ checklist.name }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ checklist.name }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ checklist.regulation }}{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:compliance_checklist_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to compliance checklists" title="Back to compliance checklists">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-.checklist-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--card-border);
-}
-.checklist-item.is-checked {
-    background: rgba(34,197,94,0.08);
-    border-color: rgba(34,197,94,0.2);
-}
-.checklist-item-text.is-checked {
-    text-decoration: line-through;
-    color: var(--text-muted);
-}
-.checklist-checkbox {
-    height: 1.5rem;
-    width: 1.5rem;
-    border-radius: 4px;
-    border: 1px solid var(--card-border);
-    accent-color: var(--primary);
-    cursor: pointer;
-}
-.add-item-border {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--card-border);
-}
-.add-item-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-}
-</style>
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{{ checklist.name }}</h1>
-            <p class="page-subtitle c-muted">{{ checklist.regulation }}</p>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:compliance_checklist_list' %}" class="btn-ghost">Back to Checklists</a>
-            <a href="{% url 'contracts:compliance_checklist_update' checklist.pk %}" class="btn-primary-grad text-white">Edit Checklist</a>
-        </div>
-    </div>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+    <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:compliance_checklist_update' checklist.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit Checklist</a></div></header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="dc-ds-record-sections"><div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Details sidebar -->
         <div class="lg:col-span-1">
             <div class="panel">
@@ -64,7 +20,7 @@
                     <div>
                         <p class="text-xs font-semibold c-muted uppercase tracking-wide">Status</p>
                         <p class="mt-1">
-                            <span class="badge-sm {% if checklist.status == 'COMPLETE' %}badge-green{% elif checklist.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ checklist.get_status_display }}</span>
+                            <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if checklist.status == 'COMPLETE' %}badge-green{% elif checklist.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ checklist.get_status_display }}</span>
                         </p>
                     </div>
                     <div>
@@ -92,12 +48,12 @@
                 <div class="panel-inner">
                     <div class="space-y-3">
                         {% for item in checklist.items.all %}
-                        <div class="checklist-item {% if item.is_checked %}is-checked{% endif %}">
-                            <span class="checklist-item-text {% if item.is_checked %}is-checked{% endif %}">{{ item.text }}</span>
+                        <div class="dc-ds-record-checklist-item {% if item.is_checked %}is-checked{% endif %}">
+                            <span class="dc-ds-record-checklist-item__text {% if item.is_checked %}is-checked{% endif %}">{{ item.text }}</span>
                             <form action="{% url 'contracts:toggle_checklist_item' item.pk %}" method="post">
                                 {% csrf_token %}
                                 <input type="checkbox" data-autosubmit {% if item.is_checked %}checked{% endif %}
-                                       class="checklist-checkbox">
+                                       class="dc-ds-record-checklist-item__checkbox">
                             </form>
                         </div>
                         {% empty %}
@@ -106,17 +62,17 @@
                     </div>
 
                     <!-- Add Item Form -->
-                    <div class="add-item-border">
-                        <h4 class="add-item-label">Add New Item</h4>
+                    <div class="dc-ds-record-checklist-add">
+                        <h4 class="dc-ds-record-checklist-add__title">Add New Item</h4>
                         <form action="{% url 'contracts:add_checklist_item' checklist.pk %}" method="post" class="flex items-center gap-2">
                             {% csrf_token %}
                             <div class="flex-grow">{{ item_form.text }}</div>
-                            <button type="submit" class="btn-primary-grad text-white">Add</button>
+                            <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">Add</button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div></div>
 </div>
 {% endblock %}

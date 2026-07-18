@@ -100,21 +100,61 @@ CANONICAL_BADGE_TONE = {
 }
 assert LEGACY_BADGE_CLASS.keys() == CANONICAL_BADGE_TONE.keys()
 
-# Complete Contract.Status → badge variant map. Color is semantic, never
-# decorative: green = healthy/terminal-good, yellow = waiting on someone,
-# blue = in-flight process, red = expired/terminated, gray = neutral/inert.
-# Every status must have an entry — an unmapped status rendering gray is a
-# defect, not a fallback.
-_STATUS_BADGES = {
-    'DRAFT': 'badge-gray',
-    'PENDING': 'badge-yellow',
-    'IN_REVIEW': 'badge-blue',
-    'APPROVED': 'badge-blue',
-    'ACTIVE': 'badge-green',
-    'COMPLETED': 'badge-green',
-    'EXPIRED': 'badge-red',
-    'TERMINATED': 'badge-red',
-    'CANCELLED': 'badge-gray',
+# Transitional vocabulary accepted by the pre-Phase 2B.3 semantic helpers.
+# New status adapters use the approved canonical names directly.
+_CANONICAL_TONE_ALIASES = {
+    'progress': 'information',
+    'attention': 'warning',
+}
+
+# Phase 2B.3 canonical status semantics. These maps deliberately describe
+# lifecycle meaning rather than their predecessor's `badge-*` colour. Unknown,
+# null, and retired values are neutral so a new server value cannot look like a
+# successful agreement or final document by accident.
+_CONTRACT_STATUS_SEMANTICS = {
+    'NEEDS_INPUT': 'attention',
+    'UPLOADED': 'progress',
+    'PROCESSING': 'progress',
+    'CLASSIFICATION_REQUIRED': 'attention',
+    'AI_REVIEW_IN_PROGRESS': 'progress',
+    'AI_REVIEW_READY': 'special',
+    'HUMAN_REVIEW_IN_PROGRESS': 'progress',
+    'INFORMATION_REQUIRED': 'attention',
+    'INTERNAL_APPROVAL_REQUIRED': 'attention',
+    'NEGOTIATION_IN_PROGRESS': 'progress',
+    'READY_FOR_SIGNATURE': 'attention',
+    'SIGNATURE_IN_PROGRESS': 'progress',
+    'EXECUTED': 'success',
+    'OBLIGATIONS_ACTIVE': 'success',
+    'DRAFT': 'neutral',
+    'PENDING': 'attention',
+    'IN_REVIEW': 'progress',
+    'APPROVED': 'progress',
+    'ACTIVE': 'success',
+    'EXPIRED': 'danger',
+    'TERMINATED': 'danger',
+    'COMPLETED': 'success',
+    'CANCELLED': 'neutral',
+}
+
+_DOCUMENT_STATUS_SEMANTICS = {
+    'DRAFT': 'neutral',
+    'REVIEW': 'attention',
+    'APPROVED': 'progress',
+    'FINAL': 'success',
+    'ARCHIVED': 'neutral',
+}
+
+# Deprecated generic presentation bridge for out-of-scope legacy tables. It
+# accepts a semantic tone, never a contract status; contract status rendering
+# uses contract_status_badge_tone directly.
+_SEMANTIC_LEGACY_BADGE_CLASS = {
+    'success': 'badge-green',
+    'progress': 'badge-blue',
+    'attention': 'badge-yellow',
+    'danger': 'badge-red',
+    'special': 'badge-purple',
+    'neutral': 'badge-gray',
 }
 
 # Contract.lifecycle_stage -> a simplified 6-value chip vocabulary for
@@ -135,16 +175,20 @@ _LIFECYCLE_STAGE_LABELS = {
     'RENEWAL': 'Renewal',
     'ARCHIVED': 'Archived',
 }
+_LIFECYCLE_STAGE_SEMANTICS = {
+    'DRAFTING': 'neutral',
+    'INTERNAL_REVIEW': 'progress',
+    'NEGOTIATION': 'progress',
+    'APPROVAL': 'attention',
+    'SIGNATURE': 'progress',
+    'EXECUTED': 'success',
+    'OBLIGATION_TRACKING': 'success',
+    'RENEWAL': 'attention',
+    'ARCHIVED': 'neutral',
+}
 _LIFECYCLE_STAGE_BADGES = {
-    'DRAFTING': 'badge-gray',
-    'INTERNAL_REVIEW': 'badge-green',
-    'NEGOTIATION': 'badge-green',
-    'APPROVAL': 'badge-gray',
-    'SIGNATURE': 'badge-gray',
-    'EXECUTED': 'badge-green',
-    'OBLIGATION_TRACKING': 'badge-green',
-    'RENEWAL': 'badge-yellow',
-    'ARCHIVED': 'badge-gray',
+    stage: _SEMANTIC_LEGACY_BADGE_CLASS[tone]
+    for stage, tone in _LIFECYCLE_STAGE_SEMANTICS.items()
 }
 
 _PHASE_BADGES = {
@@ -167,15 +211,6 @@ _APPROVAL_STATUS_BADGES = {
     'APPROVED': 'badge-green',
     'REJECTED': 'badge-red',
     'ESCALATED': 'badge-purple',
-}
-
-# Document.status -> badge variant.
-_DOCUMENT_STATUS_BADGES = {
-    'DRAFT': 'badge-gray',
-    'REVIEW': 'badge-yellow',
-    'APPROVED': 'badge-blue',
-    'FINAL': 'badge-green',
-    'ARCHIVED': 'badge-gray',
 }
 
 # Client.status -> badge variant.
@@ -382,14 +417,52 @@ def semantic_badge_tone(semantic):
     'not_applicable' -> 'neutral'). Use with design_system/status_badge.html's
     `tone` parameter. Unknown input falls back to 'neutral' rather than
     raising, since a badge should never render unstyled."""
+    if semantic == 'special':
+        return 'special'
+    semantic = _CANONICAL_TONE_ALIASES.get(semantic, semantic)
     tone_class = CANONICAL_BADGE_TONE.get(semantic, CANONICAL_BADGE_TONE['neutral'])
     return tone_class.removeprefix('dc-ds-badge--')
 
 
 @register.filter
-def status_badge_class(status):
-    """Contract status key -> canonical badge class ('ACTIVE' -> 'badge-green')."""
-    return _STATUS_BADGES.get(status, 'badge-gray')
+def legacy_badge_tone(legacy_class):
+    """Legacy ``badge-*`` class -> canonical ``dc-ds-badge`` tone suffix.
+
+    This is a presentation-only compatibility adapter for incremental template
+    migration. It intentionally leaves the legacy class maps in place until a
+    repository-wide zero-consumer check permits their removal.
+    """
+    tone_by_legacy_class = {
+        'badge-green': 'success',
+        'badge-blue': 'progress',
+        'badge-yellow': 'attention',
+        'badge-red': 'danger',
+        'badge-purple': 'special',
+        'badge-gray': 'neutral',
+    }
+    return tone_by_legacy_class.get(legacy_class, 'neutral')
+
+
+def _status_badge_tone(status, semantic_map):
+    """Resolve a lifecycle status to one of the six canonical badge tones."""
+    return semantic_badge_tone(semantic_map.get(status, 'neutral'))
+
+
+def legacy_badge_class_for_tone(tone):
+    """Deprecated generic semantic-tone -> legacy class bridge for tables."""
+    return _SEMANTIC_LEGACY_BADGE_CLASS.get(tone, 'badge-gray')
+
+
+@register.filter
+def contract_status_badge_tone(status):
+    """Contract.Status -> canonical badge tone; unknown/null values are neutral."""
+    return _status_badge_tone(status, _CONTRACT_STATUS_SEMANTICS)
+
+
+@register.filter
+def document_status_badge_tone(status):
+    """Document.Status -> canonical badge tone; unknown/null values are neutral."""
+    return _status_badge_tone(status, _DOCUMENT_STATUS_SEMANTICS)
 
 
 @register.filter
@@ -406,14 +479,14 @@ def lifecycle_stage_label(stage):
 
 @register.filter
 def lifecycle_stage_badge_class(stage):
-    """Contract lifecycle_stage key -> canonical badge class for the simplified chip."""
+    """Deprecated lifecycle-stage -> legacy class bridge for out-of-scope tables."""
     return _LIFECYCLE_STAGE_BADGES.get(stage, 'badge-gray')
 
 
 @register.filter
-def document_status_badge_class(status):
-    """Document status key -> canonical badge class ('FINAL' -> 'badge-green')."""
-    return _DOCUMENT_STATUS_BADGES.get(status, 'badge-gray')
+def lifecycle_stage_badge_tone(stage):
+    """Contract lifecycle stage -> canonical badge tone; unknown/null is neutral."""
+    return _status_badge_tone(stage, _LIFECYCLE_STAGE_SEMANTICS)
 
 
 @register.filter

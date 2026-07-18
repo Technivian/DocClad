@@ -1,34 +1,35 @@
 {% if rules %}
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table" data-table-core="server">
+    <caption class="sr-only">Approval routing rules.</caption>
     <thead>
       <tr>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Name</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Trigger</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Value</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Step</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">SLA (hrs)</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Active</th>
-        <th class="text-right px-4 py-2 text-xs font-semibold uppercase tracking-wide">Actions</th>
+        <th scope="col">Name</th>
+        <th scope="col">Trigger</th>
+        <th scope="col">Value</th>
+        <th scope="col">Step</th>
+        <th scope="col">SLA (hrs)</th>
+        <th scope="col">Active</th>
+        <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-100">
+    <tbody>
       {% for item in rules %}
       <tr>
-        <td class="px-4 py-3">{{ item.name }}</td>
-        <td class="px-4 py-3">{{ item.get_trigger_type_display }}</td>
-        <td class="px-4 py-3 c-muted">{{ item.trigger_value }}</td>
-        <td class="px-4 py-3">{{ item.get_approval_step_display }}</td>
-        <td class="px-4 py-3 c-muted">{{ item.sla_hours }}</td>
-        <td class="px-4 py-3">
+        <td>{{ item.name }}</td>
+        <td>{{ item.get_trigger_type_display }}</td>
+        <td>{{ item.trigger_value }}</td>
+        <td>{{ item.get_approval_step_display }}</td>
+        <td data-numeric>{{ item.sla_hours }}</td>
+        <td>
           {% if item.is_active %}
             {% include "design_system/status_badge.html" with label="Yes" tone="success" %}
           {% else %}
             <span class="c-muted">No</span>
           {% endif %}
         </td>
-        <td class="px-4 py-3 text-right">
-          <a href="{% url 'contracts:approval_rule_update' item.pk %}" class="dc-ds-button">Edit</a>
+        <td class="text-right">
+          <a href="{% url 'contracts:approval_rule_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
         </td>
       </tr>
       {% endfor %}

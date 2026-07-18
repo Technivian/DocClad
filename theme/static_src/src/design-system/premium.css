@@ -1,6 +1,8 @@
 /* Casefile premium compatibility layer.
    Gives legacy Django pages the same spatial and surface system while they
    migrate to dc-ds primitives. Full-bleed workspaces keep their own frames. */
+/* @deprecated for new components: this is a bridge, not a component API. See
+   docs/design-system/LEGACY_COMPATIBILITY_INVENTORY.md. */
 
 html { background: var(--paper); }
 
@@ -16,9 +18,9 @@ body[data-design-system="casefile"] .main-area {
 }
 
 body[data-design-system="casefile"] .main-area > .top-bar {
-  min-height: var(--space-96);
-  height: var(--space-96);
-  flex-basis: var(--space-96);
+  min-height: var(--shell-topbar-height);
+  height: var(--shell-topbar-height);
+  flex-basis: var(--shell-topbar-height);
   flex-shrink: 0;
   gap: var(--space-16);
   padding: 0 var(--space-24) 0 var(--space-32);
@@ -136,9 +138,9 @@ body[data-design-system="casefile"] .page-wrap:is(.contract-form-page, .dpa-work
 }
 
 body[data-design-system="casefile"] :is(.arch-header, .page-header) {
-  gap: var(--space-16) var(--space-24);
-  margin-bottom: var(--space-24);
-  padding-bottom: var(--space-20);
+  gap: var(--space-12) var(--space-16);
+  margin-bottom: var(--space-16);
+  padding-bottom: var(--space-12);
   border-bottom: 1px solid var(--line);
 }
 
@@ -158,7 +160,7 @@ body[data-design-system="casefile"] :is(.panel, .card, .card-l1, .summary-card, 
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-subpanel);
   background: var(--card);
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 body[data-design-system="casefile"] :is(.card-l2, .card-l3, .summary-row) {
@@ -170,11 +172,11 @@ body[data-design-system="casefile"] :is(.card-l2, .card-l3, .summary-row) {
 
 body[data-design-system="casefile"] :is(.panel-head, .card-header, .dc-ds-surface__head) {
   border-bottom-color: var(--line);
-  padding: var(--space-20) var(--space-24);
+  padding: var(--space-12) var(--space-16);
 }
 
 body[data-design-system="casefile"] :is(.panel-inner, .panel-body, .card-body, .dc-ds-surface__body) {
-  padding: var(--space-24);
+  padding: var(--space-16);
 }
 
 body[data-design-system="casefile"] :is(.btn, .btn-cta, .btn-soft, .btn-quiet, .btn-primary-grad, .dc-ds-button) {
@@ -188,14 +190,14 @@ body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-butt
   border-color: var(--seal);
   background: var(--seal);
   color: var(--clmone-white);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--seal-dark) 18%, transparent);
+  box-shadow: none;
 }
 
 body[data-design-system="casefile"] :is(.btn-cta, .btn-primary-grad, .dc-ds-button--primary):hover {
   border-color: var(--seal-dark);
   background: var(--seal-dark);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--seal-dark) 16%, transparent);
-  transform: translateY(-1px);
+  box-shadow: none;
+  transform: none;
 }
 
 body[data-design-system="casefile"] :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
@@ -210,12 +212,25 @@ body[data-design-system="casefile"] :is(input, select):not([type="checkbox"]):no
   min-height: var(--control-height);
 }
 
+/* A shared, low-specificity default for legacy controls that have not yet
+   adopted .form-control. Page-level form styles and utility classes still
+   take precedence, while bare controls no longer render flush to an edge. */
+:where(body[data-design-system="casefile"]) :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+  padding: var(--space-8) var(--space-12);
+}
+
+/* Chromium lays out the native date editor independently of the input's
+   content inset. Give its editable text the same intentional left gutter. */
+:where(body[data-design-system="casefile"]) :where(input[type="date"])::-webkit-datetime-edit {
+  padding-inline-start: var(--space-8);
+}
+
 body[data-design-system="casefile"] :is(table, .dc-ds-table) {
   font-variant-numeric: tabular-nums;
 }
 
 body[data-design-system="casefile"] :is(th, .dc-ds-table th) {
-  height: 42px;
+  height: 36px;
   background: var(--color-surface-table-head);
   color: var(--ink-500);
   font-size: var(--font-size-eyebrow);
@@ -426,7 +441,7 @@ body[data-design-system="casefile"] :is(.page-header, .arch-header, .workspace-m
   align-items: flex-start;
 }
 
-body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) {
+body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -638,12 +653,12 @@ body[data-design-system="casefile"] :is(.dpa-ws-grid, .nda-ws-grid) {
     gap: var(--space-12);
   }
 
-  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) {
+  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions) {
     width: 100%;
     justify-content: stretch;
   }
 
-  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions, .approval-request-actions) > :is(a, button) {
+  body[data-design-system="casefile"] :is(.page-actions, .arch-header-right, .workspace-tools, .dpa-ws-actions, .nda-ws-actions, .msa-head-actions) > :is(a, button) {
     flex: 1 1 160px;
   }
 
@@ -669,3 +684,46 @@ body[data-design-system="casefile"] :is(.dpa-ws-grid, .nda-ws-grid) {
     transform: none;
   }
 }
+
+/* Phase 2A compatibility adapters.
+   A template may carry a canonical .dc-ds-* API and its legacy class while
+   consumers are migrated incrementally. Keep the legacy geometry and colour
+   contract exact; remove each pairing only after its legacy selector has no
+   repository consumers. */
+.dc-ds-button.btn-cta {
+  min-height: 0;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--btn-gradient);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow-cta);
+}
+
+.dc-ds-button.btn-cta:hover { background: var(--btn-gradient-hover); }
+.dc-ds-button.btn-cta:active { transform: translateY(1px); }
+.dc-ds-button.btn-quiet {
+  min-height: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dc-ds-button.btn-quiet:hover { border-color: var(--border-strong); background: var(--surface-hover); color: var(--text-primary); }
+.dc-ds-button.btn-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dc-ds-button.btn-link:hover { background: transparent; color: var(--primary-light); }

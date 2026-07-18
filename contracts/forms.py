@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth import password_validation
@@ -7,6 +9,8 @@ from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
 from .services.contract_policies import get_required_fields_for_contract_type
 from .services.contract_lifecycle import can_transition_lifecycle_stage, get_signature_routing_blockers
+from .services.intake_risk import assess_intake_risk
+from .services.intake_routing import derive_intake_route
 from .services.workflow_execution import _CONDITION_PATTERN, _FIELD_ALIASES
 from .tenancy import scope_queryset_for_organization
 from .models import (
@@ -21,17 +25,17 @@ from .models import (
     ClausePlaybook, ClauseVariant,
     DocumentOCRReview,
     Organization,
-    OrganizationInvitation,
+    OrganizationInvitation, CounterpartyCollaborationParticipant,
 )
 
 User = get_user_model()
 
-# Canonical token-backed form-control classes. Styling lives in the CSS
-# pipeline (theme/static_src/src/components.css), not in Python — these classes
-# adapt to dark/light theme tokens. Use these for all new form widgets.
-FORM_CONTROL = 'form-control'        # text/email/number/url/select/textarea
-FORM_CHECK = 'form-check-input'      # checkbox/radio
-FORM_FILE = 'form-file'              # file inputs
+# Canonical form API first; legacy classes remain co-applied only as temporary
+# visual compatibility adapters. This one shared construction path covers all
+# Django widget forms without changing validation, names, or permissions.
+FORM_CONTROL = 'dc-ds-control form-control'        # text/email/number/url/select/textarea
+FORM_CHECK = 'dc-ds-check form-check-input'        # checkbox/radio
+FORM_FILE = 'dc-ds-control form-file'              # file inputs
 
 # Backward-compatible aliases. The former TAILWIND_* values were hardcoded
 # light-mode utility strings (border-gray-300 / bg-white) that only rendered
@@ -156,10 +160,18 @@ class MatterForm(forms.ModelForm):
 
 
 class DocumentForm(forms.ModelForm):
+    """Document metadata form with safe create-time defaults.
+
+    The upload experience reveals metadata only after a file is selected.  A
+    blank document type deliberately prompts for a classified choice instead
+    of silently persisting the model's legacy ``Other`` default.
+    """
+
     class Meta:
         model = Document
         fields = ['title', 'document_type', 'status', 'description', 'file',
-                  'contract', 'matter', 'client', 'tags', 'is_privileged', 'is_confidential']
+                  'contract', 'matter', 'client', 'tags', 'is_privileged', 'is_confidential',
+                  'share_with_counterparty']
         widgets = {
             'title': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'document_type': forms.Select(attrs={'class': TAILWIND_SELECT}),
@@ -169,10 +181,36 @@ class DocumentForm(forms.ModelForm):
             'contract': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'matter': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'client': forms.Select(attrs={'class': TAILWIND_SELECT}),
-            'tags': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Comma-separated tags'}),
+            'tags': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Add a tag'}),
             'is_privileged': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
             'is_confidential': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'share_with_counterparty': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields['document_type'].choices = [
+                ('', 'Select document type'),
+                *Document.DocType.choices,
+            ]
+            self.fields['document_type'].initial = ''
+            self.initial['document_type'] = ''
+            self.fields['status'].required = False
+            self.fields['status'].initial = Document.Status.DRAFT
+            self.initial['status'] = Document.Status.DRAFT
+
+    def clean_status(self):
+        return self.cleaned_data.get('status') or Document.Status.DRAFT
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('is_privileged') and cleaned_data.get('share_with_counterparty'):
+            self.add_error(
+                'share_with_counterparty',
+                'Privileged documents cannot be shared with counterparty collaborators.',
+            )
+        return cleaned_data
 
 
 class DocumentOCRReviewForm(forms.ModelForm):
@@ -330,7 +368,8 @@ class ContractForm(forms.ModelForm):
     class Meta:
         model = Contract
         fields = ['title', 'contract_type', 'content', 'status', 'counterparty', 'owner', 'value', 'currency',
-                  'governing_law', 'jurisdiction', 'language', 'risk_level',
+                  'governing_law', 'jurisdiction', 'language', 'risk_level', 'paper_source',
+                  'personal_data_processing', 'sensitive_data_flag', 'counterparty_privacy_review_required',
                   'data_transfer_flag', 'dpa_attached', 'scc_attached', 'lifecycle_stage',
                   'start_date', 'end_date', 'renewal_date', 'auto_renew', 'notice_period_days',
                   'termination_notice_date', 'client', 'matter']
@@ -347,6 +386,10 @@ class ContractForm(forms.ModelForm):
             'jurisdiction': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'e.g. New York, EU'}),
             'language': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'risk_level': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'paper_source': forms.Select(attrs={'class': TAILWIND_SELECT}),
+            'personal_data_processing': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'sensitive_data_flag': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'counterparty_privacy_review_required': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
             'data_transfer_flag': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
             'dpa_attached': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
             'scc_attached': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
@@ -361,8 +404,10 @@ class ContractForm(forms.ModelForm):
             'matter': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
 
-    def __init__(self, *args, organization=None, **kwargs):
+    def __init__(self, *args, organization=None, actor=None, selected_template=None, **kwargs):
         self.organization = organization
+        self.actor = actor
+        self.selected_template = selected_template
         super().__init__(*args, **kwargs)
         # New Contract Request should default to an unselected placeholder,
         # not silently pre-select "Other" — but only for a fresh create
@@ -387,8 +432,21 @@ class ContractForm(forms.ModelForm):
             organization_memberships__organization=organization,
             organization_memberships__is_active=True,
         ).distinct().order_by('first_name', 'last_name', 'username') if organization else User.objects.none()
+        if not self.instance.pk and actor and not can_manage_organization(actor, organization):
+            # Members may create drafts for themselves, but assigning another
+            # active workspace member is an owner/admin responsibility.
+            self.fields['owner'].queryset = self.fields['owner'].queryset.filter(pk=actor.pk)
+            self.fields['owner'].initial = actor.pk
+        self.fields['owner'].label_from_instance = self._owner_label
+        if not self.instance.pk:
+            # Intake creates one governed state only. Status and lifecycle
+            # advance through their existing workflow transitions, while
+            # intake risk is derived from the request signals below.
+            for field_name in ('status', 'lifecycle_stage', 'risk_level'):
+                self.fields.pop(field_name, None)
         for field_name in ('title', 'contract_type', 'counterparty', 'governing_law'):
             self.fields[field_name].required = True
+
         # New MVP records must be complete. Historical records created before
         # these fields existed remain editable, while any value they already
         # carry cannot be cleared on a later edit.
@@ -397,26 +455,69 @@ class ContractForm(forms.ModelForm):
             self.fields[field_name].required = not self.instance.pk or bool(value)
         self.fields['start_date'].label = 'Effective date'
         self.fields['end_date'].label = 'Expiry date'
-
-    def clean(self):
-        cleaned_data = super().clean()
-        start_date = cleaned_data.get('start_date')
-        end_date = cleaned_data.get('end_date')
-        if start_date and end_date and end_date < start_date:
-            self.add_error('end_date', 'Expiry date must be on or after the effective date.')
-        return cleaned_data
+        self.fields['paper_source'].label = 'Paper source'
+        self.fields['paper_source'].choices = [('', 'Select paper source')] + list(Contract.PaperSource.choices)
+        self.fields['paper_source'].required = False
+        self.fields['paper_source'].help_text = 'Record whether the contract started from our paper or the counterparty’s paper.'
+        self.fields['personal_data_processing'].label = 'Will this agreement involve processing personal data?'
+        self.fields['personal_data_processing'].help_text = 'Include personal data handled by either party under this agreement.'
+        self.fields['sensitive_data_flag'].label = 'Is the data sensitive, high-volume, or handled in a non-standard way?'
+        self.fields['sensitive_data_flag'].help_text = 'For example, special-category data, large-scale processing, profiling, or unusual processing terms.'
+        self.fields['counterparty_privacy_review_required'].label = 'Has the counterparty asked for privacy review?'
+        self.fields['counterparty_privacy_review_required'].help_text = 'Confirm this when the counterparty requires privacy or data-protection review.'
+        self.fields['data_transfer_flag'].label = 'Will this agreement involve transferring personal data across borders?'
+        self.fields['data_transfer_flag'].help_text = 'For example, personal data moving between the UK, EU, US, or another country.'
+        self.fields['dpa_attached'].label = 'Is a data processing agreement already included?'
+        self.fields['dpa_attached'].help_text = 'Confirm this only when the approved processor terms or DPA are included.'
+        self.fields['scc_attached'].label = 'Are standard contractual clauses already included?'
+        self.fields['scc_attached'].help_text = 'Confirm SCCs, an adequacy mechanism, or another approved transfer safeguard.'
+        self.fields['termination_notice_date'].label = 'Notice deadline'
+        if not self.instance.pk:
+            self.fields['termination_notice_date'].widget.attrs['readonly'] = 'readonly'
+            self.fields['termination_notice_date'].help_text = 'Calculated from the expiry date and notice period when both are provided.'
 
     @staticmethod
     def _clause_template_label(clause_template):
         category_name = clause_template.category.name if clause_template.category else 'Uncategorized'
         return f'{clause_template.title} (v{clause_template.version}, {category_name})'
 
+    @staticmethod
+    def _owner_label(user):
+        return user.get_full_name().strip() or user.username
+
+    def selected_template_for_intake(self):
+        """Only count a template when it matches the submitted contract type."""
+        if (
+            self.selected_template
+            and self.selected_template.is_active
+            and self.selected_template.contract_type == self.cleaned_data.get('contract_type')
+        ):
+            return self.selected_template
+        return None
+
+    def intake_risk_assessment(self):
+        return assess_intake_risk(
+            self.cleaned_data,
+            template_applied=bool(self.selected_template_for_intake()),
+        )
+
+    def intake_route_decision(self):
+        return derive_intake_route(
+            self.cleaned_data,
+            template_applied=bool(self.selected_template_for_intake()),
+        )
+
+    def intake_risk_level(self):
+        """Persist the derived preliminary level without accepting POSTed risk."""
+        assessment = self.intake_risk_assessment()
+        return assessment.level or Contract.RiskLevel.LOW
+
     def _build_clause_draft_contract(self, cleaned_data):
         return Contract(
             contract_type=cleaned_data.get('contract_type') or Contract.ContractType.OTHER,
             governing_law=cleaned_data.get('governing_law') or '',
             jurisdiction=cleaned_data.get('jurisdiction') or '',
-            risk_level=cleaned_data.get('risk_level') or Contract.RiskLevel.LOW,
+            risk_level=self.instance.risk_level if self.instance.pk else self.intake_risk_level(),
         )
 
     def _render_clause_section(self, clause_template, draft_contract):
@@ -524,6 +625,11 @@ class ContractForm(forms.ModelForm):
         cleaned_data = super().clean()
         contract_type = cleaned_data.get('contract_type')
         required_fields = get_required_fields_for_contract_type(contract_type)
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if start_date and end_date and end_date < start_date:
+            self.add_error('end_date', 'Expiry date must be on or after the effective date.')
 
         for field_name in required_fields:
             value = cleaned_data.get(field_name)
@@ -537,6 +643,12 @@ class ContractForm(forms.ModelForm):
                     'lifecycle_stage',
                     f'Invalid lifecycle stage transition from {self.instance.lifecycle_stage} to {lifecycle_stage}.',
                 )
+
+        if not self.instance.pk:
+            expiry_date = cleaned_data.get('end_date')
+            notice_period_days = cleaned_data.get('notice_period_days')
+            if expiry_date and notice_period_days is not None:
+                cleaned_data['termination_notice_date'] = expiry_date - timedelta(days=notice_period_days)
 
         draft_sections = self._get_draft_sections_from_submission()
         if draft_sections:
@@ -567,6 +679,24 @@ class NegotiationThreadForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'content': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 5}),
         }
+
+
+class CounterpartyCollaborationInviteForm(forms.ModelForm):
+    """Internal form for a least-privilege external contract invitation."""
+
+    class Meta:
+        model = CounterpartyCollaborationParticipant
+        fields = ['name', 'email', 'can_view_documents', 'can_comment', 'can_upload_revisions']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Full name (optional)'}),
+            'email': forms.EmailInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'name@counterparty.com'}),
+            'can_view_documents': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'can_comment': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+            'can_upload_revisions': forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
+        }
+
+    def clean_email(self):
+        return self.cleaned_data['email'].strip().lower()
 
 
 class LoginForm(forms.Form):

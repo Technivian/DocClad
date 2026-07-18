@@ -2,9 +2,9 @@
 
 **Audit date:** 16 July 2026  
 **Environment:** local Django server at `127.0.0.1:8060`, SQLite `db.sqlite3`, seeded `payrollminds-demo` workspace  
-**Verdict:** **Conditional no-go for a Payrollminds AI demo; go for a human-led governed-workflow demo once the P0 AI configuration is resolved.**
+**Verdict:** **Go for an AI-enabled Payrollminds MVP demo, with the remaining P1 scope and document-export checks tracked openly.**
 
-The core workflow is real and materially demonstrated: MSA intake persists a governed workflow, draft, risk signals, renewal deadline, and audit events; the DPA pack is a reviewable record with evidence, owners, cross-document conflict evidence, and a human decision gate; Finance sees an assigned approval and can decide it. The demo must **not** claim that live AI review is available in this environment, that a real e-signature provider completed the demo signature, or that every requested agreement type has a tailored Payrollminds workflow.
+The core workflow is real and materially demonstrated: MSA intake persists a governed workflow, draft, risk signals, renewal deadline, and audit events; the DPA pack is a reviewable record with evidence, owners, cross-document conflict evidence, and a human decision gate; Finance sees an assigned approval and can decide it. A live Gemini upload verification completed successfully on 16 July 2026. The demo must still not claim that the seeded e-signature used a live provider or that every requested agreement type has a tailored Payrollminds workflow.
 
 ## Executive scorecard
 
@@ -18,7 +18,7 @@ The core workflow is real and materially demonstrated: MSA intake persists a gov
 | Authoritative agreement record | Pass | MSA detail shows lifecycle, owner, source document v2, linked record, deadline and risk/deadline links. |
 | Documents, versioning and retention | Partial | Versioning/download/access-control tests pass; generated Word export endpoint is tested. A fresh DOCX/PDF was not manually opened in a desktop document viewer during this audit. |
 | DPA governance | Pass | DPA pack shows payroll data categories, transfers, security, breach, audit, deletion, liability conflict, quoted evidence, owners, statuses and decision history. |
-| AI upload/review | **Blocked** | The feature is implemented and safely human-gated, but no Gemini key is configured locally, so live provider review is unavailable. |
+| AI upload/review | Pass | Live Gemini verification created three grounded citations, three human-owned risks, three Action Queue items and a success audit event from one controlled agreement upload. |
 | Security and tenancy | Pass in tested scope | 234 focused tests passed including tenancy, authorization, document isolation, session and security guardrails. Deployment configuration, backups, SSO/SAML and production secret management were not independently verified. |
 | Product design / terminology | Partial | Authenticated pages use the shared workspace shell and accessible labels. Public landing messaging and Upload & Review styling were aligned during remediation; remaining type-specific workflow coverage is the main terminology/product gap. |
 | Seed/demo readiness | Partial | The seed is idempotent and internally coherent. It intentionally includes a demo e-signature (`provider=demo`), not evidence of a live provider integration. |
@@ -73,7 +73,7 @@ Authenticated browser checks were performed against the running local server:
 
 | ID | Severity | Finding | Evidence | Recommended action | Owner |
 |---|---|---|---|---|---|
-| P0-1 | P0 | Live AI review is not configured in the local demo environment. | `GEMINI_AI_ENABLED` depends on a non-empty key; local environment has no configured key. UI correctly says reviews are suggestions, but cannot perform provider analysis. | Provision a demo-scoped Gemini credential, set `GEMINI_AI_ENABLED=true`, enable the organization AI policy, upload a representative contract, and verify resulting quoted findings/risk items in the UI before claiming AI functionality. | Engineering / security owner |
+| P0-1 | Resolved | Live AI review required provider configuration and an end-to-end proof. | Gemini returned HTTP 200 for a controlled upload; the API persisted 3 citations, 3 risks, 3 Action Queue items and an `ai.uploaded_contract_review` success event. Payrollminds policy is explicitly enabled. | Keep the provider credential in managed secret storage and monitor provider failures before/throughout the demo. | Engineering / security owner |
 | P1-1 | Resolved | Public landing-page terminology was legal-practice/IOLTA-oriented rather than Payrollminds-oriented. | Landing messaging now describes governed contract operations, DPA reviews, obligations and role-based access. | Keep public/legal-policy copy under product review as the scope evolves. | Product / design |
 | P1-2 | P1 | Several requested agreement types do not have verified type-specific Payrollminds playbooks. | MSA, DPA and NDA workflow artifacts exist. Order Confirmation is now first-class; no tailored Consultancy/Independent Contractor/Addendum evidence was verified. | Add workflow/template coverage and acceptance tests for each in-scope type, or position it explicitly as a repository record only. | Product / legal ops |
 | P1-3 | Resolved | The updated upload page contained an inline style block, contrary to the design constitution’s updated-UI rule. | Styling now lives in `theme/static/css/upload-review.css` and is loaded through the shared page-CSS hook. | Maintain token-backed styles for future Upload & Review changes. | Frontend |
@@ -99,6 +99,7 @@ This fixes the specific Order Confirmation/SOW mismatch without rewriting histor
 | `DATABASE_URL= DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_legal_front_door tests.test_ai_contract_review tests.test_ai_clause_review_workflow tests.test_upload_ocr_pipeline --verbosity 1` | **35 passed** | Validates upload AI readiness, provider-unavailable state, evidence-backed review, tenancy and OCR ingestion. |
 | `DATABASE_URL= DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_seed_payrollminds_demo tests.test_contract_detail_record_shell tests.test_contract_required_fields --verbosity 1` | **35 passed** | Validates the first-class Order Confirmation type and governed agreement-family record. |
 | `DATABASE_URL= DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_legal_front_door tests.test_nav_workspace_mode tests.test_design_system --verbosity 1` | **58 passed** | Validates the stylesheet extraction and design/navigation shell. |
+| Live upload verification, `provider-verification-agreement.txt` | **Pass** | Gemini HTTP 200; upload API returned 201 with 3 citations, 3 risks, 3 queue items and a successful AI audit event. Executed in an isolated verification workspace. |
 | `DATABASE_URL=sqlite:////.../db.sqlite3 .venv/bin/python manage.py check` | Pass | No system-check issues. |
 | `DATABASE_URL=sqlite:////.../db.sqlite3 .venv/bin/python manage.py showmigrations --plan` | Pass | All migrations through `contracts.0084` applied. |
 | `git diff --check` | Pass | No whitespace errors in the audit fix. |
@@ -118,8 +119,8 @@ An earlier focused command attempted nonexistent module `tests.test_contract_ver
 2. Open **Payrollminds Master Services Agreement** to show the final source document, agreement family, lifecycle, deadline and owner.
 3. Open the linked **Atlas Workforce Order Confirmation 2026** and sign in as Sophie to show the Finance approval queue and separation of duties. Do not click Approve unless the demo state is intentionally reset afterwards.
 4. Open **Data Processing Agreement — Cloud payroll** and show the liability-cap conflict, source quotes, owners, linked MSA, review history and explicit human decision gate.
-5. Open **Upload & Review** to demonstrate controlled ingestion. Say that AI review is available only after the P0 provider configuration is complete; do not imply it ran in this local environment.
+5. Open **Upload & Review** to demonstrate controlled ingestion and AI-generated, quoted review suggestions. Emphasize that every finding remains a human-owned risk and never approves, rejects or changes an agreement automatically.
 
 ## Final readiness condition
 
-The product is ready for a **human-led governed CLM walkthrough**. It becomes ready for the requested **AI-enabled Payrollminds MVP demo** only after P0-1 is configured and a real upload produces review findings in the UI. Complete P1-1 and P1-4 before an external audience if the public landing page or document export will be shown.
+The product is ready for the requested **AI-enabled Payrollminds MVP demo**. Complete P1-2 and P1-4 before expanding the demo to type-specific workflows beyond the supported scope or showing generated exports to an external audience.

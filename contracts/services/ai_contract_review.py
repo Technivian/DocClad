@@ -11,7 +11,10 @@ from dataclasses import dataclass
 
 from django.conf import settings
 
-from contracts.models import AIExtractionSpan, CommandCenterWorkItem, Document, Organization, RiskLog
+from contracts.models import (
+    AIExtractionSpan, CommandCenterWorkItem, ContractReviewFinding,
+    Document, DocumentReviewRun, Organization, RiskLog,
+)
 from contracts.services.ai_extraction import AIExtractionError, extract_clause_spans, get_extraction_model
 
 
@@ -24,6 +27,8 @@ class ContractReviewResult:
     spans_reviewed: int
     flags_created: int
     model: str
+    findings_created: int = 0
+    playbook_matched: bool = False
 
 
 def provider_is_configured() -> bool:
@@ -44,12 +49,19 @@ def _flag_title(span: AIExtractionSpan) -> str:
     return f'AI review — {span.label_display} needs review'
 
 
-def _create_flags(document: Document, spans: list[AIExtractionSpan], user) -> int:
+def _finding_severity(span: AIExtractionSpan) -> str:
+    if span.risk_level == AIExtractionSpan.RiskLevel.RISK:
+        return ContractReviewFinding.Severity.HIGH
+    return ContractReviewFinding.Severity.MEDIUM
+
+
+def _create_flags(document: Document, spans: list[AIExtractionSpan], user, review_run=None) -> tuple[int, int]:
     """Persist only non-clear, evidence-backed suggestions as open risk items."""
     if not document.contract_id:
-        return 0
+        return 0, 0
 
     flags_created = 0
+    findings_created = 0
     for span in spans:
         if span.risk_level == AIExtractionSpan.RiskLevel.CLEAR:
             continue
@@ -99,8 +111,33 @@ def _create_flags(document: Document, spans: list[AIExtractionSpan], user) -> in
                 'next_action': 'Review the cited clause and record a decision.',
             },
         )
+        if review_run is not None:
+            template = span.source_template
+            ContractReviewFinding.objects.create(
+                review_run=review_run,
+                contract=document.contract,
+                document=document,
+                source_span=span,
+                risk_log=flag,
+                title=flag.title,
+                severity=_finding_severity(span),
+                source_clause=span.label_display,
+                source_page=1,
+                source_excerpt=quote,
+                explanation=rationale,
+                business_legal_impact='The cited language may depart from the organization’s approved commercial or legal position.',
+                conflicting_rule=(template.playbook_notes if template else 'No approved playbook clause matched this citation.'),
+                approved_position=(template.content if template else ''),
+                acceptable_fallback=(template.fallback_content if template else ''),
+                suggested_redline=(template.fallback_content if template else ''),
+                confidence=span.confidence,
+                recommended_action='Validate the cited language, then record a human decision or route the specific deviation.',
+                assigned_reviewer=document.contract.owner,
+                created_by=user,
+            )
+            findings_created += 1
         flags_created += 1
-    return flags_created
+    return flags_created, findings_created
 
 
 def review_uploaded_contract(
@@ -109,6 +146,7 @@ def review_uploaded_contract(
     organization: Organization,
     text: str,
     user,
+    review_run: DocumentReviewRun | None = None,
 ) -> ContractReviewResult:
     """Run Gemini extraction and create human-owned flags for one upload.
 
@@ -124,9 +162,12 @@ def review_uploaded_contract(
         spans = extract_clause_spans(text, organization, document, replace_existing=True)
     except AIExtractionError:
         raise
-    flags_created = _create_flags(document, spans, user)
+    flags_created, findings_created = _create_flags(document, spans, user, review_run=review_run)
+    matched_templates = [span.source_template for span in spans if span.source_template_id]
     return ContractReviewResult(
         spans_reviewed=len(spans),
         flags_created=flags_created,
         model=get_extraction_model(),
+        findings_created=findings_created,
+        playbook_matched=bool(matched_templates),
     )

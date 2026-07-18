@@ -90,6 +90,31 @@ class OrganizationInvitationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_team_page_hides_empty_operational_panels(self):
+        self.client.login(username='owner', password='testpass123')
+
+        response = self.client.get(reverse('contracts:organization_team'))
+
+        self.assertContains(response, 'Active Members')
+        self.assertContains(response, 'Invite Member')
+        self.assertNotContains(response, 'Inactive Members')
+        self.assertNotContains(response, 'Pending Invites')
+        self.assertNotContains(response, 'Invitation History')
+
+    def test_team_page_surfaces_pending_invites_when_present(self):
+        OrganizationInvitation.objects.create(
+            organization=self.organization,
+            email='pending@example.com',
+            role=OrganizationMembership.Role.MEMBER,
+            invited_by=self.owner,
+        )
+        self.client.login(username='owner', password='testpass123')
+
+        response = self.client.get(reverse('contracts:organization_team'))
+
+        self.assertContains(response, 'Pending Invites')
+        self.assertContains(response, 'pending@example.com')
+
     def test_admin_can_create_invitation(self):
         self.client.login(username='admin', password='testpass123')
         response = self.client.post(

@@ -137,6 +137,11 @@
   --ink-500: var(--color-text-secondary);
   --ink-400: #8B929C;
   --ink-300: #B4BAC1;
+  /* Compatibility ramp stops still referenced by legacy workflow and upload
+     surfaces. Keep these canonical rather than allowing an undefined custom
+     property to invalidate a colour or background declaration. */
+  --ink-200: #D7DCE1;
+  --ink-800: #252A31;
   --line-strong: #CDD2D8;
   --line: var(--color-border-default);
   --hairline: #ECEEF0;
@@ -189,10 +194,10 @@
         No 700+ in product chrome; authority comes from spacing and
         ink, not boldness. ─────────────────────────────────────────── */
   --font-sans: var(--clmone-font);
-  --text-display: 650 28px/36px var(--font-sans);
-  --text-title: 650 24px/32px var(--font-sans);
-  --text-section: 650 20px/28px var(--font-sans);
-  --text-heading: 600 16px/24px var(--font-sans);   /* panel titles */
+  --text-display: 650 24px/32px var(--font-sans);
+  --text-title: 650 22px/28px var(--font-sans);
+  --text-section: 650 18px/24px var(--font-sans);
+  --text-heading: 600 15px/22px var(--font-sans);   /* panel titles */
   --text-subheading: 600 14px/20px var(--font-sans);
   --text-body: 400 14px/22px var(--font-sans);
   --text-small: 400 13px/18px var(--font-sans);
@@ -206,20 +211,26 @@
   --font-size-meta: 12px;
   --font-size-small: 13px;
   --font-size-body: 14px;
-  --font-size-heading: 16px;
-  --font-size-section: 20px;
-  --font-size-title: 24px;
-  --font-size-display: 28px;
+  --font-size-heading: 15px;
+  --font-size-section: 18px;
+  --font-size-title: 22px;
+  --font-size-display: 24px;
   --line-height-tight: 1.2;
   --line-height-base: 1.45;
 
   /* Canonical spacing scale from the CMS case-study foundation. */
+  --space-2: 2px;
   --space-4: 4px;
+  --space-6: 6px;
   --space-8: 8px;
+  --space-10: 10px;
   --space-12: 12px;
+  --space-14: 14px;
   --space-16: 16px;
+  --space-18: 18px;
   --space-20: 20px;
   --space-24: 24px;
+  --space-28: 28px;
   --space-32: 32px;
   --space-40: 40px;
   --space-48: 48px;
@@ -231,28 +242,29 @@
 
   --grid-columns: 12;
   --grid-margin: 24px;
-  --grid-gutter: 24px;
+  --grid-gutter: 16px;
   --page-max-width: 1480px;
-  --page-padding-x: var(--space-32);
-  --page-padding-top: var(--space-24);
-  --page-padding-bottom: var(--space-56);
-  --control-height: 38px;
+  --page-padding-x: var(--space-24);
+  --page-padding-top: var(--space-16);
+  --page-padding-bottom: var(--space-40);
+  --control-height: 36px;
+  --shell-topbar-height: 72px;
 
   /* ── Shape — borders over shadows; precision over softness. ─────── */
   --radius-sm: 4px;
-  --radius-control: 8px;   /* buttons, inputs, selects */
-  --radius-card: 10px;
-  --radius-panel: 12px;
-  --radius-action: 13px;  /* prominent actions on expressive surfaces */
-  --radius-subpanel: 14px;
-  --radius-surface: 20px; /* spacious dashboard and context surfaces */
-  --radius-feature: 20px; /* branded feature surfaces */
+  --radius-control: 6px;   /* buttons, inputs, selects */
+  --radius-card: 8px;
+  --radius-panel: 8px;
+  --radius-action: 8px;  /* prominent actions on expressive surfaces */
+  --radius-subpanel: 10px;
+  --radius-surface: 12px; /* spacious dashboard and context surfaces */
+  --radius-feature: 12px; /* branded feature surfaces */
   --radius-pill: 999px;    /* status pills and people chips ONLY */
 
   /* ── Elevation — ink-tinted, overlays only. Working surfaces use
         1px borders, never drop shadows. ──────────────────────────── */
-  --shadow-card: 0 1px 2px rgba(23, 26, 31, 0.045), 0 4px 12px rgba(23, 26, 31, 0.03);
-  --shadow-card-hover: 0 2px 4px rgba(23, 26, 31, 0.055), 0 14px 34px rgba(23, 26, 31, 0.055);
+  --shadow-card: none;
+  --shadow-card-hover: none;
   --shadow-surface-expressive: 0 12px 34px rgba(35, 55, 82, 0.065);
   --shadow-feature: 0 18px 42px rgba(10, 114, 202, 0.22);
   --shadow-feature-clear: 0 18px 42px rgba(10, 114, 202, 0.20);

@@ -11,7 +11,7 @@
             <p class="page-subtitle c-muted">Manage data subject access requests</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:dsar_create' %}" class="btn-primary-grad text-white">
+            <a href="{% url 'contracts:dsar_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">
                 <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 Add New
             </a>
@@ -38,7 +38,7 @@
                     <td class="px-5 py-3 tbl-td">{{ item.get_request_type_display }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.requester_name }}</td>
                     <td class="px-5 py-3">
-                        <span class="badge-sm {% if item.status == 'COMPLETED' %}badge-green{% elif item.status == 'IN_PROGRESS' %}badge-blue{% elif item.is_overdue %}badge-red{% else %}badge-yellow{% endif %}">{{ item.get_status_display }}{% if item.is_overdue %} (Overdue){% endif %}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if item.status == 'COMPLETED' %}badge-green{% elif item.status == 'IN_PROGRESS' %}badge-blue{% elif item.is_overdue %}badge-red{% else %}badge-yellow{% endif %}">{{ item.get_status_display }}{% if item.is_overdue %} (Overdue){% endif %}</span>
                     </td>
                     <td class="px-5 py-3 tbl-td">{{ item.due_date }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.assigned_to|default:"—" }}</td>

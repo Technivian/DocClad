@@ -122,7 +122,10 @@ class CLMOneRepository {
                         this.selectedContracts.delete(cb.value);
                     }
                     const row = cb.closest('tr');
-                    if (row) row.classList.toggle('wq-row-selected', e.target.checked);
+                    if (row) {
+                        row.classList.toggle('wq-row-selected', e.target.checked);
+                        row.setAttribute('aria-selected', String(e.target.checked));
+                    }
                 });
                 this.updateBulkActionBar();
             });
@@ -398,9 +401,9 @@ class CLMOneRepository {
         }
 
         tbody.innerHTML = result.contracts.map(contract => `
-            <tr class="contract-row hover:bg-hover cursor-pointer" data-contract-id="${contract.id}">
+            <tr class="contract-row hover:bg-hover cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
                 <td class="px-3 py-2">
-                    <input type="checkbox" class="contract-checkbox" value="${contract.id}">
+                    <input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}">
                 </td>
                 <td class="px-3 py-2">
                     <div class="font-medium">${this.escapeHtml(contract.title)}</div>
@@ -413,7 +416,7 @@ class CLMOneRepository {
                     ${this.escapeHtml(contract.counterparty || '—')}
                 </td>
                 <td class="px-3 py-2">
-                    <span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">${this.escapeHtml(contract.stage_display || 'Drafting')}</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${contract.stage_badge_tone || 'neutral'}">${this.escapeHtml(contract.stage_display || 'Drafting')}</span>
                 </td>
                 <td class="px-3 py-2">
                     ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
@@ -456,6 +459,7 @@ class CLMOneRepository {
                 // track of in a dense table.
                 const row = e.target.closest('tr');
                 if (row) row.classList.toggle('wq-row-selected', e.target.checked);
+                if (row) row.setAttribute('aria-selected', String(e.target.checked));
                 this.updateBulkActionBar();
             });
         });
@@ -487,6 +491,7 @@ class CLMOneRepository {
             cb.checked = false;
             const row = cb.closest('tr');
             if (row) row.classList.remove('wq-row-selected');
+            if (row) row.setAttribute('aria-selected', 'false');
         });
 
         this.updateBulkActionBar();
@@ -530,13 +535,13 @@ class CLMOneRepository {
         const nextDisabled = currentPage >= totalPages;
 
         container.innerHTML = `
-            <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="dc-ds-table-pagination">
                 <div class="text-sm repo-muted-text">
                     ${totalCount} result${totalCount === 1 ? '' : 's'} · Page ${currentPage} of ${totalPages}
                 </div>
-                <div class="flex items-center gap-2">
-                    <button id="repo-page-prev" class="repo-mini-btn" ${prevDisabled ? 'disabled' : ''}>Previous</button>
-                    <button id="repo-page-next" class="repo-mini-btn" ${nextDisabled ? 'disabled' : ''}>Next</button>
+                <div class="dc-ds-table-pagination__actions">
+                    <button id="repo-page-prev" type="button" class="repo-mini-btn" aria-label="Previous page" ${prevDisabled ? 'disabled' : ''}>Previous</button>
+                    <button id="repo-page-next" type="button" class="repo-mini-btn" aria-label="Next page" ${nextDisabled ? 'disabled' : ''}>Next</button>
                 </div>
             </div>
         `;
@@ -605,7 +610,7 @@ class CLMOneRepository {
                 <div class="space-y-4">
                     <div>
                         <label class="text-sm text-muted">Status</label>
-                        <div><span class="badge-sm ${contract.status_badge_class || 'badge-gray'}">${this.escapeHtml(contract.status_display || contract.status)}</span></div>
+                        <div><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${contract.status_badge_tone || 'neutral'}">${this.escapeHtml(contract.status_display || contract.status)}</span></div>
                     </div>
 
                     <div>
@@ -765,9 +770,11 @@ class CLMOneRepository {
 
         if (chips.length === 0) {
             container.innerHTML = '';
+            container.hidden = true;
             return;
         }
 
+        container.hidden = false;
         container.innerHTML = `
             <div class="flex items-center gap-2 flex-wrap">
                 ${chips.map((chip) => `
@@ -789,12 +796,24 @@ class CLMOneRepository {
     
     showLoading() {
         const table = document.getElementById('contracts-table');
-        if (table) table.classList.add('loading');
+        const tbody = document.getElementById('contracts-tbody');
+        if (table) {
+            table.classList.add('loading');
+            table.setAttribute('data-loading', 'true');
+            table.setAttribute('aria-busy', 'true');
+        }
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="10"><div class="dc-ds-table-state" role="status" aria-live="polite">Loading contracts…</div></td></tr>';
+        }
     }
     
     hideLoading() {
         const table = document.getElementById('contracts-table');
-        if (table) table.classList.remove('loading');
+        if (table) {
+            table.classList.remove('loading');
+            table.removeAttribute('data-loading');
+            table.removeAttribute('aria-busy');
+        }
     }
     
     showError(message) {
@@ -802,7 +821,7 @@ class CLMOneRepository {
         const tbody = document.getElementById('contracts-tbody');
         if (tbody) {
             tbody.innerHTML = `
-                <tr><td colspan="8">
+                <tr><td colspan="10">
                     <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state">
                         <h2 class="dc-ds-empty__title">Repository data could not be loaded</h2>
                         <p class="dc-ds-empty__copy">The contract service did not return a usable response.</p>

@@ -9,7 +9,7 @@
             <p class="page-subtitle">Track diligence workstreams, target companies, and surfaced risks.</p>
         </div>
         <a href="{% url 'contracts:due_diligence_create' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6"/>
             </svg>
@@ -31,7 +31,7 @@
                         <h2 class="text-sm font-semibold c-primary truncate group-hover:text-[color:var(--primary-light)] transition-colors">
                             {{ process.title }}
                         </h2>
-                        <span class="badge-sm badge-blue">{{ process.get_transaction_type_display }}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-blue">{{ process.get_transaction_type_display }}</span>
                     </div>
                     <p class="text-sm c-muted mt-1 truncate">
                         {{ process.target_company|default:"Unspecified target company" }}
@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 shrink-0">
-                    <span class="badge-sm
+                    <span class="dc-ds-badge dc-ds-badge--sm badge-sm
                         {% if process.status == 'COMPLETED' %}badge-green
                         {% elif process.status == 'ON_HOLD' %}badge-yellow
                         {% elif process.status == 'MATCHING' %}badge-purple
@@ -60,7 +60,7 @@
                 </svg>
                 <div class="empty-state-title">No due diligence processes</div>
                 <p class="empty-state-description">Create the first diligence workstream for this organization.</p>
-                <a href="{% url 'contracts:due_diligence_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+                <a href="{% url 'contracts:due_diligence_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
                     New Process
                 </a>
             </div>

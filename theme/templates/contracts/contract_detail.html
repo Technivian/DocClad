@@ -3,911 +3,284 @@
 {% load clmone_components %}
 {% block title %}{{ contract.title }} – CLM One{% endblock %}
 {% block authenticated_page_title %}Contracts{% endblock %}
-{% block authenticated_page_subtitle %}Contract record, lifecycle status, and governed activity.{% endblock %}
-{% block authenticated_page_back %}{% endblock %}
+{% block authenticated_page_subtitle %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
-{% url 'contracts:document_create' as attach_document_url %}
 <style nonce="{{ csp_nonce }}">
-  .arch-header-chips { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
-  .arch-action-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .cdoc-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .cdoc-row:last-child { border-bottom: none; }
-  .cdoc-icon {
-    width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center;
-    justify-content: center; flex-shrink: 0; background: var(--primary-subtle);
-  }
-  .wf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .wf-row:last-child { border-bottom: none; }
-  .wf-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .arch-detail-grid { grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr); gap: 24px; }
-  .contract-status-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-  .contract-document-summary {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    min-height: 88px; padding: 16px; border: 1px solid var(--card-border);
-    border-radius: var(--radius-control); background: var(--well);
-  }
-  .contract-note-dialog {
-    width: min(560px, calc(100vw - 32px)); margin: auto; padding: 0;
-    border: 1px solid var(--color-border-soft); border-radius: var(--radius-subpanel);
-    background: var(--card); color: var(--color-brand-foundation); box-shadow: var(--shadow-drawer);
-  }
-  .contract-note-dialog::backdrop { background: rgba(11, 23, 40, .38); }
-  .contract-note-dialog__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px 16px; border-bottom: 1px solid var(--hairline); }
-  .contract-note-dialog__title { margin: 0; font: var(--text-section); }
-  .contract-note-dialog__copy { margin: 4px 0 0; color: var(--ink-500); font: var(--text-small); }
-  .contract-note-dialog__close { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--ink-600); cursor: pointer; }
-  .contract-note-dialog__form { display: grid; gap: 16px; padding: 20px 24px 24px; }
-  .contract-note-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
-  .deadline-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .deadline-item:last-child { border-bottom: 0; padding-bottom: 0; }
-  @media (max-width: 960px) { .arch-detail-grid { grid-template-columns: 1fr; } .contract-status-grid { grid-template-columns: 1fr; } }
-  @media (max-width: 640px) { .contract-document-summary { align-items: flex-start; flex-direction: column; } .contract-note-dialog__head, .contract-note-dialog__form { padding-inline: 16px; } }
+  .contract-detail-workspace { max-width: 1440px; }
+  .contract-command-header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px 28px; align-items:start; margin-bottom:14px; }
+  .contract-command-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .contract-command-title .arch-title { margin:0; }
+  .contract-command-context { display:flex; flex-wrap:wrap; gap:4px 8px; margin-top:7px; color:var(--ink-600,var(--text-muted)); font-size:.8125rem; }
+  .contract-command-context span + span::before { content:"·"; margin-right:8px; color:var(--ink-400,var(--text-muted)); }
+  .contract-command-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+  .contract-command-actions .dc-ds-button dc-ds-button--primary btn-cta, .contract-command-actions .dc-ds-button dc-ds-button--quiet btn-quiet { min-height:36px; padding-inline:13px; font-size:.8125rem; }
+  .contract-command-strip { display:grid; grid-template-columns:1.05fr 1.6fr 1fr 1.25fr 1.25fr 1.05fr; gap:0; margin-bottom:18px; border:1px solid var(--border); border-radius:var(--radius-subpanel); background:var(--surface-1,var(--card)); }
+  .contract-command-stat { min-width:0; padding:11px 13px; }
+  .contract-command-stat + .contract-command-stat { border-left:1px solid var(--border); }
+  .contract-command-label { display:block; color:var(--ink-600,var(--text-muted)); font-size:.625rem; font-weight:700; letter-spacing:.065em; text-transform:uppercase; }
+  .contract-command-value { display:block; margin-top:4px; overflow:hidden; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; font-weight:650; line-height:1.35; text-overflow:ellipsis; white-space:nowrap; }
+  .contract-command-value .dc-ds-badge dc-ds-badge--sm badge-sm { vertical-align:middle; }
+  .contract-workspace-grid { display:grid; grid-template-columns:minmax(0,7fr) minmax(288px,3fr); gap:20px; align-items:start; }
+  .contract-primary-stack { display:grid; gap:16px; }
+  .contract-surface { border:1px solid var(--border); border-radius:var(--radius-subpanel); background:var(--surface-1,var(--card)); }
+  .contract-surface--tint { background:var(--well,var(--surface-2)); }
+  .contract-surface-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:15px 17px 11px; }
+  .contract-surface-title { margin:0; color:var(--ink-900,var(--text-primary)); font-size:.9375rem; font-weight:700; line-height:1.3; }
+  .contract-surface-kicker { margin:3px 0 0; color:var(--ink-600,var(--text-muted)); font-size:.75rem; line-height:1.4; }
+  .contract-surface-body { padding:0 17px 16px; }
+  .contract-action-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:13px; border:1px solid var(--color-status-warning-border,#d8a23d); border-radius:var(--radius-control); background:var(--status-pending-bg,var(--well)); }
+  .contract-action-summary strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.875rem; }
+  .contract-action-summary p { margin:3px 0 0; color:var(--ink-700,var(--text-secondary)); font-size:.8125rem; line-height:1.45; }
+  .contract-finding-list, .contract-approval-list, .contract-activity-list, .contract-document-list { display:grid; }
+  .contract-finding-row, .contract-approval-row, .contract-activity-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 0; border-top:1px solid var(--border); }
+  .contract-finding-row:first-child, .contract-approval-row:first-child, .contract-activity-row:first-child { border-top:0; }
+  .contract-approval-copy { min-width:0; }
+  .contract-approval-copy strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; }
+  .contract-approval-copy span { display:block; margin-top:2px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.35; }
+  .contract-approval-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .contract-approval-controls form { margin:0; }
+  .contract-approval-controls .dc-ds-button dc-ds-button--quiet btn-quiet { min-height:30px; padding-inline:9px; font-size:.75rem; }
+  .contract-finding-copy { min-width:0; }
+  .contract-finding-copy strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; }
+  .contract-finding-copy span { display:block; margin-top:2px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.35; }
+  .contract-empty { padding:8px 0 3px; color:var(--ink-650,var(--text-secondary)); font-size:.8125rem; line-height:1.45; }
+  .contract-approval-summary { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:12px 0 14px; border-bottom:1px solid var(--border); }
+  .contract-approval-summary strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.875rem; font-weight:700; }
+  .contract-approval-summary span { display:block; margin-top:2px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.4; }
+  .contract-checklist { display:grid; gap:8px; }
+  .contract-checklist-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border); }
+  .contract-checklist-row:first-child { border-top:0; }
+  .contract-checklist-copy { min-width:0; }
+  .contract-checklist-copy strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; font-weight:700; }
+  .contract-checklist-copy span { display:block; margin-top:2px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.35; }
+  .contract-activity-feed { display:grid; gap:0; }
+  .contract-activity-feed-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--border); }
+  .contract-activity-feed-row:first-child { border-top:0; }
+  .contract-activity-feed-main { min-width:0; flex:1; }
+  .contract-activity-feed-head { display:flex; align-items:flex-start; gap:10px; }
+  .contract-activity-feed-avatar { width:20px; height:20px; margin-top:1px; flex:0 0 20px; display:grid; place-items:center; border-radius:999px; color:#fff; font-size:9px; font-weight:700; background:var(--avatar-gradient); }
+  .contract-activity-feed-copy { min-width:0; }
+  .contract-activity-feed-title { display:flex; align-items:center; gap:7px; flex-wrap:wrap; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; line-height:1.35; }
+  .contract-activity-feed-title strong { font-weight:700; }
+  .contract-activity-feed-kind { color:var(--ink-600,var(--text-secondary)); font-size:.75rem; }
+  .contract-activity-feed-meta { margin-top:2px; color:var(--ink-600,var(--text-secondary)); font-size:.75rem; line-height:1.35; }
+  .contract-activity-feed-text { margin:6px 0 0; color:var(--ink-700,var(--text-secondary)); font-size:.75rem; line-height:1.45; overflow-wrap:anywhere; }
+  .contract-activity-feed-badge { flex:0 0 auto; }
+  .contract-document-hero { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:14px; border:1px solid var(--seal-soft,var(--border)); border-radius:var(--radius-control); background:var(--surface-1,var(--card)); }
+  .contract-document-name { color:var(--ink-900,var(--text-primary)); font-size:.875rem; font-weight:700; text-decoration:none; }
+  .contract-document-meta { display:flex; flex-wrap:wrap; gap:4px 10px; margin-top:5px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.4; }
+  .contract-document-meta span + span::before { content:"·"; margin-right:10px; color:var(--ink-400,var(--text-muted)); }
+  .contract-document-actions { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+  .contract-document-actions .dc-ds-button dc-ds-button--quiet btn-quiet { min-height:32px; padding-inline:10px; font-size:.75rem; }
+  .contract-document-version { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 0; border-top:1px solid var(--border); }
+  .contract-document-version:first-child { margin-top:12px; }
+  .contract-collaboration-summary { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .contract-collaboration-summary strong { display:block; color:var(--ink-900,var(--text-primary)); font-size:.875rem; }
+  .contract-collaboration-summary span { display:block; margin-top:2px; color:var(--ink-650,var(--text-secondary)); font-size:.75rem; line-height:1.4; }
+  .contract-collaboration-permissions { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; color:var(--ink-650,var(--text-secondary)); font-size:.7rem; }
+  .contract-rail { display:grid; gap:16px; }
+  .contract-detail-section { padding:14px 16px; }
+  .contract-detail-section + .contract-detail-section { border-top:1px solid var(--border); }
+  .contract-detail-section h2 { margin:0 0 10px; color:var(--ink-900,var(--text-primary)); font-size:.8125rem; font-weight:700; }
+  .contract-detail-list { display:grid; gap:9px; }
+  .contract-detail-row { display:grid; grid-template-columns:minmax(88px,.7fr) minmax(0,1.3fr); gap:10px; color:var(--ink-700,var(--text-secondary)); font-size:.75rem; line-height:1.35; }
+  .contract-detail-row dt { color:var(--ink-600,var(--text-muted)); }
+  .contract-detail-row dd { min-width:0; margin:0; color:var(--ink-850,var(--text-primary)); font-weight:550; overflow-wrap:anywhere; }
+  .contract-utility { margin-top:12px; border-top:1px solid var(--border); padding-top:12px; }
+  .contract-utility summary { color:var(--ink-700,var(--text-secondary)); cursor:pointer; font-size:.75rem; font-weight:650; }
+  .contract-utility textarea { margin-top:10px; }
+  .contract-utility-actions { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .contract-note-dialog { width:min(560px,calc(100vw - 32px)); margin:auto; padding:0; border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); color:var(--color-brand-foundation); box-shadow:var(--shadow-drawer); }
+  .contract-note-dialog::backdrop { background:rgba(11,23,40,.38); }
+  .contract-note-dialog__head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:20px 24px 16px; border-bottom:1px solid var(--hairline); }
+  .contract-note-dialog__title { margin:0; font:var(--text-section); }
+  .contract-note-dialog__copy { margin:4px 0 0; color:var(--ink-600); font:var(--text-small); }
+  .contract-note-dialog__close { width:36px; height:36px; display:grid; place-items:center; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-600); cursor:pointer; }
+  .contract-note-dialog__form { display:grid; gap:16px; padding:20px 24px 24px; }
+  .contract-note-dialog__actions { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+  .contract-attach-dialog { width:min(640px,calc(100vw - 32px)); margin:auto; padding:0; border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); color:var(--color-brand-foundation); box-shadow:var(--shadow-drawer); }
+  .contract-attach-dialog::backdrop { background:rgba(11,23,40,.38); }
+  .contract-attach-dialog__head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:20px 24px 16px; border-bottom:1px solid var(--hairline); }
+  .contract-attach-dialog__head h2 { margin:0; font:var(--text-section); }
+  .contract-attach-dialog__head p { margin:4px 0 0; color:var(--ink-600); font:var(--text-small); line-height:1.45; }
+  .contract-attach-dialog__form { display:grid; gap:14px; padding:20px 24px 24px; }
+  .contract-attach-dialog__file { display:grid; gap:6px; padding:14px; border:1px dashed var(--line-strong); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); cursor:pointer; }
+  .contract-attach-dialog__file strong { color:var(--ink-900); font-size:.8125rem; }
+  .contract-attach-dialog__file span { font-size:.75rem; }
+  .contract-attach-dialog__file input { max-width:100%; font-size:.75rem; }
+  .contract-attach-dialog__fields { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(150px,.75fr); gap:12px; }
+  .contract-attach-dialog__field { display:grid; gap:6px; }
+  .contract-attach-dialog__field label { color:var(--ink-800); font-size:.75rem; font-weight:650; }
+  .contract-attach-dialog__field :is(input, select, textarea) { width:100%; min-height:36px; }
+  .contract-attach-dialog__field textarea { min-height:72px; }
+  .contract-attach-dialog__field--wide { grid-column:1 / -1; }
+  .contract-attach-dialog__toggles { display:flex; flex-wrap:wrap; gap:12px; color:var(--ink-700); font-size:.75rem; }
+  .contract-attach-dialog__toggles label { display:flex; align-items:center; gap:6px; }
+  .contract-attach-dialog__error { margin:0; color:var(--status-danger-fg); font-size:.75rem; }
+  .contract-attach-dialog__actions { display:flex; justify-content:flex-end; gap:8px; padding-top:4px; }
+  @media (max-width:1080px) { .contract-command-strip { grid-template-columns:repeat(3,minmax(0,1fr)); } .contract-command-stat:nth-child(4) { border-left:0; } .contract-command-stat:nth-child(n+4) { border-top:1px solid var(--border); } }
+  @media (max-width:960px) { .contract-workspace-grid { grid-template-columns:1fr; } .contract-rail { grid-template-columns:repeat(2,minmax(0,1fr)); } .contract-rail > .contract-surface:first-child { grid-column:1 / -1; } }
+  @media (max-width:640px) { .contract-command-header { grid-template-columns:1fr; } .contract-command-actions { justify-content:flex-start; } .contract-command-actions > * { flex:1 1 130px; text-align:center; } .contract-command-strip { grid-template-columns:repeat(2,minmax(0,1fr)); } .contract-command-stat:nth-child(even) { border-left:1px solid var(--border); } .contract-command-stat:nth-child(3) { border-left:0; } .contract-command-stat:nth-child(n+3) { border-top:1px solid var(--border); } .contract-command-stat:nth-child(5) { border-left:0; } .contract-command-stat:nth-child(5), .contract-command-stat:nth-child(6) { border-top:1px solid var(--border); } .contract-rail { grid-template-columns:1fr; } .contract-rail > .contract-surface:first-child { grid-column:auto; } .contract-action-summary, .contract-document-hero, .contract-attach-dialog__fields { grid-template-columns:1fr; } .contract-document-actions { justify-content:flex-start; } .contract-note-dialog__head, .contract-note-dialog__form, .contract-attach-dialog__head, .contract-attach-dialog__form { padding-inline:16px; } }
 </style>
-<div class="page-wrap reveal-stagger">
 
-  {# ── Back link ────────────────────────────────────────────── #}
-  <a href="{% url 'contracts:repository' %}" class="arch-back">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-    </svg>
-    Contracts
-  </a>
-
-  {# ── ContractMetadataHeader ───────────────────────────────── #}
-  <div class="arch-header">
-    <div class="arch-header-left">
-      <div class="arch-title-row">
+<main class="page-wrap reveal-stagger contract-detail-workspace" aria-label="Contract workspace">
+  <header class="arch-header contract-command-header">
+    <div>
+      <div class="contract-command-title">
         <h1 class="arch-title">{{ contract.title }}</h1>
-        <span class="badge-sm {{ contract.status|status_badge_class }}">{{ contract.get_status_display }}</span>
-        {% if contract.risk_level %}
-        <span class="badge-sm {{ contract.risk_level|contract_risk_badge_class }}">{{ contract.get_risk_level_display }} risk</span>
-        {% endif %}
+        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.status|contract_status_badge_tone }}">{{ contract.get_status_display }}</span>
+        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract_command.risk_badge_class|legacy_badge_tone }}">{{ contract_command.risk_label }}</span>
       </div>
-      <div class="arch-meta-strip">
-        <span class="arch-meta-item">{{ contract.get_contract_type_display }}</span>
-        {% if contract.counterparty %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">{{ contract.counterparty }}</span>
-        {% endif %}
-        {% if contract.client %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">{{ contract.client.name }}</span>
-        {% endif %}
-        {% if contract.value %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">{{ contract.value|money:contract.currency }}</span>
-        {% endif %}
-        {% if contract.start_date %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">Starts {{ contract.start_date|date:"M d, Y" }}</span>
-        {% endif %}
-        {% if contract.end_date %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">Ends {{ contract.end_date|date:"M d, Y" }}</span>
-        {% endif %}
-        {% if contract.renewal_date %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">Renews {{ contract.renewal_date|date:"M d, Y" }}</span>
-        {% elif contract.notice_period_days %}
-        <div class="arch-meta-sep"></div>
-        <span class="arch-meta-item">{{ contract.notice_period_days }}-day notice</span>
-        {% endif %}
-      </div>
-      <div class="arch-header-chips text-sm c-secondary">
-        <span><strong class="c-primary">Owner:</strong> {% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</span>
-        <span><strong class="c-primary">Stage:</strong> {{ contract.get_lifecycle_stage_display }}</span>
+      <div class="contract-command-context" aria-label="Contract identity">
+        {% if contract.counterparty %}<span>{{ contract.counterparty }}</span>{% endif %}
+        <span>{{ contract.get_contract_type_display }}</span>
+        <span>Version {% if primary_document %}{{ primary_document.version }}{% else %}—{% endif %}</span>
+        <span>Stage: {{ contract.get_lifecycle_stage_display }}</span>
+        <span>AI review: {{ contract_command.review_label }}</span>
       </div>
     </div>
-    <div class="arch-header-right">
-      <div class="arch-action-bar">
-        {% if can_submit_for_review %}
-        <button type="button" class="btn-cta" data-open-workflow>Submit for review</button>
-        {% elif can_decide_approval and open_approval %}
-        <button type="button" class="btn-cta" data-open-workflow>Record review decision</button>
-        {% elif can_route_for_signature %}
-        <a href="{% url 'contracts:signature_request_create' %}" class="btn-cta">Prepare signature request</a>
-        {% elif can_edit %}
-        <button type="button" id="run-grounded-check" class="btn-cta">Run grounded check</button>
-        {% endif %}
-        {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="btn-quiet">Edit</a>{% endif %}
-        {% if can_edit and can_submit_for_review %}<button type="button" id="run-grounded-check" class="btn-quiet">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-          </svg>
-          Run grounded check</button>{% endif %}
-      </div>
+    <div class="contract-command-actions">
+      {% if can_edit %}<a href="{% url 'contracts:contract_update' contract.pk %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Edit</a>{% endif %}
+      {% if primary_document %}<a href="{% url 'contracts:document_detail' primary_document.pk %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Open document</a>{% endif %}
+      {% if contract_command.primary_action.mode == 'link' %}
+      <a href="{{ contract_command.primary_action.target }}" class="dc-ds-button dc-ds-button--primary btn-cta">{{ contract_command.primary_action.label }}</a>
+      {% else %}
+      <a href="{{ contract_command.primary_action.target }}" class="dc-ds-button dc-ds-button--primary btn-cta">{{ contract_command.primary_action.label }}</a>
+      {% endif %}
+      {% if can_edit %}<button type="button" id="run-grounded-check" class="dc-ds-button dc-ds-button--quiet btn-quiet">Run grounded check</button>{% endif %}
     </div>
-  </div>
+  </header>
 
-  {# ── Tabs ──────────────────────────────────────────────────── #}
-  <div class="arch-tabs" role="tablist">
-    <button class="arch-tab tab-active" role="tab" aria-selected="true"  data-tab="overview"   aria-controls="tab-overview">Overview</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="documents"  aria-controls="tab-documents">Documents</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="workflow"   aria-controls="tab-workflow">Workflow</button>
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="activity"   aria-controls="tab-activity">Activity</button>
-    {% if contract_risks %}
-    <button class="arch-tab"            role="tab" aria-selected="false" data-tab="compliance" aria-controls="tab-compliance">Compliance</button>
-    {% endif %}
-  </div>
+  <section class="contract-command-strip" aria-label="Contract command summary">
+    <div class="contract-command-stat"><span class="contract-command-label">Current stage</span><span class="contract-command-value">{{ contract.get_lifecycle_stage_display }}</span></div>
+    <div class="contract-command-stat"><span class="contract-command-label">Next action</span><span class="contract-command-value">{{ contract_command.primary_action.label }}</span></div>
+    <div class="contract-command-stat"><span class="contract-command-label">Owner</span><span class="contract-command-value">{% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</span></div>
+    <div class="contract-command-stat"><span class="contract-command-label">Review status</span><span class="contract-command-value"><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ contract_command.review_badge_class }}">{{ contract_command.review_label }}</span></span></div>
+    <div class="contract-command-stat"><span class="contract-command-label">Approval status</span><span class="contract-command-value"><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ contract_command.approval_badge_class }}">{{ contract_command.approval_label }}</span></span></div>
+    <div class="contract-command-stat"><span class="contract-command-label">Expiry / renewal</span><span class="contract-command-value">{% if contract.renewal_date %}{{ contract.renewal_date|date:"M d, Y" }}{% elif contract.end_date %}{{ contract.end_date|date:"M d, Y" }}{% else %}Not set{% endif %}</span></div>
+  </section>
 
-  {# ── Content grid ─────────────────────────────────────────── #}
-  <div class="arch-detail-grid">
-
-    {# Main content — tabs #}
-    <div>
-
-      {# ── OVERVIEW ─────────────────────────────────────────── #}
-      <div id="tab-overview" class="arch-tab-panel panel-active" role="tabpanel">
-        <div class="space-y-6">
-
-          {# Current state — compact operational summary; the full tracker lives in Workflow. #}
-          <div class="card-l2">
-            <div class="contract-status-grid text-sm">
-              <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Current state</span>
-                <div class="mt-1 font-semibold c-primary">{{ contract.get_lifecycle_stage_display }} · {{ contract.get_status_display }}</div>
-              </div>
-              <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next stage</span>
-                <div class="mt-1 c-primary">{{ lifecycle_guidance.next_stage|event_label }}</div>
-              </div>
-              <div>
-                <span class="text-xs c-muted uppercase tracking-wide font-semibold">Grounded check</span>
-                <div class="mt-1 c-primary">{{ grounded_check.label }}{% if grounded_check.last_run_at %} · {{ grounded_check.last_run_at|date:"M d, H:i" }}{% endif %}</div>
-              </div>
-            </div>
-            <div class="mt-3 pt-3 border-t border-[var(--border)] text-sm">
-              <span class="text-xs c-muted uppercase tracking-wide font-semibold">Next action</span>
-              <div class="mt-1 c-primary">{{ lifecycle_guidance.action }}</div>
-              {% if signature_routing_blockers %}<p class="mt-2 text-xs c-muted">Signature routing is blocked until approvals are complete and open high-risk findings are resolved.</p>{% endif %}
-            </div>
-          </div>
-
-          {# Agreement family — master agreement and its governed child records. #}
-          {% if contract.parent_contract_id or contract.linked_contracts.exists %}
-          <div class="card-l1">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h2 class="text-base font-700 c-primary">Agreement family</h2>
-                <p class="text-sm c-muted mt-1">Related contract records governed by the same commercial relationship.</p>
-              </div>
-              <span class="badge-sm badge-blue">Linked records</span>
-            </div>
-            <div class="divide-y divide-[var(--border)]">
-              {% if contract.parent_contract %}
-              <a href="{% url 'contracts:contract_detail' contract.parent_contract.pk %}" class="cdoc-row no-underline">
-                <div class="min-w-0">
-                  <div class="font-semibold c-primary">{{ contract.parent_contract.title }}</div>
-                  <div class="text-xs c-muted mt-1">Governing agreement · {{ contract.parent_contract.get_contract_type_display }}</div>
-                </div>
-                <span class="badge-sm {{ contract.parent_contract.status|status_badge_class }}">{{ contract.parent_contract.get_status_display }}</span>
-              </a>
-              {% endif %}
-              {% for linked_contract in contract.linked_contracts.all %}
-              <a href="{% url 'contracts:contract_detail' linked_contract.pk %}" class="cdoc-row no-underline">
-                <div class="min-w-0">
-                  <div class="font-semibold c-primary">{{ linked_contract.title }}</div>
-                  <div class="text-xs c-muted mt-1">
-                    {{ linked_contract.get_contract_type_display }}
-                    {% if linked_contract.end_date %} · Key date {{ linked_contract.end_date|date:"M d, Y" }}{% endif %}
-                  </div>
-                </div>
-                <span class="badge-sm {{ linked_contract.status|status_badge_class }}">{{ linked_contract.get_status_display }}</span>
-              </a>
-              {% endfor %}
-            </div>
-          </div>
-          {% endif %}
-
-          {# Authoritative source document #}
-          <div class="card-l1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-700 c-primary">Source document</h2>
-              <span class="badge-sm badge-blue">Source of truth</span>
-            </div>
-            {% if primary_document %}
-            <div class="contract-document-summary">
-              <div>
-                <div class="font-semibold c-primary">{{ primary_document.title }}</div>
-                <div class="text-sm c-muted mt-1">{{ primary_document.get_document_type_display }} · v{{ primary_document.version }} · {{ primary_document.get_status_display }}</div>
-                <div class="text-xs c-muted mt-1">Added {{ primary_document.created_at|date:"M d, Y" }} by {% if primary_document.uploaded_by %}{{ primary_document.uploaded_by.get_full_name|default:primary_document.uploaded_by.username }}{% else %}—{% endif %}</div>
-              </div>
-              <a href="{% url 'contracts:document_detail' primary_document.pk %}" class="btn-soft-primary text-sm flex-shrink-0">Open document</a>
-            </div>
-            {% else %}
-            <div class="empty-state text-sm c-muted">
-              <p>No document has been generated yet.</p>
-              <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary mt-3 text-sm">Upload source document</a>
-            </div>
-            {% endif %}
-          </div>
-
-          {# Negotiation notes #}
-          {% if negotiation_threads %}
-          <div class="card-l1">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-700 c-primary">Negotiation Notes</h2>
-              {% if can_comment %}<button type="button" class="btn-quiet text-xs px-2.5 py-1.5" data-open-note-dialog>Add note</button>{% endif %}
-            </div>
-            <div class="divide-y divide-[var(--border)]">
-              {% for note in negotiation_threads %}
-              <div class="py-4 {% if forloop.first %}pt-0{% endif %}">
-                <div class="flex items-center justify-between gap-3 mb-2">
-                  <div class="text-sm font-medium c-primary">{{ note.title }}</div>
-                  <div class="text-xs c-muted">{{ note.created_at|date:"M d" }}</div>
-                </div>
-                <div class="text-sm c-secondary">{{ note.content|truncatechars:220 }}</div>
-                <div class="text-xs c-muted mt-2">{% if note.created_by %}{{ note.created_by.get_full_name|default:note.created_by.username }}{% else %}—{% endif %}</div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-          {% else %}
-          <div class="card-l2 text-center">
-            <p class="text-sm c-muted">No negotiation notes yet.</p>
-            {% if can_comment %}<button type="button" class="btn-soft-primary mt-3 text-sm" data-open-note-dialog>Add first note</button>{% endif %}
-          </div>
-          {% endif %}
-
-          {# Contract field review — a grounded rules-engine check, not generative AI; collapsed by default. #}
-          <details class="card-l2" id="contract-field-review">
-            <summary class="cursor-pointer list-none flex items-center gap-2 font-medium text-sm c-primary select-none">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-              </svg>
-              Contract field review
-              <span class="ml-auto text-xs font-normal c-muted">Grounded checks on this record — no external AI model</span>
-            </summary>
-            <div class="mt-4 space-y-3">
-              <textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Ask for risk, renewal, and action insights…"></textarea>
-              <div class="flex items-center gap-3">
-                <button id="ai-assistant-submit" type="button" class="btn-soft-primary text-sm">Run review</button>
-                <span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span>
-              </div>
-              <div id="ai-assistant-error" class="hidden text-xs c-danger" role="alert"></div>
-              <div id="ai-assistant-output" class="hidden space-y-3" aria-live="polite" aria-label="Contract field review result"></div>
-            </div>
-          </details>
-
+  <div class="contract-workspace-grid">
+    <div class="contract-primary-stack">
+      <section class="dc-ds-surface contract-surface contract-surface--tint" aria-labelledby="next-action-heading">
+        <div class="contract-surface-head"><div><h2 id="next-action-heading" class="contract-surface-title">Next action &amp; blockers</h2><p class="contract-surface-kicker">The work that needs attention before this contract can advance.</p></div></div>
+        <div class="contract-surface-body">
+          <div class="contract-action-summary"><div><strong>{{ contract_command.primary_action.label }}</strong><p>{{ contract_command.next_action }}</p></div><a href="{{ contract_command.primary_action.target }}" class="dc-ds-button dc-ds-button--primary btn-cta">{{ contract_command.primary_action.label }}</a></div>
+          {% if signature_routing_blockers %}<div class="contract-finding-list mt-3" aria-label="Workflow blockers">{% for blocker in signature_routing_blockers %}<div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ blocker }}</strong></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-yellow">Blocked</span></div>{% endfor %}</div>{% endif %}
         </div>
-      </div>{# /tab-overview #}
+      </section>
 
-      {# ── DOCUMENTS ────────────────────────────────────────── #}
-      <div id="tab-documents" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-700 c-primary">Documents &amp; Versions</h2>
-            <a href="{% url 'contracts:document_create' %}" class="btn-cta text-sm">Attach document</a>
-          </div>
-          {% if documents %}
-          <div>
-            {% for doc in documents %}
-            <a href="{% url 'contracts:document_detail' doc.pk %}" class="cdoc-row">
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="cdoc-icon">
-                  <svg class="w-4 h-4 c-primary" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-                <div class="min-w-0">
-                  <div class="text-sm font-medium c-primary truncate">{{ doc.title }}</div>
-                  <div class="text-xs c-muted mt-0.5">{{ doc.get_document_type_display }} · v{{ doc.version }}</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-4 flex-shrink-0">
-                <div class="text-right hidden sm:block">
-                  <div class="text-xs c-secondary">{% if doc.uploaded_by %}{{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}{% else %}—{% endif %}</div>
-                  <div class="text-xs c-muted">{{ doc.created_at|date:"M d, Y" }}</div>
-                </div>
-                <svg class="w-4 h-4 c-muted" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </div>
-            </a>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="py-12 text-center">
-            <p class="text-sm c-muted mb-3">No documents attached yet.</p>
-            <a href="{% url 'contracts:document_create' %}" class="btn-soft-primary text-sm">Attach first document</a>
-          </div>
-          {% endif %}
-
-          <div class="mt-6 pt-6 border-t" id="ai-clause-review"
-               data-extract-url="{% url 'contracts:contract_ai_extract_api' contract.pk %}"
-               data-review-url-template="{% url 'contracts:ai_extraction_span_review_api' contract.pk 0 %}">
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-              <div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="text-base font-700 c-primary">AI-assisted clause review</h2>
-                  <span class="badge-sm badge-blue">Human review required</span>
-                </div>
-                <p class="text-xs c-muted mt-1">Verbatim document citations, grounded in this workspace’s approved clause library.</p>
-              </div>
-              {% if can_use_ai and ai_provider_configured and documents %}
-              <button type="button" class="dc-ds-button dc-ds-button--primary" data-ai-extract>
-                {% if ai_clause_span_count %}Re-extract clauses{% else %}Extract clauses{% endif %}
-              </button>
-              {% endif %}
-            </div>
-
-            <div class="hidden text-sm c-danger mb-4" role="alert" data-ai-extract-error></div>
-            <div class="text-xs c-muted mb-4" role="status" aria-live="polite" data-ai-extract-status></div>
-
-            {% if not ai_features_enabled %}
-              <div class="dc-ds-empty">
-                <h3 class="dc-ds-empty__title">AI-assisted review is disabled</h3>
-                <p>Workspace policy currently prevents contract text from being sent to an AI provider.</p>
-                <p>When an administrator enables AI data controls, clause extraction becomes available here.</p>
-              </div>
-            {% else %}
-              {% if not ai_provider_configured %}
-              <div class="card-l2 p-3 mb-4">
-                <h3 class="text-sm font-semibold c-primary">AI provider setup is incomplete</h3>
-                <p>No provider key is configured, so no contract text has been sent externally.</p>
-                <p class="text-xs c-muted mt-1">Existing review evidence remains available. Configure Gemini to run or refresh extraction.</p>
-              </div>
-              {% endif %}
-            {% if not documents %}
-              {% include "design_system/empty_state.html" with icon="file-text" title="No document to review" reason="This contract has no attached agreement." how="Clause citations appear after a readable PDF, Word, or text agreement is attached and processed." action_url=attach_document_url action_label="Attach document" %}
-            {% elif not ai_clause_span_count %}
-              <div class="dc-ds-empty">
-                <h3 class="dc-ds-empty__title">No clause citations yet</h3>
-                <p>Extraction has not run, or the attached documents contain no machine-readable text.</p>
-                <p>CLM One creates verbatim citations from processed document text and then matches them to approved clauses.</p>
-                {% if ai_provider_configured %}
-                <div class="dc-ds-empty__actions">
-                  <button type="button" class="dc-ds-button dc-ds-button--primary" data-ai-extract>Extract clauses</button>
-                </div>
-                {% endif %}
-              </div>
-            {% else %}
-              <div class="space-y-6">
-              {% for doc in documents %}
-                {% with spans=doc.ai_extraction_spans.all %}
-                {% if spans %}
-                <section aria-labelledby="ai-doc-{{ doc.pk }}">
-                  <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                    <h3 id="ai-doc-{{ doc.pk }}" class="text-sm font-semibold c-primary">{{ doc.title }}</h3>
-                    <a href="{% url 'contracts:document_detail' doc.pk %}" class="text-xs c-link">Open source document</a>
-                  </div>
-                  <div class="divide-y">
-                  {% for span in spans %}
-                    <article class="py-4 first:pt-0" data-ai-span="{{ span.pk }}">
-                      <div class="flex flex-wrap items-center gap-2 mb-2">
-                        <span class="text-sm font-semibold c-primary">{{ span.label_display }}</span>
-                        {% if span.risk_level == 'CLEAR' %}
-                          <span class="badge-sm badge-green">Monitored / clear</span>
-                        {% elif span.risk_level == 'RISK' %}
-                          <span class="badge-sm badge-red">Active risk</span>
-                        {% else %}
-                          <span class="badge-sm badge-yellow">Review needed</span>
-                        {% endif %}
-                        {% if span.review_status == 'CONFIRMED' %}
-                          <span class="badge-sm badge-green" data-review-badge>Confirmed</span>
-                        {% elif span.review_status == 'DISMISSED' %}
-                          <span class="badge-sm badge-gray" data-review-badge>Dismissed</span>
-                        {% else %}
-                          <span class="badge-sm badge-yellow" data-review-badge>Needs human review</span>
-                        {% endif %}
-                        <span class="text-xs c-muted">{% widthratio span.confidence 1 100 %}% confidence</span>
-                      </div>
-                      <blockquote class="card-l2 text-sm c-primary p-3 break-words">“{{ span.span_text }}”</blockquote>
-                      {% if span.rationale %}<p class="text-xs c-muted mt-2"><strong>Reason:</strong> {{ span.rationale }}</p>{% endif %}
-                      {% if span.source_template %}
-                        <div class="mt-3 text-xs c-muted">
-                          <strong class="c-primary">Approved source:</strong> {{ span.source_template.title }} · v{{ span.source_template.version }}
-                          {% if span.source_template.playbook_notes %}<div class="mt-1"><strong>Playbook:</strong> {{ span.source_template.playbook_notes }}</div>{% endif %}
-                          {% if span.source_template.fallback_content %}<details class="mt-1"><summary class="c-link cursor-pointer">Show fallback clause</summary><p class="mt-1 break-words">{{ span.source_template.fallback_content }}</p></details>{% endif %}
-                        </div>
-                      {% else %}
-                        <p class="text-xs c-muted mt-2">No approved library clause matched. Legal review is required before relying on this citation.</p>
-                      {% endif %}
-                      {% if can_use_ai %}
-                      <div class="flex flex-wrap gap-2 mt-3" data-review-actions>
-                        <button type="button" class="dc-ds-button" data-review-status="CONFIRMED">Confirm citation</button>
-                        <button type="button" class="dc-ds-button dc-ds-button--ghost" data-review-status="DISMISSED">Dismiss</button>
-                      </div>
-                      {% endif %}
-                    </article>
-                  {% endfor %}
-                  </div>
-                </section>
-                {% endif %}
-                {% endwith %}
-              {% endfor %}
-              </div>
-            {% endif %}
-            {% endif %}
-          </div>
+      <section class="contract-surface" id="ai-review" aria-labelledby="ai-review-heading">
+        <div class="contract-surface-head"><div><h2 id="ai-review-heading" class="contract-surface-title">AI review summary</h2><p class="contract-surface-kicker">Grounded review evidence remains subject to human review.</p></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ contract_command.review_badge_class }}">{{ contract_command.review_label }}</span></div>
+        <div class="contract-surface-body">
+          {% if uploaded_ai_review %}<p class="contract-empty"><strong>Latest upload review.</strong> {% if contract_command.review_finding_count %}{{ contract_command.review_finding_count }} potential issue{{ contract_command.review_finding_count|pluralize }} identified in the latest review evidence.{% else %}No potential issues were found in the clauses reviewed. Human review is still required.{% endif %}{% if contract_command.review_label == 'Review refresh required' %} Refresh this review before relying on its outcome.{% endif %}</p>{% elif documents %}<p class="contract-empty">{% if grounded_check.is_current %}No completed AI review evidence is available for the current document version.{% else %}The contract changed after its last grounded check. Refresh the review before relying on its outcome.{% endif %}</p>{% else %}<p class="contract-empty">Attach a source document to begin grounded review.</p>{% endif %}
+          {% if documents %}<div class="contract-utility"><a href="{% url 'contracts:contract_review_workspace' contract.pk %}" class="c-link text-sm font-medium">Open review workspace</a></div>{% endif %}
+          {% if can_edit %}<details class="contract-utility" id="contract-field-review"><summary>Grounded check utility</summary><textarea id="ai-assistant-prompt" class="input-base w-full rounded-lg border px-3 py-2 text-sm" rows="2" placeholder="Ask for risk, renewal, and action insights…"></textarea><div class="contract-utility-actions"><button id="ai-assistant-submit" type="button" class="dc-ds-button dc-ds-button--soft btn-soft-primary text-sm">Run review</button><span id="ai-assistant-status" class="text-xs c-muted" role="status" aria-live="polite"></span></div><div id="ai-assistant-error" class="hidden text-xs c-danger mt-2" role="alert"></div><div id="ai-assistant-output" class="hidden space-y-3 mt-3" aria-live="polite" aria-label="Contract field review result"></div></details>{% endif %}
         </div>
-      </div>{# /tab-documents #}
+      </section>
 
-      {# ── WORKFLOW ─────────────────────────────────────────── #}
-      <div id="tab-workflow" class="arch-tab-panel" role="tabpanel">
-        <div class="space-y-6">
+      <section class="contract-surface" id="open-findings" aria-labelledby="findings-heading">
+        <div class="contract-surface-head"><div><h2 id="findings-heading" class="contract-surface-title">Open findings</h2><p class="contract-surface-kicker">Risk status reflects unresolved findings, not an optimistic record-level default.</p></div><a href="{% url 'contracts:risk_log_list' %}" class="c-link text-xs font-medium">Risk register</a></div>
+        <div class="contract-surface-body">{% if open_findings %}<div class="contract-finding-list">{% for risk in open_findings %}<div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ risk.title }}</strong><span>{% if risk.assigned_to %}Assigned to {{ risk.assigned_to.get_full_name|default:risk.assigned_to.username }}{% else %}Unassigned{% endif %} · {{ risk.status|risk_status_label }}</span></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span></div>{% endfor %}</div>{% else %}<p class="contract-empty">No unresolved risk findings are recorded for this contract.</p>{% endif %}</div>
+      </section>
 
-          <div class="card-l2">
-            <div class="arch-section-label">Lifecycle tracker</div>
-            {% lifecycle_steps contract as lc_steps %}
-            <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ contract.get_lifecycle_stage_display }}">
-              {% for step in lc_steps %}
-              <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-                <span class="lc-dot" aria-hidden="true"></span>
-                <span class="lc-label">{{ step.label }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% if signature_routing_blockers %}
-            <div class="mt-4 pt-4 border-t border-[var(--border)]">
-              <div class="text-xs c-muted uppercase tracking-wide font-semibold">Blockers</div>
-              <ul class="mt-2 text-sm c-secondary list-disc pl-5 space-y-1">{% for blocker in signature_routing_blockers %}<li>{{ blocker }}</li>{% endfor %}</ul>
-            </div>
-            {% endif %}
-          </div>
-
-          {# Approvals #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Approvals</h2>
-              <a href="{% url 'contracts:approval_request_list' %}" class="text-xs c-link font-medium">View all</a>
-            </div>
-            {% if approval_requests %}
-            <div>
-              {% for approval in approval_requests %}
-              <div class="wf-row">
-                <div class="flex items-center gap-3 min-w-0">
-                  {% assignee_chip approval.assigned_to %}
-                  <span class="text-sm c-primary">{{ approval.approval_step|approval_step_label }}</span>
-                </div>
-                <span class="badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No approvals requested for this contract yet.</div>
-            {% endif %}
-
-            {% if can_submit_for_review %}
-            <form method="post" action="{% url 'contracts:contract_submit_for_review' contract.pk %}" class="mt-5 pt-5 border-t border-[var(--border)] space-y-3" id="contract-submit-review-form">
-              {% csrf_token %}
-              <label class="block text-sm font-medium c-primary" for="reviewer-id">Reviewer</label>
-              <select class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="reviewer-id" name="reviewer_id" required>
-                <option value="">Select an active workspace reviewer</option>
-                {% for reviewer in reviewer_choices %}<option value="{{ reviewer.pk }}">{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}
-              </select>
-              <label class="block text-sm font-medium c-primary" for="submit-comment">Submission note</label>
-              <textarea class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="submit-comment" name="comment" rows="2" placeholder="What should the reviewer focus on?"></textarea>
-              <button type="submit" class="btn-cta">Submit for review</button>
-            </form>
-            {% elif can_decide_approval and open_approval %}
-            <form method="post" action="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'approve' %}" class="mt-5 pt-5 border-t border-[var(--border)] space-y-3">
-              {% csrf_token %}
-              <label class="block text-sm font-medium c-primary" for="decision-comment">Decision comment</label>
-              <textarea class="input-base w-full rounded-lg border px-3 py-2 text-sm" id="decision-comment" name="comment" rows="3" required></textarea>
-              <div class="flex flex-wrap gap-2">
-                <button type="submit" class="btn-cta">Approve</button>
-                <button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'request-changes' %}" class="btn-soft-primary">Request changes</button>
-                <button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'reject' %}" class="btn-quiet">Reject</button>
-              </div>
-            </form>
-            {% endif %}
-          </div>
-
-          {# Signatures #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Signatures</h2>
-              <a href="{% url 'contracts:signature_request_list' %}" class="text-xs c-link font-medium">View all</a>
-            </div>
-            {% if signature_requests %}
-            <div>
-              {% for sig in signature_requests %}
-              <div class="wf-row">
-                <div class="min-w-0">
-                  <div class="text-sm c-primary">{{ sig.signer_name }}</div>
-                  <div class="text-xs c-muted">{{ sig.signer_role|default:sig.signer_email }}</div>
-                </div>
-                <span class="badge-sm {{ sig.status|signature_status_badge_class }}">{{ sig.get_status_display }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No signature requests for this contract yet.</div>
-            {% endif %}
-          </div>
-
-          {# Tasks #}
-          <div class="card-l1">
-            <div class="wf-section-head">
-              <h2 class="text-base font-700 c-primary">Tasks</h2>
-              <a href="{% url 'contracts:legal_task_kanban' %}" class="text-xs c-link font-medium">View all</a>
-            </div>
-            {% if contract_tasks %}
-            <div>
-              {% for task in contract_tasks %}
-              <div class="wf-row">
-                <div class="flex items-center gap-3 min-w-0">
-                  {% assignee_chip task.assigned_to %}
-                  <span class="text-sm c-primary truncate">{{ task.title }}</span>
-                </div>
-                <span class="badge-sm {{ task.status|task_status_badge_class }}">{{ task.get_status_display }}</span>
-              </div>
-              {% endfor %}
-            </div>
-            {% else %}
-            <div class="py-6 text-center text-sm c-muted">No tasks linked to this contract yet.</div>
-            {% endif %}
-          </div>
-
+      <section class="contract-surface" id="required-approvals" aria-labelledby="approvals-heading">
+        <div class="contract-surface-head"><div><h2 id="approvals-heading" class="contract-surface-title">Approval summary</h2><p class="contract-surface-kicker">Manage the contract-specific approval chain without changing the governed workflow.</p></div><a href="{{ approval_summary.create_url }}" class="c-link text-xs font-medium">Add approver</a></div>
+        <div class="contract-surface-body">
+          <div class="contract-approval-summary"><div><strong>{{ approval_summary.label }}</strong><span>Each approver is listed with the current status on the contract record.</span></div></div>
+          {% if approval_requests_all %}<div class="contract-approval-list">{% for approval in approval_requests_all %}<div class="contract-approval-row"><div class="contract-approval-copy"><strong>{{ forloop.counter }}. {{ approval.approval_step|approval_step_label }}</strong><span>{% if approval.assigned_to %}{{ approval.assigned_to.get_full_name|default:approval.assigned_to.username }}{% else %}Unassigned{% endif %}</span></div><div class="contract-approval-controls"><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ approval.status|approval_status_badge_class }}">{{ approval.get_status_display }}</span>{% if can_edit and approval_summary.can_edit_chain %}{% if not forloop.first %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="up"><button type="submit" class="dc-ds-button dc-ds-button--quiet btn-quiet">Move up</button></form>{% endif %}{% if not forloop.last %}<form method="post" action="{% url 'contracts:contract_approval_chain_reorder' contract.pk approval.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="down"><button type="submit" class="dc-ds-button dc-ds-button--quiet btn-quiet">Move down</button></form>{% endif %}{% endif %}</div></div>{% endfor %}</div>{% else %}<p class="contract-empty">No approvers have been added yet.</p>{% endif %}
+          {% if can_submit_for_review %}<form method="post" action="{% url 'contracts:contract_submit_for_review' contract.pk %}" class="contract-utility space-y-3" id="contract-submit-review-form">{% csrf_token %}<label class="block text-sm font-medium c-primary" for="reviewer-id">Reviewer</label><select class="dc-ds-control input-base w-full rounded-lg border px-3 py-2 text-sm" id="reviewer-id" name="reviewer_id" required><option value="">Select an active workspace reviewer</option>{% for reviewer in reviewer_choices %}<option value="{{ reviewer.pk }}">{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}</select><label class="block text-sm font-medium c-primary" for="submit-comment">Submission note</label><textarea class="dc-ds-control input-base w-full rounded-lg border px-3 py-2 text-sm" id="submit-comment" name="comment" rows="2" placeholder="What should the reviewer focus on?"></textarea><button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">Submit for review</button></form>{% elif can_decide_approval and open_approval %}<form method="post" action="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'approve' %}" class="contract-utility space-y-3">{% csrf_token %}<label class="block text-sm font-medium c-primary" for="decision-comment">Decision comment</label><textarea class="dc-ds-control input-base w-full rounded-lg border px-3 py-2 text-sm" id="decision-comment" name="comment" rows="3" required></textarea><div class="flex flex-wrap gap-2"><button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">Approve</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'request-changes' %}" class="dc-ds-button dc-ds-button--soft btn-soft-primary">Request changes</button><button type="submit" formaction="{% url 'contracts:contract_approval_decision' contract.pk open_approval.pk 'reject' %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Reject</button></div></form>{% endif %}
         </div>
-      </div>{# /tab-workflow #}
+      </section>
 
-      {# ── ACTIVITY ─────────────────────────────────────────── #}
-      <div id="tab-activity" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="wf-section-head">
-            <h2 class="text-base font-700 c-primary">Activity</h2>
-            <a href="{% url 'contracts:audit_log_list' %}" class="text-xs c-link font-medium">View full audit trail</a>
-          </div>
-          {% if activity_entries %}
-          <div>
-            {% for entry in activity_entries %}
-            {% activity_line entry %}
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="py-6 text-center text-sm c-muted">No recent activity recorded for this contract.</div>
-          {% endif %}
-        </div>
-      </div>{# /tab-activity #}
+      <section class="contract-surface" id="document-versions" aria-labelledby="documents-heading">
+        <div class="contract-surface-head"><div><h2 id="documents-heading" class="contract-surface-title">Documents &amp; versions</h2><p class="contract-surface-kicker">The source agreement is the operating record for this contract.</p></div>{% if can_edit %}<button type="button" class="dc-ds-button dc-ds-button--quiet btn-quiet text-xs" data-open-attach-dialog>Attach document</button>{% endif %}</div>
+        <div class="contract-surface-body">{% if primary_document %}<article class="contract-document-hero"><div><a href="{% url 'contracts:document_detail' primary_document.pk %}" class="contract-document-name">{{ primary_document.title }}</a><div class="contract-document-meta"><span>{{ primary_document.get_document_type_display }}</span><span>Version {{ primary_document.version }}</span><span>Source of truth</span><span>{{ contract_command.review_label }}</span>{% if primary_document.share_with_counterparty %}<span>Shared with counterparty</span>{% endif %}<span>Updated {{ primary_document.updated_at|date:"M d, Y" }}</span><span>{% if primary_document.uploaded_by %}Uploaded by {{ primary_document.uploaded_by.get_full_name|default:primary_document.uploaded_by.username }}{% else %}Uploader unavailable{% endif %}</span></div></div><div class="contract-document-actions"><a href="{% url 'contracts:document_detail' primary_document.pk %}" class="dc-ds-button dc-ds-button--quiet btn-quiet">Open document</a>{% if documents|length > 1 %}<a href="#document-versions" class="dc-ds-button dc-ds-button--quiet btn-quiet">Compare versions</a>{% endif %}</div></article>{% for doc in documents %}{% if doc.pk != primary_document.pk %}<div class="contract-document-version"><div><a href="{% url 'contracts:document_detail' doc.pk %}" class="contract-document-name">{{ doc.title }}</a><div class="contract-document-meta"><span>Version {{ doc.version }}</span><span>{{ doc.get_status_display }}</span>{% if doc.share_with_counterparty %}<span>Shared with counterparty</span>{% endif %}<span>{{ doc.updated_at|date:"M d, Y" }}</span></div></div><a href="{% url 'contracts:document_detail' doc.pk %}" class="c-link text-xs">Open</a></div>{% endif %}{% endfor %}{% else %}<p class="contract-empty">No document is attached.{% if can_edit %} <button type="button" class="c-link" data-open-attach-dialog>Attach the source document</button>.{% endif %}</p>{% endif %}</div>
+      </section>
 
-      {% if contract_risks %}
-      {# ── COMPLIANCE ───────────────────────────────────────── #}
-      <div id="tab-compliance" class="arch-tab-panel" role="tabpanel">
-        <div class="card-l1">
-          <div class="wf-section-head">
-            <h2 class="text-base font-700 c-primary">Risks</h2>
-            <a href="{% url 'contracts:risk_log_list' %}" class="text-xs c-link font-medium">View risk register</a>
-          </div>
-          <div>
-            {% for risk in contract_risks %}
-            <div class="wf-row">
-              <div class="flex items-center gap-3 min-w-0">
-                {% assignee_chip risk.assigned_to %}
-                <span class="text-sm c-primary truncate">{{ risk.title }}</span>
-              </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <span class="badge-sm {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-yellow{% elif risk.risk_level == 'MEDIUM' %}badge-blue{% else %}badge-green{% endif %}">{{ risk.get_risk_level_display }}</span>
-                <span class="badge-sm {{ risk.status|risk_status_badge_class }}">{{ risk.status|risk_status_label }}</span>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>{# /tab-compliance #}
-      {% endif %}
+      <section class="contract-surface" aria-labelledby="counterparty-collaboration-heading">
+        <div class="contract-surface-head"><div><h2 id="counterparty-collaboration-heading" class="contract-surface-title">Counterparty collaboration</h2><p class="contract-surface-kicker">A secure, contract-scoped space for external comments, revisions, and tasks.</p></div>{% if counterparty_collaboration.can_manage %}<button type="button" class="c-link text-xs font-medium" data-open-collaboration-dialog>Invite counterparty</button>{% endif %}</div>
+        <div class="contract-surface-body"><div class="contract-collaboration-summary"><div><strong>{{ counterparty_collaboration.active_count }} active collaborator{{ counterparty_collaboration.active_count|pluralize }}</strong><span>{{ counterparty_collaboration.shared_document_count }} document{{ counterparty_collaboration.shared_document_count|pluralize }} explicitly shared. Invitations are email-confirmed, expiring, and revocable.</span></div></div>
+        {% for participant in counterparty_collaboration.participants %}<div class="contract-approval-row"><div class="contract-approval-copy"><strong>{{ participant.name|default:participant.email }}</strong><span>{{ participant.email }} · expires {% if participant.expires_at %}{{ participant.expires_at|date:"M d, Y" }}{% else %}—{% endif %}</span><div class="contract-collaboration-permissions">{% if participant.can_view_documents %}<span>Documents</span>{% endif %}{% if participant.can_comment %}<span>Comments</span>{% endif %}{% if participant.can_upload_revisions %}<span>Revision uploads</span>{% endif %}</div></div><div class="contract-approval-controls"><span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if participant.status == 'ACTIVE' %}badge-green{% elif participant.status == 'PENDING' %}badge-yellow{% else %}badge-gray{% endif %}">{{ participant.get_status_display }}</span>{% if counterparty_collaboration.can_manage and participant.status != 'REVOKED' %}<form method="post" action="{% url 'contracts:counterparty_collaboration_revoke' contract.pk participant.pk %}">{% csrf_token %}<button type="submit" class="dc-ds-button dc-ds-button--quiet btn-quiet">Revoke</button></form>{% endif %}</div></div>{% empty %}<p class="contract-empty">No counterparty collaborators have been invited. Internal notes and approvals remain private.</p>{% endfor %}
+        {% if counterparty_collaboration.items %}<div class="contract-utility"><strong class="text-sm c-primary">Shared work</strong>{% for item in counterparty_collaboration.items %}<div class="contract-approval-row"><div class="contract-approval-copy"><strong>{{ item.title|default:item.get_kind_display }}</strong><span>{% if item.content %}{{ item.content|truncatechars:120 }} · {% endif %}{{ item.created_at|timesince }} ago</span></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if item.status == 'COMPLETED' %}badge-green{% else %}badge-gray{% endif %}">{{ item.get_status_display }}</span></div>{% endfor %}</div>{% endif %}
+        {% if counterparty_collaboration.can_manage %}<form method="post" action="{% url 'contracts:counterparty_collaboration_create_item' contract.pk %}" class="contract-utility space-y-2">{% csrf_token %}<input type="hidden" name="kind" value="TASK"><label class="block text-sm font-medium c-primary" for="counterparty-task-title">Create a shared task</label><input class="input-base w-full" id="counterparty-task-title" name="title" maxlength="200" required placeholder="e.g. Confirm data-processing contacts"><textarea class="input-base w-full" name="content" rows="2" maxlength="10000" placeholder="Optional context for the counterparty"></textarea><button type="submit" class="dc-ds-button dc-ds-button--quiet btn-quiet">Add task</button></form>{% endif %}</div>
+      </section>
 
-    </div>{# /main content #}
-
-    {# ── Context rail ─────────────────────────────────────────── #}
-    <div class="arch-context-rail">
-
-      {# Deadlines — genuinely dynamic, not shown in the header #}
-      {% if deadlines %}
-      <div class="card-l2">
-        <div class="arch-section-label">Deadlines</div>
-        <div class="detail-stack">
-          {% for dl in deadlines %}
-          <div class="deadline-item">
-            <div class="flex items-start justify-between gap-3">
-              <span class="detail-label font-medium">{{ dl.title }}</span>
-              <span class="badge-sm {% if dl.is_overdue %}badge-red{% elif dl.days_remaining <= 7 %}badge-yellow{% else %}badge-blue{% endif %}">{% if dl.is_overdue %}Overdue{% else %}{{ dl.days_remaining }}d{% endif %}</span>
-            </div>
-            <div class="text-xs c-muted mt-1">Due {{ dl.due_date|date:"M d, Y" }} · {{ dl.get_deadline_type_display }}</div>
-            <div class="text-xs c-muted mt-1">Owner: {% if dl.assigned_to %}{{ dl.assigned_to.get_full_name|default:dl.assigned_to.username }}{% else %}Unassigned{% endif %}{% if dl.contract %} · {{ dl.contract.title }}{% endif %}</div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-      {# Related matter #}
-      {% if related_case_matter %}
-      <div class="card-l2">
-        <div class="arch-section-label">Related matter</div>
-        <a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="text-sm c-link font-medium hover:underline">{{ related_case_matter.title }}</a>
-      </div>
-      {% endif %}
-
-      {# Quick links — secondary navigation not already covered by the action bar or tabs #}
-      <div class="card-l2">
-        <div class="arch-section-label">Quick links</div>
-        <div class="detail-stack">
-          <a href="{% url 'contracts:risk_log_list' %}" class="text-sm c-link font-medium">Risk register</a>
-          <a href="{% url 'contracts:deadline_create' %}?contract={{ contract.pk }}" class="text-sm c-link font-medium">Add deadline or obligation</a>
-          {% if dpa_review_pack %}
-          <a href="{% url 'contracts:dpa_review_pack_detail' dpa_review_pack.pk %}" class="text-sm c-link font-medium">Open DPA review</a>
-          {% elif can_edit %}
-          <a href="{% url 'contracts:contract_update' contract.pk %}" class="text-sm c-link font-medium">Enable DPA review</a>
-          {% endif %}
-        </div>
-      </div>
-
-    </div>{# /arch-context-rail #}
-
-  </div>{# /arch-detail-grid #}
-</div>{# /page-wrap #}
-
-{% if can_comment %}
-<dialog class="contract-note-dialog" id="contract-note-dialog" aria-labelledby="contract-note-dialog-title">
-  <div class="contract-note-dialog__head">
-    <div>
-      <h2 class="contract-note-dialog__title" id="contract-note-dialog-title">Add negotiation note</h2>
-      <p class="contract-note-dialog__copy">Capture the decision, context, or a teammate mention without leaving this contract.</p>
+      <section class="contract-surface" aria-labelledby="activity-heading">
+        <div class="contract-surface-head"><div><h2 id="activity-heading" class="contract-surface-title">Internal activity</h2><p class="contract-surface-kicker">Audit trail events and internal notes, ordered newest first.</p></div><div class="flex gap-3"><a href="{% url 'contracts:audit_log_list' %}" class="c-link text-xs font-medium">Audit trail</a>{% if can_comment %}<button type="button" class="c-link text-xs font-medium" data-open-note-dialog>Add note</button>{% endif %}</div></div>
+        <div class="contract-surface-body">{% if contract_activity_feed %}<div class="contract-activity-feed">{% for item in contract_activity_feed %}<div class="contract-activity-feed-row"><div class="contract-activity-feed-main"><div class="contract-activity-feed-head"><span class="contract-activity-feed-avatar" aria-hidden="true">{{ item.actor_initial }}</span><div class="contract-activity-feed-copy"><div class="contract-activity-feed-title"><strong>{{ item.title }}</strong><span class="contract-activity-feed-kind">{{ item.badge_label }}</span></div><div class="contract-activity-feed-meta">{{ item.actor_name }} · {{ item.timestamp|timesince }} ago</div></div></div><p class="contract-activity-feed-text">{{ item.detail|truncatechars:180 }}</p></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ item.badge_class }} contract-activity-feed-badge">{{ item.badge_label }}</span></div>{% endfor %}</div>{% else %}<p class="contract-empty">No internal activity recorded for this contract.</p>{% endif %}</div>
+      </section>
     </div>
-    <button type="button" class="contract-note-dialog__close" data-close-note-dialog aria-label="Close note form">×</button>
+
+    <aside class="contract-rail" aria-label="Contract reference details">
+      <section class="contract-surface"><div class="contract-detail-section"><h2>Workflow checklist</h2><div class="contract-checklist">{% for item in workflow_checklist %}<div class="contract-checklist-row"><div class="contract-checklist-copy"><strong>{{ item.label }}</strong><span>{{ item.detail }}</span></div><span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ item.badge_class }}">{{ item.status }}</span></div>{% endfor %}</div></div><div class="contract-detail-section"><h2>Contract details</h2><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Type</dt><dd>{{ contract.get_contract_type_display }}</dd></div><div class="contract-detail-row"><dt>Version</dt><dd>{% if primary_document %}{{ primary_document.version }}{% else %}—{% endif %}</dd></div><div class="contract-detail-row"><dt>Lifecycle</dt><dd>{{ contract.get_lifecycle_stage_display }}</dd></div><div class="contract-detail-row"><dt>Status</dt><dd>{{ contract.get_status_display }}</dd></div></dl></div><div class="contract-detail-section"><h2>Parties</h2><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Counterparty</dt><dd>{{ contract.counterparty|default:"Not set" }}</dd></div><div class="contract-detail-row"><dt>Client</dt><dd>{% if contract.client %}{{ contract.client.name }}{% else %}—{% endif %}</dd></div><div class="contract-detail-row"><dt>Business unit</dt><dd>{{ contract.business_unit|default:"—" }}</dd></div></dl></div><div class="contract-detail-section"><h2>Important dates</h2><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Start</dt><dd>{% if contract.start_date %}{{ contract.start_date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div><div class="contract-detail-row"><dt>Expiry</dt><dd>{% if contract.end_date %}{{ contract.end_date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div><div class="contract-detail-row"><dt>Renewal</dt><dd>{% if contract.renewal_date %}{{ contract.renewal_date|date:"M d, Y" }}{% else %}—{% endif %}</dd></div></dl></div><div class="contract-detail-section"><h2>Commercial terms</h2><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Value</dt><dd>{% if contract.value %}{{ contract.value|money:contract.currency }}{% else %}—{% endif %}</dd></div><div class="contract-detail-row"><dt>Paper source</dt><dd>{{ contract.get_paper_source_display|default:"—" }}</dd></div><div class="contract-detail-row"><dt>Governing law</dt><dd>{{ contract.governing_law|default:"—" }}</dd></div><div class="contract-detail-row"><dt>Auto-renew</dt><dd>{% if contract.auto_renew %}Yes{% else %}No{% endif %}</dd></div></dl></div></section>
+      <section class="contract-surface"><div class="contract-detail-section"><h2>Playbook usage</h2>{% if playbook_usage_summary.has_data %}<p class="contract-empty">{{ playbook_usage_summary.summary }}</p><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Approved clauses used</dt><dd>{{ playbook_usage_summary.unique_clause_count }}</dd></div><div class="contract-detail-row"><dt>Usage events</dt><dd>{{ playbook_usage_summary.event_count }}</dd></div>{% for item in playbook_usage_summary.top_clauses %}<div class="contract-detail-row"><dt>{{ item.title }}</dt><dd>{{ item.count }} use{{ item.count|pluralize }}</dd></div>{% endfor %}</dl>{% else %}<p class="contract-empty">No approved clauses were marked as used on this contract.</p>{% endif %}</div></section>
+      <section class="contract-surface"><div class="contract-detail-section"><h2>Contract team</h2><dl class="contract-detail-list"><div class="contract-detail-row"><dt>Owner</dt><dd>{% if owner %}{{ owner.get_full_name|default:owner.username }}{% else %}Unassigned{% endif %}</dd></div><div class="contract-detail-row"><dt>Created by</dt><dd>{% if contract.created_by %}{{ contract.created_by.get_full_name|default:contract.created_by.username }}{% else %}System{% endif %}</dd></div></dl></div><div class="contract-detail-section"><h2>Related records</h2><div class="contract-detail-list">{% if related_case_matter %}<a href="{% url 'contracts:matter_detail' related_case_matter.pk %}" class="c-link text-sm font-medium">{{ related_case_matter.title }}</a>{% endif %}{% if contract.parent_contract %}<a href="{% url 'contracts:contract_detail' contract.parent_contract.pk %}" class="c-link text-sm font-medium">Governing agreement: {{ contract.parent_contract.title }} · {{ contract.parent_contract.get_contract_type_display }}</a>{% endif %}{% for linked_contract in contract.linked_contracts.all %}<a href="{% url 'contracts:contract_detail' linked_contract.pk %}" class="c-link text-sm font-medium">{{ linked_contract.title }} · {{ linked_contract.get_contract_type_display }}</a>{% empty %}{% if not related_case_matter and not contract.parent_contract %}<span class="text-xs c-muted">No related records.</span>{% endif %}{% endfor %}</div></div></section>
+      {% if deadlines or signature_requests or contract_tasks %}<section class="contract-surface"><div class="contract-detail-section"><h2>Operational follow-up</h2><div class="contract-detail-list">{% for dl in deadlines %}<div class="contract-detail-row"><dt>{{ dl.title }}</dt><dd>Due {{ dl.due_date|date:"M d" }}</dd></div>{% endfor %}{% for task in contract_tasks|slice:":3" %}<div class="contract-detail-row"><dt>{{ task.title }}</dt><dd>{{ task.get_status_display }}</dd></div>{% endfor %}{% for sig in signature_requests|slice:":2" %}<div class="contract-detail-row"><dt>{{ sig.signer_name }}</dt><dd>{{ sig.get_status_display }}</dd></div>{% endfor %}</div></div></section>{% endif %}
+    </aside>
   </div>
-  <form method="post" action="{% url 'contracts:add_negotiation_note' contract.pk %}" class="contract-note-dialog__form">
+</main>
+
+{% if can_comment %}<dialog class="contract-note-dialog" id="contract-note-dialog" aria-labelledby="contract-note-dialog-title"><div class="contract-note-dialog__head"><div><h2 class="contract-note-dialog__title" id="contract-note-dialog-title">Add negotiation note</h2><p class="contract-note-dialog__copy">Capture the decision, context, or a teammate mention without leaving this contract.</p></div><button type="button" class="contract-note-dialog__close" data-close-note-dialog aria-label="Close note form">×</button></div><form method="post" action="{% url 'contracts:add_negotiation_note' contract.pk %}" class="contract-note-dialog__form">{% csrf_token %}<div><label for="negotiation-note-title" class="form-label">Title</label><input id="negotiation-note-title" name="title" type="text" class="dc-ds-control input-base w-full" maxlength="200" required></div><div><label for="negotiation-note-content" class="form-label">Note</label><textarea id="negotiation-note-content" name="content" class="dc-ds-control dc-ds-control--textarea input-base w-full" rows="5" required placeholder="Add context, a decision, or mention a teammate with @username"></textarea></div><div class="contract-note-dialog__actions"><button type="button" class="dc-ds-button dc-ds-button--quiet btn-quiet" data-close-note-dialog>Cancel</button><button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">Save note</button></div></form></dialog>{% endif %}
+
+{% if counterparty_collaboration.can_manage %}<dialog class="contract-note-dialog" id="counterparty-collaboration-dialog" aria-labelledby="counterparty-collaboration-dialog-title"><div class="contract-note-dialog__head"><div><h2 class="contract-note-dialog__title" id="counterparty-collaboration-dialog-title">Invite counterparty collaborator</h2><p class="contract-note-dialog__copy">Access is limited to this contract, expires in 14 days, and can be revoked at any time.</p></div><button type="button" class="contract-note-dialog__close" data-close-collaboration-dialog aria-label="Close invitation form">×</button></div><form method="post" action="{% url 'contracts:counterparty_collaboration_invite' contract.pk %}" class="contract-note-dialog__form">{% csrf_token %}<div><label for="counterparty-collaboration-name" class="form-label">Name <span class="c-muted">(optional)</span></label><input id="counterparty-collaboration-name" name="name" type="text" class="input-base w-full" maxlength="200"></div><div><label for="counterparty-collaboration-email" class="form-label">Email</label><input id="counterparty-collaboration-email" name="email" type="email" class="input-base w-full" maxlength="254" required></div><fieldset class="space-y-2"><legend class="form-label">Allow this collaborator to</legend><label class="flex items-center gap-2 text-sm c-secondary"><input type="checkbox" class="form-check-input" name="can_view_documents" checked> View documents explicitly shared with the counterparty</label><label class="flex items-center gap-2 text-sm c-secondary"><input type="checkbox" class="form-check-input" name="can_comment" checked> Post comments and complete shared tasks</label><label class="flex items-center gap-2 text-sm c-secondary"><input type="checkbox" class="form-check-input" name="can_upload_revisions"> Upload revised documents for internal review</label></fieldset><div class="contract-note-dialog__actions"><button type="button" class="dc-ds-button dc-ds-button--quiet btn-quiet" data-close-collaboration-dialog>Cancel</button><button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">Send invitation</button></div></form></dialog>{% endif %}
+
+{% if can_edit %}
+<dialog class="contract-attach-dialog" id="contract-attach-dialog" aria-labelledby="contract-attach-dialog-title">
+  <div class="contract-attach-dialog__head">
+    <div><h2 id="contract-attach-dialog-title">Attach document</h2><p>Add a version to this contract without leaving the workspace.</p></div>
+    <button type="button" class="contract-note-dialog__close" data-close-attach-dialog aria-label="Close attach document dialog">×</button>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="contract-attach-dialog__form" id="contract-attach-form">
     {% csrf_token %}
-    <div>
-      <label for="negotiation-note-title" class="form-label">Title</label>
-      <input id="negotiation-note-title" name="title" type="text" class="input-base w-full" maxlength="200" required>
+    {{ attach_document_form.status.as_hidden }}
+    {{ attach_document_form.tags.as_hidden }}
+    {% if attach_document_form.non_field_errors %}<p class="contract-attach-dialog__error" role="alert">{{ attach_document_form.non_field_errors.0 }}</p>{% endif %}
+    <label class="contract-attach-dialog__file" for="{{ attach_document_form.file.id_for_label }}"><strong>Choose a document</strong><span>PDF, DOCX, TXT, MD, CSV, HTML, XML or JSON · up to 50 MB</span>{{ attach_document_form.file }}</label>
+    {% if attach_document_form.file.errors %}<p class="contract-attach-dialog__error" role="alert">{{ attach_document_form.file.errors.0 }}</p>{% endif %}
+    <div class="contract-attach-dialog__fields">
+      <div class="contract-attach-dialog__field"><label for="{{ attach_document_form.title.id_for_label }}">Document title</label>{{ attach_document_form.title }}{% if attach_document_form.title.errors %}<p class="contract-attach-dialog__error" role="alert">{{ attach_document_form.title.errors.0 }}</p>{% endif %}</div>
+      <div class="contract-attach-dialog__field"><label for="{{ attach_document_form.document_type.id_for_label }}">Document type</label>{{ attach_document_form.document_type }}{% if attach_document_form.document_type.errors %}<p class="contract-attach-dialog__error" role="alert">{{ attach_document_form.document_type.errors.0 }}</p>{% endif %}</div>
+      <div class="contract-attach-dialog__field contract-attach-dialog__field--wide"><label for="{{ attach_document_form.description.id_for_label }}">Description <span class="c-muted">(optional)</span></label>{{ attach_document_form.description }}{% if attach_document_form.description.errors %}<p class="contract-attach-dialog__error" role="alert">{{ attach_document_form.description.errors.0 }}</p>{% endif %}</div>
     </div>
-    <div>
-      <label for="negotiation-note-content" class="form-label">Note</label>
-      <textarea id="negotiation-note-content" name="content" class="input-base w-full" rows="5" required placeholder="Add context, a decision, or mention a teammate with @username"></textarea>
-    </div>
-    <div class="contract-note-dialog__actions">
-      <button type="button" class="btn-quiet" data-close-note-dialog>Cancel</button>
-      <button type="submit" class="btn-cta">Save note</button>
-    </div>
+    <div class="contract-attach-dialog__toggles"><label>{{ attach_document_form.is_privileged }} Privileged</label><label>{{ attach_document_form.is_confidential }} Confidential</label><label>{{ attach_document_form.share_with_counterparty }} Share with counterparty collaborators</label></div>
+    <div class="contract-attach-dialog__actions"><button type="button" class="dc-ds-button dc-ds-button--quiet btn-quiet" data-close-attach-dialog>Cancel</button><button type="submit" class="dc-ds-button dc-ds-button--primary btn-cta">Attach document</button></div>
   </form>
 </dialog>
 {% endif %}
 
-{# ── Tab switcher JS ──────────────────────────────────────── #}
-<script nonce="{{ csp_nonce }}">
-(function () {
-    const tabs   = document.querySelectorAll('.arch-tab[data-tab]');
-    const panels = document.querySelectorAll('.arch-tab-panel');
-
-    function activateTab(key) {
-        tabs.forEach(t   => { t.classList.toggle('tab-active', t.dataset.tab === key); t.setAttribute('aria-selected', t.dataset.tab === key ? 'true' : 'false'); });
-        panels.forEach(p => p.classList.toggle('panel-active', p.id === 'tab-' + key));
-    }
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => activateTab(tab.dataset.tab));
-    });
-
-    const requestedTab = new URLSearchParams(window.location.search).get('tab');
-    if (requestedTab && document.querySelector(`.arch-tab[data-tab="${requestedTab}"]`)) {
-        activateTab(requestedTab);
-    }
-
-    document.querySelectorAll('[data-open-workflow]').forEach((button) => {
-        button.addEventListener('click', () => {
-            activateTab('workflow');
-            document.getElementById('contract-submit-review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-    });
-
-    const runCheckBtn = document.getElementById('run-grounded-check');
-    const reviewDetails = document.getElementById('contract-field-review');
-    if (runCheckBtn && reviewDetails) {
-        runCheckBtn.addEventListener('click', () => {
-            activateTab('overview');
-            reviewDetails.open = true;
-            reviewDetails.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-    }
-
-    const noteDialog = document.getElementById('contract-note-dialog');
-    if (noteDialog) {
-        document.querySelectorAll('[data-open-note-dialog]').forEach((button) => {
-            button.addEventListener('click', () => {
-                noteDialog.showModal();
-                noteDialog.querySelector('#negotiation-note-title')?.focus();
-            });
-        });
-        noteDialog.querySelectorAll('[data-close-note-dialog]').forEach((button) => {
-            button.addEventListener('click', () => noteDialog.close());
-        });
-    }
-})();
-</script>
-
-{# ── Governed AI clause extraction/review JS ─────────────── #}
 <script nonce="{{ csp_nonce }}">
 (() => {
-    const root = document.getElementById('ai-clause-review');
-    if (!root) return;
-    const status = root.querySelector('[data-ai-extract-status]');
-    const error = root.querySelector('[data-ai-extract-error]');
-    const csrf = '{{ csrf_token }}';
-
-    async function readJson(response) {
-        try { return await response.json(); } catch (_) { return {}; }
-    }
-
-    root.querySelectorAll('[data-ai-extract]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            root.querySelectorAll('[data-ai-extract]').forEach((item) => { item.disabled = true; });
-            error.classList.add('hidden');
-            status.textContent = 'Extracting cited clauses from readable document text…';
-            try {
-                const response = await fetch(root.dataset.extractUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                    body: '{}',
-                });
-                const data = await readJson(response);
-                if (!response.ok) throw new Error(data.error || 'Clause extraction could not be completed.');
-                status.textContent = `${data.created || 0} clause citation${data.created === 1 ? '' : 's'} extracted. Refreshing review…`;
-                const url = new URL(window.location.href);
-                url.searchParams.set('tab', 'documents');
-                window.location.assign(url.toString());
-            } catch (requestError) {
-                error.textContent = requestError.message;
-                error.classList.remove('hidden');
-                status.textContent = '';
-                root.querySelectorAll('[data-ai-extract]').forEach((item) => { item.disabled = false; });
-            }
-        });
-    });
-
-    root.querySelectorAll('[data-review-status]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            const article = button.closest('[data-ai-span]');
-            if (!article) return;
-            const spanId = article.dataset.aiSpan;
-            const endpoint = root.dataset.reviewUrlTemplate.replace('/0/review/', `/${spanId}/review/`);
-            article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = true; });
-            error.classList.add('hidden');
-            status.textContent = 'Saving human review…';
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                    body: JSON.stringify({ status: button.dataset.reviewStatus }),
-                });
-                const data = await readJson(response);
-                if (!response.ok) throw new Error(data.error || 'The review decision could not be saved.');
-                const badge = article.querySelector('[data-review-badge]');
-                if (badge) {
-                    badge.textContent = data.review_status === 'CONFIRMED' ? 'Confirmed' : 'Dismissed';
-                    badge.className = data.review_status === 'CONFIRMED' ? 'badge-sm badge-green' : 'badge-sm badge-gray';
-                    badge.setAttribute('data-review-badge', '');
-                }
-                status.textContent = `Review saved by ${data.reviewed_by}.`;
-                article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = false; });
-            } catch (requestError) {
-                error.textContent = requestError.message;
-                error.classList.remove('hidden');
-                status.textContent = '';
-                article.querySelectorAll('[data-review-status]').forEach((item) => { item.disabled = false; });
-            }
-        });
-    });
+  const runCheck = document.getElementById('run-grounded-check');
+  const reviewDetails = document.getElementById('contract-field-review');
+  if (runCheck && reviewDetails) runCheck.addEventListener('click', () => { reviewDetails.open = true; reviewDetails.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  const noteDialog = document.getElementById('contract-note-dialog');
+  if (noteDialog) { document.querySelectorAll('[data-open-note-dialog]').forEach((button) => button.addEventListener('click', () => { noteDialog.showModal(); noteDialog.querySelector('#negotiation-note-title')?.focus(); })); noteDialog.querySelectorAll('[data-close-note-dialog]').forEach((button) => button.addEventListener('click', () => noteDialog.close())); }
+  const collaborationDialog = document.getElementById('counterparty-collaboration-dialog');
+  if (collaborationDialog) { document.querySelectorAll('[data-open-collaboration-dialog]').forEach((button) => button.addEventListener('click', () => { collaborationDialog.showModal(); collaborationDialog.querySelector('#counterparty-collaboration-email')?.focus(); })); collaborationDialog.querySelectorAll('[data-close-collaboration-dialog]').forEach((button) => button.addEventListener('click', () => collaborationDialog.close())); }
+  const attachDialog = document.getElementById('contract-attach-dialog');
+  if (attachDialog) {
+    const attachForm = document.getElementById('contract-attach-form');
+    const fileInput = attachForm?.querySelector('input[type="file"]');
+    const titleInput = attachForm?.querySelector('#{{ attach_document_form.title.id_for_label }}');
+    const openAttachDialog = () => { attachDialog.showModal(); fileInput?.focus(); };
+    document.querySelectorAll('[data-open-attach-dialog]').forEach((button) => button.addEventListener('click', openAttachDialog));
+    attachDialog.querySelectorAll('[data-close-attach-dialog]').forEach((button) => button.addEventListener('click', () => attachDialog.close()));
+    fileInput?.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file && titleInput && !titleInput.value.trim()) titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '); });
+    {% if attach_document_dialog_open %}openAttachDialog();{% endif %}
+  }
 })();
 </script>
-
-{# ── Contract field review JS ────────────────────────────── #}
 <script nonce="{{ csp_nonce }}">
 (() => {
-    const promptField = document.getElementById('ai-assistant-prompt');
-    const submit = document.getElementById('ai-assistant-submit');
-    const status = document.getElementById('ai-assistant-status');
-    const errorBox = document.getElementById('ai-assistant-error');
-    const output = document.getElementById('ai-assistant-output');
-    if (!promptField || !submit || !status || !errorBox || !output) return;
-
-    let inFlight = false;
-
-    function clearNode(node) {
-        while (node.firstChild) node.removeChild(node.firstChild);
-    }
-
-    function section(labelText) {
-        const wrap = document.createElement('div');
-        const label = document.createElement('div');
-        label.className = 'arch-section-label';
-        label.textContent = labelText;
-        wrap.appendChild(label);
-        return wrap;
-    }
-
-    function bulletList(items) {
-        const list = document.createElement('ul');
-        list.className = 'space-y-1 text-sm c-muted list-disc pl-4 mt-1';
-        items.forEach((item) => {
-            const li = document.createElement('li');
-            li.textContent = item;
-            list.appendChild(li);
-        });
-        return list;
-    }
-
-    function renderResult(result) {
-        clearNode(output);
-
-        const summary = result.summary || {};
-        const summaryWrap = section('Summary');
-        const summaryLine = document.createElement('p');
-        summaryLine.className = 'text-sm c-primary font-medium';
-        const summaryParts = [summary.contract_type, summary.status, summary.counterparty].filter(Boolean);
-        summaryLine.textContent = summaryParts.length ? summaryParts.join(' · ') : 'No summary available.';
-        summaryWrap.appendChild(summaryLine);
-        output.appendChild(summaryWrap);
-
-        if (Array.isArray(result.timeline) && result.timeline.length) {
-            const wrap = section('Key dates');
-            wrap.appendChild(bulletList(result.timeline));
-            output.appendChild(wrap);
-        }
-
-        if (Array.isArray(result.risks) && result.risks.length) {
-            const wrap = section('Risks');
-            wrap.appendChild(bulletList(result.risks));
-            output.appendChild(wrap);
-        }
-
-        if (Array.isArray(result.recommendations) && result.recommendations.length) {
-            const wrap = section('Recommendations');
-            wrap.appendChild(bulletList(result.recommendations));
-            output.appendChild(wrap);
-        }
-
-        if (Array.isArray(result.citations) && result.citations.length) {
-            const wrap = section('Evidence (fields checked)');
-            const list = bulletList(
-                result.citations
-                    .filter((c) => c && c.field)
-                    .map((c) => `${c.field}: ${c.value === null || c.value === undefined || c.value === '' ? '—' : c.value}`)
-            );
-            list.className += ' font-mono';
-            wrap.appendChild(list);
-            output.appendChild(wrap);
-        }
-
-        output.classList.remove('hidden');
-    }
-
-    submit.addEventListener('click', async () => {
-        if (inFlight) return;
-        inFlight = true;
-        status.textContent = 'Reviewing…';
-        errorBox.classList.add('hidden');
-        errorBox.textContent = '';
-        output.classList.add('hidden');
-        submit.disabled = true;
-        try {
-            const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ prompt: promptField.value })
-            });
-            const data = await response.json().catch(() => null);
-            if (!response.ok || !data || data.ok === false) {
-                const message = (data && data.error) || 'Unable to run the review right now.';
-                errorBox.textContent = message;
-                errorBox.classList.remove('hidden');
-                status.textContent = '';
-                return;
-            }
-            renderResult(data.response || {});
-            status.textContent = 'Done';
-        } catch (err) {
-            errorBox.textContent = 'Unable to reach the review service. Check your connection and try again.';
-            errorBox.classList.remove('hidden');
-            status.textContent = '';
-        } finally {
-            submit.disabled = false;
-            inFlight = false;
-        }
-    });
+  const promptField = document.getElementById('ai-assistant-prompt'); const submit = document.getElementById('ai-assistant-submit'); const status = document.getElementById('ai-assistant-status'); const errorBox = document.getElementById('ai-assistant-error'); const output = document.getElementById('ai-assistant-output');
+  if (!promptField || !submit || !status || !errorBox || !output) return;
+  submit.addEventListener('click', async () => { status.textContent = 'Reviewing…'; errorBox.classList.add('hidden'); submit.disabled = true; try { const response = await fetch("{% url 'contracts:contract_ai_assistant' contract.pk %}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, body: JSON.stringify({ prompt: promptField.value }) }); const data = await response.json().catch(() => null); if (!response.ok || !data || data.ok === false) throw new Error((data && data.error) || 'Unable to run the review right now.'); const result = data.response || {}; output.textContent = [result.summary && result.summary.status, result.summary && result.summary.counterparty, ...(result.recommendations || [])].filter(Boolean).join(' · ') || 'No additional recommendations returned.'; output.classList.remove('hidden'); status.textContent = 'Done'; } catch (error) { errorBox.textContent = error.message; errorBox.classList.remove('hidden'); status.textContent = ''; } finally { submit.disabled = false; } });
 })();
 </script>
 {% endblock %}

@@ -19,7 +19,12 @@ from contracts.services.queue_rows import (
     assignee_map_for_contracts,
     latest_activity_map,
 )
-from contracts.templatetags.clmone_format import lifecycle_steps, money, status_badge_class as status_badge_class_for
+from contracts.templatetags.clmone_format import (
+    contract_status_badge_tone,
+    lifecycle_stage_badge_tone,
+    lifecycle_steps,
+    money,
+)
 
 
 class BulkUpdateValidationError(Exception):
@@ -68,7 +73,8 @@ class DjangoRepositoryService:
             if (contract.owner or contract.created_by) else 'Unassigned',
             updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
             created_at=contract.created_at.isoformat() if contract.created_at else None,
-            status_badge_class=status_badge_class_for(contract.status),
+            status_badge_tone=contract_status_badge_tone(contract.status),
+            stage_badge_tone=lifecycle_stage_badge_tone(contract.lifecycle_stage),
             stage_steps=lifecycle_steps(contract),
             assignee_name=assignee_name,
             assignee_initial=assignee_initial,

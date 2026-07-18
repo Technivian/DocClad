@@ -1,17 +1,11 @@
 {% extends "base.html" %}
 {% block title %}{% if form.instance.pk %}Edit Checklist{% else %}New Compliance Checklist{% endif %} – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}{% if form.instance.pk %}Update checklist details and settings.{% else %}Create a new compliance checklist.{% endif %}{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:compliance_checklist_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to compliance checklists" title="Back to compliance checklists">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{% if form.instance.pk %}Edit Compliance Checklist{% else %}New Compliance Checklist{% endif %}</h1>
-            <p class="page-subtitle c-muted">{% if form.instance.pk %}Update checklist details and settings.{% else %}Create a new compliance checklist.{% endif %}</p>
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-inner">
-            <form method="post" enctype="multipart/form-data">
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
+            <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
                 {% csrf_token %}
                 {% if form.non_field_errors %}
                 <div class="mb-4">
@@ -52,12 +46,10 @@
                         {% if form.attachments.errors %}<p class="text-xs c-danger mt-1">{{ form.attachments.errors|join:", " }}</p>{% endif %}
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 pt-6 mt-2 border-t">
-                    <a href="{% url 'contracts:compliance_checklist_list' %}" class="btn-ghost">Cancel</a>
-                    <button type="submit" class="btn-primary-grad text-white">Save Checklist</button>
+                <div class="dc-ds-form-actions">
+                    <a href="{% url 'contracts:compliance_checklist_list' %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Cancel</a>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Save Checklist</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
+</div></div>
 {% endblock %}

@@ -7,7 +7,7 @@
       <h1 class="page-title">Invoices</h1>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:invoice_create' %}" class="inline-flex items-center gap-2 btn-primary-grad">
+      <a href="{% url 'contracts:invoice_create' %}" class="inline-flex items-center gap-2 dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Invoice
       </a>
@@ -50,7 +50,7 @@
           <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.client.name|truncatechars:25 }}</td>
           <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.matter.matter_number|default:"—" }}</td>
           <td class="px-5 py-3 tbl-td">
-            <span class="badge-sm {% if invoice.status == 'PAID' %}badge-green{% elif invoice.status == 'OVERDUE' %}badge-red{% elif invoice.status == 'SENT' %}badge-blue{% else %}badge-gray{% endif %}">{{ invoice.get_status_display }}</span>
+            <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if invoice.status == 'PAID' %}badge-green{% elif invoice.status == 'OVERDUE' %}badge-red{% elif invoice.status == 'SENT' %}badge-blue{% else %}badge-gray{% endif %}">{{ invoice.get_status_display }}</span>
           </td>
           <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.issue_date|date:"M d, Y" }}</td>
           <td class="px-5 py-3 tbl-td text-sm {% if invoice.is_overdue %}c-danger font-semibold{% else %}c-muted{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</td>

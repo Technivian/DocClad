@@ -1,67 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Clause Library – CLM One{% endblock %}
+{% block authenticated_page_title %}Clause Library{% endblock %}
+{% block authenticated_page_subtitle %}Manage the governed clause library and its approved language.{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .tbl-row-hover:hover { background: var(--sidebar-hover); }
-</style>
-<div class="page-wrap">
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
 
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Clause Library</h1>
-      <p class="page-subtitle">Manage clause library</p>
+  <header class="dc-ds-page-hero dc-ds-list-header">
+    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
+      <h1 class="dc-ds-title">Clause Library</h1>
+      <p class="dc-ds-subtitle">Manage the governed clause library and its approved language.</p>
     </div>
-    <a href="{% url 'contracts:clause_template_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
-      <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-      Add New
-    </a>
-  </div>
+    <div class="dc-ds-actions"><a href="{% url 'contracts:clause_template_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        Add New
+      </a></div>
+  </header>
 
-  <div class="panel">
-    <table class="w-full text-sm">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" data-table-core="server">
+      <caption class="sr-only">Clause library records.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Scope</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Version</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Mandatory</th>
-          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+          <th scope="col">Title</th>
+          <th scope="col">Category</th>
+          <th scope="col">Scope</th>
+          <th scope="col">Version</th>
+          <th scope="col">Status</th>
+          <th scope="col">Mandatory</th>
+          <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in clauses %}
-        <tr class="border-b transition-colors tbl-row tbl-row-hover">
-          <td class="px-5 py-3.5"><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
-          <td class="px-5 py-3.5 tbl-td">{{ item.category|default:"-" }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ item.get_jurisdiction_scope_display }}</td>
-          <td class="px-5 py-3.5 tbl-td">v{{ item.version }}</td>
-          <td class="px-5 py-3.5">
+        <tr>
+          <td><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
+          <td>{{ item.category|default:"-" }}</td>
+          <td>{{ item.get_jurisdiction_scope_display }}</td>
+          <td data-numeric>v{{ item.version }}</td>
+          <td>
             {% if item.is_approved %}
-            <span class="badge-sm badge-green">Approved</span>
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Approved</span>
             {% else %}
-            <span class="badge-sm badge-yellow">Draft</span>
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Draft</span>
             {% endif %}
           </td>
-          <td class="px-5 py-3.5">
+          <td>
             {% if item.is_mandatory %}
             <span class="c-danger font-medium">Yes</span>
             {% else %}
             <span class="c-muted">No</span>
             {% endif %}
           </td>
-          <td class="px-5 py-3.5 text-right">
-            <a href="{% url 'contracts:clause_template_update' item.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">Edit</a>
+          <td class="text-right">
+            <a href="{% url 'contracts:clause_template_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
           </td>
         </tr>
         {% empty %}
         <tr>
           <td colspan="7">
-            <div class="empty-state text-center py-8">
-              <p class="text-sm c-muted mb-3">No clauses in the library yet.</p>
-              <a href="{% url 'contracts:clause_template_create' %}" class="btn-soft-primary text-sm">Add first clause</a>
-            </div>
+            {% url 'contracts:clause_template_create' as clause_template_create_url %}
+            {% include "design_system/empty_state.html" with icon="file" title="No clauses in the library yet" reason="No approved or draft clause is available in this workspace." how="Add the first clause to start building a governed library." action_url=clause_template_create_url action_label="Add first clause" class_name="dc-ds-empty--compact" %}
           </td>
         </tr>
         {% endfor %}

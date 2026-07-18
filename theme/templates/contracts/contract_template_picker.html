@@ -2,6 +2,11 @@
 {% block title %}New Contract – CLM One{% endblock %}
 {% block authenticated_page_title %}{% if selected_type %}New {{ selected_type_label }}{% else %}New Contract{% endif %}{% endblock %}
 {% block authenticated_page_subtitle %}{% if selected_type %}Choose an approved template or begin a controlled blank draft.{% else %}Choose a governed contract type and approved workflow.{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
   .ctp-card {
@@ -13,7 +18,7 @@
   /* Entry-card grid (Stage 1: "What are you creating?") */
   .ctp-entry-card {
     position: relative; display: flex; flex-direction: column; gap: var(--space-12);
-    min-height: 230px; padding: var(--space-16); text-decoration: none;
+    min-height: 212px; padding: var(--space-16); text-decoration: none;
   }
   .ctp-entry-heading { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-12); align-items: start; }
   .ctp-entry-icon {
@@ -24,7 +29,7 @@
   .ctp-entry-title { font: var(--text-heading); color: var(--ink-900); }
   .ctp-entry-desc { margin-top: var(--space-4); color: var(--ink-500); font: var(--text-small); }
   .ctp-entry-meta {
-    display: flex; flex-direction: column; gap: var(--space-8); margin-top: auto; padding-top: var(--space-12);
+    display: flex; flex-direction: column; gap: var(--space-4); margin-top: auto; padding-top: var(--space-8);
     border-top: 1px solid var(--hairline); color: var(--ink-500); font: var(--text-meta);
   }
   .ctp-entry-meta-row { display: flex; justify-content: space-between; gap: var(--ds-space-2); }
@@ -32,6 +37,14 @@
   .ctp-entry-meta-row b { max-width: 65%; color: var(--ink-700); font-size: var(--font-size-meta); font-weight: 600; text-align: right; }
   .ctp-entry-cta {
     width: fit-content; min-height: 36px; margin-top: 0;
+  }
+  /* A hover lift gives feedback without making a route look selected. */
+  .ctp-entry-card.dc-ds-surface--interactive:hover {
+    border-color: var(--hairline);
+  }
+  @media (min-width: 1025px) {
+    /* The seventh route is centred so the incomplete final grid row is deliberate. */
+    .ctp-entry-grid > :last-child:nth-child(3n + 1) { grid-column: 2; }
   }
   /* No 'unsafe-inline' in style-src: style="" attributes are silently
      dropped, so this section header's spacing/size lives here instead. */
@@ -63,7 +76,7 @@
   </div>
 
   {% else %}
-  <div class="dc-ds-card-grid dc-ds-card-grid--3">
+  <div class="ctp-entry-grid dc-ds-card-grid dc-ds-card-grid--3">
     {% for card in entry_cards %}
     <a href="{{ card.start_url }}" class="ctp-entry-card dc-ds-surface dc-ds-surface--interactive">
       <div class="ctp-entry-heading">

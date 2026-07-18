@@ -5,6 +5,7 @@ send_signature_request service (transition + idempotency) and the send view.
 """
 
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -12,12 +13,14 @@ from django.urls import reverse
 
 from contracts.models import (
     Contract,
+    Document,
     Organization,
     OrganizationMembership,
     SignatureRequest,
 )
-from contracts.services.esign import send_signature_request
+from contracts.services.esign import refresh_signature_request, send_signature_request
 from contracts.services.signature_providers import (
+    DocumensoSignatureProvider,
     HttpSignatureProvider,
     NullSignatureProvider,
     SignatureProviderError,
@@ -198,3 +201,162 @@ class DocuSignProviderTests(TestCase):
     def test_factory_builds_docusign(self):
         from contracts.services.signature_providers import get_signature_provider, DocuSignSignatureProvider
         self.assertIsInstance(get_signature_provider(), DocuSignSignatureProvider)
+
+
+class DocumensoProviderTests(TestCase):
+    def setUp(self):
+        from django.core.files.base import ContentFile
+
+        self.org = Organization.objects.create(name='Documenso Org', slug='documenso-org')
+        self.user = User.objects.create_user(username='documenso_user', password='p')
+        OrganizationMembership.objects.create(
+            organization=self.org,
+            user=self.user,
+            role=OrganizationMembership.Role.OWNER,
+            is_active=True,
+        )
+        self.contract = Contract.objects.create(
+            organization=self.org,
+            title='Documenso MSA',
+            contract_type='MSA',
+            status='ACTIVE',
+            created_by=self.user,
+        )
+        self.document = Document.objects.create(
+            organization=self.org,
+            title='Documenso MSA.pdf',
+            mime_type='application/pdf',
+            uploaded_by=self.user,
+        )
+        self.document.file.save('documenso-msa.pdf', ContentFile(b'%PDF-1.4 test'), save=True)
+        self.sig = SignatureRequest.objects.create(
+            organization=self.org,
+            contract=self.contract,
+            document=self.document,
+            signer_name='Demi Signer',
+            signer_email='demi@example.com',
+            created_by=self.user,
+        )
+
+    def test_v2_provider_creates_and_distributes_envelope(self):
+        captured = []
+        responses = iter([
+            {'id': 'envelope_demo_123'},
+            {
+                'success': True,
+                'id': 'envelope_demo_123',
+                'recipients': [{
+                    'email': 'demi@example.com',
+                    'signingUrl': 'https://app.documenso.com/sign/demo-token',
+                }],
+            },
+        ])
+
+        def fake_opener(req, timeout=None):
+            captured.append(req)
+            return _FakeResponse(next(responses))
+
+        provider = DocumensoSignatureProvider(
+            'api_demo_key',
+            base_url='https://app.documenso.com',
+            opener=fake_opener,
+        )
+        result = send_signature_request(self.sig, actor=self.user, provider=provider)
+        self.sig.refresh_from_db()
+
+        self.assertEqual(result['external_id'], 'envelope_demo_123')
+        self.assertEqual(result['signing_url'], 'https://app.documenso.com/sign/demo-token')
+        self.assertEqual(self.sig.esign_provider, 'documenso')
+        self.assertEqual(self.sig.status, SignatureRequest.Status.SENT)
+        self.assertEqual(captured[0].full_url, 'https://app.documenso.com/api/v2/envelope/create')
+        self.assertEqual(captured[0].headers.get('Authorization'), 'api_demo_key')
+        self.assertIn(b'"externalId": "clmone-', captured[0].data)
+        self.assertIn(b'name="payload"', captured[0].data)
+        self.assertIn(b'name="files"', captured[0].data)
+        self.assertEqual(captured[1].full_url, 'https://app.documenso.com/api/v2/envelope/distribute')
+        self.assertEqual(json.loads(captured[1].data.decode())['envelopeId'], 'envelope_demo_123')
+
+    def test_refresh_maps_opened_recipient_to_viewed(self):
+        self.sig.status = SignatureRequest.Status.SENT
+        self.sig.esign_provider = 'documenso'
+        self.sig.external_id = 'envelope_demo_456'
+        self.sig.save()
+
+        provider = DocumensoSignatureProvider(
+            'api_demo_key',
+            opener=lambda req, timeout=None: _FakeResponse({
+                'id': 'envelope_demo_456',
+                'status': 'PENDING',
+                'updatedAt': '2026-07-16T10:00:00Z',
+                'recipients': [{
+                    'email': 'demi@example.com',
+                    'readStatus': 'OPENED',
+                    'signingStatus': 'NOT_SIGNED',
+                }],
+            }),
+        )
+        result = refresh_signature_request(self.sig, provider=provider)
+        self.sig.refresh_from_db()
+        self.assertTrue(result['changed'])
+        self.assertEqual(self.sig.status, SignatureRequest.Status.VIEWED)
+
+    @patch('contracts.views_domains.privacy_approvals.refresh_signature_request')
+    def test_detail_exposes_webhook_free_refresh_action(self, mocked_refresh):
+        self.sig.status = SignatureRequest.Status.SENT
+        self.sig.esign_provider = 'documenso'
+        self.sig.external_id = 'envelope_demo_refresh'
+        self.sig.save()
+        mocked_refresh.return_value = {
+            'refreshed': True,
+            'changed': False,
+            'status': SignatureRequest.Status.SENT,
+        }
+
+        self.client.login(username='documenso_user', password='p')
+        detail_url = reverse('contracts:signature_request_detail', kwargs={'pk': self.sig.pk})
+        detail = self.client.get(detail_url)
+        self.assertContains(detail, 'Refresh signing status')
+
+        refresh_url = reverse('contracts:signature_request_refresh', kwargs={'pk': self.sig.pk})
+        response = self.client.post(refresh_url)
+        self.assertRedirects(response, detail_url)
+        mocked_refresh.assert_called_once()
+
+    @override_settings(
+        ESIGN_PROVIDER='documenso',
+        ESIGN_DOCUMENSO_API_KEY='api_demo_key',
+        ESIGN_DOCUMENSO_BASE_URL='https://app.documenso.com',
+    )
+    def test_factory_builds_documenso(self):
+        self.assertIsInstance(get_signature_provider(), DocumensoSignatureProvider)
+
+    @override_settings(ESIGN_DOCUMENSO_WEBHOOK_SECRET='webhook-demo-secret')
+    def test_v2_completed_webhook_marks_request_signed(self):
+        self.sig.status = SignatureRequest.Status.SENT
+        self.sig.esign_provider = 'documenso'
+        self.sig.external_id = 'envelope_demo_789'
+        self.sig.save()
+
+        response = self.client.post(
+            reverse('contracts:documenso_esign_webhook_api'),
+            data=json.dumps({
+                'event': 'DOCUMENT_COMPLETED',
+                'payload': {
+                    'id': 'envelope_demo_789',
+                    'externalId': f'clmone-{self.org.id}-{self.sig.id}',
+                    'status': 'COMPLETED',
+                    'completedAt': '2026-07-16T10:05:00Z',
+                    'recipients': [{
+                        'email': 'demi@example.com',
+                        'readStatus': 'OPENED',
+                        'signingStatus': 'SIGNED',
+                    }],
+                },
+                'createdAt': '2026-07-16T10:05:01Z',
+            }),
+            content_type='application/json',
+            HTTP_X_DOCUMENSO_SECRET='webhook-demo-secret',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.sig.refresh_from_db()
+        self.assertEqual(self.sig.status, SignatureRequest.Status.SIGNED)

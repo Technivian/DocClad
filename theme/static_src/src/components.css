@@ -1,4 +1,11 @@
 
+/*
+ * Legacy component compatibility API.
+ *
+ * New authenticated-app components must use .dc-ds-* partials. These
+ * selectors remain until the inventory in docs/design-system/
+ * LEGACY_COMPATIBILITY_INVENTORY.md has verified zero consumers.
+ */
 /* Component Library */
 
 /* Button Components */
@@ -481,7 +488,7 @@
 .form-control {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: var(--space-8) var(--space-12);
   font-size: 14px;
   line-height: 1.4;
   color: var(--text-primary);

@@ -17,13 +17,17 @@ Resolve the configured provider with ``get_signature_provider()``.
 from __future__ import annotations
 
 import base64
+from io import BytesIO
 import json
+import os
 from dataclasses import dataclass, field
 from typing import Any, Optional, Protocol
 from urllib import error as urllib_error
 from urllib import request as urllib_request
+from uuid import uuid4
 
 from django.conf import settings
+from pypdf import PdfReader
 
 
 class SignatureProviderError(RuntimeError):
@@ -211,11 +215,11 @@ class DocuSignSignatureProvider:
 
 
 class DocumensoSignatureProvider:
-    """Documenso e-signature provider (free tier: API + webhooks included).
+    """Documenso V2 e-signature provider.
 
-    Sends a document for signature via the Documenso REST API.
-    Documenso emails the signer; status flows back via inbound webhook
-    reconciliation (PENDING -> SENT -> SIGNED).
+    Sends a PDF through the current envelope API. Documenso emails the signer
+    and returns a direct signing URL. Status can be reconciled through either a
+    team webhook or the explicit refresh action available for free accounts.
 
     Set ESIGN_PROVIDER=documenso plus ESIGN_DOCUMENSO_API_KEY.
     """
@@ -227,102 +231,162 @@ class DocumensoSignatureProvider:
         self.timeout = timeout
         self._opener = opener or urllib_request.urlopen
 
+    def _api_url(self, path: str) -> str:
+        base = self.base_url.rstrip('/')
+        if not base.endswith('/api/v2'):
+            base = f'{base}/api/v2'
+        return f'{base}/{path.lstrip("/")}'
+
+    def _read_pdf(self, signature_request) -> tuple[bytes, str, int]:
+        document = getattr(signature_request, 'document', None)
+        file_field = getattr(document, 'file', None) if document else None
+        if not file_field:
+            raise SignatureProviderError('Documenso send requires a PDF document attached to the signature request.')
+
+        try:
+            file_field.open('rb')
+            file_content = file_field.read()
+        except Exception as exc:
+            raise SignatureProviderError(f'Could not read document file: {exc}') from exc
+        finally:
+            try:
+                file_field.close()
+            except Exception:
+                pass
+
+        if not file_content.startswith(b'%PDF'):
+            raise SignatureProviderError('Documenso only accepts PDF documents.')
+
+        filename = os.path.basename(getattr(file_field, 'name', '') or '') or 'contract.pdf'
+        if not filename.lower().endswith('.pdf'):
+            filename = f'{filename}.pdf'
+
+        page_number = 1
+        try:
+            page_number = max(1, len(PdfReader(BytesIO(file_content)).pages))
+        except Exception:
+            # Documenso performs the authoritative PDF validation. Keeping page
+            # one as a fallback gives the provider a useful error for damaged
+            # files without leaking document contents into logs.
+            page_number = 1
+        return file_content, filename, page_number
+
+    def _open_json(self, request, *, action: str) -> dict:
+        try:
+            with self._opener(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode('utf-8') or '{}')
+        except urllib_error.HTTPError as exc:
+            raise SignatureProviderError(f'Documenso {action} failed with HTTP {exc.code}.') from exc
+        except urllib_error.URLError as exc:
+            raise SignatureProviderError(f'Documenso {action} failed: {exc}') from exc
+        except (ValueError, TypeError) as exc:
+            raise SignatureProviderError(f'Documenso returned an invalid response while attempting to {action}.') from exc
+
     def send(self, signature_request) -> SendResult:
         if not self.api_key:
             raise SignatureProviderError('ESIGN_DOCUMENSO_API_KEY is not configured.')
 
-        # Build document payload - try to attach real PDF if document exists
-        document = getattr(signature_request, 'document', None)
-        file_field = getattr(document, 'file', None) if document else None
-
+        file_content, filename, page_number = self._read_pdf(signature_request)
         title = f'Signature requested: {signature_request.contract}'
-
-        if file_field:
-            # Upload with real PDF via multipart
-            try:
-                file_field.open('rb')
-                file_content = file_field.read()
-                file_field.close()
-            except Exception as exc:
-                raise SignatureProviderError(f'Could not read document file: {exc}') from exc
-
-            boundary = b'----DocumensoFormBoundary'
-            body_parts = []
-
-            # title field
-            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="title"\r\n\r\n' + title.encode() + b'\r\n')
-
-            # externalId for idempotency
-            ext_id = f'clmone-{signature_request.organization_id}-{signature_request.id}'
-            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="externalId"\r\n\r\n' + ext_id.encode() + b'\r\n')
-
-            # recipients as JSON
-            recipients_json = json.dumps([{
+        external_id = f'clmone-{signature_request.organization_id}-{signature_request.id}'
+        payload = {
+            'type': 'DOCUMENT',
+            'title': title,
+            'externalId': external_id,
+            'recipients': [{
                 'name': signature_request.signer_name,
                 'email': signature_request.signer_email,
                 'role': 'SIGNER',
-            }]).encode()
-            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="recipients"\r\n\r\n' + recipients_json + b'\r\n')
+                'signingOrder': signature_request.order or 1,
+                'fields': [
+                    {
+                        'identifier': 0,
+                        'type': 'NAME',
+                        'page': page_number,
+                        'positionX': 10,
+                        'positionY': 82,
+                        'width': 30,
+                        'height': 3,
+                    },
+                    {
+                        'identifier': 0,
+                        'type': 'SIGNATURE',
+                        'page': page_number,
+                        'positionX': 10,
+                        'positionY': 86,
+                        'width': 30,
+                        'height': 5,
+                    },
+                    {
+                        'identifier': 0,
+                        'type': 'DATE',
+                        'page': page_number,
+                        'positionX': 50,
+                        'positionY': 86,
+                        'width': 20,
+                        'height': 3,
+                    },
+                ],
+            }],
+            'meta': {
+                'subject': title,
+                'message': 'Please review and sign the attached agreement.',
+            },
+        }
 
-            # file
-            doc_name = getattr(document, 'title', 'contract') or 'contract'
-            body_parts.append(b'--' + boundary + b'\r\nContent-Disposition: form-data; name="file"; filename="' + doc_name.encode() + b'.pdf"\r\nContent-Type: application/pdf\r\n\r\n' + file_content + b'\r\n')
-            body_parts.append(b'--' + boundary + b'--\r\n')
-
-            body = b''.join(body_parts)
-            content_type = f'multipart/form-data; boundary={boundary.decode()}'
-        else:
-            # No document: create a minimal document with a placeholder
-            payload = {
-                'title': title,
-                'externalId': f'clmone-{signature_request.organization_id}-{signature_request.id}',
-                'recipients': [{
-                    'name': signature_request.signer_name,
-                    'email': signature_request.signer_email,
-                    'role': 'SIGNER',
-                }],
-            }
-            body = json.dumps(payload).encode('utf-8')
-            content_type = 'application/json'
+        boundary = f'----CLMOneDocumenso{uuid4().hex}'
+        boundary_bytes = boundary.encode('ascii')
+        body = b''.join([
+            b'--' + boundary_bytes + b'\r\n'
+            b'Content-Disposition: form-data; name="payload"\r\n'
+            b'Content-Type: application/json\r\n\r\n'
+            + json.dumps(payload).encode('utf-8') + b'\r\n',
+            b'--' + boundary_bytes + b'\r\n'
+            + f'Content-Disposition: form-data; name="files"; filename="{filename}"\r\n'.encode('utf-8')
+            + b'Content-Type: application/pdf\r\n\r\n'
+            + file_content + b'\r\n',
+            b'--' + boundary_bytes + b'--\r\n',
+        ])
 
         req = urllib_request.Request(
-            f'{self.base_url}/api/v1/documents',
+            self._api_url('/envelope/create'),
             data=body,
             method='POST',
             headers={
-                'Authorization': f'Bearer {self.api_key}',
-                'Content-Type': content_type,
+                'Authorization': self.api_key,
+                'Content-Type': f'multipart/form-data; boundary={boundary}',
             },
         )
-        try:
-            with self._opener(req, timeout=self.timeout) as response:
-                raw = json.loads(response.read().decode('utf-8') or '{}')
-        except urllib_error.URLError as exc:
-            raise SignatureProviderError(f'Documenso request failed: {exc}') from exc
-        except (ValueError, TypeError) as exc:
-            raise SignatureProviderError(f'Documenso returned an invalid response: {exc}') from exc
+        raw = self._open_json(req, action='document creation')
 
-        doc_id = str(raw.get('documentId') or raw.get('id') or '').strip()
+        doc_id = str(raw.get('id') or '').strip()
         if not doc_id:
-            raise SignatureProviderError(f'Documenso response is missing a document id. Response: {raw}')
+            raise SignatureProviderError('Documenso response is missing an envelope id.')
 
-        # Trigger send
+        distribute_body = json.dumps({
+            'envelopeId': doc_id,
+            'meta': payload['meta'],
+        }).encode('utf-8')
         send_req = urllib_request.Request(
-            f'{self.base_url}/api/v1/documents/{doc_id}/send',
-            data=b'{}',
+            self._api_url('/envelope/distribute'),
+            data=distribute_body,
             method='POST',
             headers={
-                'Authorization': f'Bearer {self.api_key}',
+                'Authorization': self.api_key,
                 'Content-Type': 'application/json',
             },
         )
-        try:
-            with self._opener(send_req, timeout=self.timeout) as send_resp:
-                send_raw = json.loads(send_resp.read().decode('utf-8') or '{}')
-        except urllib_error.URLError as exc:
-            raise SignatureProviderError(f'Documenso send request failed: {exc}') from exc
+        send_raw = self._open_json(send_req, action='document distribution')
 
-        signing_url = str(raw.get('signingUrl') or send_raw.get('signingUrl') or '').strip()
+        recipients = send_raw.get('recipients') or []
+        matching_recipient = next(
+            (
+                recipient for recipient in recipients
+                if str(recipient.get('email') or '').lower() == signature_request.signer_email.lower()
+            ),
+            recipients[0] if recipients else {},
+        )
+        signing_url = str(matching_recipient.get('signingUrl') or '').strip()
 
         return SendResult(
             external_id=doc_id,
@@ -330,6 +394,18 @@ class DocumensoSignatureProvider:
             provider=self.name,
             raw={**raw, **send_raw},
         )
+
+    def fetch_status(self, external_id: str) -> dict:
+        """Return the current envelope state for webhook-free free accounts."""
+        envelope_id = str(external_id or '').strip()
+        if not envelope_id:
+            raise SignatureProviderError('Documenso status refresh requires an envelope id.')
+        req = urllib_request.Request(
+            self._api_url(f'/envelope/{envelope_id}'),
+            method='GET',
+            headers={'Authorization': self.api_key},
+        )
+        return self._open_json(req, action='status refresh')
 
 
 def get_signature_provider(config: Optional[Any] = None) -> OutboundSignatureProvider:

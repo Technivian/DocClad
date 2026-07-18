@@ -69,9 +69,9 @@ class CommandCenterDashboardTests(TestCase):
         self.assertNotContains(response, 'Legal operations')
         self.assertNotContains(response, 'Live workspace')
         self.assertContains(response, 'Overview of contracts, approvals, and governance.')
-        # The compact header keeps the shell focused on the current empty
-        # state rather than repeating setup copy from the older layout.
-        self.assertContains(response, 'No contract needs immediate attention')
+        # A contract record makes the portfolio measurable even if it does not
+        # yet have a priority workflow item.
+        self.assertContains(response, 'No priority action right now')
         self.assertContains(response, 'Review priority actions')
         self.assertContains(response, 'No active issues')
         self.assertNotContains(response, 'Attention needed:')

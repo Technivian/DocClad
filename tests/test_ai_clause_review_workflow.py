@@ -7,12 +7,16 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from contracts.models import (
+    ApprovalRequest,
     AIExtractionSpan,
     AuditLog,
     ClauseTemplate,
+    ClausePlaybook,
     Contract,
+    ContractReviewFinding,
     Document,
     DocumentOCRReview,
+    DocumentReviewRun,
     Organization,
     OrganizationMembership,
     OrgPolicy,
@@ -235,3 +239,115 @@ class AIClauseReviewWorkflowTests(TestCase):
         self.assertContains(response, 'AI-assisted clause review')
         self.assertContains(response, 'Human review required')
         self.assertContains(response, self.url)
+
+    def test_review_workspace_and_finding_actions_are_human_governed(self):
+        span = AIExtractionSpan.objects.create(
+            document=self.document,
+            organization=self.organization,
+            label='termination',
+            span_text='Either party may terminate on thirty days written notice.',
+            start_char=self.text.index('Either party'),
+            end_char=len(self.text),
+            confidence='0.9100',
+            extraction_model='gemini-3.5-flash',
+            risk_level=AIExtractionSpan.RiskLevel.RISK,
+        )
+        run = DocumentReviewRun.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            document=self.document,
+            status=DocumentReviewRun.Status.READY,
+            current_step='Review ready',
+            progress_steps=[{'label': 'Review ready', 'status': 'active'}],
+            governance_sources={'message': 'No approved playbook matched. This review uses general analysis and requires full human review.'},
+        )
+        finding = ContractReviewFinding.objects.create(
+            review_run=run,
+            contract=self.contract,
+            document=self.document,
+            source_span=span,
+            title='AI review — termination needs review',
+            severity=ContractReviewFinding.Severity.HIGH,
+            source_clause='Termination',
+            source_excerpt=span.span_text,
+            explanation='The notice period needs human review.',
+            confidence=span.confidence,
+            assigned_reviewer=self.reviewer,
+        )
+        workspace = self.client.get(reverse('contracts:contract_review_workspace', args=[self.contract.pk]))
+        self.assertContains(workspace, 'Review workspace')
+        self.assertContains(workspace, 'No approved contract playbook matched')
+        self.assertContains(workspace, span.span_text)
+
+        action_url = reverse('contracts:contract_review_finding_action_api', args=[self.contract.pk, finding.pk])
+        rejected = self.client.post(action_url, data=json.dumps({'action': 'dismiss'}), content_type='application/json')
+        self.assertEqual(rejected.status_code, 400)
+        accepted = self.client.post(action_url, data=json.dumps({'action': 'accept'}), content_type='application/json')
+        self.assertEqual(accepted.status_code, 200)
+        finding.refresh_from_db()
+        self.assertEqual(finding.status, ContractReviewFinding.Status.IN_PROGRESS)
+        self.assertTrue(AuditLog.objects.filter(event_type='ai.review_finding_updated', object_id=finding.pk).exists())
+
+    def test_incomplete_review_is_truthful_and_surfaces_resolvable_blockers(self):
+        self.contract.contract_type = Contract.ContractType.OTHER
+        self.contract.counterparty = ''
+        self.contract.status = Contract.Status.AI_REVIEW_READY
+        self.contract.save(update_fields=['contract_type', 'counterparty', 'status', 'updated_at'])
+        DocumentReviewRun.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            document=self.document,
+            status=DocumentReviewRun.Status.READY,
+            current_step='Review ready',
+        )
+
+        response = self.client.get(reverse('contracts:contract_review_workspace', args=[self.contract.pk]))
+
+        self.assertContains(response, 'Needs input')
+        self.assertContains(response, 'Stage: Internal review')
+        self.assertContains(response, 'Resolve review blockers')
+        self.assertContains(response, 'AI review could not be completed. The document preview failed, no approved playbook was matched and required contract information needs confirmation.')
+        self.assertContains(response, 'Document preview unavailable')
+        self.assertContains(response, 'Document preview')
+        self.assertContains(response, 'Counterparty')
+        self.assertContains(response, 'Contract type')
+        self.assertContains(response, 'Governing law')
+        self.assertContains(response, 'Payment terms')
+        self.assertContains(response, 'Not yet generated')
+        self.assertContains(response, 'Not reviewed. Findings will appear after the review blockers are resolved and AI analysis completes.')
+        self.assertNotContains(response, 'Critical findings')
+        self.assertNotContains(response, 'AI review ready')
+
+    def test_clear_review_requires_explicit_human_confirmation_before_approval(self):
+        playbook = ClausePlaybook.objects.create(
+            organization=self.organization,
+            name='Vendor agreement review',
+            created_by=self.reviewer,
+        )
+        self.contract.counterparty = 'Acme Corp'
+        self.contract.governing_law = 'Netherlands'
+        self.contract.value = '5000.00'
+        self.contract.save(update_fields=['counterparty', 'governing_law', 'value', 'updated_at'])
+        DocumentReviewRun.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            document=self.document,
+            status=DocumentReviewRun.Status.READY,
+            current_step='Review ready',
+            extracted_metadata={
+                'governing_law_confirmed': True,
+                'value_confirmed': True,
+                'payment_terms_confirmed': True,
+            },
+            governance_sources={
+                'ai_analysis_completed': True,
+                'selected_playbook_id': playbook.pk,
+            },
+        )
+        response = self.client.post(reverse('contracts:contract_review_confirm_api', args=[self.contract.pk]))
+        self.assertEqual(response.status_code, 200)
+        approval = ApprovalRequest.objects.get(contract=self.contract)
+        self.assertEqual(approval.approval_step, 'Human confirmation: AI review outcome')
+        self.contract.refresh_from_db()
+        self.assertEqual(self.contract.status, Contract.Status.INTERNAL_APPROVAL_REQUIRED)
+        self.assertTrue(AuditLog.objects.filter(event_type='ai.review_human_confirmation_requested').exists())

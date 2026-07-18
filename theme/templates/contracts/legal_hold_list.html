@@ -11,7 +11,7 @@
             <p class="page-subtitle c-muted">Manage legal holds</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:legal_hold_create' %}" class="btn-primary-grad text-white">
+            <a href="{% url 'contracts:legal_hold_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">
                 <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 Add New
             </a>
@@ -37,7 +37,7 @@
                     <td class="px-5 py-3 tbl-td">{{ item.matter|default:"—" }}</td>
                     <td class="px-5 py-3">
                         {# ACTIVE hold = red: intentional alert semantic (active hold demands attention) #}
-                        <span class="badge-sm {% if item.status == 'ACTIVE' %}badge-red{% elif item.status == 'RELEASED' %}badge-green{% else %}badge-gray{% endif %}">{{ item.get_status_display }}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if item.status == 'ACTIVE' %}badge-red{% elif item.status == 'RELEASED' %}badge-green{% else %}badge-gray{% endif %}">{{ item.get_status_display }}</span>
                     </td>
                     <td class="px-5 py-3 tbl-td">{{ item.hold_start_date }}</td>
                     <td class="px-5 py-3 tbl-td">{{ item.hold_end_date|default:"—" }}</td>

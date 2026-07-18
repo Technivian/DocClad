@@ -3,6 +3,11 @@
 {% block title %}MSA Commercial Review Workflow – CLM One{% endblock %}
 {% block authenticated_page_title %}New MSA Draft{% endblock %}
 {% block authenticated_page_subtitle %}Set commercial terms, apply governed positions, and generate a review-ready agreement.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:contract_template_picker' %}" class="topbar-back-link" data-workspace-back aria-label="Back to templates" title="Back to templates">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .page-wrap.msa-workflow-page { max-width: 1480px; margin: 0 auto; padding: 24px 28px 40px; }
@@ -11,10 +16,6 @@
 .msa-workflow-page .arch-workspace-main > * + * { margin-top: 12px !important; }
 .arch-workspace-draft { min-width: 0; }
 .msa-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
-.msa-head-copy { display: flex; flex-direction: column; gap: 6px; }
-.msa-back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 700; text-decoration: none; }
-.msa-back-link:hover { color: var(--text-primary); }
-.msa-back-link svg { width: 15px; height: 15px; }
 .msa-title { margin: 0; color: var(--text-primary); font-size: 30px; line-height: 1.06; font-weight: 760; letter-spacing: -0.01em; }
 .msa-subtitle { margin: 0; max-width: 760px; color: var(--text-muted); font-size: 14px; line-height: 1.45; }
 .msa-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -26,13 +27,14 @@
 .msa-command-metric { min-width: 0; padding: 9px 11px; border: 1px solid var(--card-border); border-radius: 8px; background: var(--well); }
 .msa-command-label { display: block; color: var(--text-muted); font-size: 9.5px; line-height: 1.2; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
 .msa-command-value { display: block; margin-top: 3px; color: var(--text-primary); font-size: 12px; line-height: 1.25; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.msa-stage-track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; gap: 0; }
-.msa-stage-step { position: relative; min-width: 0; padding-top: 4px; text-align: center; }
-.msa-stage-step:not(:last-child)::after { content: ''; position: absolute; top: 13px; left: calc(50% + 14px); right: calc(-50% + 14px); height: 1px; background: var(--border); }
-.msa-stage-dot { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin: 0 auto 6px; border-radius: 999px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text-muted); font-size: 10px; font-weight: 800; }
-.msa-stage-step.is-active .msa-stage-dot { border-color: var(--primary); background: var(--primary); color: #fff; }
-.msa-stage-step.is-ready .msa-stage-dot { border-color: var(--primary); color: var(--primary); }
-.msa-stage-name { display: block; color: var(--text-secondary); font-size: 10px; line-height: 1.2; font-weight: 700; }
+.msa-stage-track { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:start; gap:0; }
+.msa-stage-step { position:relative; min-width:0; padding-top:4px; text-align:center; }
+.msa-stage-step:not(:last-child)::after { content:''; position:absolute; top:13px; left:calc(50% + 14px); right:calc(-50% + 14px); height:1px; background:var(--border); }
+.msa-stage-dot { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; width:20px; height:20px; margin:0 auto 6px; border-radius:50%; border:0; background:var(--ink-200); color:transparent; font-size:10px; font-weight:800; }
+.msa-stage-step.is-active .msa-stage-dot { border:4px solid var(--seal); background:var(--card); color:transparent; }
+.msa-stage-step.is-ready .msa-stage-dot { background:var(--seal); color:#fff; }
+.msa-stage-name { display:block; color:var(--ink-500); font-size:10px; line-height:1.2; font-weight:700; }
+.msa-stage-step.is-active .msa-stage-name { color:var(--ink-900); font-weight:750; }
 .msa-guide-panel { padding: 13px 15px; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); }
 .msa-guide-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .msa-guide-title { margin: 0; color: var(--text-primary); font-size: 12px; font-weight: 800; }
@@ -137,11 +139,7 @@
 .page-wrap.msa-workflow-page { max-width: none; padding: var(--page-padding-top) var(--page-padding-x) var(--page-padding-bottom); }
 .msa-workflow-page { color: var(--ink-900); }
 .msa-page-head { margin: 0; min-height: 36px; align-items: center; }
-.msa-head-copy { gap: 0; }
-.msa-page-breadcrumb { margin: 0; color: var(--ink-500); font: var(--text-small); }
-.msa-page-breadcrumb a { color: inherit; text-decoration: none; }
-.msa-page-breadcrumb a:hover { color: var(--seal); }
-.msa-head-actions { gap: var(--space-8); }
+.msa-head-actions { margin-left: auto; gap: var(--space-8); }
 .msa-summary-card { display: grid; grid-template-columns: minmax(250px, .85fr) minmax(0, 1.55fr); gap: var(--space-24); padding: var(--space-24); }
 .msa-summary-title { margin: 0; color: var(--ink-900); font: var(--text-heading); }
 .msa-summary-copy { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); line-height: var(--line-height-normal); }
@@ -207,9 +205,6 @@
   <form method="post" action="{% url 'contracts:msa_workflow_builder' %}" id="msa-workflow-form">
     {% csrf_token %}
     <div class="msa-page-head">
-      <div class="msa-head-copy">
-        <p class="msa-page-breadcrumb"><a href="{% url 'contracts:contract_template_picker' %}">Contract types</a> / Master Service Agreement</p>
-      </div>
       <div class="msa-head-actions">
         <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
         <button type="submit" class="dc-ds-button dc-ds-button--primary" id="submit-msa-btn">Generate governed draft</button>

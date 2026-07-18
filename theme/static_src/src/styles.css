@@ -3,6 +3,9 @@
 @import "./components.css";
 @import "./design-system/index.css";
 
+/* Phase 1 architecture: this is the sole Tailwind v4 entry point. The
+   archived v3 configuration must not be reintroduced. */
+
 /**
   * A catch-all path to Django template files, JavaScript, and Python files
   * that contain Tailwind CSS classes and will be scanned by Tailwind to generate the final CSS file.

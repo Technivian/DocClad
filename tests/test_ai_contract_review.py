@@ -3,8 +3,10 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
+from django.urls import reverse
 
-from contracts.models import AIExtractionSpan, CommandCenterWorkItem, Contract, Document, Organization, OrganizationMembership, RiskLog
+from contracts.middleware import log_action
+from contracts.models import AIExtractionSpan, AuditLog, CommandCenterWorkItem, Contract, Document, Organization, OrganizationMembership, RiskLog
 from contracts.services.ai_contract_review import ContractReviewResult, review_uploaded_contract
 
 
@@ -82,3 +84,30 @@ class UploadedContractAIReviewTests(TestCase):
     def test_upload_review_result_shape_is_stable(self):
         result = ContractReviewResult(spans_reviewed=4, flags_created=2, model='gemini-test')
         self.assertEqual(result.flags_created, 2)
+
+    def test_contract_documents_tab_shows_a_completed_clear_upload_review(self):
+        log_action(
+            self.user,
+            AuditLog.Action.CREATE,
+            'Document',
+            self.document.pk,
+            str(self.document),
+            organization=self.organization,
+            event_type='ai.uploaded_contract_review',
+            outcome=AuditLog.Outcome.SUCCESS,
+            changes={
+                'event': 'ai.uploaded_contract_review',
+                'review_status': 'completed',
+                'finding_count': 0,
+                'citation_count': 0,
+                'review_message': 'No potential issues were found in the clauses reviewed. Human review is still required.',
+                'document_id': self.document.pk,
+            },
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('contracts:contract_detail', args=[self.contract.pk]))
+
+        self.assertContains(response, 'Latest upload review')
+        self.assertContains(response, 'No potential issues were found in the clauses reviewed. Human review is still required.')
+        self.assertNotContains(response, 'Extraction has not run')

@@ -426,7 +426,8 @@ ESIGN_WEBHOOK_SECRET = os.getenv('ESIGN_WEBHOOK_SECRET', '').strip()
 # Outbound e-signature dispatch. 'null' simulates a send (no network) so the
 # flow works without credentials; 'http' posts to a configured e-sign gateway;
 # 'docusign' uses the DocuSign eSignature REST API; 'documenso' uses the
-# Documenso REST API (free tier: API + webhooks included).
+# Documenso REST API. Free personal accounts support limited API sends; team
+# accounts can additionally configure lifecycle webhooks.
 ESIGN_PROVIDER = os.getenv('ESIGN_PROVIDER', 'null').strip().lower()
 ESIGN_API_BASE = os.getenv('ESIGN_API_BASE', '').strip()
 ESIGN_API_KEY = os.getenv('ESIGN_API_KEY', '').strip()

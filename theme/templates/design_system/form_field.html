@@ -2,19 +2,21 @@
   {{ field }}
 {% else %}
   <div class="dc-ds-form-field{% if field.errors %} dc-ds-form-field--error{% endif %}{% if class_name %} {{ class_name }}{% endif %}">
-    <label class="dc-ds-form-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-    <div class="dc-ds-form-field__control">
+    <label class="dc-ds-form-field__label" for="{{ field.id_for_label }}">
+      <span>{{ field.label }}</span>{% if not preserve_help %}{% include "design_system/info_hint.html" with help_text=field.help_text %}{% endif %}
+    </label>
+      <div class="dc-ds-form-field__control">
       {{ field }}
     </div>
-    {% if field.help_text %}
-      <p class="dc-ds-form-field__help">{{ field.help_text }}</p>
-    {% endif %}
     {% if field.errors %}
-      <div class="dc-ds-form-field__errors">
+      <div class="dc-ds-form-field__errors" id="{{ field.id_for_label }}-errors" role="alert">
         {% for error in field.errors %}
           <p>{{ error }}</p>
         {% endfor %}
       </div>
+    {% endif %}
+    {% if preserve_help and field.help_text %}
+      <p class="dc-ds-form-field__help">{{ field.help_text }}</p>
     {% endif %}
   </div>
 {% endif %}

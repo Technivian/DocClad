@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load clmone_format %}
+{% block title %}Review {{ contract.title }} – CLM One{% endblock %}
+{% block authenticated_page_title %}Document review{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:contract_detail' contract.pk %}" class="topbar-back-link" data-workspace-back aria-label="Back to contract" title="Back to contract">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .review-workspace { max-width: 1480px; }
+  .review-header { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .review-header h1 { margin:0; font-size:1.55rem; line-height:1.2; color:var(--ink-900); }
+  .review-context, .review-facts { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:9px; color:var(--ink-500); font-size:.8125rem; }
+  .review-facts { justify-content:flex-end; max-width:500px; }
+  .review-facts strong { color:var(--ink-900); }
+  .review-next { margin-top:13px; padding:10px 12px; border-left:3px solid var(--seal); background:var(--well); color:var(--ink-700); font-size:.875rem; }
+  .review-steps { position:relative; display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:8px; margin:18px 0 22px; padding:14px 0 0; border-top:1px solid var(--border); list-style:none; }
+  .review-steps::before { content:"Workflow checklist"; position:absolute; transform:translateY(-30px); color:var(--ink-500); font:var(--text-eyebrow); }
+  .review-steps li { display:grid; grid-template-columns:22px minmax(0,1fr); align-items:center; gap:8px; min-height:22px; color:var(--ink-500); font-size:.8125rem; font-weight:650; white-space:nowrap; }
+  .review-steps li::before { width:20px; height:20px; border-radius:50%; background:var(--ink-200); content:""; }
+  .review-steps .complete { color:var(--ink-700); }.review-steps .complete::before { display:grid; place-items:center; background:var(--seal); color:#fff; content:"✓"; font-size:12px; font-weight:800; }
+  .review-steps .active { color:var(--ink-900); font-weight:750; }.review-steps .active::before { border:4px solid var(--seal); background:var(--card); }
+  .review-steps .blocked { color:var(--status-danger-fg); }.review-steps .blocked::before { display:grid; place-items:center; background:var(--status-danger-bg); color:var(--status-danger-fg); content:"!"; font-weight:800; }
+  .review-layout { display:grid; grid-template-columns:minmax(420px, 1.05fr) minmax(420px, .95fr); gap:20px; align-items:start; }
+  .review-document, .review-panel { min-width:0; border:1px solid var(--border); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); }
+  .review-document-head, .review-panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .review-document-head h2, .review-panel-head h2 { margin:0; color:var(--ink-900); font-size:.9375rem; }
+  .review-document-tools { display:flex; align-items:center; gap:8px; }
+  .review-search { width:170px; min-height:32px; padding:0 9px; border:1px solid var(--line); border-radius:var(--radius-control); font-size:.75rem; }
+  .review-frame { display:block; width:100%; height:390px; border:0; background:var(--well); }
+  .review-document-text { max-height:440px; overflow:auto; padding:16px; border-top:1px solid var(--border); }
+  .review-clause { padding:13px 0; border-bottom:1px solid var(--border); scroll-margin-top:24px; }
+  .review-clause:last-child { border-bottom:0; }
+  .review-clause-label { display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--ink-900); font-size:.8125rem; font-weight:700; }
+  .review-clause blockquote { margin:7px 0 0; padding:9px 11px; border-left:3px solid var(--seal); background:var(--seal-bg); color:var(--ink-700); font-size:.8125rem; line-height:1.5; }
+  .review-tabs { display:flex; gap:2px; padding:0 12px; border-bottom:1px solid var(--border); overflow:auto; }
+  .review-tab { flex:0 0 auto; padding:11px 9px; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--ink-500); font-size:.75rem; font-weight:700; cursor:pointer; }
+  .review-tab.is-active { border-color:var(--seal); color:var(--seal-dark); }
+  .review-tab-panel { display:none; padding:16px; }
+  .review-tab-panel.is-active { display:block; }
+  .review-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--border); border-radius:var(--radius-control); overflow:hidden; }
+  .review-summary div { padding:11px; border-right:1px solid var(--border); }
+  .review-summary div:last-child { border-right:0; }
+  .review-summary strong { display:block; color:var(--ink-900); font-size:1.1rem; }
+  .review-summary span { color:var(--ink-500); font-size:.72rem; }
+  .review-governance { margin-top:14px; padding:12px; border:1px solid var(--color-status-info-border); border-radius:var(--radius-control); background:var(--status-progress-bg); color:var(--ink-700); font-size:.8125rem; line-height:1.45; }
+  .review-readiness { display:grid; gap:0; border:1px solid var(--border); border-radius:var(--radius-control); overflow:hidden; }
+  .review-readiness-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border); font-size:.8125rem; }
+  .review-readiness-row:last-child { border-bottom:0; }
+  .review-readiness-row span:first-child { color:var(--ink-600); }.review-readiness-row strong { color:var(--ink-900); font-weight:650; }
+  .review-readiness-row .is-warning { color:var(--status-pending-fg); }.review-readiness-row .is-failed { color:var(--status-danger-fg); }
+  .review-blockers { margin-top:14px; border-top:1px solid var(--border); }
+  .review-blocker { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .review-blocker-copy { min-width:0; }.review-blocker-copy strong { display:block; color:var(--ink-900); font-size:.8125rem; }.review-blocker-copy span { display:block; margin-top:2px; color:var(--ink-500); font-size:.75rem; }
+  .review-blocker details { flex:0 0 auto; }.review-blocker summary { color:var(--seal-dark); cursor:pointer; font-size:.75rem; font-weight:700; list-style:none; }.review-blocker summary::-webkit-details-marker { display:none; }
+  .review-blocker-form { display:grid; gap:7px; width:min(290px, calc(100vw - 72px)); margin-top:8px; padding:10px; border:1px solid var(--line); background:var(--well); }.review-blocker-form input,.review-blocker-form select { width:100%; min-height:32px; padding:6px 8px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); font-size:.75rem; }
+  .review-preview-error { min-height:390px; display:grid; place-items:center; padding:28px; background:var(--well); text-align:center; }.review-preview-error__inner { max-width:340px; }.review-preview-error h3 { margin:10px 0 4px; color:var(--ink-900); font-size:1rem; }.review-preview-error p { margin:0; color:var(--ink-500); font-size:.8125rem; line-height:1.45; }.review-preview-error__actions { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:16px; }
+  .review-finding { padding:14px 0; border-bottom:1px solid var(--border); }
+  .review-finding:first-child { padding-top:0; }.review-finding:last-child{border-bottom:0;padding-bottom:0}
+  .review-finding-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .review-finding h3 { margin:0; color:var(--ink-900); font-size:.9rem; }
+  .review-finding-meta { margin-top:5px; color:var(--ink-500); font-size:.72rem; }
+  .review-finding-copy { margin:10px 0 0; color:var(--ink-700); font-size:.8125rem; line-height:1.45; }
+  .review-finding-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+  .review-action { min-height:30px; padding:0 9px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-700); font-size:.72rem; font-weight:700; cursor:pointer; }
+  .review-action:hover { border-color:var(--seal); color:var(--seal-dark); }.review-action--primary { border-color:var(--seal); background:var(--seal); color:#fff; }
+  .review-action-detail { margin-top:10px; padding:10px; background:var(--well); border-radius:var(--radius-control); color:var(--ink-600); font-size:.75rem; line-height:1.45; }
+  .review-action-detail textarea, .review-action-detail select { width:100%; margin-top:7px; padding:8px; border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-800); font:inherit; }
+  .review-activity { display:grid; gap:10px; }.review-activity-item { padding-bottom:10px; border-bottom:1px solid var(--border); color:var(--ink-700); font-size:.8125rem; }.review-activity-item small { display:block; margin-top:3px; color:var(--ink-500); }
+  .review-empty { padding:30px 10px; color:var(--ink-500); font-size:.875rem; text-align:center; }
+  @media (max-width:1000px){.review-layout{grid-template-columns:1fr}.review-header{grid-template-columns:1fr}.review-facts{justify-content:flex-start}.review-frame{height:300px}.review-steps{grid-template-columns:repeat(3,minmax(0,1fr))}} @media(max-width:600px){.review-steps{grid-template-columns:1fr;gap:10px}.review-summary{grid-template-columns:1fr}.review-summary div{border-right:0;border-bottom:1px solid var(--border)}.review-summary div:last-child{border-bottom:0}.review-document-head{align-items:flex-start;flex-direction:column}.review-search{width:100%}}
+</style>
+<main class="page-wrap review-workspace">
+  <header class="review-header">
+    <div>
+      <div class="flex flex-wrap items-center gap-2"><h1>{{ contract.title }}</h1><span class="badge-sm {{ review_state.status_class }}">{{ review_state.status_label }}</span></div>
+      <div class="review-context"><span>{{ contract.counterparty|default:"Counterparty to confirm" }}</span><span>{% if contract.contract_type == 'OTHER' %}Contract type to confirm{% else %}{{ contract.get_contract_type_display }}{% endif %}</span><span>Version {% if document %}{{ document.version }}{% else %}—{% endif %}</span><span>Owner: {{ contract.owner.get_full_name|default:contract.owner.username|default:"Unassigned" }}</span><span>Stage: {{ review_state.stage_label }}</span></div>
+      <div class="review-next"><strong>Primary next action:</strong> {{ review_state.message }}<div class="mt-3">{% if review_state.can_run_ai_review %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="action" value="run_ai_review"><button class="review-action review-action--primary">Run AI review</button></form>{% elif review_state.findings_ready %}<button class="review-action review-action--primary" data-confirm-review>Start human review</button>{% else %}<button class="review-action review-action--primary" data-scroll-blockers>Resolve review blockers</button>{% endif %}</div></div>
+    </div>
+  </header>
+  <ol class="review-steps" aria-label="Document review progress">{% for step in review_state.steps %}<li class="{{ step.status }}">{{ step.label }}{% if step.status == 'blocked' %} · Blocked{% endif %}</li>{% endfor %}</ol>
+
+  <div class="review-layout">
+    <section class="review-document" aria-labelledby="review-document-title">
+      <header class="review-document-head"><div><h2 id="review-document-title">Original document</h2><span class="text-xs c-muted">{% if document %}{{ document.title }} · immutable version {{ document.version }}{% else %}No source document{% endif %}</span></div>{% if document %}<div class="review-document-tools"><input id="review-search" class="review-search" type="search" placeholder="Search clauses"><a class="review-action" href="{% url 'contracts:document_download' document.pk %}">Download</a></div>{% endif %}</header>
+      {% if document and document.file and review_state.preview_available %}<iframe class="review-frame" title="Original document {{ document.title }}" src="{% url 'contracts:document_download' document.pk %}"></iframe>{% elif document %}<div class="review-preview-error" role="alert"><div class="review-preview-error__inner"><svg class="w-8 h-8 mx-auto c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17h6m-6-4h6m-7 8h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg><h3>Document preview unavailable</h3><p>The document was uploaded successfully, but CLM One could not render the preview.</p><div class="review-preview-error__actions" id="document-preview-actions"><form method="post">{% csrf_token %}<input type="hidden" name="action" value="retry_preview"><button class="review-action">Retry preview</button></form><a class="review-action" href="{% url 'contracts:document_download' document.pk %}">Download original</a><a class="review-action" href="{% url 'contracts:document_update' document.pk %}">Replace document</a></div></div></div>{% else %}<div class="review-empty">No source document is attached to this review.</div>{% endif %}
+      <div class="review-document-text" aria-label="Clause citations">{% if spans %}{% for span in spans %}<article class="review-clause" id="review-clause-{{ span.pk }}" data-clause-text="{{ span.label_display }} {{ span.span_text|lower }}"><div class="review-clause-label"><span>{{ span.label_display }}</span><span class="badge-sm {% if span.risk_level == 'RISK' %}badge-red{% elif span.risk_level == 'CLEAR' %}badge-green{% else %}badge-yellow{% endif %}">{{ span.get_risk_level_display }}</span></div><blockquote>{{ span.span_text }}</blockquote>{% if span.source_template %}<p class="text-xs c-muted mt-2">Matched to {{ span.source_template.title }} · v{{ span.source_template.version }}</p>{% endif %}</article>{% endfor %}{% else %}<p class="review-empty">Clause citations will appear here once readable text is available.</p>{% endif %}</div>
+    </section>
+
+    <section class="review-panel" aria-label="Review findings and decisions">
+      <header class="review-panel-head"><h2>Review workspace</h2></header>
+      <div class="review-tabs" role="tablist"><button class="review-tab is-active" data-review-tab="overview">Overview</button><button class="review-tab" data-review-tab="findings">Findings</button><button class="review-tab" data-review-tab="clauses">Clauses</button><button class="review-tab" data-review-tab="questions">Questions</button><button class="review-tab" data-review-tab="obligations">Obligations</button><button class="review-tab" data-review-tab="activity">Activity</button></div>
+      <div class="review-tab-panel is-active" data-review-panel="overview">
+        {% if review_state.findings_ready %}
+          <div class="review-summary"><div><strong>{{ finding_counts.CRITICAL|default:0 }}</strong><span>Critical findings</span></div><div><strong>{{ finding_counts.HIGH|default:0 }}</strong><span>High findings</span></div><div><strong>{{ finding_counts.MEDIUM|default:0 }}</strong><span>Medium findings</span></div><div><strong>{{ findings|length }}</strong><span>Total findings</span></div></div>
+          <div class="review-governance"><strong>Review basis</strong><br>{{ review_run.governance_sources.selected_playbook_name|default:"Approved contract playbook" }}<br><br><strong>System governance</strong><br>AI processing is governed by the current CLM One Governance Charter.</div>
+        {% else %}
+          <h3 class="text-sm font-semibold c-ink mb-3">Review readiness</h3>
+          <div class="review-readiness">
+            <div class="review-readiness-row"><span>Document extraction</span><strong>{% if review_state.extraction_complete %}Complete{% else %}Incomplete{% endif %}</strong></div>
+            <div class="review-readiness-row"><span>Document preview</span><strong class="{% if review_state.preview_available %}{% else %}is-failed{% endif %}">{% if review_state.preview_available %}Available{% else %}Failed{% endif %}</strong></div>
+            <div class="review-readiness-row"><span>Classification</span><strong class="{% if review_state.classification_complete %}{% else %}is-warning{% endif %}">{% if review_state.classification_complete %}Complete{% else %}Needs confirmation{% endif %}</strong></div>
+            <div class="review-readiness-row"><span>Playbook</span><strong class="{% if review_state.playbook_confirmed %}{% else %}is-warning{% endif %}">{% if review_state.playbook_confirmed %}Matched{% else %}Not matched{% endif %}</strong></div>
+            <div class="review-readiness-row"><span>AI analysis</span><strong class="{% if review_state.analysis_completed %}{% else %}is-warning{% endif %}">{% if review_state.analysis_completed %}Complete{% else %}Not started{% endif %}</strong></div>
+          </div>
+          <section class="review-blockers" id="review-blockers" aria-labelledby="review-blockers-title">
+            <h3 class="text-sm font-semibold c-ink mt-3 mb-1" id="review-blockers-title">Review blockers</h3>
+            <div class="review-blocker"><div class="review-blocker-copy"><strong>Document preview</strong><span>Failed</span></div><a class="review-action" href="#document-preview-actions">Retry</a></div>
+            {% for blocker in review_state.blockers %}
+              <div class="review-blocker">
+                <div class="review-blocker-copy"><strong>{{ blocker.label }}</strong><span>{{ blocker.state }}</span></div>
+                {% if blocker.key == 'findings' %}
+                  {% if review_state.can_run_ai_review %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="run_ai_review"><button class="review-action">Run review</button></form>{% else %}<span class="text-xs c-muted">Resolve required information first</span>{% endif %}
+                {% else %}
+                  <details><summary>{{ blocker.action }}</summary>
+                    <form class="review-blocker-form" method="post">{% csrf_token %}
+                      {% if blocker.key == 'counterparty' %}<input type="hidden" name="action" value="confirm_counterparty"><label for="counterparty">Counterparty</label><input id="counterparty" name="counterparty" value="{{ contract.counterparty }}" required><button class="review-action">Confirm</button>
+                      {% elif blocker.key == 'contract_type' %}<input type="hidden" name="action" value="confirm_contract_type"><label for="contract-type">Contract type</label><select id="contract-type" name="contract_type" required><option value="">Select contract type</option>{% for value, label in contract_types %}{% if value != 'OTHER' %}<option value="{{ value }}">{{ label }}</option>{% endif %}{% endfor %}</select><button class="review-action">Confirm</button>
+                      {% elif blocker.key == 'governing_law' %}<input type="hidden" name="action" value="confirm_governing_law"><label for="governing-law">Governing law</label><input id="governing-law" name="governing_law" value="{{ contract.governing_law }}" required><button class="review-action">Confirm</button>
+                      {% elif blocker.key == 'value' %}<input type="hidden" name="action" value="confirm_value"><label for="contract-value">Contract value</label><input id="contract-value" name="value" type="number" min="0" step="0.01" value="{{ contract.value|default_if_none:'' }}" required><button class="review-action">Confirm</button>
+                      {% elif blocker.key == 'payment_terms' %}<input type="hidden" name="action" value="confirm_payment_terms"><label for="payment-terms">Payment terms</label><input id="payment-terms" name="payment_terms" value="{{ review_run.extracted_metadata.payment_terms }}" required><button class="review-action">Confirm</button>
+                      {% elif blocker.key == 'playbook' %}<input type="hidden" name="action" value="select_playbook"><label for="playbook">Approved playbook</label><select id="playbook" name="playbook_id" required><option value="">Select playbook</option>{% for playbook in playbooks %}<option value="{{ playbook.pk }}">{{ playbook.name }}</option>{% endfor %}</select><button class="review-action">Select playbook</button>
+                      {% endif %}
+                    </form>
+                  </details>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </section>
+          <div class="review-governance"><strong>Review basis</strong><br>No approved contract playbook matched. General contract analysis has not yet been completed.<br><br><strong>System governance</strong><br>AI processing is governed by the current CLM One Governance Charter.</div>
+        {% endif %}
+      </div>
+      <div class="review-tab-panel" data-review-panel="findings">{% if not review_state.findings_ready %}<div class="review-empty">Not reviewed. Findings will appear after the review blockers are resolved and AI analysis completes.</div>{% elif findings %}{% for finding in findings %}<article class="review-finding" data-finding-id="{{ finding.pk }}"><div class="review-finding-top"><div><h3><button class="review-action" data-jump-clause="{{ finding.source_span_id }}">{{ finding.title }}</button></h3><p class="review-finding-meta">{{ finding.get_severity_display }} · {{ finding.source_clause }}{% if finding.source_page %} · page {{ finding.source_page }}{% endif %} · {{ finding.confidence|floatformat:0 }}% confidence · {{ finding.get_status_display }}</p></div><span class="badge-sm {% if finding.severity == 'CRITICAL' or finding.severity == 'HIGH' %}badge-red{% elif finding.severity == 'MEDIUM' %}badge-yellow{% else %}badge-blue{% endif %}">{{ finding.get_severity_display }}</span></div><p class="review-finding-copy">{{ finding.explanation }}</p><div class="review-action-detail"><strong>Impact:</strong> {{ finding.business_legal_impact }}<br><strong>Approved position:</strong> {{ finding.approved_position|default:"No approved position matched" }}<br><strong>Fallback:</strong> {{ finding.acceptable_fallback|default:"No approved fallback available" }}<br><strong>Recommended action:</strong> {{ finding.recommended_action }}</div><div class="review-finding-actions"><button class="review-action review-action--primary" data-finding-action="accept">Accept finding</button><button class="review-action" data-finding-action="dismiss">Dismiss</button><button class="review-action" data-finding-action="resolve">Mark resolved</button><button class="review-action" data-finding-action="escalate">Escalate</button><button class="review-action" data-finding-action="request_information">Request information</button><button class="review-action" data-finding-action="create_exception">Create exception request</button></div><details class="review-action-detail"><summary>Edit assessment, redline, reviewer or comment</summary><textarea data-field="assessment" placeholder="Assessment">{{ finding.assessment }}</textarea><textarea data-field="redline" placeholder="Editable redline draft">{{ finding.redline_draft|default:finding.suggested_redline }}</textarea><select data-field="reviewer_id"><option value="">Assign reviewer</option>{% for reviewer in reviewers %}<option value="{{ reviewer.pk }}"{% if finding.assigned_reviewer_id == reviewer.pk %} selected{% endif %}>{{ reviewer.get_full_name|default:reviewer.username }}</option>{% endfor %}</select><textarea data-field="comment" placeholder="Comment">{{ finding.comment }}</textarea><div class="review-finding-actions"><button class="review-action" data-finding-action="edit_assessment">Save assessment</button><button class="review-action" data-finding-action="edit_redline">Save redline</button><button class="review-action" data-finding-action="accept_redline">Accept redline draft</button><button class="review-action" data-finding-action="assign">Assign</button><button class="review-action" data-finding-action="comment">Save comment</button></div></details></article>{% endfor %}{% else %}<div class="review-empty">No findings were generated by this completed AI review.</div>{% endif %}</div>
+      <div class="review-tab-panel" data-review-panel="clauses"><p class="text-sm c-muted">{{ spans|length }} cited clause{{ spans|length|pluralize }} are visible in the document panel. Select a finding to jump to its exact citation.</p></div>
+      <div class="review-tab-panel" data-review-panel="questions"><p class="text-sm c-muted">Questions and requests for information remain attached to the related finding and are auditable.</p></div>
+      <div class="review-tab-panel" data-review-panel="obligations"><p class="text-sm c-muted">Obligations identified through the governed review will appear in the contract’s obligations register after human confirmation.</p></div>
+      <div class="review-tab-panel" data-review-panel="activity"><div class="review-activity">{% for entry in activity %}<div class="review-activity-item">{{ entry.event_type|default:entry.get_action_display }}<small>{{ entry.timestamp|date:"M d, Y H:i" }}</small></div>{% empty %}<p class="review-empty">No activity yet.</p>{% endfor %}</div></div>
+    </section>
+  </div>
+</main>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var csrftoken = document.cookie.split('; ').find(function (row) { return row.indexOf('csrftoken=') === 0; });
+  csrftoken = csrftoken ? csrftoken.split('=')[1] : '';
+  document.querySelectorAll('[data-review-tab]').forEach(function (button) { button.addEventListener('click', function () { var tab = button.dataset.reviewTab; document.querySelectorAll('[data-review-tab]').forEach(function (item) { item.classList.toggle('is-active', item === button); }); document.querySelectorAll('[data-review-panel]').forEach(function (panel) { panel.classList.toggle('is-active', panel.dataset.reviewPanel === tab); }); }); });
+  document.querySelectorAll('[data-jump-clause]').forEach(function (button) { button.addEventListener('click', function () { var target = document.getElementById('review-clause-' + button.dataset.jumpClause); if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); target.style.background = 'var(--status-progress-bg)'; window.setTimeout(function () { target.style.background = ''; }, 1200); } }); });
+  var search = document.getElementById('review-search'); if (search) search.addEventListener('input', function () { var term = search.value.trim().toLowerCase(); document.querySelectorAll('[data-clause-text]').forEach(function (row) { row.hidden = term && row.dataset.clauseText.indexOf(term) === -1; }); });
+  document.querySelectorAll('[data-scroll-blockers]').forEach(function (button) { button.addEventListener('click', function () { var blockers = document.getElementById('review-blockers'); if (blockers) { blockers.scrollIntoView({ behavior: 'smooth', block: 'start' }); var firstAction = blockers.querySelector('summary, button, a, input, select'); if (firstAction) firstAction.focus({ preventScroll: true }); } }); });
+  document.querySelectorAll('[data-finding-action]').forEach(function (button) { button.addEventListener('click', function () { var row = button.closest('[data-finding-id]'); if (!row) return; var action = button.dataset.findingAction; var payload = { action: action }; ['assessment','redline','reviewer_id','comment'].forEach(function (field) { var input = row.querySelector('[data-field="' + field + '"]'); if (input) payload[field] = input.value; }); if (action === 'dismiss') { payload.dismissal_reason = window.prompt('Dismissal reason: ACCEPTED_BUSINESS_RISK, FALSE_POSITIVE, COVERED_ELSEWHERE, APPROVED_EXCEPTION, NOT_APPLICABLE, or OTHER', ''); if (payload.dismissal_reason === null) return; } fetch('{% url "contracts:contract_review_finding_action_api" contract.pk 0 %}'.replace('/0/action/', '/' + row.dataset.findingId + '/action/'), { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken}, body:JSON.stringify(payload) }).then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); }).then(function (result) { if (!result.ok) { window.alert(result.data.error || 'Could not record this review action.'); return; } window.location.reload(); }).catch(function () { window.alert('Could not record this review action.'); }); }); });
+  document.querySelectorAll('[data-confirm-review]').forEach(function (confirm) { confirm.addEventListener('click', function () { fetch('{% url "contracts:contract_review_confirm_api" contract.pk %}', { method:'POST', headers:{'X-CSRFToken':csrftoken} }).then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); }).then(function (result) { if (!result.ok) { window.alert(result.data.error || 'Could not start human review.'); return; } window.location.reload(); }); }); });
+})();
+</script>
+{% endblock %}

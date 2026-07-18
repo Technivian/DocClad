@@ -35,9 +35,9 @@ def approvals_body(html):
     never renders them).
 
     Anchored on the stable `id="approvals-root"` marker rather than a class
-    string — the class list on that element (.page-wrap/.page-wrap-fluid/
-    .approvals-page) is exactly what the shell-convergence tests exercise,
-    so this helper must not depend on its exact contents or order.
+    string — the class list on that element is the canonical list scaffold
+    plus the route marker, and shell-convergence tests exercise it directly.
+    This helper must not depend on its exact contents or order.
     """
     start = html.find('id="approvals-root"')
     end = html.find('id="djDebug"')
@@ -435,9 +435,8 @@ class ApprovalsCopyQualityTests(TestCase):
 
 
 class ApprovalsShellConvergenceTests(TestCase):
-    """Approvals must use the shared shell (.page-wrap/.page-wrap-fluid), not
-    a fourth private page-recipe alongside .CLMOneDashboard/.page-wrap/the
-    former Privacy grid — the whole point of this convergence block."""
+    """Approvals must use the canonical list scaffold, not a private page
+    recipe or a legacy page-wrap/architecture-header composition."""
 
     def setUp(self):
         self.organization = Organization.objects.create(name='Shell Firm', slug='approvals-shell-firm')
@@ -446,22 +445,22 @@ class ApprovalsShellConvergenceTests(TestCase):
         self.client = Client()
         self.client.login(username='shell_user', password='testpass123')
 
-    def test_uses_shared_page_wrap_shell(self):
+    def test_uses_shared_list_scaffold(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         html = response.content.decode()
-        self.assertIn('page-wrap page-wrap-fluid approvals-page', html)
+        self.assertIn('dc-ds-page--wide dc-ds-page-flow dc-ds-list-page approvals-page', html)
 
     def test_no_longer_defines_its_own_private_shell_dimensions(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         html = response.content.decode()
         # The old duplicate shell hardcoded these exact values locally —
-        # asserting they're gone proves the page no longer competes with
-        # .page-wrap/.CLMOneDashboard for "what is the page shell".
+        # asserting they're gone proves the page no longer competes with a
+        # private recipe for "what is the page shell".
         self.assertNotIn('.approvals-page { max-width', html)
         self.assertNotIn('max-width: 1480px', html)
 
-    def test_uses_shared_page_header_pattern(self):
+    def test_uses_shared_list_header_pattern(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         html = response.content.decode()
-        self.assertIn('arch-header', html)
-        self.assertIn('arch-title', html)
+        self.assertIn('dc-ds-list-header', html)
+        self.assertIn('topbar-page-title">Approvals', html)

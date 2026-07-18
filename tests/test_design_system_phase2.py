@@ -32,6 +32,12 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         cls.root = Path(settings.BASE_DIR)
         cls.theme = cls.root / 'theme'
         cls.base_html = (cls.theme / 'templates' / 'base.html').read_text()
+        cls.global_shell_css = '\n'.join(
+            source.read_text()
+            for source in sorted(
+                (cls.theme / 'static_src' / 'src' / 'global-shell').glob('*.css')
+            )
+        )
         cls.components_css = (
             cls.theme / 'static_src' / 'src' / 'components.css'
         ).read_text()
@@ -57,7 +63,7 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
             )
 
     def test_every_semantic_name_maps_to_a_defined_legacy_class(self):
-        defined_legacy = set(re.findall(r'\.(badge-[a-z]+)\s*\{', self.base_html))
+        defined_legacy = set(re.findall(r'\.(badge-[a-z]+)\s*\{', self.global_shell_css))
         for semantic, legacy_class in LEGACY_BADGE_CLASS.items():
             self.assertIn(
                 legacy_class, defined_legacy,
@@ -74,8 +80,8 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
 
     def test_legacy_badge_colours_resolve_through_canonical_status_tokens(self):
         for legacy_class in ('badge-green', 'badge-blue', 'badge-yellow', 'badge-red', 'badge-purple', 'badge-gray'):
-            match = re.search(r'\.' + legacy_class + r'\s*\{([^}]*)\}', self.base_html)
-            self.assertIsNotNone(match, f'{legacy_class} not found in base.html')
+            match = re.search(r'\.' + legacy_class + r'\s*\{([^}]*)\}', self.global_shell_css)
+            self.assertIsNotNone(match, f'{legacy_class} not found in global shell CSS')
             rule_body = match.group(1)
             self.assertIn('var(--status-', rule_body, f'{legacy_class} is not token-backed: {rule_body!r}')
             self.assertNotRegex(rule_body, r'#[0-9A-Fa-f]{3,6}', f'{legacy_class} still hardcodes a hex colour')
@@ -91,15 +97,15 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         self.assertIn('var(--status-neutral', match.group(1))
 
     def test_no_orphaned_selectorless_declaration_block_in_base_html(self):
-        # Regression guard for the malformed CSS fragment removed alongside
-        # .badge-expiring (a declaration block with no preceding selector).
-        self.assertNotIn('background: rgba(196,145,51,0.14);', self.base_html)
+        # Regression guard for the malformed selector-less declaration block
+        # removed from the legacy shell compatibility source.
+        self.assertNotIn('background: rgba(196,145,51,0.14);', self.global_shell_css)
 
     # -- compatibility: legacy classes still present, still used ------------
 
     def test_legacy_badge_classes_still_defined(self):
         for legacy_class in ('badge-sm', 'badge-green', 'badge-blue', 'badge-yellow', 'badge-red', 'badge-purple', 'badge-gray'):
-            self.assertIn(f'.{legacy_class}', self.base_html, f'{legacy_class} was removed from base.html')
+            self.assertIn(f'.{legacy_class}', self.global_shell_css, f'{legacy_class} was removed from global shell CSS')
 
     def test_legacy_badge_classes_still_have_repository_consumers(self):
         # Guardrail: do not let a legacy class quietly reach zero usage and
@@ -113,11 +119,11 @@ class DesignSystemPhaseTwoTests(SimpleTestCase):
         self.assertGreater(consumers, 0, 'legacy .badge-* classes have zero remaining consumers')
 
     def test_empty_state_and_wq_empty_still_defined(self):
-        self.assertIn('.empty-state {', self.base_html)
-        self.assertIn('.wq-empty {', self.base_html)
+        self.assertIn('.empty-state {', self.global_shell_css)
+        self.assertIn('.wq-empty {', self.global_shell_css)
 
     def test_wq_empty_is_token_backed(self):
-        match = re.search(r'\.wq-empty\s*\{([^}]*)\}', self.base_html)
+        match = re.search(r'\.wq-empty\s*\{([^}]*)\}', self.global_shell_css)
         self.assertIsNotNone(match)
         self.assertIn('var(--text-muted)', match.group(1))
 

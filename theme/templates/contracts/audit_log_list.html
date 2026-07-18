@@ -82,7 +82,7 @@
                     <td class="px-5 py-3 tbl-td">{{ log.timestamp|date:"M d, Y H:i" }}</td>
                     <td class="px-5 py-3 tbl-td">{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}{{ log.get_actor_type_display }}{% endif %}</td>
                     <td class="px-5 py-3">
-                        <span class="badge-sm {% if log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' %}badge-blue{% elif log.action == 'DELETE' %}badge-red{% else %}badge-gray{% endif %}">{{ log.get_action_display }}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if log.action == 'CREATE' %}badge-green{% elif log.action == 'UPDATE' %}badge-blue{% elif log.action == 'DELETE' %}badge-red{% else %}badge-gray{% endif %}">{{ log.get_action_display }}</span>
                     </td>
                     <td class="px-5 py-3 tbl-td">{{ log.model_name|object_type_label }}</td>
                     <td class="px-5 py-3 tbl-td">{{ log.object_repr|brand_name|truncatechars:50 }}</td>
@@ -99,9 +99,9 @@
 
     {% if is_paginated %}
     <div class="mt-4 flex justify-center gap-2">
-        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn-ghost text-sm">Previous</a>{% endif %}
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="dc-ds-button dc-ds-button--quiet btn-ghost text-sm">Previous</a>{% endif %}
         <span class="px-3 py-1 text-sm c-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn-ghost text-sm">Next</a>{% endif %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="dc-ds-button dc-ds-button--quiet btn-ghost text-sm">Next</a>{% endif %}
     </div>
     {% endif %}
 </div>

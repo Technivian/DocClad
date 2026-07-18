@@ -19,7 +19,7 @@
     <div class="page-actions">
       <form method="post" action="{% url 'contracts:mark_all_notifications_read' %}">
         {% csrf_token %}
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border btn-ghost">Mark all as read</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Mark all as read</button>
       </form>
     </div>
     {% endif %}

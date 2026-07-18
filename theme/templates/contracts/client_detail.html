@@ -1,19 +1,28 @@
 {% extends "base.html" %}
 {% block title %}{{ client.name }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ client.name }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ client.get_client_type_display }} &middot; {{ client.get_status_display }}{% if client.industry %} &middot; {{ client.industry }}{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:client_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to clients" title="Back to clients">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">{{ client.name }}</h1>
-      <p class="page-subtitle c-muted">{{ client.get_client_type_display }} &middot; {{ client.get_status_display }}{% if client.industry %} &middot; {{ client.industry }}{% endif %}</p>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+  <header class="dc-ds-page-hero">
+    <div class="dc-ds-page-hero__context">
+      <h1 class="dc-ds-title">{{ client.name }}</h1>
+      <p class="dc-ds-subtitle">{{ client.get_client_type_display }} &middot; {{ client.get_status_display }}{% if client.industry %} &middot; {{ client.industry }}{% endif %}</p>
     </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">New Matter</a>
-      <a href="{% url 'contracts:client_update' client.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border btn-ghost">Edit</a>
+    <div class="dc-ds-actions">
+      <a href="{% url 'contracts:matter_create' %}?client={{ client.pk }}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary btn-primary-grad">New Matter</a>
+      <a href="{% url 'contracts:client_update' client.pk %}" class="inline-flex items-center px-3 py-2 rounded-lg text-sm border dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
     </div>
-  </div>
+  </header>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <div class="dc-ds-record-sections">
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <!-- Contact Info -->
     <div class="panel panel-inner">
@@ -49,7 +58,7 @@
   </div>
 
   <!-- Matters -->
-  <div class="panel mb-6">
+  <div class="panel dc-ds-record-section">
     <div class="panel-head">
       <h2 class="panel-title">Matters</h2>
     </div>
@@ -60,7 +69,7 @@
           <div class="text-sm font-medium">{{ matter.matter_number }} - {{ matter.title }}</div>
           <div class="text-xs c-muted">{{ matter.get_practice_area_display }}</div>
         </div>
-        <span class="badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
+        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if matter.status == 'ACTIVE' %}badge-green{% else %}badge-gray{% endif %}">{{ matter.get_status_display }}</span>
       </a>
       {% empty %}
       <div class="empty-state">No matters for this client.</div>
@@ -70,11 +79,12 @@
 
   <!-- Notes -->
   {% if client.notes %}
-  <div class="panel panel-inner">
+  <div class="panel panel-inner dc-ds-record-section">
     <h3 class="panel-title mb-3">Notes</h3>
     <p class="text-sm">{{ client.notes }}</p>
   </div>
   {% endif %}
+  </div>
 
 </div>
 {% endblock %}

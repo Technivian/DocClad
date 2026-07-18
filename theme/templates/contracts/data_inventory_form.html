@@ -1,32 +1,17 @@
 {% extends "base.html" %}
 {% block title %}{{ object|yesno:"Edit,New" }} Data Inventory Record – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Data Inventory Record{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:data_inventory_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to data inventory" title="Back to data inventory">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
-<div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{{ object|yesno:"Edit,New" }} Data Inventory Record</h1>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'contracts:data_inventory_list' %}" class="btn-ghost">&larr; Back</a>
-        </div>
-    </div>
-    <div class="panel">
-        <div class="panel-inner">
-            <form method="post" enctype="multipart/form-data">
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
+            <form method="post" enctype="multipart/form-data" class="panel panel-inner dc-ds-surface dc-ds-record-form">
                 {% csrf_token %}
                 {% for field in form %}
-                <div class="mb-4">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-                    {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
-                </div>
+                {% include "design_system/form_field.html" with field=field class_name="mb-4" preserve_help=True %}
                 {% endfor %}
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="submit" class="btn-primary-grad text-white">Save</button>
+                <div class="dc-ds-form-actions">
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Save</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
+</div></div>
 {% endblock %}

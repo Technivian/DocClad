@@ -14,24 +14,24 @@
             </p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:signature_request_list' %}" class="btn-ghost">Back to List</a>
-            <a href="{{ packet_detail_url }}" class="btn-ghost">Packet Workspace</a>
-            <a href="{% url 'contracts:signature_request_update' object.pk %}" class="btn-primary-grad text-white">Edit</a>
+            <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Back to List</a>
+            <a href="{{ packet_detail_url }}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Packet Workspace</a>
+            <a href="{% url 'contracts:signature_request_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">Edit</a>
         </div>
     </div>
 
     <div class="panel mb-6">
         <div class="panel-inner">
             <div class="flex items-center gap-2 flex-wrap">
-                <span class="badge-sm {% if object.status == 'PENDING' %}badge-yellow{% else %}badge-gray{% endif %}">Queued</span>
+                <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if object.status == 'PENDING' %}badge-yellow{% else %}badge-gray{% endif %}">Queued</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if object.status == 'SENT' or object.sent_at %}badge-blue{% else %}badge-gray{% endif %}">Sent</span>
+                <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if object.status == 'SENT' or object.sent_at %}badge-blue{% else %}badge-gray{% endif %}">Sent</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if object.status == 'VIEWED' or object.viewed_at %}badge-purple{% else %}badge-gray{% endif %}">Viewed</span>
+                <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if object.status == 'VIEWED' or object.viewed_at %}badge-purple{% else %}badge-gray{% endif %}">Viewed</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if object.status == 'SIGNED' or object.signed_at %}badge-green{% else %}badge-gray{% endif %}">Signed</span>
+                <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if object.status == 'SIGNED' or object.signed_at %}badge-green{% else %}badge-gray{% endif %}">Signed</span>
                 <span class="c-muted">→</span>
-                <span class="badge-sm {% if object.status == 'DECLINED' or object.declined_at %}badge-red{% else %}badge-gray{% endif %}">Declined</span>
+                <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if object.status == 'DECLINED' or object.declined_at %}badge-red{% else %}badge-gray{% endif %}">Declined</span>
             </div>
         </div>
     </div>
@@ -127,7 +127,7 @@
                     {% if object.status == 'PENDING' %}
                     <form method="post" action="{% url 'contracts:signature_request_send' object.pk %}" class="mb-4">
                         {% csrf_token %}
-                        <button type="submit" class="btn-primary-grad text-white w-full text-left">
+                        <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white w-full text-left">
                             Send for signature
                         </button>
                     </form>
@@ -135,12 +135,20 @@
                     {% if object.signing_url %}
                     <div class="detail-row mb-3"><span class="detail-label">Signing link</span><a class="c-primary truncate" href="{{ object.signing_url }}">{{ object.signing_url }}</a></div>
                     {% endif %}
+                    {% if object.esign_provider == 'documenso' and object.external_id and object.status != 'SIGNED' and object.status != 'DECLINED' and object.status != 'EXPIRED' and object.status != 'CANCELLED' %}
+                    <form method="post" action="{% url 'contracts:signature_request_refresh' object.pk %}" class="mb-4">
+                        {% csrf_token %}
+                        <button type="submit" class="dc-ds-button dc-ds-button--quiet btn-ghost w-full text-left">
+                            Refresh signing status
+                        </button>
+                    </form>
+                    {% endif %}
                     {% if available_transitions %}
                     <div class="space-y-3">
                         {% for transition in available_transitions %}
                         <form method="post" action="{% url 'contracts:signature_request_transition' object.pk transition.value %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn-primary-grad text-white w-full text-left">
+                            <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white w-full text-left">
                                 Mark as {{ transition.label }}
                             </button>
                         </form>
@@ -153,7 +161,7 @@
                     {% if needs_follow_up and can_send_reminder %}
                     <form method="post" action="{% url 'contracts:signature_request_send_reminder' object.pk %}" class="mt-4">
                         {% csrf_token %}
-                        <button type="submit" class="btn-ghost w-full">Send reminder</button>
+                        <button type="submit" class="dc-ds-button dc-ds-button--quiet btn-ghost w-full">Send reminder</button>
                     </form>
                     {% endif %}
                 </div>
@@ -186,7 +194,7 @@
                     <span class="panel-title">Packet Snapshot</span>
                 </div>
                 <div class="panel-inner detail-stack text-sm">
-                    <div class="detail-row"><span class="detail-label">Packet status</span><span class="badge-sm {% if packet_summary.packet_status == 'SIGNED' %}badge-green{% elif packet_summary.packet_status == 'DECLINED' or packet_summary.packet_status == 'EXPIRED' or packet_summary.packet_status == 'CANCELLED' %}badge-red{% elif packet_summary.packet_status == 'VIEWED' %}badge-purple{% elif packet_summary.packet_status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ packet_summary.packet_status_display }}</span></div>
+                    <div class="detail-row"><span class="detail-label">Packet status</span><span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if packet_summary.packet_status == 'SIGNED' %}badge-green{% elif packet_summary.packet_status == 'DECLINED' or packet_summary.packet_status == 'EXPIRED' or packet_summary.packet_status == 'CANCELLED' %}badge-red{% elif packet_summary.packet_status == 'VIEWED' %}badge-purple{% elif packet_summary.packet_status == 'SENT' %}badge-blue{% else %}badge-yellow{% endif %}">{{ packet_summary.packet_status_display }}</span></div>
                     <div class="detail-row"><span class="detail-label">Completion</span><span class="detail-value">{{ packet_summary.completion_percent }}%</span></div>
                     <div class="detail-row"><span class="detail-label">Current signer</span><span class="detail-value">{{ packet_summary.current_signer_name|default:"—" }}</span></div>
                     <div class="detail-row"><span class="detail-label">Provider</span><span class="detail-value">{{ packet_summary.provider_label }}</span></div>

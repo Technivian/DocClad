@@ -10,9 +10,6 @@
 .arch-workspace-draft { min-width: 0; }
 .nda-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
 .nda-head-copy { display: flex; flex-direction: column; gap: 6px; }
-.nda-back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 700; text-decoration: none; }
-.nda-back-link:hover { color: var(--text-primary); }
-.nda-back-link svg { width: 15px; height: 15px; }
 .nda-title { margin: 0; color: var(--text-primary); font-size: 30px; line-height: 1.06; font-weight: 760; letter-spacing: -0.01em; }
 .nda-subtitle { margin: 0; max-width: 760px; color: var(--text-muted); font-size: 14px; line-height: 1.45; }
 .nda-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -106,10 +103,6 @@
     {% csrf_token %}
     <div class="nda-page-head">
       <div class="nda-head-copy">
-        <a href="{% url 'contracts:contract_template_picker' %}" class="nda-back-link">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-          Contract type
-        </a>
         <h1 class="nda-title">New NDA Draft</h1>
         <p class="nda-subtitle">AI-assisted drafting from approved templates and playbooks.</p>
       </div>

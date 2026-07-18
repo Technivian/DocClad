@@ -45,10 +45,10 @@
         {% csrf_token %}
         {% if policy.ai_features_enabled %}
           <input type="hidden" name="ai_features_enabled" value="0">
-          <button type="submit" class="btn-danger">Disable AI features for this organisation</button>
+          <button type="submit" class="dc-ds-button dc-ds-button--danger btn-danger">Disable AI features for this organisation</button>
         {% else %}
           <input type="hidden" name="ai_features_enabled" value="1">
-          <button type="submit" class="btn-primary-grad">Enable AI features for this organisation</button>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Enable AI features for this organisation</button>
         {% endif %}
       </form>
     {% else %}

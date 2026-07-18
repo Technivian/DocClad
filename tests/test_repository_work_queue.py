@@ -138,10 +138,13 @@ class RepositoryApiRowShapeTests(TestCase):
         payload = json.loads(response.content)
         row = next(c for c in payload['contracts'] if c['id'] == str(contract.id))
 
-        # WorkQueue-aligned fields are present and server-computed.
+        # WorkQueue-aligned fields are present and server-computed. Badge
+        # presentation is expressed through canonical semantic tones.
         self.assertIn('stage_steps', row)
         self.assertTrue(row['stage_steps'])
-        self.assertEqual(row['status_badge_class'], 'badge-blue')
+        self.assertEqual(row['status_badge_tone'], 'progress')
+        self.assertEqual(row['stage_badge_tone'], 'progress')
+        self.assertNotIn('status_badge_class', row)
         self.assertEqual(row['assignee_name'], self.user.get_full_name() or self.user.username)
         self.assertIsNotNone(row['latest_activity_text'])
         self.assertIn('updated', row['latest_activity_text'].lower())

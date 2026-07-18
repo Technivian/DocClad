@@ -9,20 +9,27 @@ of raw enums/ISO timestamps/model names.
 import re
 
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client as TestClient
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from contracts.middleware import log_action
 from contracts.models import (
     ApprovalRequest,
     AuditLog,
+    ClauseTemplate,
+    ClauseUsageEvent,
     Contract,
+    CounterpartyCollaborationItem,
+    CounterpartyCollaborationParticipant,
     Deadline,
     Document,
     LegalTask,
     Organization,
     OrganizationMembership,
+    NegotiationThread,
     RiskLog,
     SignatureRequest,
 )
@@ -64,16 +71,16 @@ class ContractDetailShellTests(TestCase):
         self.assertContains(response, 'arch-header')
         self.assertContains(response, 'arch-title')
 
-    def test_uses_compact_document_summary_and_inline_note_composer(self):
+    def test_uses_document_workspace_surface_and_inline_note_composer(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
-        self.assertContains(response, 'contract-document-summary')
+        self.assertContains(response, 'contract-document-hero')
         self.assertContains(response, 'data-open-note-dialog')
         self.assertContains(response, 'id="contract-note-dialog"')
 
-    def test_approved_tab_labels_present(self):
+    def test_contract_workspace_sections_present(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        for label in ('Overview', 'Documents', 'Workflow', 'Activity'):
+        for label in ('Next action &amp; blockers', 'AI review summary', 'Open findings', 'Approval summary', 'Documents &amp; versions', 'Internal activity'):
             self.assertIn(label, body)
 
     def test_banned_jargon_is_absent(self):
@@ -82,17 +89,17 @@ class ContractDetailShellTests(TestCase):
         for phrase in BANNED_JARGON:
             self.assertNotIn(phrase, body, f'Found banned jargon "{phrase}" in Contract Detail body')
 
-    def test_compliance_tab_absent_when_no_risks_exist(self):
+    def test_open_findings_section_uses_empty_state_when_no_risks_exist(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertNotIn('data-tab="compliance"', body)
+        self.assertIn('No unresolved risk findings are recorded', body)
 
-    def test_compliance_tab_present_when_risks_exist(self):
+    def test_open_findings_section_shows_linked_risks(self):
         RiskLog.objects.create(title='Linked risk', description='d', contract=self.contract, created_by=self.user)
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertIn('data-tab="compliance"', body)
-        self.assertIn('Compliance', body)
+        self.assertIn('Open findings', body)
+        self.assertIn('Linked risk', body)
 
     def test_agreement_family_shows_governing_and_linked_contract_records(self):
         order_confirmation = Contract.objects.create(
@@ -108,7 +115,7 @@ class ContractDetailShellTests(TestCase):
             reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
         )
         parent_body = page_body(parent_response.content.decode())
-        self.assertIn('Agreement family', parent_body)
+        self.assertIn('Related records', parent_body)
         self.assertIn(order_confirmation.title, parent_body)
         self.assertIn('Purchase Order', parent_body)
 
@@ -142,8 +149,73 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.assertIn('Northwind Logistics LLC', body)
         self.assertIn('$125,000.00', body)
         self.assertIn('High risk', body)
-        self.assertIn('stage-dot-current', body)
+        self.assertIn('contract-command-strip', body)
+        self.assertIn('Current stage', body)
         self.assertIn('Negotiation', body)
+
+    def test_header_uses_command_summary_without_metadata_grid(self):
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('aria-label="Contract command summary"', body)
+        for label in ('Current stage', 'Next action', 'Owner', 'Review status', 'Approval status', 'Expiry / renewal'):
+            self.assertIn(f'>{label}</span>', body)
+
+    def test_phase_one_summary_shows_paper_source_and_workflow_checklist(self):
+        reviewer = User.objects.create_user(username='cdetail_route_reviewer', password='testpass123')
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=reviewer, role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        self.contract.paper_source = Contract.PaperSource.OUR_PAPER
+        self.contract.save(update_fields=['paper_source', 'updated_at'])
+        ApprovalRequest.objects.create(
+            organization=self.organization,
+            contract=self.contract,
+            approval_step='LEGAL',
+            status=ApprovalRequest.Status.PENDING,
+            assigned_to=reviewer,
+        )
+
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('Workflow checklist', body)
+        self.assertIn('Record basics', body)
+        self.assertIn('Paper source', body)
+        self.assertIn('Our paper', body)
+        self.assertIn('Approval summary', body)
+        self.assertIn('0 of 1 approved', body)
+        self.assertIn('Add approver', body)
+        self.assertIn(reverse('contracts:approval_request_create') + f'?contract={self.contract.pk}', body)
+
+    def test_phase_one_summary_shows_playbook_usage_summary(self):
+        clause = ClauseTemplate.objects.create(
+            organization=self.organization,
+            title='Confidentiality',
+            content='Approved confidentiality text.',
+            is_approved=True,
+            created_by=self.owner,
+        )
+        ClauseUsageEvent.objects.create(
+            organization=self.organization,
+            clause=clause,
+            contract=self.contract,
+            action=ClauseUsageEvent.Action.ADDED,
+            performed_by=self.owner,
+        )
+        ClauseUsageEvent.objects.create(
+            organization=self.organization,
+            clause=clause,
+            contract=self.contract,
+            action=ClauseUsageEvent.Action.ACCEPTED,
+            performed_by=self.owner,
+        )
+
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('Playbook usage', body)
+        self.assertIn('1 approved clause used across 2 recorded events.', body)
+        self.assertIn('Approved clauses used', body)
+        self.assertIn('Confidentiality', body)
+        self.assertIn('2 uses', body)
 
     def test_header_shows_owner_via_assignee_chip(self):
         Deadline.objects.create(
@@ -199,6 +271,14 @@ class ContractDetailActionsTests(TestCase):
         self.assertIn(reverse('contracts:signature_request_create'), body)
         self.assertIn('Prepare signature request', body)
 
+    def test_add_approver_link_prefills_the_contract(self):
+        response = self.client.get(
+            reverse('contracts:approval_request_create'),
+            {'contract': self.contract.pk},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['form'].initial.get('contract'), self.contract.pk)
+
     def test_grounded_check_endpoint_still_wired(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
@@ -221,6 +301,109 @@ class ContractDetailActionsTests(TestCase):
         self.assertEqual(detail.context['grounded_check']['label'], 'Current')
 
 
+class CounterpartyCollaborationTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='External Firm', slug='external-firm')
+        self.owner = User.objects.create_user(
+            username='external_owner', password='testpass123', email='owner@firm.test',
+        )
+        OrganizationMembership.objects.create(
+            organization=self.organization, user=self.owner,
+            role=OrganizationMembership.Role.MEMBER, is_active=True,
+        )
+        self.contract = Contract.objects.create(
+            organization=self.organization, title='External Collaboration Agreement',
+            counterparty='Northwind', created_by=self.owner,
+        )
+        self.client = TestClient()
+        self.client.login(username='external_owner', password='testpass123')
+
+    def test_invitation_is_contract_scoped_and_visible_in_record_shell(self):
+        response = self.client.post(
+            reverse('contracts:counterparty_collaboration_invite', kwargs={'pk': self.contract.pk}),
+            {
+                'name': 'Taylor Counterparty', 'email': 'taylor@northwind.test',
+                'can_view_documents': 'on', 'can_comment': 'on',
+            },
+        )
+        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        participant = CounterpartyCollaborationParticipant.objects.get(contract=self.contract)
+        self.assertEqual(participant.organization, self.organization)
+        self.assertTrue(participant.can_view_documents)
+        self.assertTrue(participant.can_comment)
+        self.assertFalse(participant.can_upload_revisions)
+        detail = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        self.assertContains(detail, 'Counterparty collaboration')
+        self.assertContains(detail, participant.email)
+        self.assertContains(detail, 'Invite counterparty')
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            event_type='counterparty_collaboration.invited', object_id=participant.pk,
+        ).exists())
+
+    def test_portal_requires_invited_email_then_shows_only_explicitly_shared_documents(self):
+        participant = CounterpartyCollaborationParticipant.objects.create(
+            organization=self.organization, contract=self.contract, email='taylor@northwind.test',
+            can_view_documents=True, can_comment=True,
+        )
+        shared = Document.objects.create(
+            organization=self.organization, contract=self.contract, title='Shared draft',
+            share_with_counterparty=True,
+        )
+        Document.objects.create(
+            organization=self.organization, contract=self.contract, title='Internal legal memo',
+            share_with_counterparty=False,
+        )
+        Document.objects.create(
+            organization=self.organization, contract=self.contract, title='Privileged negotiation strategy',
+            share_with_counterparty=True, is_privileged=True,
+        )
+        portal_url = reverse('contracts:counterparty_collaboration_portal', kwargs={'token': participant.token})
+        access = self.client.get(portal_url)
+        self.assertContains(access, 'Confirm your email')
+        denied = self.client.post(portal_url, {'email': 'wrong@northwind.test'})
+        self.assertEqual(denied.status_code, 403)
+        entered = self.client.post(portal_url, {'email': participant.email})
+        self.assertRedirects(entered, portal_url)
+        portal = self.client.get(portal_url)
+        self.assertContains(portal, shared.title)
+        self.assertNotContains(portal, 'Internal legal memo')
+        self.assertNotContains(portal, 'Privileged negotiation strategy')
+        participant.refresh_from_db()
+        self.assertEqual(participant.status, CounterpartyCollaborationParticipant.Status.ACTIVE)
+        self.assertIsNotNone(participant.accepted_at)
+
+    def test_portal_comment_and_revocation_are_audited_and_revocation_ends_access(self):
+        participant = CounterpartyCollaborationParticipant.objects.create(
+            organization=self.organization, contract=self.contract, email='taylor@northwind.test',
+            can_comment=True,
+        )
+        portal_url = reverse('contracts:counterparty_collaboration_portal', kwargs={'token': participant.token})
+        self.client.post(portal_url, {'email': participant.email})
+        comment_response = self.client.post(
+            reverse('contracts:counterparty_collaboration_add_comment', kwargs={'token': participant.token}),
+            {'content': 'Please clarify the limitation of liability.'},
+        )
+        self.assertRedirects(comment_response, portal_url)
+        item = CounterpartyCollaborationItem.objects.get(contract=self.contract)
+        self.assertEqual(item.kind, CounterpartyCollaborationItem.Kind.COMMENT)
+        self.assertEqual(item.participant, participant)
+        self.assertTrue(AuditLog.objects.filter(
+            organization=self.organization,
+            event_type='counterparty_collaboration.comment_added',
+        ).exists())
+
+        revoke_response = self.client.post(
+            reverse('contracts:counterparty_collaboration_revoke', kwargs={
+                'pk': self.contract.pk, 'participant_id': participant.pk,
+            }),
+        )
+        self.assertRedirects(revoke_response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        participant.refresh_from_db()
+        self.assertEqual(participant.status, CounterpartyCollaborationParticipant.Status.REVOKED)
+        self.assertEqual(self.client.get(portal_url).status_code, 404)
+
+
 class ContractDetailDocumentsTabTests(TestCase):
     def setUp(self):
         self.organization = Organization.objects.create(name='Docs Firm', slug='cdetail-docs-firm')
@@ -233,11 +416,34 @@ class ContractDetailDocumentsTabTests(TestCase):
             status=Contract.Status.ACTIVE, created_by=self.uploader,
         )
 
-    def test_documents_tab_shows_empty_state_without_giant_panel(self):
+    def test_documents_surface_shows_empty_state_without_giant_panel(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertIn('No documents attached yet.', body)
-        self.assertIn('No document has been generated yet.', body)
+        self.assertIn('No document is attached.', body)
+        self.assertIn('Attach the source document', body)
+
+    def test_attach_document_is_an_in_page_dialog(self):
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+
+        self.assertIn('id="contract-attach-dialog"', body)
+        self.assertIn('data-open-attach-dialog', body)
+        self.assertNotIn(reverse('contracts:document_create'), body)
+
+    def test_attaching_a_document_returns_to_this_contract(self):
+        response = self.client.post(
+            reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
+            {
+                'title': 'Attached agreement',
+                'document_type': Document.DocType.CONTRACT,
+                'file': SimpleUploadedFile('attached-agreement.txt', b'contract text', content_type='text/plain'),
+            },
+        )
+
+        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        document = Document.objects.get(title='Attached agreement')
+        self.assertEqual(document.contract, self.contract)
+        self.assertEqual(document.uploaded_by, self.uploader)
 
     def test_documents_tab_shows_uploaded_document_fields(self):
         Document.objects.create(
@@ -248,8 +454,17 @@ class ContractDetailDocumentsTabTests(TestCase):
         body = page_body(response.content.decode())
         self.assertIn('MSA Final', body)
         self.assertIn('Contract Document', body)
-        self.assertIn('v2', body)
+        self.assertIn('Version 2', body)
         self.assertIn('Casey', body)
+
+    def test_workspace_uses_command_strip_and_document_surface(self):
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('contract-command-strip', body)
+        self.assertIn('Current stage', body)
+        self.assertIn('Next action', body)
+        self.assertIn('Review status', body)
+        self.assertIn('contract-document-hero', body)
 
 
 class ContractDetailWorkflowTabTests(TestCase):
@@ -266,12 +481,46 @@ class ContractDetailWorkflowTabTests(TestCase):
             status=Contract.Status.PENDING, created_by=self.creator,
         )
 
-    def test_workflow_tab_shows_empty_states_when_nothing_exists(self):
+    def test_required_approvals_shows_empty_state_when_nothing_exists(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertIn('No approvals requested for this contract yet.', body)
-        self.assertIn('No signature requests for this contract yet.', body)
-        self.assertIn('No tasks linked to this contract yet.', body)
+        self.assertIn('Approval summary', body)
+        self.assertIn('No approvers have been added yet.', body)
+        self.assertIn('Add approver', body)
+
+    def test_approval_chain_can_be_reordered(self):
+        editor = User.objects.create_user(username='cdetail_wf_editor', password='testpass123')
+        reviewer_b = User.objects.create_user(username='cdetail_wf_reviewer_b', password='testpass123')
+        reviewer_c = User.objects.create_user(username='cdetail_wf_reviewer_c', password='testpass123')
+        OrganizationMembership.objects.create(organization=self.organization, user=editor, role=OrganizationMembership.Role.OWNER, is_active=True)
+        OrganizationMembership.objects.create(organization=self.organization, user=reviewer_b, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        OrganizationMembership.objects.create(organization=self.organization, user=reviewer_c, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        approval_a = ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract, approval_step='LEGAL',
+            status=ApprovalRequest.Status.PENDING, assigned_to=self.assignee, sort_order=10,
+        )
+        approval_b = ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract, approval_step='FINANCE',
+            status=ApprovalRequest.Status.PENDING, assigned_to=reviewer_b, sort_order=20,
+        )
+        approval_c = ApprovalRequest.objects.create(
+            organization=self.organization, contract=self.contract, approval_step='EXECUTIVE',
+            status=ApprovalRequest.Status.PENDING, assigned_to=reviewer_c, sort_order=30,
+        )
+
+        editor_client = TestClient()
+        self.assertTrue(editor_client.login(username='cdetail_wf_editor', password='testpass123'))
+
+        response = editor_client.post(
+            reverse('contracts:contract_approval_chain_reorder', kwargs={'pk': self.contract.pk, 'approval_id': approval_c.pk}),
+            {'direction': 'up'},
+        )
+        self.assertRedirects(response, reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        ordered_steps = list(
+            ApprovalRequest.objects.filter(contract=self.contract).order_by('sort_order', 'created_at', 'pk').values_list('approval_step', flat=True)
+        )
+        self.assertEqual(ordered_steps, ['LEGAL', 'EXECUTIVE', 'FINANCE'])
+        self.assertEqual(ApprovalRequest.objects.get(pk=approval_c.pk).sort_order, 20)
 
     def test_workflow_tab_shows_existing_approval_signature_and_task(self):
         ApprovalRequest.objects.create(
@@ -309,10 +558,9 @@ class ContractDetailActivityTabTests(TestCase):
     def test_activity_tab_shows_empty_state(self):
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
         body = page_body(response.content.decode())
-        self.assertIn('No recent activity recorded for this contract.', body)
+        self.assertIn('No internal activity recorded for this contract.', body)
 
     def test_activity_tab_shows_human_readable_entry(self):
-        from contracts.middleware import log_action
         log_action(
             self.user, 'UPDATE', 'Contract', self.contract.id, str(self.contract),
             changes={'event': 'contract_updated'}, organization=self.organization,
@@ -322,6 +570,24 @@ class ContractDetailActivityTabTests(TestCase):
         self.assertIn('Sam', body)
         self.assertNotIn('UPDATE', body)
         self.assertIsNone(ISO_TIMESTAMP_RE.search(body), 'Found a raw ISO timestamp in the Contract Detail response')
+
+    def test_activity_tab_unifies_audit_log_and_internal_notes(self):
+        NegotiationThread.objects.create(
+            contract=self.contract,
+            title='Redline note',
+            content='Keep this internal and merge into the same feed.',
+            created_by=self.user,
+        )
+        log_action(
+            self.user, 'UPDATE', 'Contract', self.contract.id, str(self.contract),
+            changes={'event': 'contract_updated'}, organization=self.organization,
+        )
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('Internal activity', body)
+        self.assertIn('Redline note', body)
+        self.assertIn('Internal note', body)
+        self.assertIn('Audit', body)
 
 
 class ContractDetailCopyQualityTests(TestCase):
@@ -348,6 +614,31 @@ class ContractDetailCopyQualityTests(TestCase):
         self.assertIn('Internal Review', body)
         self.assertNotIn('In opvolging', body)
         self.assertIsNone(ISO_TIMESTAMP_RE.search(body), 'Found a raw ISO timestamp in the Contract Detail response')
+
+
+class ContractDetailStateConsistencyTests(TestCase):
+    def setUp(self):
+        self.organization = Organization.objects.create(name='State Firm', slug='cdetail-state-firm')
+        self.user = User.objects.create_user(username='cdetail_state_user', password='testpass123')
+        OrganizationMembership.objects.create(organization=self.organization, user=self.user, role=OrganizationMembership.Role.MEMBER, is_active=True)
+        self.client = TestClient()
+        self.client.login(username='cdetail_state_user', password='testpass123')
+        self.contract = Contract.objects.create(
+            organization=self.organization, title='State Contract', content='Seed',
+            status=Contract.Status.APPROVED, risk_level=Contract.RiskLevel.LOW, created_by=self.user,
+        )
+
+    def test_open_high_risk_overrides_low_record_badge_and_blocks_signature(self):
+        RiskLog.objects.create(
+            title='Unresolved indemnity exposure', description='d', contract=self.contract,
+            risk_level=RiskLog.RiskLevel.HIGH, status=RiskLog.Status.OPEN, created_by=self.user,
+        )
+        response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}))
+        body = page_body(response.content.decode())
+        self.assertIn('High-risk findings open', body)
+        self.assertIn('Resolve blockers', body)
+        self.assertIn('Resolve high or critical open risk findings before signature routing.', body)
+        self.assertNotIn('Low risk</span>', body)
 
 
 class ContractDetailCrossTenantIsolationTests(TestCase):

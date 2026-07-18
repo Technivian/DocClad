@@ -79,6 +79,9 @@ from contracts.models import (
     ClausePlaybook,
     ClauseVariant,
     ClauseUsageEvent,
+    DocumentReviewRun,
+    Matter,
+    ContractReviewFinding,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,6 +141,36 @@ _ALLOWED_UPLOAD_EXTENSIONS = {
 _MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 
 
+_REVIEW_STEP_LABELS = ('Uploaded', 'Extracting', 'Classifying', 'Matching playbook', 'AI reviewing', 'Review ready')
+
+
+def _review_steps(current_step, *, blocked=False):
+    """Return a dependency-aware processing timeline without implying success."""
+    current_index = _REVIEW_STEP_LABELS.index(current_step) if current_step in _REVIEW_STEP_LABELS else 0
+    steps = []
+    for index, label in enumerate(_REVIEW_STEP_LABELS):
+        state = 'complete' if index < current_index else ('active' if index == current_index else 'pending')
+        if blocked and index == current_index:
+            state = 'blocked'
+        steps.append({'key': label.lower().replace(' ', '-'), 'label': label, 'status': state})
+    return steps
+
+
+def _metadata_from_text(text):
+    """Conservative extraction hints: surfaced for confirmation, never silently approved."""
+    import re
+
+    value_match = re.search(r'(?:(?:USD|EUR|GBP|\$|€|£)\s?)([\d,]+(?:\.\d{2})?)', text, re.I)
+    law_match = re.search(r'governed by the laws? of ([^.\n;]+)', text, re.I)
+    payment_match = re.search(r'(?:payment|invoice)[^.\n]{0,100}', text, re.I)
+    return {
+        'governing_law': law_match.group(1).strip() if law_match else '',
+        'value': value_match.group(1).replace(',', '') if value_match else '',
+        'payment_terms': payment_match.group(0).strip() if payment_match else '',
+        'confidence': 'Confirm extracted information before relying on it.',
+    }
+
+
 @login_required
 @require_http_methods(['POST'])
 def document_upload_api(request):
@@ -182,25 +215,12 @@ def document_upload_api(request):
     create_contract = request.POST.get('create_contract') in {'1', 'true', 'True', 'on'}
     contract_payload = None
     if create_contract and contract is None:
-        required = {
-            'title': 'Title',
-            'contract_type': 'Contract type',
-            'counterparty': 'Counterparty',
-            'start_date': 'Effective date',
-            'end_date': 'Expiry date',
-            'governing_law': 'Governing law',
-        }
-        missing = [label for key, label in required.items() if not (request.POST.get(key) or '').strip()]
-        if missing:
-            return _error_response(request, f'Missing required metadata: {", ".join(missing)}.', 400)
-        contract_type = request.POST.get('contract_type')
+        contract_type = request.POST.get('contract_type') or Contract.ContractType.OTHER
         if contract_type not in {value for value, _ in Contract.ContractType.choices}:
             return _error_response(request, 'Invalid contract type.', 400)
-        start_date = parse_date(request.POST.get('start_date', ''))
-        end_date = parse_date(request.POST.get('end_date', ''))
-        if not start_date or not end_date:
-            return _error_response(request, 'Effective and expiry dates must be valid dates.', 400)
-        if end_date < start_date:
+        start_date = parse_date(request.POST.get('start_date', '')) if request.POST.get('start_date') else None
+        end_date = parse_date(request.POST.get('end_date', '')) if request.POST.get('end_date') else None
+        if end_date and start_date and end_date < start_date:
             return _error_response(request, 'Expiry date must be on or after the effective date.', 400)
         owner_id = request.POST.get('owner_id') or request.user.pk
         owner = User.objects.filter(
@@ -218,20 +238,27 @@ def document_upload_api(request):
                 return _error_response(request, 'Contract value must be a valid number.', 400)
             if value < 0:
                 return _error_response(request, 'Contract value cannot be negative.', 400)
+        matter = None
+        if request.POST.get('matter_id'):
+            matter = Matter.objects.filter(pk=request.POST['matter_id'], organization=organization).first()
+            if matter is None:
+                return _error_response(request, 'Related matter not found or access denied.', 404)
         contract_payload = {
             'organization': organization,
-            'title': request.POST['title'].strip(),
+            'title': (request.POST.get('title') or '').strip() or os.path.splitext(uploaded_file.name)[0],
             'contract_type': contract_type,
-            'counterparty': request.POST['counterparty'].strip(),
+            'counterparty': (request.POST.get('counterparty') or '').strip(),
+            'business_unit': (request.POST.get('business_unit') or '').strip(),
+            'matter': matter,
             'owner': owner,
             'created_by': request.user,
             'value': value,
             'currency': request.POST.get('currency') or Contract.Currency.USD,
             'start_date': start_date,
             'end_date': end_date,
-            'governing_law': request.POST['governing_law'].strip(),
+            'governing_law': (request.POST.get('governing_law') or '').strip(),
             'dpa_attached': request.POST.get('dpa_attached') in {'1', 'true', 'True', 'on'},
-            'status': Contract.Status.DRAFT,
+            'status': Contract.Status.UPLOADED,
         }
 
     doc_type = request.POST.get('document_type', Document.DocType.OTHER)
@@ -245,6 +272,9 @@ def document_upload_api(request):
         with transaction.atomic():
             if contract_payload is not None:
                 contract = Contract.objects.create(**contract_payload)
+                get_version_service().create_version(
+                    contract, changed_by=request.user, change_summary='Initial source document uploaded.'
+                )
                 log_action(
                     request.user, AuditLog.Action.CREATE, 'Contract', contract.pk, str(contract),
                     organization=organization, request=request,
@@ -255,6 +285,9 @@ def document_upload_api(request):
                         'contract_type': contract.contract_type,
                     },
                 )
+            prior_document = None
+            if contract is not None:
+                prior_document = contract.documents.order_by('-version', '-created_at').first()
             document = Document(
                 organization=organization,
                 title=title,
@@ -262,9 +295,28 @@ def document_upload_api(request):
                 status=Document.Status.DRAFT,
                 contract=contract,
                 uploaded_by=request.user,
+                version=((prior_document.version or 1) + 1) if prior_document else 1,
+                parent_document=(prior_document.parent_document or prior_document) if prior_document else None,
             )
             document.file = uploaded_file
             document.save()  # triggers SHA256 hash + OCR queue in Document.save()
+            if contract and prior_document:
+                get_version_service().create_version(
+                    contract, changed_by=request.user,
+                    change_summary=f'Revised source document uploaded as version {document.version}.',
+                )
+            review_run = None
+            if contract:
+                review_run = DocumentReviewRun.objects.create(
+                    organization=organization,
+                    contract=contract,
+                    document=document,
+                    status=DocumentReviewRun.Status.UPLOADED,
+                    current_step='Uploaded',
+                    progress_steps=_review_steps('Uploaded'),
+                    review_objective=(request.POST.get('review_objective') or '').strip(),
+                    primary_next_action='Extract document text and prepare the review for human confirmation.',
+                )
             log_action(
                 request.user, AuditLog.Action.CREATE, 'Document', document.pk, str(document),
                 organization=organization, request=request,
@@ -309,6 +361,7 @@ def document_upload_api(request):
             request=request,
             organization=organization,
             document=document,
+            review_run=review_run,
         )
 
     return JsonResponse(
@@ -322,6 +375,11 @@ def document_upload_api(request):
             'document_type': document.document_type,
             'contract_id': contract.pk if contract else None,
             'contract_url': reverse('contracts:contract_detail', kwargs={'pk': contract.pk}) if contract else None,
+            'contract_review_url': (
+                reverse('contracts:contract_review_workspace', kwargs={'pk': contract.pk})
+                if contract else None
+            ),
+            'review_run_id': review_run.pk if review_run else None,
             'ocr': {
                 'status': ocr_status,
                 'confidence': confidence,
@@ -354,7 +412,7 @@ def _cleanup_orphaned_upload(document):
         )
 
 
-def _run_uploaded_contract_review(*, request, organization, document):
+def _run_uploaded_contract_review(*, request, organization, document, review_run=None):
     """Run an optional AI review after the agreement has been safely stored."""
     review = {
         'requested': True,
@@ -378,13 +436,54 @@ def _run_uploaded_contract_review(*, request, organization, document):
                 'event': 'ai.uploaded_contract_review',
                 'review_status': review['status'],
                 'finding_count': review['finding_count'],
+                'citation_count': review.get('citation_count', 0),
+                'review_message': review.get('message', ''),
                 'document_id': document.pk,
             },
         )
 
+    def update_run(status, step, *, message='', model='', metadata=None, playbook_matched=None, analysis_completed=False, citation_count=None):
+        if review_run is None:
+            return
+        review_run.status = status
+        review_run.current_step = step
+        review_run.progress_steps = _review_steps(
+            step,
+            blocked=status in {
+                DocumentReviewRun.Status.CLASSIFICATION_REQUIRED,
+                DocumentReviewRun.Status.PLAYBOOK_REQUIRED,
+                DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE,
+            },
+        )
+        review_run.primary_next_action = message
+        if model:
+            review_run.review_model = model
+        if metadata is not None:
+            review_run.extracted_metadata = metadata
+        if playbook_matched is not None:
+            review_run.governance_sources = {
+                **(review_run.governance_sources or {}),
+                'governance_charter': 'Current CLM One Governance Charter',
+                'approved_playbook_matched': playbook_matched,
+            }
+        if analysis_completed:
+            review_run.governance_sources = {
+                **(review_run.governance_sources or {}),
+                'ai_analysis_completed': True,
+            }
+        if citation_count is not None:
+            review_run.governance_sources = {
+                **(review_run.governance_sources or {}),
+                'citation_count': citation_count,
+            }
+        if status != DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS:
+            review_run.completed_at = timezone.now()
+        review_run.save()
+
     policy, _ = OrgPolicy.objects.get_or_create(organization=organization)
     if not policy.ai_features_enabled:
         review['message'] = 'AI-assisted features are disabled for this workspace.'
+        update_run(DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE, 'AI reviewing', message=review['message'])
         record_outcome()
         return review
 
@@ -397,6 +496,48 @@ def _run_uploaded_contract_review(*, request, organization, document):
             'status': 'needs-readable-text',
             'message': 'The agreement was uploaded, but no readable text was found for AI review.',
         })
+        if document.contract_id:
+            document.contract.status = Contract.Status.NEEDS_INPUT
+            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
+            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        update_run(DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE, 'Extracting', message=review['message'])
+        record_outcome()
+        return review
+
+    review_metadata = review_run.extracted_metadata or {} if review_run else {}
+    review_governance = review_run.governance_sources or {} if review_run else {}
+    classification_confirmed = bool(
+        document.contract_id
+        and (document.contract.counterparty or '').strip()
+        and document.contract.contract_type != Contract.ContractType.OTHER
+        and (document.contract.governing_law or '').strip()
+        and document.contract.value is not None
+        and review_metadata.get('governing_law_confirmed')
+        and review_metadata.get('value_confirmed')
+        and review_metadata.get('payment_terms_confirmed')
+    )
+    if not classification_confirmed:
+        review.update({
+            'status': 'needs-input',
+            'message': 'Contract classification and required metadata must be confirmed before AI review can begin.',
+        })
+        if document.contract_id:
+            document.contract.status = Contract.Status.NEEDS_INPUT
+            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
+            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        update_run(DocumentReviewRun.Status.CLASSIFICATION_REQUIRED, 'Classifying', message=review['message'])
+        record_outcome()
+        return review
+    if not (review_governance.get('approved_playbook_matched') or review_governance.get('selected_playbook_id')):
+        review.update({
+            'status': 'playbook-required',
+            'message': 'Select an approved contract playbook before AI review can begin.',
+        })
+        if document.contract_id:
+            document.contract.status = Contract.Status.NEEDS_INPUT
+            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
+            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        update_run(DocumentReviewRun.Status.PLAYBOOK_REQUIRED, 'Matching playbook', message=review['message'])
         record_outcome()
         return review
 
@@ -407,11 +548,16 @@ def _run_uploaded_contract_review(*, request, organization, document):
     from contracts.services.ai_extraction import AIExtractionError
 
     try:
+        if document.contract_id:
+            document.contract.status = Contract.Status.AI_REVIEW_IN_PROGRESS
+            document.contract.save(update_fields=['status', 'updated_at'])
+        update_run(DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS, 'AI reviewing')
         result = review_uploaded_contract(
             document=document,
             organization=organization,
             text=text,
             user=request.user,
+            review_run=review_run,
         )
     except AIContractReviewUnavailable as exc:
         review['message'] = str(exc)
@@ -439,6 +585,44 @@ def _run_uploaded_contract_review(*, request, organization, document):
                 'No potential issues were found in the clauses reviewed. Human review is still required.'
             ),
         })
+
+        if document.contract_id:
+            document.contract.status = (
+                Contract.Status.HUMAN_REVIEW_IN_PROGRESS
+                if result.flags_created else Contract.Status.AI_REVIEW_READY
+            )
+            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
+            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        update_run(
+            DocumentReviewRun.Status.READY,
+            'Review ready',
+            message=(
+                'Resolve or route the cited findings before negotiation, approval, or signature.'
+                if result.flags_created else
+                'Confirm the clear review outcome before routing the targeted internal approval.'
+            ),
+            model=result.model,
+            metadata={
+                **_metadata_from_text(text),
+                **{
+                    key: value for key, value in (review_run.extracted_metadata or {}).items()
+                    if key.endswith('_confirmed')
+                },
+            },
+            playbook_matched=(
+                result.playbook_matched
+                or bool((review_run.governance_sources or {}).get('selected_playbook_id'))
+            ),
+            analysis_completed=True,
+            citation_count=result.spans_reviewed,
+        )
+
+    if review['status'] != 'completed':
+        if document.contract_id:
+            document.contract.status = Contract.Status.NEEDS_INPUT
+            document.contract.lifecycle_stage = 'INTERNAL_REVIEW'
+            document.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        update_run(DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE, 'AI reviewing', message=review['message'])
 
     record_outcome()
     return review
@@ -668,6 +852,208 @@ def ai_extraction_span_review_api(request, contract_id, span_id):
         'reviewed_by': request.user.get_full_name() or request.user.username,
         'reviewed_at': span.reviewed_at.isoformat(),
     })
+
+
+@login_required
+@require_http_methods(['POST'])
+def contract_review_finding_action_api(request, contract_id, finding_id):
+    """Apply a human-owned decision to a governed AI finding.
+
+    The endpoint deliberately records only a review disposition or a routing
+    request. It never changes a playbook, approves a deviation, or sends a
+    redline externally.
+    """
+    organization, contract, error = _resolve_ai_contract(request, contract_id, action=ContractAction.EDIT)
+    if error:
+        return error
+    finding = ContractReviewFinding.objects.filter(
+        pk=finding_id, contract=contract, document__organization=organization,
+    ).select_related('risk_log').first()
+    if finding is None:
+        return _error_response(request, 'Review finding not found or access denied.', 404)
+    try:
+        payload = json.loads(request.body or '{}')
+    except (TypeError, ValueError):
+        return _error_response(request, 'Request body must be valid JSON.', 400)
+
+    action = str(payload.get('action') or '').strip().lower()
+    allowed = {
+        'accept', 'dismiss', 'edit_assessment', 'accept_redline', 'edit_redline',
+        'assign', 'comment', 'escalate', 'request_information', 'create_exception', 'resolve',
+    }
+    if action not in allowed:
+        return _error_response(request, 'Unsupported finding action.', 400)
+
+    updates = []
+    previous_status = finding.status
+    if action == 'accept':
+        finding.status = ContractReviewFinding.Status.IN_PROGRESS
+        updates.append('status')
+    elif action == 'dismiss':
+        reason = str(payload.get('dismissal_reason') or '').upper()
+        if finding.severity in {ContractReviewFinding.Severity.CRITICAL, ContractReviewFinding.Severity.HIGH} and not reason:
+            return _error_response(request, 'A dismissal reason is required for Critical and High findings.', 400)
+        if reason and reason not in ContractReviewFinding.DismissalReason.values:
+            return _error_response(request, 'Invalid dismissal reason.', 400)
+        finding.status = ContractReviewFinding.Status.DISMISSED
+        finding.dismissal_reason = reason
+        updates.extend(['status', 'dismissal_reason'])
+    elif action == 'edit_assessment':
+        finding.assessment = str(payload.get('assessment') or '').strip()
+        updates.append('assessment')
+    elif action == 'accept_redline':
+        finding.status = ContractReviewFinding.Status.IN_PROGRESS
+        finding.redline_draft = str(payload.get('redline') or finding.suggested_redline or '').strip()
+        contract.status = Contract.Status.NEGOTIATION_IN_PROGRESS
+        contract.lifecycle_stage = 'NEGOTIATION'
+        contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+        updates.extend(['status', 'redline_draft'])
+    elif action == 'edit_redline':
+        finding.redline_draft = str(payload.get('redline') or '').strip()
+        updates.append('redline_draft')
+    elif action == 'assign':
+        reviewer_id = payload.get('reviewer_id')
+        reviewer = User.objects.filter(
+            pk=reviewer_id,
+            organization_memberships__organization=organization,
+            organization_memberships__is_active=True,
+        ).distinct().first()
+        if reviewer is None:
+            return _error_response(request, 'Reviewer must be an active workspace member.', 400)
+        finding.assigned_reviewer = reviewer
+        updates.append('assigned_reviewer')
+    elif action == 'comment':
+        finding.comment = str(payload.get('comment') or '').strip()
+        updates.append('comment')
+    elif action == 'escalate':
+        finding.status = ContractReviewFinding.Status.ESCALATED
+        updates.append('status')
+    elif action == 'request_information':
+        finding.status = ContractReviewFinding.Status.INFORMATION_REQUESTED
+        contract.status = Contract.Status.INFORMATION_REQUIRED
+        contract.save(update_fields=['status', 'updated_at'])
+        updates.append('status')
+    elif action == 'create_exception':
+        finding.status = ContractReviewFinding.Status.EXCEPTION_REQUESTED
+        ApprovalRequest.objects.get_or_create(
+            contract=contract,
+            approval_step=f'Exception decision: {finding.title[:100]}',
+            defaults={
+                'organization': organization,
+                'assigned_to': contract.owner,
+                'comments': 'Decide the specific policy deviation recorded in this AI review finding. This is not an approval of the full contract.',
+            },
+        )
+        contract.status = Contract.Status.INTERNAL_APPROVAL_REQUIRED
+        contract.save(update_fields=['status', 'updated_at'])
+        updates.append('status')
+    elif action == 'resolve':
+        finding.status = ContractReviewFinding.Status.RESOLVED
+        finding.resolved_by = request.user
+        finding.resolved_at = timezone.now()
+        updates.extend(['status', 'resolved_by', 'resolved_at'])
+        if finding.risk_log_id:
+            finding.risk_log.status = finding.risk_log.Status.RESOLVED
+            finding.risk_log.save(update_fields=['status', 'updated_at'])
+
+    if updates:
+        finding.save(update_fields=[*updates, 'updated_at'])
+    log_action(
+        request.user,
+        AuditLog.Action.UPDATE,
+        'ContractReviewFinding',
+        finding.pk,
+        str(finding),
+        organization=organization,
+        request=request,
+        event_type='ai.review_finding_updated',
+        changes={
+            'event': 'ai.review_finding_updated',
+            'finding_id': finding.pk,
+            'action': action,
+            'previous_status': previous_status,
+            'new_status': finding.status,
+            'document_id': finding.document_id,
+        },
+    )
+    return JsonResponse({
+        'ok': True,
+        'finding_id': finding.pk,
+        'status': finding.status,
+        'status_label': finding.get_status_display(),
+        'assigned_reviewer': (
+            finding.assigned_reviewer.get_full_name() or finding.assigned_reviewer.username
+            if finding.assigned_reviewer else None
+        ),
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def contract_review_confirm_api(request, contract_id):
+    """Turn a completed clear review into a specific human-confirmation task."""
+    organization, contract, error = _resolve_ai_contract(request, contract_id, action=ContractAction.EDIT)
+    if error:
+        return error
+    review_run = contract.document_review_runs.order_by('-started_at').first()
+    review_metadata = (review_run.extracted_metadata if review_run else {}) or {}
+    review_governance = (review_run.governance_sources if review_run else {}) or {}
+    review_is_ready = bool(
+        review_run
+        and review_run.status == DocumentReviewRun.Status.READY
+        and review_governance.get('ai_analysis_completed')
+        and (review_governance.get('approved_playbook_matched') or review_governance.get('selected_playbook_id'))
+        and (contract.counterparty or '').strip()
+        and contract.contract_type != Contract.ContractType.OTHER
+        and (contract.governing_law or '').strip()
+        and contract.value is not None
+        and review_metadata.get('governing_law_confirmed')
+        and review_metadata.get('value_confirmed')
+        and review_metadata.get('payment_terms_confirmed')
+    )
+    if not review_is_ready:
+        return _error_response(request, 'Resolve the review blockers and complete AI analysis before starting human review.', 409)
+    unresolved = ContractReviewFinding.objects.filter(
+        contract=contract,
+        status__in=[
+            ContractReviewFinding.Status.OPEN,
+            ContractReviewFinding.Status.IN_PROGRESS,
+            ContractReviewFinding.Status.ESCALATED,
+            ContractReviewFinding.Status.INFORMATION_REQUESTED,
+            ContractReviewFinding.Status.EXCEPTION_REQUESTED,
+        ],
+    ).exists()
+    if unresolved:
+        return _error_response(request, 'Resolve, dismiss, or route all open findings before confirming the review outcome.', 409)
+    approval, created = ApprovalRequest.objects.get_or_create(
+        contract=contract,
+        approval_step='Human confirmation: AI review outcome',
+        defaults={
+            'organization': organization,
+            'assigned_to': contract.owner,
+            'comments': 'Confirm that the completed AI review outcome has been assessed. This is a specific human confirmation, not an automatic contract approval.',
+        },
+    )
+    contract.status = Contract.Status.INTERNAL_APPROVAL_REQUIRED
+    contract.lifecycle_stage = 'APPROVAL'
+    contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
+    log_action(
+        request.user,
+        AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE,
+        'ApprovalRequest',
+        approval.pk,
+        str(approval),
+        organization=organization,
+        request=request,
+        event_type='ai.review_human_confirmation_requested',
+        changes={
+            'event': 'ai.review_human_confirmation_requested',
+            'contract_id': contract.pk,
+            'approval_id': approval.pk,
+            'created': created,
+        },
+    )
+    return JsonResponse({'ok': True, 'approval_id': approval.pk, 'created': created})
 
 
 @login_required

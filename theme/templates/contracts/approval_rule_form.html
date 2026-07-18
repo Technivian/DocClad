@@ -2,6 +2,11 @@
 {% block title %}{{ object|yesno:"Edit,New" }} Approval Rule – CLM One{% endblock %}
 {% block authenticated_page_title %}{{ object|yesno:"Edit,New" }} Approval Rule{% endblock %}
 {% block authenticated_page_subtitle %}Configure conditional approval routing for governed workflows.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:approval_rule_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to approval rules" title="Back to approval rules">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/approval_rule_form_content.html" %}

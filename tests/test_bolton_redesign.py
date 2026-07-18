@@ -70,8 +70,9 @@ class BoltonRedesignTestCase(TestCase):
     def test_dashboard_empty_state_is_intentional(self):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Contract portfolio health')
-        self.assertContains(response, 'Review priority actions')
+        self.assertContains(response, 'Establish your contract portfolio')
+        self.assertContains(response, 'Health score unavailable')
+        self.assertContains(response, 'Add first contract')
         self.assertContains(response, 'dc-ds-metric__value--clear')
         self.assertContains(response, 'No active issues')
 
@@ -122,8 +123,8 @@ class BoltonRedesignTestCase(TestCase):
         self._enable_clm_dashboard()
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Contract portfolio health')
-        self.assertContains(response, 'Add your first contract to establish a portfolio health baseline')
+        self.assertContains(response, 'Establish your contract portfolio')
+        self.assertContains(response, 'Add your first contract to begin monitoring approvals, risks, deadlines, obligations and policy exceptions.')
 
     def test_single_filter_system_no_duplicate_rows(self):
         # There must be exactly one filter system: saved-view tabs plus a

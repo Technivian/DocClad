@@ -1,47 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Clause Categories – CLM One{% endblock %}
+{% block authenticated_page_title %}Clause Categories{% endblock %}
+{% block authenticated_page_subtitle %}Manage categories that organize the governed clause library.{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .tbl-row:hover { background: var(--sidebar-hover); }
-</style>
-<div class="page-wrap">
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
 
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Clause Categories</h1>
-      <p class="page-subtitle">Manage clause categories</p>
+  <header class="dc-ds-page-hero dc-ds-list-header">
+    <div class="dc-ds-page-hero__context dc-ds-list-header__context">
+      <h1 class="dc-ds-title">Clause Categories</h1>
+      <p class="dc-ds-subtitle">Manage categories that organize the governed clause library.</p>
     </div>
-    <a href="{% url 'contracts:clause_category_create' %}" class="btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
-      <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-      Add New
-    </a>
-  </div>
+    <div class="dc-ds-actions"><a href="{% url 'contracts:clause_category_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+        Add New
+      </a></div>
+  </header>
 
-  <div class="panel">
-    <table class="w-full text-sm">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" data-table-core="server">
+      <caption class="sr-only">Clause category records.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Name</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Order</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Clauses</th>
-          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+          <th scope="col">Name</th>
+          <th scope="col">Description</th>
+          <th scope="col">Order</th>
+          <th scope="col">Clauses</th>
+          <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in categories %}
-        <tr class="border-b transition-colors tbl-row">
-          <td class="px-5 py-3.5">{{ item.name }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ item.description|truncatewords:15|default:"-" }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ item.order }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ item.clauses.count }}</td>
-          <td class="px-5 py-3.5 text-right">
-            <a href="{% url 'contracts:clause_category_update' item.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">Edit</a>
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.description|truncatewords:15|default:"-" }}</td>
+          <td data-numeric>{{ item.order }}</td>
+          <td data-numeric>{{ item.clauses.count }}</td>
+          <td class="text-right">
+            <a href="{% url 'contracts:clause_category_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5"><div class="empty-state">No clause categories found</div></td>
+          <td colspan="5">{% include "design_system/empty_state.html" with icon="folder" title="No clause categories found" reason="Categories organize the clause library for this workspace." how="Create a category before assigning clauses to it." class_name="dc-ds-empty--compact" %}</td>
         </tr>
         {% endfor %}
       </tbody>

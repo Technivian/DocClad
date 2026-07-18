@@ -85,8 +85,9 @@ class DashboardEmptyStateTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         body = dashboard_body(response.content.decode())
-        self.assertIn('Contract portfolio health', body)
-        self.assertIn('Review priority actions', body)
+        self.assertIn('Establish your contract portfolio', body)
+        self.assertIn('Health score unavailable', body)
+        self.assertIn('Add first contract', body)
         self.assertIn('Risk findings', body)
         self.assertIn('Configure deadlines', body)
 

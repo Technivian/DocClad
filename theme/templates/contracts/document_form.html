@@ -1,32 +1,239 @@
 {% extends "base.html" %}
 {% block title %}{% if form.instance.pk %}Edit{% else %}Upload{% endif %} Document – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit document{% else %}Upload document{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}{% if form.instance.pk %}Maintain this document record and its access controls.{% else %}Add the file first. CLM One will prepare the record details for confirmation.{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:document_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to documents" title="Back to documents">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
+{% if form.instance.pk %}
 <div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{% if form.instance.pk %}Edit Document{% else %}Upload Document{% endif %}</h1>
+  <div class="panel dc-ds-surface"><div class="panel-inner">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for field in form %}
+        <div class="dc-ds-form-field {% if field.name == 'description' or field.name == 'file' %}md:col-span-2{% endif %}{% if field.errors %} dc-ds-form-field--error{% endif %}">
+          <label for="{{ field.id_for_label }}" class="dc-ds-form-field__label">{{ field.label }}</label>
+          <div class="dc-ds-form-field__control">{{ field }}</div>
+          {% if field.help_text %}<p class="dc-ds-form-field__help">{{ field.help_text }}</p>{% endif %}
+          {% if field.errors %}<div class="dc-ds-form-field__errors" role="alert"><p>{{ field.errors.0 }}</p></div>{% endif %}
         </div>
-    </div>
-    <div class="panel">
-        <div class="panel-inner">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for field in form %}
-                    <div class="{% if field.name == 'description' or field.name == 'file' %}md:col-span-2{% endif %}">
-                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-                        {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <a href="{% url 'contracts:document_list' %}" class="btn-ghost">Cancel</a>
-                    <button type="submit" class="btn-primary-grad text-white">{% if form.instance.pk %}Update{% else %}Upload{% endif %}</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        {% endfor %}
+      </div>
+      <div class="flex justify-end gap-3 pt-4">
+        <a href="{% url 'contracts:document_list' %}" class="btn-ghost">Cancel</a>
+        <button type="submit" class="btn-primary-grad text-white">Update</button>
+      </div>
+    </form>
+  </div></div>
 </div>
+{% else %}
+<style nonce="{{ csp_nonce }}">
+  .doc-upload { width:100%; max-width:980px; margin:0 auto; }
+  .doc-upload-form { display:grid; gap:var(--space-16); }
+  .doc-upload-surface { overflow:hidden; border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); }
+  .doc-upload-intro { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-16); padding:var(--space-24) var(--space-24) 0; }
+  .doc-upload-intro h2 { margin:0; color:var(--ink-900); font:var(--text-section); }
+  .doc-upload-intro p { max-width:60ch; margin:var(--space-8) 0 0; color:var(--ink-500); font:var(--text-small); line-height:1.5; }
+  .doc-upload-stage { display:inline-flex; flex:0 0 auto; align-items:center; gap:var(--space-6); min-height:28px; padding:0 var(--space-10); border-radius:var(--radius-pill); background:var(--seal-bg); color:var(--seal-dark); font:var(--text-meta); font-weight:750; }
+  .doc-upload-stage::before { width:7px; height:7px; border-radius:50%; background:var(--seal); content:""; }
+  .doc-dropzone { display:grid; justify-items:center; gap:var(--space-10); min-height:310px; margin:var(--space-24); padding:var(--space-32) var(--space-24); border:1.5px dashed var(--line-strong); border-radius:var(--radius-subpanel); background:linear-gradient(135deg, var(--well), var(--seal-bg)); color:var(--ink-800); text-align:center; cursor:pointer; transition:border-color 160ms ease, background 160ms ease, transform 160ms ease; }
+  .doc-dropzone:hover, .doc-dropzone.is-dragover { border-color:var(--seal); background:var(--seal-bg); transform:translateY(-1px); }
+  .doc-dropzone:focus-visible { outline:2px solid var(--seal); outline-offset:3px; }
+  .doc-dropzone-icon { display:grid; width:54px; height:54px; place-items:center; border:1px solid var(--color-status-info-border); border-radius:18px; background:var(--card); color:var(--seal); box-shadow:var(--shadow-card); }
+  .doc-dropzone-icon svg { width:26px; height:26px; }
+  .doc-dropzone-title { color:var(--ink-900); font:var(--text-heading); font-weight:750; }
+  .doc-dropzone-copy { max-width:48ch; color:var(--ink-500); font:var(--text-small); line-height:1.5; }
+  .doc-dropzone-button { display:inline-flex; align-items:center; min-height:36px; padding:0 var(--space-14); border:1px solid var(--seal); border-radius:var(--radius-control); background:var(--card); color:var(--seal-dark); font:var(--text-small); font-weight:750; }
+  .doc-file-summary { display:none; align-items:center; gap:var(--space-10); max-width:100%; margin-top:var(--space-8); padding:var(--space-10) var(--space-12); border:1px solid var(--color-status-success-border); border-radius:var(--radius-control); background:var(--status-positive-bg); color:var(--status-positive-fg); font:var(--text-small); font-weight:700; }
+  .doc-file-summary.is-visible { display:flex; }
+  .doc-file-summary span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .doc-file-input { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }
+  .doc-upload-error { margin:-8px var(--space-24) var(--space-16); color:var(--status-danger-fg); font:var(--text-meta); }
+  .doc-confirmation { border-top:1px solid var(--line); }
+  .doc-confirmation[hidden] { display:none; }
+  .doc-confirmation-head { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-16); padding:var(--space-20) var(--space-24); background:var(--well); }
+  .doc-confirmation-head h3 { margin:0; color:var(--ink-900); font:var(--text-heading); }
+  .doc-confirmation-head p { margin:var(--space-4) 0 0; color:var(--ink-500); font:var(--text-meta); line-height:1.45; }
+  .doc-draft-note { flex:0 0 auto; color:var(--ink-500); font:var(--text-meta); }
+  .doc-confirmation-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-16); padding:var(--space-24); }
+  .doc-field { min-width:0; }
+  .doc-field--wide { grid-column:1 / -1; }
+  .doc-field-label { display:flex; align-items:center; justify-content:space-between; gap:var(--space-8); margin-bottom:var(--space-8); color:var(--ink-800); font:var(--text-meta); font-weight:750; }
+  .doc-field :is(input:not([type="checkbox"]), select, textarea) { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-900); font:var(--text-small); }
+  .doc-field textarea { min-height:100px; resize:vertical; }
+  .doc-field :is(input, select, textarea):focus { border-color:var(--seal); outline:0; box-shadow:0 0 0 3px var(--seal-bg); }
+  .doc-confidence { display:inline-flex; flex:0 0 auto; align-items:center; min-height:21px; padding:0 var(--space-8); border-radius:var(--radius-pill); color:var(--ink-500); background:var(--well); font:var(--text-meta); font-weight:700; white-space:nowrap; }
+  .doc-confidence.is-high { color:var(--status-positive-fg); background:var(--status-positive-bg); }
+  .doc-confidence.is-medium { color:var(--status-pending-fg); background:var(--status-pending-bg); }
+  .doc-confidence.is-low { color:var(--ink-500); background:var(--well); }
+  .doc-field-error { margin:var(--space-4) 0 0; color:var(--status-danger-fg); font:var(--text-meta); }
+  .doc-tag-editor { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-6); min-height:var(--control-height); padding:var(--space-6); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); }
+  .doc-tag-editor:focus-within { border-color:var(--seal); box-shadow:0 0 0 3px var(--seal-bg); }
+  .doc-tag-editor input { flex:1 1 150px; width:auto; min-height:28px; padding:0 var(--space-6); border:0; box-shadow:none !important; }
+  .doc-tag-chip { display:inline-flex; align-items:center; gap:var(--space-4); min-height:26px; padding:0 var(--space-8); border:0; border-radius:var(--radius-pill); background:var(--seal-bg); color:var(--seal-dark); font:var(--text-meta); font-weight:700; }
+  .doc-tag-chip button { width:16px; height:16px; padding:0; border:0; background:transparent; color:inherit; font-size:16px; line-height:1; cursor:pointer; }
+  .doc-advanced { margin:0 var(--space-24) var(--space-24); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
+  .doc-advanced summary { display:flex; align-items:center; justify-content:space-between; min-height:48px; padding:0 var(--space-14); color:var(--ink-800); font:var(--text-small); font-weight:750; cursor:pointer; list-style:none; }
+  .doc-advanced summary::-webkit-details-marker { display:none; }
+  .doc-advanced summary::after { color:var(--ink-500); content:"⌄"; font-size:18px; transition:transform 160ms ease; }
+  .doc-advanced[open] summary::after { transform:rotate(180deg); }
+  .doc-advanced-body { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-16); padding:0 var(--space-14) var(--space-16); }
+  .doc-advanced-body .doc-field--wide { grid-column:1 / -1; }
+  .doc-toggle { display:flex; align-items:flex-start; gap:var(--space-8); padding:var(--space-10); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-700); font:var(--text-meta); line-height:1.4; }
+  .doc-toggle input { width:16px; height:16px; margin:1px 0 0; accent-color:var(--seal); }
+  .doc-upload-actions { display:flex; align-items:center; justify-content:flex-end; gap:var(--space-12); padding:var(--space-16) var(--space-24); border-top:1px solid var(--line); }
+  .doc-upload-actions .dc-ds-button { min-height:42px; }
+  @media (max-width:700px) { .doc-upload-intro, .doc-confirmation-head { flex-direction:column; } .doc-dropzone { min-height:250px; margin:var(--space-16); padding:var(--space-24) var(--space-16); } .doc-confirmation-grid, .doc-advanced-body { grid-template-columns:1fr; padding:var(--space-16); } .doc-field--wide, .doc-advanced-body .doc-field--wide { grid-column:auto; } .doc-advanced { margin:0 var(--space-16) var(--space-16); } .doc-upload-actions { padding:var(--space-16); flex-direction:column-reverse; align-items:stretch; } .doc-upload-actions .dc-ds-button { width:100%; } }
+</style>
+
+<div class="dc-ds-page doc-upload">
+  <form method="post" enctype="multipart/form-data" class="doc-upload-form" id="document-upload-form" novalidate>
+    {% csrf_token %}
+    {{ form.status.as_hidden }}
+    {{ form.tags.as_hidden }}
+    <section class="doc-upload-surface" aria-labelledby="document-upload-title">
+      <div class="doc-upload-intro">
+        <div>
+          <h2 id="document-upload-title">Add a document</h2>
+          <p>Start with the file. We’ll prepare the document record from its name and let you confirm the details before saving.</p>
+        </div>
+        <span class="doc-upload-stage" id="document-upload-stage">File required</span>
+      </div>
+
+      <label class="doc-dropzone" id="document-dropzone" for="{{ form.file.id_for_label }}" tabindex="0" aria-describedby="document-dropzone-copy">
+        <span class="doc-dropzone-icon" aria-hidden="true"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a2 2 0 002 2h10a2 2 0 002-2v-5"/></svg></span>
+        <span class="doc-dropzone-title">Drop a document here, or choose a file</span>
+        <span class="doc-dropzone-copy" id="document-dropzone-copy">PDF, DOCX, TXT, MD, CSV, HTML, XML or JSON · up to 50 MB</span>
+        <span class="doc-dropzone-button" aria-hidden="true">Choose file</span>
+        <span class="doc-file-summary" id="document-file-summary" aria-live="polite"><span id="document-file-name"></span></span>
+      </label>
+      {{ form.file.as_widget }}
+      <style nonce="{{ csp_nonce }}">#{{ form.file.id_for_label }} { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; }</style>
+      {% if form.file.errors %}<p class="doc-upload-error">{{ form.file.errors.0 }}</p>{% endif %}
+
+      <section class="doc-confirmation" id="document-confirmation" aria-labelledby="document-confirmation-title"{% if not form.is_bound %} hidden{% endif %}>
+        <div class="doc-confirmation-head">
+          <div><h3 id="document-confirmation-title">Confirm document details</h3><p>Suggestions are based on the uploaded filename. Edit anything that needs correction.</p></div>
+          <span class="doc-draft-note">Saved as Draft</span>
+        </div>
+        <div class="doc-confirmation-grid">
+          <div class="doc-field doc-field--wide"><label class="doc-field-label" for="{{ form.title.id_for_label }}">Document title <span class="doc-confidence" data-confidence="title">Awaiting file</span></label>{{ form.title }}{% if form.title.errors %}<p class="doc-field-error">{{ form.title.errors.0 }}</p>{% endif %}</div>
+          <div class="doc-field"><label class="doc-field-label" for="{{ form.document_type.id_for_label }}">Document type <span class="doc-confidence" data-confidence="document-type">Awaiting file</span></label>{{ form.document_type }}{% if form.document_type.errors %}<p class="doc-field-error">{{ form.document_type.errors.0 }}</p>{% endif %}</div>
+          <div class="doc-field"><label class="doc-field-label" for="{{ form.client.id_for_label }}">Client <span class="doc-confidence" data-confidence="client">No match yet</span></label>{{ form.client }}{% if form.client.errors %}<p class="doc-field-error">{{ form.client.errors.0 }}</p>{% endif %}</div>
+          <div class="doc-field"><label class="doc-field-label" for="{{ form.contract.id_for_label }}">Linked contract <span class="doc-confidence" data-confidence="contract">No match yet</span></label>{{ form.contract }}{% if form.contract.errors %}<p class="doc-field-error">{{ form.contract.errors.0 }}</p>{% endif %}</div>
+          <div class="doc-field"><label class="doc-field-label" for="{{ form.matter.id_for_label }}">Matter <span class="doc-confidence" data-confidence="matter">No match yet</span></label>{{ form.matter }}{% if form.matter.errors %}<p class="doc-field-error">{{ form.matter.errors.0 }}</p>{% endif %}</div>
+          <div class="doc-field"><label class="doc-field-label" for="document-tag-entry">Tags <span class="doc-confidence" data-confidence="tags">Awaiting file</span></label><div class="doc-tag-editor" id="document-tag-editor"><input id="document-tag-entry" type="text" placeholder="Add a tag" autocomplete="off"></div>{% if form.tags.errors %}<p class="doc-field-error">{{ form.tags.errors.0 }}</p>{% endif %}</div>
+        </div>
+        <details class="doc-advanced">
+          <summary>Advanced details</summary>
+          <div class="doc-advanced-body">
+            <div class="doc-field doc-field--wide"><label class="doc-field-label" for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}{% if form.description.errors %}<p class="doc-field-error">{{ form.description.errors.0 }}</p>{% endif %}</div>
+            <label class="doc-toggle">{{ form.is_privileged }}<span><strong>Privileged</strong><br>Restrict handling as legally privileged material.</span></label>
+            <label class="doc-toggle">{{ form.is_confidential }}<span><strong>Confidential</strong><br>Mark this record as confidential.</span></label>
+          </div>
+        </details>
+      </section>
+
+      <div class="doc-upload-actions">
+        <a href="{% url 'contracts:document_list' %}" class="dc-ds-button dc-ds-button--ghost">Cancel</a>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" id="document-upload-submit"{% if not form.is_bound %} disabled{% endif %}>Save document <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+  </form>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+  (function () {
+    var form = document.getElementById('document-upload-form');
+    var dropzone = document.getElementById('document-dropzone');
+    var fileInput = document.getElementById('{{ form.file.id_for_label }}');
+    var confirmation = document.getElementById('document-confirmation');
+    var submit = document.getElementById('document-upload-submit');
+    var stage = document.getElementById('document-upload-stage');
+    var fileSummary = document.getElementById('document-file-summary');
+    var fileName = document.getElementById('document-file-name');
+    var title = document.getElementById('{{ form.title.id_for_label }}');
+    var type = document.getElementById('{{ form.document_type.id_for_label }}');
+    var tagsField = document.getElementById('{{ form.tags.id_for_label }}');
+    var tagEditor = document.getElementById('document-tag-editor');
+    var tagEntry = document.getElementById('document-tag-entry');
+    var tags = [];
+    if (!form || !dropzone || !fileInput) return;
+
+    function normalise(value) { return (value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+    function readableSize(bytes) { if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + ' KB'; return (bytes / (1024 * 1024)).toFixed(1) + ' MB'; }
+    function setConfidence(key, text, level) { var el = document.querySelector('[data-confidence="' + key + '"]'); if (!el) return; el.textContent = text; el.className = 'doc-confidence' + (level ? ' is-' + level : ''); }
+    function titleFromFilename(filename) { return filename.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/\b\w/g, function (letter) { return letter.toUpperCase(); }); }
+    function inferType(value) {
+      var source = normalise(value);
+      var rules = [
+        [/\b(amendment|addendum)\b/, 'AMENDMENT', 'High confidence'], [/\b(exhibit|attachment|annex)\b/, 'EXHIBIT', 'High confidence'],
+        [/\b(invoice)\b/, 'INVOICE', 'High confidence'], [/\b(memo|memorandum)\b/, 'MEMO', 'High confidence'],
+        [/\b(research)\b/, 'RESEARCH', 'High confidence'], [/\b(template)\b/, 'TEMPLATE', 'High confidence'],
+        [/\b(court|filing|claim)\b/, 'COURT_FILING', 'Medium confidence'], [/\b(discovery)\b/, 'DISCOVERY', 'High confidence'],
+        [/\b(pleading)\b/, 'PLEADING', 'High confidence'], [/\b(letter|email|correspondence)\b/, 'CORRESPONDENCE', 'Medium confidence'],
+        [/\b(agreement|contract|msa|nda|dpa|sow)\b/, 'CONTRACT', 'Medium confidence']
+      ];
+      for (var i = 0; i < rules.length; i += 1) if (rules[i][0].test(source)) return { value: rules[i][1], confidence: rules[i][2] };
+      return null;
+    }
+    function suggestRelation(select, key, source) {
+      if (!select) return;
+      var query = normalise(source); var best = null;
+      Array.prototype.forEach.call(select.options, function (option) {
+        var candidate = normalise(option.text);
+        if (option.value && candidate.length > 3 && query.indexOf(candidate) !== -1 && (!best || candidate.length > best.name.length)) best = { option: option, name: candidate };
+      });
+      if (best) { select.value = best.option.value; setConfidence(key, 'Suggested · high', 'high'); }
+      else { select.value = ''; setConfidence(key, 'No confident match', 'low'); }
+    }
+    function renderTags() {
+      Array.prototype.slice.call(tagEditor.querySelectorAll('.doc-tag-chip')).forEach(function (chip) { chip.remove(); });
+      tags.forEach(function (tag) {
+        var chip = document.createElement('span'); chip.className = 'doc-tag-chip'; chip.appendChild(document.createTextNode(tag));
+        var remove = document.createElement('button'); remove.type = 'button'; remove.setAttribute('aria-label', 'Remove ' + tag); remove.dataset.tag = tag; remove.textContent = '×'; chip.appendChild(remove); tagEditor.insertBefore(chip, tagEntry);
+      });
+      tagsField.value = tags.join(', ');
+    }
+    function addTag(value) { var tag = value.trim().replace(/[,]+/g, ''); if (tag && tags.map(function (item) { return item.toLowerCase(); }).indexOf(tag.toLowerCase()) === -1) { tags.push(tag); renderTags(); } tagEntry.value = ''; }
+    function tagsFromFilename(value, inferred) {
+      var ignored = { agreement:1, contract:1, document:1, final:1, signed:1, version:1, draft:1, copy:1, pdf:1, docx:1 };
+      var options = normalise(value).split(' ').filter(function (word) { return word.length > 2 && !ignored[word]; }).slice(0, 3);
+      if (inferred && inferred.value === 'CONTRACT' && options.indexOf('agreement') === -1) options.unshift('Agreement');
+      return options.map(function (word) { return word.charAt(0).toUpperCase() + word.slice(1); });
+    }
+    function setFile(file) {
+      if (!file) return;
+      var suggestedTitle = titleFromFilename(file.name); var inferred = inferType(file.name);
+      title.value = suggestedTitle; setConfidence('title', 'Filename · high', 'high');
+      if (inferred) { type.value = inferred.value; setConfidence('document-type', inferred.confidence, inferred.confidence.indexOf('High') === 0 ? 'high' : 'medium'); }
+      else { type.value = ''; setConfidence('document-type', 'Choose type', 'medium'); }
+      suggestRelation(document.getElementById('{{ form.client.id_for_label }}'), 'client', suggestedTitle);
+      suggestRelation(document.getElementById('{{ form.contract.id_for_label }}'), 'contract', suggestedTitle);
+      suggestRelation(document.getElementById('{{ form.matter.id_for_label }}'), 'matter', suggestedTitle);
+      tags = tagsFromFilename(file.name, inferred); renderTags(); setConfidence('tags', tags.length ? 'Suggested · medium' : 'Add tags', tags.length ? 'medium' : 'low');
+      fileName.textContent = file.name + ' · ' + readableSize(file.size); fileSummary.classList.add('is-visible');
+      confirmation.hidden = false; submit.disabled = false; stage.textContent = 'Ready to confirm';
+    }
+    dropzone.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener('change', function () { setFile(fileInput.files[0]); });
+    dropzone.addEventListener('dragover', function (event) { event.preventDefault(); dropzone.classList.add('is-dragover'); });
+    dropzone.addEventListener('dragleave', function () { dropzone.classList.remove('is-dragover'); });
+    dropzone.addEventListener('drop', function (event) { event.preventDefault(); dropzone.classList.remove('is-dragover'); if (event.dataTransfer.files.length) { fileInput.files = event.dataTransfer.files; setFile(fileInput.files[0]); } });
+    tagEntry.addEventListener('keydown', function (event) { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addTag(tagEntry.value); } else if (event.key === 'Backspace' && !tagEntry.value && tags.length) { tags.pop(); renderTags(); } });
+    tagEntry.addEventListener('blur', function () { if (tagEntry.value) addTag(tagEntry.value); });
+    tagEditor.addEventListener('click', function (event) { var remove = event.target.closest('[data-tag]'); if (remove) { tags = tags.filter(function (tag) { return tag !== remove.dataset.tag; }); renderTags(); } });
+    form.addEventListener('submit', function (event) {
+      if (!fileInput.files.length) { event.preventDefault(); stage.textContent = 'Choose a file first'; dropzone.focus(); return; }
+      if (!type.value) { event.preventDefault(); setConfidence('document-type', 'Type required', 'medium'); type.focus(); return; }
+      if (tagEntry.value) addTag(tagEntry.value);
+    });
+    if (tagsField.value) { tags = tagsField.value.split(',').map(function (tag) { return tag.trim(); }).filter(Boolean); renderTags(); }
+  }());
+</script>
+{% endif %}
 {% endblock %}

@@ -57,6 +57,10 @@
 .dpa-field-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .dpa-field-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 8px; background: var(--primary-subtle); color: var(--primary); font-family: Inter, system-ui, sans-serif; font-size: 10px; font-weight: 800; }
 .dpa-approval-trigger { margin-top: 8px; }
+.dpa-ws-rail-tabs { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-bottom:12px; padding:6px; border:1px solid var(--card-border); border-radius:8px; background:var(--card-bg); }
+.dpa-ws-rail-tab { min-height:34px; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--text-muted); font-size:11px; font-weight:800; cursor:pointer; }
+.dpa-ws-rail-tab[aria-selected="true"] { border-color:var(--primary); background:var(--primary-subtle); color:var(--primary); }
+.dpa-ws-rail-pane[hidden] { display:none; }
 @media (max-width: 1180px) {
   .dpa-ws-meta-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .dpa-ws-grid { grid-template-columns: 1fr; }
@@ -128,33 +132,29 @@
         </div>
       </section>
 
-      <section class="dpa-ws-card" id="risk-signals">
-        <div class="dpa-ws-card-head">
-          <div class="dpa-ws-card-title">Risk Signals</div>
-          <span class="dpa-ws-badge">{{ dpa_workspace.risk_cards|length }} active</span>
-        </div>
-        <div class="dpa-ws-card-body">
-          {% for risk in dpa_workspace.risk_cards %}
-          <article class="dpa-risk-card">
-            <div class="dpa-risk-top">
-              <div class="dpa-risk-title">{{ risk.title }}</div>
-              <span class="dpa-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span>
-            </div>
-            <div class="dpa-risk-grid">
-              <div><div class="dpa-kv-label">Reason</div><div class="dpa-kv-value">{{ risk.reason }}</div></div>
-              <div><div class="dpa-kv-label">Source</div><div class="dpa-kv-value">{{ risk.source }}</div></div>
-              <div><div class="dpa-kv-label">Recommended action</div><div class="dpa-kv-value">{{ risk.recommended_action }}</div></div>
-              <div><div class="dpa-kv-label">Approval impact</div><div class="dpa-kv-value">{{ risk.approval_impact }}</div></div>
-              <div><div class="dpa-kv-label">Status</div><div class="dpa-kv-value dpa-status">{{ risk.status }}</div></div>
-            </div>
-            <a class="dpa-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related draft section</a>
-          </article>
-          {% endfor %}
-        </div>
-      </section>
     </main>
 
-    <aside>
+    <aside class="dpa-ws-rail">
+      <div class="dpa-ws-rail-tabs" role="tablist" aria-label="DPA workspace rail">
+        <button class="dpa-ws-rail-tab" type="button" role="tab" aria-selected="true" aria-controls="dpa-rail-review" data-dpa-rail-tab="review">Review</button>
+        <button class="dpa-ws-rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-properties" data-dpa-rail-tab="properties">Properties</button>
+        <button class="dpa-ws-rail-tab" type="button" role="tab" aria-selected="false" aria-controls="dpa-rail-activity" data-dpa-rail-tab="activity">Activity</button>
+      </div>
+      <div class="dpa-ws-rail-pane" id="dpa-rail-review" role="tabpanel" data-dpa-rail-pane="review">
+      <section class="dpa-ws-card" id="risk-signals">
+        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Review items</div><span class="dpa-ws-badge">{{ dpa_workspace.risk_cards|length }} active</span></div>
+        <div class="dpa-ws-card-body">
+          {% for risk in dpa_workspace.risk_cards %}
+          <article class="dpa-risk-card"><div class="dpa-risk-top"><div class="dpa-risk-title">{{ risk.title }}</div><span class="dpa-risk-sev {{ risk.severity_code }}">{{ risk.severity }}</span></div><div class="dpa-kv-label">Why this needs attention</div><div class="dpa-kv-value">{{ risk.reason }}</div><div class="dpa-kv-label dpa-approval-trigger">Source playbook rule</div><div class="dpa-kv-value">{{ risk.source }}</div><div class="dpa-kv-label dpa-approval-trigger">Recommended action</div><div class="dpa-kv-value">{{ risk.recommended_action }}</div><div class="dpa-kv-label dpa-approval-trigger">Approval impact</div><div class="dpa-kv-value">{{ risk.approval_impact }}</div><a class="dpa-risk-link" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open related clause</a></article>
+          {% empty %}<p class="dpa-kv-value">No review items require attention.</p>{% endfor %}
+        </div>
+      </section>
+      <section class="dpa-ws-card">
+        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Approval Route</div></div>
+        <div class="dpa-ws-card-body">{% for approval in dpa_workspace.approval_cards %}<article class="dpa-approval-card"><div class="dpa-risk-top"><div class="dpa-approval-title">{{ approval.name }}</div><span class="dpa-ws-badge">{{ approval.status }}</span></div><div class="dpa-kv-label">Why triggered</div><div class="dpa-kv-value">{{ approval.reason }}</div><div class="dpa-kv-label dpa-approval-trigger">Trigger</div><div class="dpa-kv-value">{{ approval.trigger }}</div></article>{% endfor %}</div>
+      </section>
+      </div>
+      <div class="dpa-ws-rail-pane" id="dpa-rail-properties" role="tabpanel" data-dpa-rail-pane="properties" hidden>
       <section class="dpa-ws-card">
         <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Governance Rail</div></div>
         <div class="dpa-ws-card-body">
@@ -165,25 +165,8 @@
           <div class="dpa-rail-item"><span class="dpa-rail-dot">✓</span><div><div class="dpa-rail-title">Approval route</div><div class="dpa-rail-copy">{% for approval in dpa_workspace.approval_cards %}{{ approval.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div></div></div>
         </div>
       </section>
-
-      <section class="dpa-ws-card">
-        <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Approval Route</div></div>
-        <div class="dpa-ws-card-body">
-          {% for approval in dpa_workspace.approval_cards %}
-          <article class="dpa-approval-card">
-            <div class="dpa-risk-top">
-              <div class="dpa-approval-title">{{ approval.name }}</div>
-              <span class="dpa-ws-badge">{{ approval.status }}</span>
-            </div>
-            <div class="dpa-kv-label">Why triggered</div>
-            <div class="dpa-kv-value">{{ approval.reason }}</div>
-            <div class="dpa-kv-label dpa-approval-trigger">Trigger</div>
-            <div class="dpa-kv-value">{{ approval.trigger }}</div>
-          </article>
-          {% endfor %}
-        </div>
-      </section>
-
+      </div>
+      <div class="dpa-ws-rail-pane" id="dpa-rail-activity" role="tabpanel" data-dpa-rail-pane="activity" hidden>
       <section class="dpa-ws-card">
         <div class="dpa-ws-card-head"><div class="dpa-ws-card-title">Audit Trail Preview</div></div>
         <div class="dpa-ws-card-body">
@@ -196,6 +179,7 @@
           {% endfor %}
         </div>
       </section>
+      </div>
     </aside>
   </div>
 </div>
@@ -209,5 +193,16 @@ document.addEventListener('click', function (event) {
     node.classList.remove('is-linked');
   });
   target.classList.add('is-linked');
+});
+document.querySelectorAll('[data-dpa-rail-tab]').forEach(function (tab) {
+  tab.addEventListener('click', function () {
+    var name = tab.getAttribute('data-dpa-rail-tab');
+    document.querySelectorAll('[data-dpa-rail-tab]').forEach(function (button) {
+      button.setAttribute('aria-selected', String(button === tab));
+    });
+    document.querySelectorAll('[data-dpa-rail-pane]').forEach(function (pane) {
+      pane.hidden = pane.getAttribute('data-dpa-rail-pane') !== name;
+    });
+  });
 });
 </script>

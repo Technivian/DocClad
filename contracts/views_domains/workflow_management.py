@@ -840,6 +840,13 @@ def _risk_detail_for_signal(signal):
             'approval_impact': 'Legal and DPO approval required before signature.',
             'section_anchor': 'processing-details',
         },
+        'privacy_fact_uncertain': {
+            'title': 'Privacy fact needs confirmation',
+            'source': 'DPA intake · Operational fact marked Not sure',
+            'recommended_action': 'Privacy and the DPO must confirm the processing or subprocessor position before approval.',
+            'approval_impact': 'Blocked from approval and signature until Privacy and DPO review is complete.',
+            'section_anchor': 'subprocessors',
+        },
         'scc_fallback_included': {
             'title': 'SCC fallback language included',
             'source': 'AI Smart Questions · SCC fallback language',
@@ -884,7 +891,7 @@ def _dpa_approval_cards(workflow, values, risk_codes):
             'trigger': 'Personal data processing review',
         },
     ]
-    dpo_risk_codes = {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk'}
+    dpo_risk_codes = {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk', 'privacy_fact_uncertain'}
     if (
         values.get('personal_data_involved')
         or values.get('cross_border_transfer')
@@ -894,7 +901,7 @@ def _dpa_approval_cards(workflow, values, risk_codes):
         cards.append({
             'name': 'DPO',
             'status': 'Triggered',
-            'reason': 'DPO review is required because personal data processing, EEA/SCC posture, or special category data are in scope.',
+            'reason': 'DPO review is required because personal data processing, transfer posture, special-category data, or an unconfirmed privacy fact is in scope.',
             'trigger': 'Privacy and transfer risk rules',
         })
     return cards

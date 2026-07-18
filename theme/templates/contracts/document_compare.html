@@ -2,6 +2,11 @@
 {% block title %}Compare Document Versions – CLM One{% endblock %}
 {% block authenticated_page_title %}Document compare{% endblock %}
 {% block authenticated_page_subtitle %}{{ document.title }} · Version {{ document.version }} compared with version {{ other_document.version }}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:document_detail' document.pk %}" class="topbar-back-link" data-workspace-back aria-label="Back to document" title="Back to document">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .pre-code {

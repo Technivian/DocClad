@@ -101,7 +101,7 @@ class WorkflowCockpitRegressionTests(TestCase):
         dpa = self.client_.get(reverse('contracts:dpa_workflow_builder'))
         msa = self.client_.get(reverse('contracts:msa_workflow_builder'))
 
-        self.assertContains(dpa, 'New DPA Draft')
+        self.assertContains(dpa, 'New DPA')
         self.assertContains(msa, 'New MSA Draft')
 
     def test_reference_workflows_generate_records_and_render_workspaces(self):

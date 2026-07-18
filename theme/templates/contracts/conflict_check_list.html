@@ -13,7 +13,7 @@
       <h1 class="page-title">Conflict of Interest Checks</h1>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:conflict_check_create' %}" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center gap-2">
+      <a href="{% url 'contracts:conflict_check_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center gap-2">
         <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         New Check
       </a>
@@ -42,12 +42,12 @@
           <td class="tbl-td px-5 py-3 c-muted">{{ check.client.name|default:"—" }}</td>
           <td class="tbl-td px-5 py-3 c-muted">{{ check.matter.matter_number|default:"—" }}</td>
           <td class="tbl-td px-5 py-3">
-            <span class="badge-sm {% if check.status == 'CLEAR' %}badge-green{% elif check.status == 'CONFLICT' %}badge-red{% elif check.status == 'WAIVED' %}badge-yellow{% else %}badge-gray{% endif %}">{{ check.get_status_display }}</span>
+            <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if check.status == 'CLEAR' %}badge-green{% elif check.status == 'CONFLICT' %}badge-red{% elif check.status == 'WAIVED' %}badge-yellow{% else %}badge-gray{% endif %}">{{ check.get_status_display }}</span>
           </td>
           <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_by.get_full_name|default:"—" }}</td>
           <td class="tbl-td px-5 py-3 c-muted">{{ check.created_at|date:"M d, Y" }}</td>
           <td class="tbl-td px-5 py-3 text-right">
-            <a href="{% url 'contracts:conflict_check_update' check.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a>
+            <a href="{% url 'contracts:conflict_check_update' check.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a>
           </td>
         </tr>
         {% empty %}

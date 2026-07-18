@@ -643,6 +643,14 @@ def esign_webhook_api(request):
 
 # Documenso event type → internal status string (matches PROVIDER_STATUS_MAP in esign.py)
 _DOCUMENSO_EVENT_STATUS = {
+    'DOCUMENT_SENT': 'sent',
+    'DOCUMENT_OPENED': 'opened',
+    'DOCUMENT_SIGNED': 'signed',
+    'DOCUMENT_RECIPIENT_COMPLETED': 'signed',
+    'DOCUMENT_COMPLETED': 'completed',
+    'DOCUMENT_REJECTED': 'declined',
+    'DOCUMENT_CANCELLED': 'cancelled',
+    # Legacy V1 event names retained for in-flight envelopes.
     'document.sent': 'sent',
     'document.opened': 'opened',
     'document.signed': 'signed',
@@ -673,7 +681,7 @@ def documenso_esign_webhook_api(request):
 
     provided = str(request.headers.get('X-Documenso-Secret', '') or '').strip()
     if not provided or not secrets.compare_digest(secret, provided):
-        return HttpResponse('Invalid webhook secret', status=403)
+        return HttpResponse('Invalid webhook secret', status=401)
 
     try:
         payload = json.loads(request.body or '{}')
@@ -687,7 +695,7 @@ def documenso_esign_webhook_api(request):
         logger.debug('documenso_webhook: unhandled event type %s', event_type)
         return JsonResponse({'received': True, 'processed': False})
 
-    data = payload.get('data') or {}
+    data = payload.get('payload') or payload.get('data') or {}
     doc_id = str(data.get('id') or '').strip()
     external_id = str(data.get('externalId') or '').strip()
     created_at = str(payload.get('createdAt') or '').strip()
@@ -849,5 +857,4 @@ def api_crm_trigger_sync(request):
         return JsonResponse(result)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-
 

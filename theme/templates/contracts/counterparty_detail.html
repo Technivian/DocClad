@@ -1,23 +1,26 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ object.get_entity_type_display }}{% if object.jurisdiction %} &middot; {{ object.jurisdiction }}{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:counterparty_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to counterparties" title="Back to counterparties">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <a href="{% url 'contracts:counterparty_list' %}" class="text-sm c-muted hover:underline">&larr; Back to list</a>
-  <div class="page-header mt-2">
-    <div>
-      <h1 class="page-title">{{ object }}</h1>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+  <header class="dc-ds-page-hero">
+    <div class="dc-ds-actions"><a href="{% url 'contracts:counterparty_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit</a></div>
+  </header>
+  <div class="dc-ds-record-content dc-ds-record-content--narrow">
+    <div class="panel panel-inner dc-ds-surface dc-ds-record-metadata">
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Entity Type</span><p class="dc-ds-record-metadata__value">{{ object.get_entity_type_display }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Jurisdiction</span><p class="dc-ds-record-metadata__value">{{ object.jurisdiction|default:"-" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Registration #</span><p class="dc-ds-record-metadata__value">{{ object.registration_number|default:"-" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Address</span><p class="dc-ds-record-metadata__value">{{ object.address|default:"-" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Contact</span><p class="dc-ds-record-metadata__value">{{ object.contact_name }} ({{ object.contact_email }})</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Notes</span><p class="dc-ds-record-metadata__value">{{ object.notes|default:"-" }}</p></div>
     </div>
-    <div class="page-actions">
-      <a href="{% url 'contracts:counterparty_update' object.pk %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Edit</a>
-    </div>
-  </div>
-  <div class="max-w-3xl panel panel-inner">
-    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Entity Type</span><p class="mt-1 text-sm">{{ object.get_entity_type_display }}</p></div>
-    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Jurisdiction</span><p class="mt-1 text-sm">{{ object.jurisdiction|default:"-" }}</p></div>
-    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Registration #</span><p class="mt-1 text-sm">{{ object.registration_number|default:"-" }}</p></div>
-    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Address</span><p class="mt-1 text-sm">{{ object.address|default:"-" }}</p></div>
-    <div class="py-3 border-b"><span class="c-muted text-xs font-medium uppercase">Contact</span><p class="mt-1 text-sm">{{ object.contact_name }} ({{ object.contact_email }})</p></div>
-    <div class="py-3"><span class="c-muted text-xs font-medium uppercase">Notes</span><p class="mt-1 text-sm">{{ object.notes|default:"-" }}</p></div>
   </div>
 </div>
 {% endblock %}

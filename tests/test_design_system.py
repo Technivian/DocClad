@@ -205,8 +205,8 @@ class DesignSystemTests(TestCase):
         ).read_text()
 
         self.assertIn('@import "./premium.css"', index)
-        self.assertIn('--page-padding-x: var(--space-32)', tokens)
-        self.assertIn('--page-padding-top: var(--space-24)', tokens)
+        self.assertIn('--page-padding-x: var(--space-24)', tokens)
+        self.assertIn('--page-padding-top: var(--space-16)', tokens)
         self.assertIn('--ds-page-x: var(--page-padding-x)', tokens)
         self.assertIn('.page-wrap', premium)
         self.assertIn('.dc-ds-page', premium)
@@ -227,8 +227,8 @@ class DesignSystemTests(TestCase):
             '--color-status-success-border',
             '--color-status-warning-border',
             '--color-status-error-border',
-            '--radius-subpanel: 14px',
-            '--radius-card: 10px',
+            '--radius-subpanel: 10px',
+            '--radius-card: 8px',
             '--shadow-card:',
         ):
             self.assertIn(contract, tokens)
@@ -293,6 +293,12 @@ class DesignSystemTests(TestCase):
         root = Path(settings.BASE_DIR)
         template_root = root / 'theme' / 'templates'
         base = (template_root / 'base.html').read_text()
+        shell = '\n'.join(
+            source.read_text()
+            for source in sorted(
+                (root / 'theme' / 'static_src' / 'src' / 'global-shell').glob('*.css')
+            )
+        )
         premium = (
             root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
         ).read_text()
@@ -300,9 +306,11 @@ class DesignSystemTests(TestCase):
         self.assertIn('class="topbar-page-context"', base)
         self.assertIn('block authenticated_page_title', base)
         self.assertIn('dc-ds-header-promoted', base)
-        self.assertIn('.workspace-main-head .workspace-title', base)
+        self.assertIn('css/dist/global-shell.css', base)
+        self.assertIn('.workspace-main-head', shell)
+        self.assertIn('.workspace-title', shell)
         self.assertIn('.topbar-page-context', premium)
-        self.assertIn('height: var(--space-96)', premium)
+        self.assertIn('height: var(--shell-topbar-height)', premium)
 
         for relative_path in (
             'dashboard.html',
@@ -350,7 +358,7 @@ class DesignSystemTests(TestCase):
 
         repository = (template_root / 'repository.html').read_text()
         self.assertIn('repo-filter-drawer', repository)
-        self.assertIn('dc-ds-summary', repository)
+        self.assertNotIn('dc-ds-summary', repository)
 
         for relative_path in ('dpa_review_pack_list.html', 'obligations_workspace.html'):
             content = (template_root / relative_path).read_text()
@@ -393,7 +401,12 @@ class DesignSystemTests(TestCase):
         command_center = (
             root / 'theme' / 'static' / 'css' / 'command-center.css'
         ).read_text()
-        base = (root / 'theme' / 'templates' / 'base.html').read_text()
+        shell = '\n'.join(
+            source.read_text()
+            for source in sorted(
+                (root / 'theme' / 'static_src' / 'src' / 'global-shell').glob('*.css')
+            )
+        )
 
         for route_scoped_shell_selector in (
             'body:has(.cc-v3) .sidebar-container',
@@ -407,9 +420,9 @@ class DesignSystemTests(TestCase):
         ):
             self.assertNotIn(route_scoped_shell_selector, command_center)
 
-        self.assertIn('navigation is product chrome, never page chrome', base)
-        self.assertIn('width: 225px', base)
-        self.assertIn('min-height: 54px', base)
+        self.assertIn('navigation is product chrome, never page chrome', shell)
+        self.assertIn('width: 225px', shell)
+        self.assertIn('min-height: 54px', shell)
 
     def test_core_operational_surfaces_use_central_icons_and_table_contracts(self):
         root = Path(settings.BASE_DIR)
@@ -468,7 +481,14 @@ class DesignSystemTests(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'main-layout')
         self.assertContains(response, 'sidebar-container')
-        self.assertContains(response, '@media (max-width: 1024px)')
+        self.assertContains(response, 'css/dist/global-shell.css')
+        shell = '\n'.join(
+            source.read_text()
+            for source in sorted(
+                (Path(settings.BASE_DIR) / 'theme' / 'static_src' / 'src' / 'global-shell').glob('*.css')
+            )
+        )
+        self.assertIn('@media (max-width: 1024px)', shell)
 
     def test_search_and_notifications_links_exist(self):
         os.environ['FEATURE_REDESIGN'] = 'true'

@@ -9,7 +9,7 @@
         <h1 class="page-title">Trademark Requests</h1>
         <p class="page-subtitle">Manage filing pipelines and linked client matters.</p>
     </div>
-    <a href="{% url 'contracts:trademark_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+    <a href="{% url 'contracts:trademark_request_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         New Request
     </a>
@@ -56,9 +56,9 @@
             <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-        <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Search</button>
+        <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Search</button>
         {% if search_query or selected_status %}
-        <a href="{% url 'contracts:trademark_request_list' %}" class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 btn-ghost">Clear</a>
+        <a href="{% url 'contracts:trademark_request_list' %}" class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 dc-ds-button dc-ds-button--quiet btn-ghost">Clear</a>
         {% endif %}
     </form>
 </div>
@@ -83,7 +83,7 @@
                     <p class="text-xs mt-0.5 c-muted">{{ trademark_request.description|truncatechars:72 }}</p>
                 </td>
                 <td class="px-5 py-3.5">
-                    <span class="badge-sm {% if trademark_request.status == 'APPROVED' %}badge-green{% elif trademark_request.status == 'PENDING' or trademark_request.status == 'IN_REVIEW' %}badge-yellow{% elif trademark_request.status == 'REJECTED' %}badge-red{% else %}badge-blue{% endif %}">
+                    <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if trademark_request.status == 'APPROVED' %}badge-green{% elif trademark_request.status == 'PENDING' or trademark_request.status == 'IN_REVIEW' %}badge-yellow{% elif trademark_request.status == 'REJECTED' %}badge-red{% else %}badge-blue{% endif %}">
                         {{ trademark_request.get_status_display }}
                     </span>
                 </td>
@@ -93,7 +93,7 @@
                 </td>
                 <td class="px-5 py-3.5 c-secondary">{{ trademark_request.filing_basis|default:'—' }}</td>
                 <td class="px-5 py-3.5 c-secondary">{{ trademark_request.updated_at|date:"M d, Y" }}</td>
-                <td class="px-5 py-3.5 text-right"><div class="inline-flex items-center gap-2"><a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary-primary">View</a><a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a></div></td>
+                <td class="px-5 py-3.5 text-right"><div class="inline-flex items-center gap-2"><a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-soft-primary-primary">View</a><a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a></div></td>
             </tr>
             {% empty %}
             <tr><td colspan="6" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><p class="font-medium c-primary">No trademark requests found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_status %}Try adjusting your filters or <a href="{% url 'contracts:trademark_request_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:trademark_request_create' %}" class="c-link">creating your first request</a>.{% endif %}</p></div></div></td></tr>

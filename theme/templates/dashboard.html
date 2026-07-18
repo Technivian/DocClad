@@ -9,25 +9,39 @@
 <main class="command-center cc-v3" id="CLMOneDashboard" data-command-center>
   <div class="cc-v3-layout">
     <div class="cc-v3-primary">
-      <section class="cc-v3-hero cc-v3-portfolio-hero dc-ds-surface--feature" aria-labelledby="portfolio-health-title">
-        <div class="cc-v3-portfolio-intro">
-          <div class="cc-v3-hero-kicker"><span class="cc-v3-badge">Governance overview</span></div>
-          <h2 id="portfolio-health-title">Contract portfolio health</h2>
-          <p class="cc-v3-portfolio-summary">{{ portfolio_health_summary }}</p>
-        </div>
-        <div class="cc-v3-score cc-v3-portfolio-score" data-risk-score="{{ portfolio_health_score }}" role="img" aria-label="Portfolio health score {{ portfolio_health_score }} out of 100, {{ portfolio_health_band }}">
-          <div class="cc-v3-score-copy"><strong>{{ portfolio_health_score }}</strong><span>/100</span><em>{{ portfolio_health_band }}</em></div>
-        </div>
-        <div class="cc-v3-portfolio-signals" aria-label="Portfolio health signals">
-          <div class="cc-v3-portfolio-signal{% if clm_pending_approvals_count %} is-warning{% endif %}"><span>Pending approvals</span><strong>{{ clm_pending_approvals_count }}</strong><small>{% if clm_pending_approvals_count %}Awaiting a decision{% else %}No approvals waiting{% endif %}</small></div>
-          <div class="cc-v3-portfolio-signal{% if clm_high_severity_count %} is-critical{% endif %}"><span>High-risk findings</span><strong>{{ clm_high_severity_count }}</strong><small>{% if clm_high_severity_count %}Need active attention{% else %}No high-risk findings{% endif %}</small></div>
-          <div class="cc-v3-portfolio-signal{% if clm_renewals_count or clm_deadline_overdue_count %} is-warning{% endif %}"><span>Upcoming deadlines</span><strong>{{ clm_renewals_count }}</strong><small>{% if clm_deadline_overdue_count %}{{ clm_deadline_overdue_count }} overdue{% else %}Due within 30 days{% endif %}</small></div>
-          <div class="cc-v3-portfolio-signal{% if clm_policy_exception_count %} is-warning{% endif %}"><span>Policy exceptions</span><strong>{{ clm_policy_exception_count }}</strong><small>{% if clm_policy_exception_count %}Accepted risk to monitor{% else %}No open exceptions{% endif %}</small></div>
-          <div class="cc-v3-portfolio-signal{% if clm_conflict_count %} is-critical{% endif %}"><span>Cross-document conflicts</span><strong>{{ clm_conflict_count }}</strong><small>{% if clm_conflict_count %}Require reconciliation{% else %}No conflicts detected{% endif %}</small></div>
-        </div>
+      <section class="cc-v3-hero cc-v3-portfolio-hero dc-ds-surface--feature{% if not portfolio_health_available %} cc-v3-portfolio-hero--empty{% endif %}" aria-labelledby="portfolio-health-title">
+        <header class="cc-v3-portfolio-header">
+          <div class="cc-v3-portfolio-copy">
+            <p class="cc-v3-portfolio-eyebrow">Governance overview</p>
+            <h2 id="portfolio-health-title">{% if portfolio_health_available %}Contract portfolio health{% else %}Establish your contract portfolio{% endif %}</h2>
+            <p class="cc-v3-portfolio-summary">{{ portfolio_health_summary }}</p>
+          </div>
+          <div class="cc-v3-portfolio-score-panel">
+            {% if portfolio_health_available %}
+            <div class="cc-v3-score cc-v3-portfolio-score" data-risk-score="{{ portfolio_health_score }}" role="img" aria-label="Portfolio health score {{ portfolio_health_score }} out of 100, {{ portfolio_health_band }}">
+              <div class="cc-v3-score-copy"><strong>{{ portfolio_health_score }}</strong><span>/100</span></div>
+            </div>
+            <details class="cc-v3-score-breakdown">
+              <summary>View score breakdown</summary>
+              <div class="cc-v3-score-breakdown-panel" role="region" aria-label="Portfolio health score breakdown">
+                <p>Starts at 100. Current portfolio signals reduce the score:</p>
+                <ul>
+                  {% for factor in portfolio_health_factors %}
+                  <li><span>{{ factor.label }}</span><strong>{{ factor.count }} × {{ factor.weight }}{% if factor.penalty %} <em>−{{ factor.penalty }}</em>{% else %} <em>no deduction</em>{% endif %}</strong></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </details>
+            {% else %}
+            <div class="cc-v3-score-unavailable" role="status" aria-label="Health score unavailable until a contract is added">
+              <strong>—</strong><span>/100</span><em>Score pending</em>
+            </div>
+            {% endif %}
+          </div>
+        </header>
         {% if priority_feature %}
         <article class="cc-v3-top-priority" aria-labelledby="top-priority-title">
-          <div class="cc-v3-top-priority-head"><span class="cc-v3-top-priority-label">Top priority</span><span class="cc-v3-top-priority-stage">{{ priority_feature.current_stage|default:"Review" }}</span></div>
+          <div class="cc-v3-top-priority-head"><span class="cc-v3-top-priority-label">Top priority</span><span class="cc-v3-top-priority-stage">{{ priority_feature_status }}</span></div>
           <div class="cc-v3-top-priority-body">
             <div class="cc-v3-top-priority-context"><h3 id="top-priority-title">{{ priority_feature.title }}</h3><div class="cc-v3-top-priority-meta"><span>{{ priority_feature.counterparty|default:"Counterparty pending" }}</span><span>{{ priority_feature.contract_type|default:"Contract" }}</span></div></div>
             <div class="cc-v3-top-priority-insights">
@@ -37,11 +51,20 @@
           </div>
         </article>
         {% else %}
-        <div class="cc-v3-top-priority cc-v3-top-priority--empty"><div class="cc-v3-top-priority-label">Top priority</div><h3>No contract needs immediate attention</h3><p>As contracts enter review, their next governed action will appear here.</p></div>
+        <section class="cc-v3-top-priority cc-v3-top-priority--empty" aria-labelledby="top-priority-title">
+          <p class="cc-v3-top-priority-label">Top priority</p>
+          <h3 id="top-priority-title">{% if portfolio_health_available %}No priority action right now{% else %}No contracts monitored yet{% endif %}</h3>
+          <p>{% if portfolio_health_available %}No governed contract requires immediate attention.{% else %}Your priority actions will appear here once contracts are added to the portfolio.{% endif %}</p>
+        </section>
         {% endif %}
         <div class="cc-v3-hero-actions cc-v3-portfolio-actions">
-          <a class="is-primary" href="{% url 'contracts:repository' %}">Review priority actions <span aria-hidden="true">→</span></a>
+          {% if portfolio_health_available %}
+          <a class="is-primary" href="{% url 'contracts:repository' %}">Review priority actions <span class="cc-v3-cta-arrow" aria-hidden="true">→</span></a>
           <a class="is-secondary" href="{% url 'contracts:repository' %}">View all contracts</a>
+          {% else %}
+          <a class="is-primary" href="{% url 'contracts:contract_template_picker' %}">Add first contract <span class="cc-v3-cta-arrow" aria-hidden="true">→</span></a>
+          <a class="is-secondary" href="{% url 'contracts:upload_signed_contract' %}">Upload existing agreement</a>
+          {% endif %}
         </div>
       </section>
 
@@ -66,7 +89,7 @@
             <tbody>
               {% for row in priority_queue_rows|slice:":5" %}
               <tr>
-                <td><a class="cc-v3-doc" href="{{ row.workspace_href }}" aria-label="{{ row.title }}. {{ row.next_action }}. {{ row.highest_risk_signal }}. {{ row.risk_personality }}"><span class="cc-v3-doc-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span><span><strong>{{ row.title }}</strong><span>{{ row.item_type|default:"Contract" }}</span></span></a></td>
+                <td><a class="cc-v3-doc" href="{{ row.workspace_href }}" aria-label="{{ row.title }}. {{ row.next_action }}. {{ row.highest_risk_signal }}. {{ row.risk_personality }}"><span class="cc-v3-doc-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span><span class="cc-v3-doc-copy"><strong>{{ row.title }}</strong><span>{{ row.item_type|default:"Contract" }}</span></span></a></td>
                 <td title="{{ row.counterparty|default:'No counterparty' }}">{{ row.counterparty|default:"No counterparty" }}</td>
                 <td><span class="cc-v3-owner"><span class="cc-v3-owner-avatar" aria-hidden="true">{{ row.owner_label|slice:":1"|upper }}</span>{{ row.owner_label }}</span></td>
                 <td><span class="cc-v3-stage">{{ row.current_stage|default:"Review" }}</span></td>
@@ -93,7 +116,7 @@
       <section class="cc-v3-card cc-v3-rail-card cc-v3-deadlines dc-ds-surface dc-ds-surface--expressive" aria-labelledby="upcoming-deadlines-title">
         <div class="cc-v3-section-head"><h2 id="upcoming-deadlines-title">Upcoming Deadlines</h2>{% if deadline_tracking_configured %}<a href="{% url 'contracts:deadline_list' %}">View calendar</a>{% endif %}</div>
         <div class="cc-v3-rail-body">
-          {% for item in clm_upcoming_obligations %}<a class="cc-v3-deadline-row" href="{{ item.href }}"><span class="cc-v3-calendar" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-deadline-copy"><strong>{{ item.title }}</strong><span>{{ item.counterparty }}</span></span><span class="cc-v3-date-status{% if item.status_tone == 'overdue' %} is-overdue{% endif %}">{{ item.status_label }}</span></a>
+          {% for item in clm_upcoming_obligations|slice:":2" %}<a class="cc-v3-deadline-row" href="{{ item.href }}"><span class="cc-v3-calendar" aria-hidden="true">{% include "design_system/icon.html" with name="calendar" %}</span><span class="cc-v3-deadline-copy"><strong>{{ item.title }}</strong><span>{{ item.counterparty }}</span></span><span class="cc-v3-date-status{% if item.status_tone == 'overdue' %} is-overdue{% endif %}">{{ item.status_label }}</span></a>
           {% empty %}
           {% if deadline_tracking_configured %}
           <div class="cc-v3-rail-state"><span>No upcoming deadlines</span><strong class="is-clear">Nothing due in the next 30 days.</strong></div>

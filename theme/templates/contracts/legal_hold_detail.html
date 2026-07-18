@@ -1,35 +1,22 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ object.get_status_display }}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:legal_hold_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to legal holds" title="Back to legal holds">{% include "design_system/icon.html" with name="arrow-left" %}</a>
+{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-.detail-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px; }
-.detail-row { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
-.detail-row:last-child { border-bottom: none; }
-.detail-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.detail-value { margin-top: 4px; font-size: 14px; color: var(--text-primary); }
-.back-link { font-size: 13px; color: var(--text-secondary); text-decoration: none; }
-.back-link:hover { color: var(--text-primary); }
-.page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
-.btn-primary-grad { display: inline-block; padding: 8px 16px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; border-radius: 8px; text-decoration: none; transition: background 0.15s; }
-.btn-primary-grad:hover { background: var(--primary-hover); }
-</style>
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <a href="{% url 'contracts:legal_hold_list' %}" class="back-link">&larr; Back to list</a>
-            <h1 class="page-title">{{ object }}</h1>
-        </div>
-        <a href="{% url 'contracts:legal_hold_update' object.pk %}" class="btn-primary-grad">Edit</a>
-    </div>
-    <div class="detail-card">
-        <div class="detail-row"><span class="detail-label">Status</span><p class="detail-value">{{ object.get_status_display }}</p></div>
-        <div class="detail-row"><span class="detail-label">Matter</span><p class="detail-value">{{ object.matter|default:"-" }}</p></div>
-        <div class="detail-row"><span class="detail-label">Client</span><p class="detail-value">{{ object.client|default:"-" }}</p></div>
-        <div class="detail-row"><span class="detail-label">Start Date</span><p class="detail-value">{{ object.hold_start_date }}</p></div>
-        <div class="detail-row"><span class="detail-label">End Date</span><p class="detail-value">{{ object.hold_end_date|default:"Indefinite" }}</p></div>
-        <div class="detail-row"><span class="detail-label">Reason</span><p class="detail-value">{{ object.reason|default:"-" }}</p></div>
-        <div class="detail-row"><span class="detail-label">Scope</span><p class="detail-value">{{ object.scope|default:"-" }}</p></div>
-        <div class="detail-row"><span class="detail-label">Issued By</span><p class="detail-value">{{ object.issued_by|default:"-" }}</p></div>
-    </div>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+    <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:legal_hold_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit</a></div></header>
+    <div class="dc-ds-record-content dc-ds-record-content--narrow"><div class="panel panel-inner dc-ds-surface dc-ds-record-metadata">
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Status</span><p class="dc-ds-record-metadata__value">{{ object.get_status_display }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Matter</span><p class="dc-ds-record-metadata__value">{{ object.matter|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Client</span><p class="dc-ds-record-metadata__value">{{ object.client|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Start Date</span><p class="dc-ds-record-metadata__value">{{ object.hold_start_date }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">End Date</span><p class="dc-ds-record-metadata__value">{{ object.hold_end_date|default:"Indefinite" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Reason</span><p class="dc-ds-record-metadata__value">{{ object.reason|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Scope</span><p class="dc-ds-record-metadata__value">{{ object.scope|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Issued By</span><p class="dc-ds-record-metadata__value">{{ object.issued_by|default:"-" }}</p></div>
+    </div></div>
 </div>
 {% endblock %}

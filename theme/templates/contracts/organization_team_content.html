@@ -1,15 +1,18 @@
 {% with subtitle="Manage members and invite teammates to "|add:organization.name|add:"." %}
-  {% include "design_system/page_hero.html" with eyebrow="Organization settings" title="Organization Team" subtitle=subtitle actions_template="contracts/organization_team_actions.html" %}
+  {% include "design_system/page_hero.html" with eyebrow="Organization settings" title="Organization Team" subtitle=subtitle %}
 {% endwith %}
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <div class="lg:col-span-2">
-    {% include "design_system/surface_card.html" with title="Active Members" labelledby="organization-team-members" body_template="contracts/organization_team_members.html" %}
-  </div>
-  <div class="space-y-6">
-    {% include "design_system/surface_card.html" with title="Inactive Members" labelledby="organization-team-inactive" body_template="contracts/organization_team_inactive.html" %}
+<div class="space-y-6">
+  {% include "design_system/surface_card.html" with title="Active Members" labelledby="organization-team-members" meta_template="contracts/organization_team_actions.html" body_template="contracts/organization_team_members.html" %}
+
+  {% if inactive_memberships or invitations or invitation_history %}
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
     <div id="organization-team-invite">{% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite-title" body_template="contracts/organization_team_invite.html" %}</div>
-    {% include "design_system/surface_card.html" with title="Pending Invites" labelledby="organization-team-pending" body_template="contracts/organization_team_pending.html" %}
-    {% include "design_system/surface_card.html" with title="Invitation History" labelledby="organization-team-history" body_template="contracts/organization_team_history.html" %}
+    {% if invitations %}{% include "design_system/surface_card.html" with title="Pending Invites" labelledby="organization-team-pending" body_template="contracts/organization_team_pending.html" %}{% endif %}
+    {% if inactive_memberships %}{% include "design_system/surface_card.html" with title="Inactive Members" labelledby="organization-team-inactive" body_template="contracts/organization_team_inactive.html" %}{% endif %}
+    {% if invitation_history %}{% include "design_system/surface_card.html" with title="Invitation History" labelledby="organization-team-history" body_template="contracts/organization_team_history.html" %}{% endif %}
   </div>
+  {% else %}
+  <div id="organization-team-invite">{% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite-title" body_template="contracts/organization_team_invite.html" %}</div>
+  {% endif %}
 </div>

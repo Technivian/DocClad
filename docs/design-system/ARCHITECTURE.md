@@ -1,11 +1,15 @@
 # CLM One Frontend Architecture
 
-Status: Command Center visual standard adopted application-wide. Shared
-foundations, shell, primitives, and the legacy compatibility bridge all resolve
-to the same production contract.
+Status: Phase 1 foundation active; Phase 2 component consolidation pending
+review. The target architecture is recorded in ADR/PDR 0008.
 Authority: `DESIGN_CONSTITUTION.md` (the CLM One Governance Charter)
 
 ## Authority and ownership
+
+The Phase 1 boundary is intentional: it establishes build, token, shell, and
+compatibility ownership without migrating individual pages. See
+`docs/adr/0008-frontend-design-system-phase-1.md` for the approved target and
+`LEGACY_COMPATIBILITY_INVENTORY.md` for the retained bridge.
 
 1. The Governance Charter is authoritative when code, screenshots, audits, or
    older documentation conflict with it.
@@ -123,7 +127,8 @@ retained outside this 8-name vocabulary for existing rare/escalated and
 brand-teal lifecycle consumers respectively — `--phase` resolves to `--seal`
 (brand teal), not green; it is not a duplicate of `--success`.
 
-All six legacy `.badge-*` colour pairs (plus the unused `.badge-expiring` and
+All six legacy `.badge-*` colour pairs (the unused `.badge-expiring` alias was
+removed in Phase 2B.2) and
 the near-unused `.badge-{success,warning,danger,info,neutral}` set) now
 resolve to the same canonical `--status-*-fg/-bg` tokens instead of separately
 hardcoded hex — one source of colour, zero template changes, zero page

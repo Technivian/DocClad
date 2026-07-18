@@ -54,6 +54,8 @@ urlpatterns = [
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
     path('api/contracts/<str:contract_id>/ai-extract/<int:span_id>/review/', api_views.ai_extraction_span_review_api, name='ai_extraction_span_review_api'),
+    path('api/contracts/<str:contract_id>/review-findings/<int:finding_id>/action/', api_views.contract_review_finding_action_api, name='contract_review_finding_action_api'),
+    path('api/contracts/<str:contract_id>/review/confirm/', api_views.contract_review_confirm_api, name='contract_review_confirm_api'),
     path('api/contracts/<str:contract_id>/obligations/', api_views.contract_obligations_api, name='contract_obligations_api'),
     path('api/obligations/reminders/', api_views.obligation_reminders_api, name='obligation_reminders_api'),
     path('api/obligations/<int:obligation_id>/', api_views.obligation_detail_api, name='obligation_detail_api'),
@@ -146,6 +148,7 @@ urlpatterns = [
     path('documents/<int:pk>/compare/<int:other_pk>/', views.DocumentCompareView.as_view(), name='document_compare'),
     path('documents/ocr-queue/', views.DocumentOCRQueueView.as_view(), name='document_ocr_queue'),
     path('documents/ocr-queue/<int:pk>/', views.DocumentOCRReviewUpdateView.as_view(), name='document_ocr_review'),
+    path('<int:pk>/review/', views.contract_review_workspace, name='contract_review_workspace'),
 
     # Time Entries
     path('time/', views.TimeEntryListView.as_view(), name='time_entry_list'),
@@ -326,6 +329,7 @@ urlpatterns = [
     path('signatures/<int:pk>/', views.SignatureRequestDetailView.as_view(), name='signature_request_detail'),
     path('signatures/<int:pk>/edit/', views.SignatureRequestUpdateView.as_view(), name='signature_request_update'),
     path('signatures/<int:pk>/send/', views.signature_request_send, name='signature_request_send'),
+    path('signatures/<int:pk>/refresh/', views.signature_request_refresh, name='signature_request_refresh'),
     path('signatures/<int:pk>/transition/<str:new_status>/', views.signature_request_transition, name='signature_request_transition'),
     path('signatures/<int:pk>/reminder/', views.signature_request_send_reminder, name='signature_request_send_reminder'),
     path('signatures/<int:contract_pk>/packet/', views.SignaturePacketDetailView.as_view(), name='signature_packet_detail'),
@@ -407,6 +411,13 @@ urlpatterns = [
     path('search/', views.global_search, name='global_search'),
 
     # Contracts
+    # External collaboration is isolated from organization membership. Keep
+    # these routes explicit and before the contract shell for auditability.
+    path('collaborate/<uuid:token>/', views.counterparty_collaboration_portal, name='counterparty_collaboration_portal'),
+    path('collaborate/<uuid:token>/comment/', views.counterparty_collaboration_add_comment, name='counterparty_collaboration_add_comment'),
+    path('collaborate/<uuid:token>/revision/', views.counterparty_collaboration_upload_revision, name='counterparty_collaboration_upload_revision'),
+    path('collaborate/<uuid:token>/tasks/<int:item_id>/complete/', views.counterparty_collaboration_complete_task, name='counterparty_collaboration_complete_task'),
+    path('collaborate/<uuid:token>/documents/<int:document_id>/download/', views.counterparty_collaboration_document_download, name='counterparty_collaboration_document_download'),
     path('', views.ContractListView.as_view(), name='contract_list'),
     path('<int:pk>/', views.ContractDetailView.as_view(), name='contract_detail'),
     path('start/', views.legal_front_door, name='legal_front_door'),
@@ -415,11 +426,16 @@ urlpatterns = [
     path('new/msa/', views.MSAWorkflowBuilderView.as_view(), name='msa_workflow_builder'),
     path('new/nda/', views.NDAWorkflowBuilderView.as_view(), name='nda_workflow_builder'),
     path('new/dpa/', views.DPAWorkflowBuilderView.as_view(), name='dpa_workflow_builder'),
+    path('new/dpa/review/', views.DPAReviewAndGenerateView.as_view(), name='dpa_workflow_review'),
     path('new/', views.ContractCreateView.as_view(), name='contract_create'),
     path('<int:pk>/edit/', views.ContractUpdateView.as_view(), name='contract_update'),
     path('<int:pk>/submit-review/', views.contract_submit_for_review, name='contract_submit_for_review'),
+    path('<int:pk>/approvals/<int:approval_id>/reorder/', views.contract_approval_chain_reorder, name='contract_approval_chain_reorder'),
     path('<int:pk>/approvals/<int:approval_id>/<slug:decision>/', views.contract_approval_decision, name='contract_approval_decision'),
     path('<int:pk>/add_note/', views.AddNegotiationNoteView.as_view(), name='add_negotiation_note'),
+    path('<int:pk>/counterparty-collaboration/invite/', views.counterparty_collaboration_invite, name='counterparty_collaboration_invite'),
+    path('<int:pk>/counterparty-collaboration/items/', views.counterparty_collaboration_create_item, name='counterparty_collaboration_create_item'),
+    path('<int:pk>/counterparty-collaboration/<int:participant_id>/revoke/', views.counterparty_collaboration_revoke, name='counterparty_collaboration_revoke'),
     path('<int:pk>/ai-assistant/', views.contract_ai_assistant, name='contract_ai_assistant'),
 
     # Subscription / billing

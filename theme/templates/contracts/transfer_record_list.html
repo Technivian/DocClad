@@ -8,7 +8,7 @@
       <p class="page-subtitle">Manage data transfer records</p>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:transfer_record_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
+      <a href="{% url 'contracts:transfer_record_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
       </a>
@@ -34,9 +34,9 @@
           <td class="tbl-td">{{ item.source_country }}</td>
           <td class="tbl-td">{{ item.destination_country }}</td>
           <td class="tbl-td">{{ item.get_transfer_mechanism_display }}</td>
-          <td class="tbl-td">{% if item.tia_completed %}<span class="c-success">✓</span>{% else %}<span class="badge-sm badge-yellow">Pending</span>{% endif %}</td>
-          <td class="tbl-td">{% if item.is_active %}<span class="badge-sm badge-green">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
+          <td class="tbl-td">{% if item.tia_completed %}<span class="c-success">✓</span>{% else %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-yellow">Pending</span>{% endif %}</td>
+          <td class="tbl-td">{% if item.is_active %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-green">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
+          <td class="tbl-td text-right"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
         </tr>
         {% empty %}
         {% url 'contracts:transfer_record_create' as transfer_record_create_url %}

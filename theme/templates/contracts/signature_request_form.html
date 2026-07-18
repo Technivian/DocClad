@@ -10,17 +10,12 @@
             <a href="{% url 'contracts:signature_request_list' %}" class="btn-ghost">&larr; Back</a>
         </div>
     </div>
-    <div class="panel">
+    <div class="panel dc-ds-surface">
         <div class="panel-inner">
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form %}
-                <div class="mb-4">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}<p class="c-muted text-xs mt-1">{{ field.help_text }}</p>{% endif %}
-                    {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors|join:", " }}</p>{% endif %}
-                </div>
+                {% include "design_system/form_field.html" with field=field class_name="mb-4" preserve_help=True %}
                 {% endfor %}
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="submit" class="btn-primary-grad text-white">Save</button>

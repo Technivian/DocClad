@@ -74,6 +74,8 @@ class UploadSignedContractViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse('contracts:document_upload_api'))
         self.assertContains(response, 'usc-dropzone')
+        self.assertContains(response, 'contract_review_url')
+        self.assertContains(response, "window.location.assign(result.data.contract_review_url)")
 
     @override_settings(GEMINI_AI_ENABLED=False, GEMINI_API_KEY='')
     def test_unconfigured_ai_is_explicitly_disabled_in_upload_ui(self):

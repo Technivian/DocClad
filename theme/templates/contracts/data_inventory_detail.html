@@ -1,35 +1,25 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ object.get_lawful_basis_display }}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:data_inventory_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to data inventory" title="Back to data inventory">{% include "design_system/icon.html" with name="arrow-left" %}</a>
+{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-.di-back-link { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
-.di-back-link:hover { color: var(--text-secondary); }
-.di-page-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
-.di-field-row { padding: 12px 0; border-bottom: 1px solid var(--card-border); }
-.di-field-row:last-child { border-bottom: none; }
-.di-field-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.di-field-value { margin-top: 4px; font-size: 13px; color: var(--text-primary); }
-</style>
-<div class="max-w-3xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <a href="{% url 'contracts:data_inventory_list' %}" class="di-back-link">&larr; Back to list</a>
-            <h1 class="di-page-title">{{ object }}</h1>
-        </div>
-        <a href="{% url 'contracts:data_inventory_update' object.pk %}" class="chip chip-active text-sm font-medium">Edit</a>
-    </div>
-    <div class="panel p-6">
-        <div class="di-field-row"><span class="di-field-label">Data Categories</span><p class="di-field-value">{{ object.data_categories }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Data Subjects</span><p class="di-field-value">{{ object.data_subjects }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Purpose</span><p class="di-field-value">{{ object.purpose }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Lawful Basis</span><p class="di-field-value">{{ object.get_lawful_basis_display }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Retention Period</span><p class="di-field-value">{{ object.retention_period }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Recipients</span><p class="di-field-value">{{ object.recipients|default:"-" }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">3rd Country Transfers</span><p class="di-field-value">{{ object.third_country_transfers|yesno:"Yes,No" }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Transfer Safeguards</span><p class="di-field-value">{{ object.transfer_safeguards|default:"-" }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Technical Measures</span><p class="di-field-value">{{ object.technical_measures|default:"-" }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Controller</span><p class="di-field-value">{{ object.controller|default:"-" }}</p></div>
-        <div class="di-field-row"><span class="di-field-label">Processor</span><p class="di-field-value">{{ object.processor|default:"-" }}</p></div>
-    </div>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+    <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:data_inventory_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit</a></div></header>
+    <div class="dc-ds-record-content dc-ds-record-content--narrow"><div class="panel panel-inner dc-ds-surface dc-ds-record-metadata">
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Data Categories</span><p class="dc-ds-record-metadata__value">{{ object.data_categories }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Data Subjects</span><p class="dc-ds-record-metadata__value">{{ object.data_subjects }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Purpose</span><p class="dc-ds-record-metadata__value">{{ object.purpose }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Lawful Basis</span><p class="dc-ds-record-metadata__value">{{ object.get_lawful_basis_display }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Retention Period</span><p class="dc-ds-record-metadata__value">{{ object.retention_period }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Recipients</span><p class="dc-ds-record-metadata__value">{{ object.recipients|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">3rd Country Transfers</span><p class="dc-ds-record-metadata__value">{{ object.third_country_transfers|yesno:"Yes,No" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Transfer Safeguards</span><p class="dc-ds-record-metadata__value">{{ object.transfer_safeguards|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Technical Measures</span><p class="dc-ds-record-metadata__value">{{ object.technical_measures|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Controller</span><p class="dc-ds-record-metadata__value">{{ object.controller|default:"-" }}</p></div>
+        <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Processor</span><p class="dc-ds-record-metadata__value">{{ object.processor|default:"-" }}</p></div>
+    </div></div>
 </div>
 {% endblock %}

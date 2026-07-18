@@ -45,7 +45,13 @@ from contracts.models import (
 )
 from contracts.middleware import log_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
-from contracts.services.esign import ESignTransitionError, send_signature_request, transition_signature_request
+from contracts.services.esign import (
+    ESignReconciliationError,
+    ESignTransitionError,
+    refresh_signature_request,
+    send_signature_request,
+    transition_signature_request,
+)
 from contracts.services.signature_providers import SignatureProviderError
 from contracts.services.signature_audit import (
     log_signature_packet_cancel,
@@ -284,6 +290,31 @@ def signature_request_send(request, pk):
         messages.success(request, f'Sent to {signature_request.signer_email} for signature.')
     else:
         messages.info(request, 'Signature request was already sent.')
+    return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
+
+
+@login_required
+@require_POST
+def signature_request_refresh(request, pk):
+    org = get_user_organization(request.user)
+    queryset = scope_queryset_for_organization(
+        SignatureRequest.objects.select_related('contract', 'document', 'created_by'), org
+    )
+    signature_request = get_object_or_404(queryset, pk=pk)
+    try:
+        result = refresh_signature_request(signature_request)
+    except (ESignReconciliationError, SignatureProviderError) as exc:
+        messages.error(request, f'Could not refresh signature status: {exc}')
+        return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
+
+    signature_request.refresh_from_db()
+    if result.get('changed'):
+        messages.success(
+            request,
+            f'Signature status updated to {signature_request.get_status_display().lower()}.',
+        )
+    else:
+        messages.info(request, 'Signature status is already up to date.')
     return redirect(reverse('contracts:signature_request_detail', kwargs={'pk': signature_request.pk}))
 
 
@@ -789,6 +820,26 @@ class ApprovalRequestCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, 
         'assigned_to': _organization_user_queryset,
         'delegated_to': _organization_user_queryset,
     }
+
+    def get_initial(self):
+        initial = super().get_initial()
+        contract_id = self.request.GET.get('contract')
+        if contract_id:
+            contract = get_object_or_404(
+                scope_queryset_for_organization(Contract.objects.all(), self.get_organization()),
+                pk=contract_id,
+            )
+            initial['contract'] = contract.pk
+        return initial
+
+    def form_valid(self, form):
+        if not form.instance.pk and form.instance.contract_id:
+            highest_sort_order = form.instance.contract.approval_requests.order_by('-sort_order').values_list(
+                'sort_order',
+                flat=True,
+            ).first()
+            form.instance.sort_order = (highest_sort_order or 0) + 10
+        return super().form_valid(form)
 
 
 class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):

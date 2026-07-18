@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,7 +16,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from contracts.forms import ContractForm, UserProfileForm
+from contracts.forms import ContractForm, DocumentForm, UserProfileForm
 from contracts.middleware import log_action
 from contracts.models import (
     AuditLog,
@@ -48,7 +49,13 @@ from contracts.models import (
     DPARiskItem,
     DPAPlaybookPosition,
     ApprovalRule,
+    ClausePlaybook,
     OrgPolicy,
+    ContractReviewFinding,
+    DocumentReviewRun,
+    ClauseUsageEvent,
+    CounterpartyCollaborationItem,
+    CounterpartyCollaborationParticipant,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
 from contracts.services.queue_rows import TERMINAL_STATUSES, assignee_map_for_contracts, latest_activity_map
@@ -66,10 +73,19 @@ from contracts.services.command_center import (
     rank_command_center_rows,
 )
 from contracts.services.contract_launch_setup import get_entry_cards, get_launch_setup_map
+from contracts.services.intake_risk import assess_intake_risk, intake_risk_client_policy
+from contracts.services.intake_routing import intake_routing_client_policy
 from contracts.services.draft_cockpit import get_governance_panel
-from contracts.templatetags.clmone_format import status_badge_class
+from contracts.templatetags.clmone_format import (
+    contract_status_badge_tone,
+    legacy_badge_class_for_tone,
+)
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
-from contracts.view_support import TenantAssignCreateMixin, TenantScopedQuerysetMixin
+from contracts.view_support import (
+    TenantAssignCreateMixin,
+    TenantScopedQuerysetMixin,
+    apply_form_queryset_scopes,
+)
 from contracts.services.contract_lifecycle import (
     build_contract_audit_changes,
     get_signature_routing_blockers,
@@ -81,6 +97,8 @@ from config.feature_flags import is_feature_redesign_enabled
 
 from .contract_helpers import _build_contract_ai_response, build_contract_lifecycle_guidance
 from contracts.services.contract_templates import render_merge_fields
+from contracts.templatetags.clmone_format import object_type_label
+from contracts.services.document_ocr import queue_document_ocr_review
 
 User = get_user_model()
 
@@ -204,6 +222,55 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         org = get_user_organization(self.request.user)
         return scope_queryset_for_organization(Contract.objects.all(), org)
 
+    def _attachment_form(self, data=None, files=None):
+        """Build the existing upload form with this contract fixed server-side."""
+        form = DocumentForm(data, files, instance=Document(contract=self.object))
+        apply_form_queryset_scopes(
+            form,
+            get_user_organization(self.request.user),
+            {'contract': Contract, 'matter': Matter, 'client': Client},
+        )
+        # An attachment belongs to the contract in this URL; never trust a
+        # posted relation to retarget it to another record.
+        for field_name in ('contract', 'matter', 'client'):
+            form.fields.pop(field_name, None)
+        return form
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not can_access_contract_action(request.user, self.object, ContractAction.EDIT):
+            return HttpResponseForbidden('You do not have permission to upload documents for this contract.')
+
+        form = self._attachment_form(request.POST, request.FILES)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(
+                attach_document_form=form,
+                attach_document_dialog_open=True,
+            ))
+
+        document = form.save(commit=False)
+        set_organization_on_instance(document, get_user_organization(request.user))
+        document.uploaded_by = request.user
+        document.save()
+        form.save_m2m()
+        queue_document_ocr_review(document)
+        log_action(
+            request.user,
+            'CREATE',
+            'Document',
+            document.id,
+            str(document),
+            changes={
+                'event': 'document_uploaded',
+                'version': document.version,
+                'file_hash': document.file_hash,
+                'source': 'contract_detail_attachment',
+            },
+            request=request,
+        )
+        messages.success(request, f'Document "{document.title}" attached to this contract.')
+        return redirect('contracts:contract_detail', pk=self.object.pk)
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         case_record = self.object
@@ -230,14 +297,17 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         # (assignee_map_for_contracts), so "who owns this" agrees everywhere.
         org = get_user_organization(self.request.user)
         ctx['owner'] = case_record.owner or case_record.created_by
-        ctx['approval_requests'] = case_record.approval_requests.select_related(
+        approval_requests_qs = case_record.approval_requests.select_related(
             'assigned_to', 'delegated_to',
-        ).order_by('-created_at')[:10]
+        ).order_by('sort_order', 'created_at', 'pk')
+        approval_requests = list(approval_requests_qs)
+        ctx['approval_requests'] = approval_requests[:10]
+        ctx['approval_requests_all'] = approval_requests
         ctx['signature_requests'] = case_record.signature_requests.order_by('-created_at')[:10]
         ctx['contract_tasks'] = LegalTask.objects.filter(contract=case_record).select_related(
             'assigned_to',
         ).order_by('due_date')[:10]
-        approval_ids = list(case_record.approval_requests.values_list('pk', flat=True))
+        approval_ids = [approval.pk for approval in approval_requests]
         deadline_ids = list(case_record.deadlines.values_list('pk', flat=True))
         dpa_pack_ids = list(case_record.dpa_review_packs.values_list('pk', flat=True))
         activity_filter = Q(model_name='Contract', object_id=case_record.pk)
@@ -247,10 +317,25 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             activity_filter |= Q(model_name='Deadline', object_id__in=deadline_ids)
         if dpa_pack_ids:
             activity_filter |= Q(model_name='DPAReviewPack', object_id__in=dpa_pack_ids)
-        ctx['activity_entries'] = AuditLog.objects.filter(
-            activity_filter, organization=org,
-        ).select_related('user').order_by('-timestamp')[:40]
-        ctx['contract_risks'] = RiskLog.objects.filter(contract=case_record).select_related('assigned_to')[:10]
+        activity_entries = list(
+            AuditLog.objects.filter(
+                activity_filter, organization=org,
+            ).select_related('user').order_by('-timestamp')[:40]
+        )
+        ctx['activity_entries'] = activity_entries
+        ctx['contract_risks'] = list(
+            RiskLog.objects.filter(contract=case_record).select_related('assigned_to').order_by(
+                'risk_level', '-updated_at',
+            )[:10]
+        )
+        ctx['open_findings'] = [
+            risk for risk in ctx['contract_risks']
+            if risk.status in (RiskLog.Status.OPEN, RiskLog.Status.IN_PROGRESS)
+        ]
+        ctx['high_risk_findings'] = [
+            risk for risk in ctx['open_findings']
+            if risk.risk_level in (RiskLog.RiskLevel.HIGH, RiskLog.RiskLevel.CRITICAL)
+        ]
         ctx['reviewer_choices'] = User.objects.filter(
             organization_memberships__organization=org,
             organization_memberships__is_active=True,
@@ -258,6 +343,8 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             'first_name', 'last_name', 'username',
         )
         ctx['can_edit'] = can_access_contract_action(self.request.user, case_record, ContractAction.EDIT)
+        if 'attach_document_form' not in ctx:
+            ctx['attach_document_form'] = self._attachment_form()
         ctx['can_comment'] = can_access_contract_action(self.request.user, case_record, ContractAction.COMMENT)
         policy = OrgPolicy.objects.filter(organization=org).first()
         ctx['ai_features_enabled'] = policy.ai_features_enabled if policy else True
@@ -271,6 +358,16 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         )
         ctx['ai_clause_span_count'] = sum(
             len(document.ai_extraction_spans.all()) for document in ctx['documents']
+        )
+        document_ids = [document.pk for document in ctx['documents']]
+        ctx['uploaded_ai_review'] = (
+            AuditLog.objects.filter(
+                organization=org,
+                model_name='Document',
+                object_id__in=document_ids,
+                event_type='ai.uploaded_contract_review',
+            ).order_by('-timestamp').first()
+            if document_ids else None
         )
         ctx['can_submit_for_review'] = ctx['can_edit'] and case_record.status == Contract.Status.DRAFT
         check_log = AuditLog.objects.filter(
@@ -298,6 +395,281 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
         else:
             ctx['can_decide_approval'] = False
         ctx['dpa_review_pack'] = case_record.dpa_review_packs.order_by('-created_at').first()
+        pending_approvals = [
+            approval for approval in approval_requests
+            if approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
+        ]
+        activity_feed = []
+
+        def _actor_snapshot(user):
+            if user:
+                actor_name = user.get_full_name() or user.username
+                actor_initial = (user.first_name or user.username or '?')[:1].upper()
+            else:
+                actor_name = 'System'
+                actor_initial = 'S'
+            return actor_name, actor_initial
+
+        def _audit_detail(changes):
+            if not changes:
+                return 'Recorded in the audit trail.'
+            if changes.get('event') == 'contract.approval_chain_reordered':
+                return 'Approval chain order updated.'
+            if 'status' in changes and isinstance(changes['status'], dict):
+                before = changes['status'].get('before') or 'previous value'
+                after = changes['status'].get('after') or 'new value'
+                return f'Status changed from {before} to {after}.'
+            if 'approval_step' in changes and isinstance(changes['approval_step'], dict):
+                before = changes['approval_step'].get('before') or 'previous step'
+                after = changes['approval_step'].get('after') or 'new step'
+                return f'Approver changed from {before} to {after}.'
+            return 'Recorded in the audit trail.'
+
+        for log in activity_entries:
+            actor_name, actor_initial = _actor_snapshot(log.user)
+            activity_feed.append({
+                'kind': 'audit',
+                'timestamp': log.timestamp,
+                'actor_name': actor_name,
+                'actor_initial': actor_initial,
+                'title': f'{actor_name} {log.get_action_display().lower()} {object_type_label(log.model_name)}',
+                'detail': _audit_detail(log.changes or {}),
+                'badge_label': 'Audit',
+                'badge_class': 'badge-gray',
+                'log': log,
+            })
+
+        negotiation_threads = list(case_record.negotiation_threads.select_related('created_by').order_by('-created_at')[:10])
+        for note in negotiation_threads:
+            actor_name, actor_initial = _actor_snapshot(note.created_by)
+            activity_feed.append({
+                'kind': 'note',
+                'timestamp': note.created_at,
+                'actor_name': actor_name,
+                'actor_initial': actor_initial,
+                'title': note.title,
+                'detail': note.content,
+                'badge_label': 'Internal note',
+                'badge_class': 'badge-blue',
+                'note': note,
+            })
+        activity_feed.sort(key=lambda item: item['timestamp'], reverse=True)
+        ctx['contract_activity_feed'] = activity_feed[:12]
+        ctx['negotiation_threads'] = negotiation_threads
+        collaboration_participants = list(
+            case_record.counterparty_collaboration_participants.select_related('invited_by').all()[:20]
+        )
+        collaboration_items = list(
+            case_record.counterparty_collaboration_items.select_related(
+                'participant', 'created_by', 'document'
+            ).all()[:8]
+        )
+        ctx['counterparty_collaboration'] = {
+            'participants': collaboration_participants,
+            'items': collaboration_items,
+            'active_count': sum(
+                1 for participant in collaboration_participants
+                if participant.status in (
+                    CounterpartyCollaborationParticipant.Status.PENDING,
+                    CounterpartyCollaborationParticipant.Status.ACTIVE,
+                ) and participant.is_accessible
+            ),
+            'shared_document_count': case_record.documents.filter(
+                share_with_counterparty=True, is_privileged=False, is_deleted=False,
+            ).count(),
+            'can_manage': ctx['can_edit'],
+        }
+        approved_count = sum(
+            1 for approval in approval_requests
+            if approval.status == ApprovalRequest.Status.APPROVED
+        )
+        approval_total_count = len(approval_requests)
+        approval_create_url = f"{reverse('contracts:approval_request_create')}?contract={case_record.pk}"
+        paper_source_label = case_record.get_paper_source_display() if case_record.paper_source else 'Not set'
+        paper_source_complete = bool(case_record.paper_source)
+        workflow_ready = bool(
+            case_record.title
+            and case_record.contract_type
+            and case_record.counterparty
+            and case_record.owner_id
+            and paper_source_complete
+        )
+        ctx['approval_summary'] = {
+            'label': (
+                f'{approved_count} of {approval_total_count} approved'
+                if approval_total_count
+                else 'No approvers yet'
+            ),
+            'approved_count': approved_count,
+            'total_count': approval_total_count,
+            'create_url': approval_create_url,
+            'has_approvers': approval_total_count > 0,
+            'can_edit_chain': ctx['can_edit'] and approval_total_count > 1,
+        }
+        playbook_usage_qs = ClauseUsageEvent.objects.filter(
+            organization=org,
+            contract=case_record,
+            clause__is_approved=True,
+        ).select_related('clause', 'performed_by')
+        playbook_usage_count = playbook_usage_qs.count()
+        playbook_usage_unique_clause_count = playbook_usage_qs.values('clause_id').distinct().count()
+        playbook_usage_top_clauses = [
+            {
+                'title': row['clause__title'],
+                'count': row['total'],
+            }
+            for row in (
+                playbook_usage_qs.values('clause_id', 'clause__title')
+                .annotate(total=Count('pk'))
+                .order_by('-total', 'clause__title')[:3]
+            )
+        ]
+        ctx['playbook_usage_summary'] = {
+            'has_data': playbook_usage_count > 0,
+            'event_count': playbook_usage_count,
+            'unique_clause_count': playbook_usage_unique_clause_count,
+            'top_clauses': playbook_usage_top_clauses,
+            'summary': (
+                f'{playbook_usage_unique_clause_count} approved clause'
+                f'{"s" if playbook_usage_unique_clause_count != 1 else ""}'
+                f' used across {playbook_usage_count} recorded event'
+                f'{"s" if playbook_usage_count != 1 else ""}.'
+            ),
+        }
+        ctx['workflow_checklist'] = [
+            {
+                'label': 'Record basics',
+                'status': 'Complete' if workflow_ready else 'Needs input',
+                'badge_class': 'badge-green' if workflow_ready else 'badge-yellow',
+                'detail': 'Title, counterparty, owner and paper source are captured.',
+            },
+            {
+                'label': 'Paper source',
+                'status': paper_source_label,
+                'badge_class': 'badge-green' if paper_source_complete else 'badge-gray',
+                'detail': 'Used to set intake expectations and review routing.',
+            },
+            {
+                'label': 'Approval route',
+                'status': (
+                    f'{approved_count} of {approval_total_count} approved'
+                    if approval_total_count
+                    else 'Not started'
+                ),
+                'badge_class': 'badge-green' if approval_total_count and approved_count == approval_total_count else 'badge-yellow' if approval_total_count else 'badge-gray',
+                'detail': 'Shows whether the contract has a recorded approval chain.',
+            },
+            {
+                'label': 'Current stage',
+                'status': case_record.get_lifecycle_stage_display(),
+                'badge_class': 'badge-blue',
+                'detail': f"Next stage: {ctx['lifecycle_guidance']['next_stage']}",
+            },
+        ]
+        review_changes = (ctx['uploaded_ai_review'].changes if ctx['uploaded_ai_review'] else {}) or {}
+        review_completed = review_changes.get('review_status') == 'completed'
+        review_finding_count = int(review_changes.get('finding_count') or 0)
+        if not check_is_current:
+            review_label, review_badge_class = 'Review refresh required', 'badge-yellow'
+        elif review_completed:
+            review_label, review_badge_class = 'AI review complete', 'badge-green'
+        elif ctx['documents']:
+            review_label, review_badge_class = 'Manual review required', 'badge-yellow'
+        else:
+            review_label, review_badge_class = 'No document to review', 'badge-gray'
+
+        if ctx['high_risk_findings']:
+            risk_label, risk_badge_class = 'High-risk findings open', 'badge-red'
+        elif ctx['open_findings']:
+            risk_label, risk_badge_class = 'Open findings', 'badge-yellow'
+        else:
+            if (
+                case_record.status == Contract.Status.DRAFT
+                and case_record.lifecycle_stage == 'DRAFTING'
+                and not review_completed
+            ):
+                created_audit = next(
+                    (
+                        audit for audit in AuditLog.objects.filter(
+                            model_name='Contract', object_id=case_record.pk,
+                        ).order_by('-timestamp')[:20]
+                        if isinstance(audit.changes, dict) and audit.changes.get('event') == 'contract_created'
+                    ),
+                    None,
+                )
+                audited_assessment = (created_audit.changes or {}).get('risk_assessment', {}) if created_audit else {}
+                intake_assessment = assess_intake_risk(case_record.__dict__)
+                intake_level = audited_assessment.get('level') or intake_assessment.level
+                risk_label = audited_assessment.get('label') or intake_assessment.label
+                risk_badge_class = {
+                    Contract.RiskLevel.CRITICAL: 'badge-red',
+                    Contract.RiskLevel.HIGH: 'badge-yellow',
+                    Contract.RiskLevel.MEDIUM: 'badge-blue',
+                    Contract.RiskLevel.LOW: 'badge-green',
+                }.get(intake_level, 'badge-gray')
+            elif review_completed:
+                risk_label = f'Reviewed {case_record.get_risk_level_display()} risk'
+                risk_badge_class = {
+                    Contract.RiskLevel.CRITICAL: 'badge-red',
+                    Contract.RiskLevel.HIGH: 'badge-yellow',
+                    Contract.RiskLevel.MEDIUM: 'badge-blue',
+                    Contract.RiskLevel.LOW: 'badge-green',
+                }.get(case_record.risk_level, 'badge-gray')
+            else:
+                risk_label = f'{case_record.get_risk_level_display()} risk'
+                risk_badge_class = {
+                Contract.RiskLevel.CRITICAL: 'badge-red',
+                Contract.RiskLevel.HIGH: 'badge-yellow',
+                Contract.RiskLevel.MEDIUM: 'badge-blue',
+                Contract.RiskLevel.LOW: 'badge-green',
+                }.get(case_record.risk_level, 'badge-gray')
+
+        # The command model is the one source for header badges, the summary
+        # strip and the next-action surface.  In particular, a fresh AI review
+        # cannot be shown when the deterministic record check is stale, and
+        # high-risk findings always outrank the contract-level risk setting.
+        if ctx['high_risk_findings']:
+            primary_action = {'label': 'Resolve blockers', 'target': '#open-findings', 'mode': 'anchor'}
+            next_action = 'Resolve open high-risk findings before routing for signature.'
+        elif ctx['can_decide_approval'] and ctx['open_approval']:
+            primary_action = {'label': 'Record review decision', 'target': '#required-approvals', 'mode': 'anchor'}
+            next_action = 'Record the outstanding approval decision.'
+        elif ctx['can_submit_for_review']:
+            primary_action = {'label': 'Submit for review', 'target': '#required-approvals', 'mode': 'anchor'}
+            next_action = 'Select a reviewer and submit this contract for review.'
+        elif ctx['can_route_for_signature']:
+            primary_action = {
+                'label': 'Prepare signature request',
+                'target': reverse('contracts:signature_request_create'),
+                'mode': 'link',
+            }
+            next_action = 'Prepare the approved agreement for signature.'
+        else:
+            primary_action = {'label': 'Review contract', 'target': '#ai-review', 'mode': 'anchor'}
+            next_action = ctx['lifecycle_guidance']['action']
+
+        if pending_approvals:
+            approval_label, approval_badge_class = f'{len(pending_approvals)} approval(s) pending', 'badge-yellow'
+        elif approval_requests and all(
+            approval.status == ApprovalRequest.Status.APPROVED for approval in approval_requests
+        ):
+            approval_label, approval_badge_class = 'Approvals complete', 'badge-green'
+        elif approval_requests:
+            approval_label, approval_badge_class = 'Approval action required', 'badge-yellow'
+        else:
+            approval_label, approval_badge_class = 'Not requested', 'badge-gray'
+        ctx['contract_command'] = {
+            'review_label': review_label,
+            'review_badge_class': review_badge_class,
+            'review_finding_count': review_finding_count,
+            'risk_label': risk_label,
+            'risk_badge_class': risk_badge_class,
+            'next_action': next_action,
+            'primary_action': primary_action,
+            'approval_label': approval_label,
+            'approval_badge_class': approval_badge_class,
+            'pending_approval_count': len(pending_approvals),
+        }
         return ctx
 
 
@@ -398,9 +770,244 @@ def upload_signed_contract(request):
         'contract_types': Contract.ContractType.choices,
         'currencies': Contract.Currency.choices,
         'owners': owners,
+        'matters': Matter.objects.filter(organization=organization).order_by('title')[:100],
         'ai_review_available': ai_review_available,
         'ai_review_unavailable_reason': ai_review_unavailable_reason,
     })
+
+
+@login_required
+def contract_review_workspace(request, pk):
+    """Single review surface for an uploaded agreement version and its evidence."""
+    organization = get_user_organization(request.user)
+    contract = get_object_or_404(Contract, pk=pk, organization=organization)
+    review_run = contract.document_review_runs.select_related('document').order_by('-started_at').first()
+    document = review_run.document if review_run else contract.documents.order_by('-version', '-created_at').first()
+
+    if request.method == 'POST':
+        if not can_access_contract_action(request.user, contract, ContractAction.EDIT):
+            return HttpResponseForbidden('You do not have permission to update this review.')
+        if review_run is None:
+            messages.error(request, 'Create an uploaded document review before resolving review blockers.')
+            return redirect('contracts:contract_review_workspace', pk=contract.pk)
+        action = (request.POST.get('action') or '').strip()
+        metadata = dict(review_run.extracted_metadata or {})
+        governance = dict(review_run.governance_sources or {})
+        contract_fields = []
+        if action == 'confirm_counterparty':
+            contract.counterparty = (request.POST.get('counterparty') or '').strip()
+            if not contract.counterparty:
+                messages.error(request, 'Enter the confirmed counterparty to continue.')
+            else:
+                contract_fields.append('counterparty')
+        elif action == 'confirm_contract_type':
+            contract_type = (request.POST.get('contract_type') or '').strip()
+            if contract_type not in Contract.ContractType.values or contract_type == Contract.ContractType.OTHER:
+                messages.error(request, 'Select the confirmed contract type to continue.')
+            else:
+                contract.contract_type = contract_type
+                contract_fields.append('contract_type')
+        elif action == 'confirm_governing_law':
+            contract.governing_law = (request.POST.get('governing_law') or '').strip()
+            if not contract.governing_law:
+                messages.error(request, 'Enter the confirmed governing law to continue.')
+            else:
+                metadata['governing_law_confirmed'] = True
+                contract_fields.append('governing_law')
+        elif action == 'confirm_value':
+            raw_value = (request.POST.get('value') or '').strip()
+            try:
+                contract.value = Decimal(raw_value)
+            except Exception:
+                messages.error(request, 'Enter a valid contract value to continue.')
+            else:
+                metadata['value_confirmed'] = True
+                contract_fields.append('value')
+        elif action == 'confirm_payment_terms':
+            payment_terms = (request.POST.get('payment_terms') or '').strip()
+            if not payment_terms:
+                messages.error(request, 'Enter the confirmed payment terms to continue.')
+            else:
+                metadata['payment_terms'] = payment_terms
+                metadata['payment_terms_confirmed'] = True
+        elif action == 'select_playbook':
+            playbook = ClausePlaybook.objects.filter(
+                pk=request.POST.get('playbook_id'), organization=organization, is_active=True,
+            ).first()
+            if playbook is None:
+                messages.error(request, 'Select an active approved playbook to continue.')
+            else:
+                governance.update({
+                    'selected_playbook_id': playbook.pk,
+                    'selected_playbook_name': playbook.name,
+                    'approved_playbook_matched': True,
+                })
+        elif action == 'retry_preview':
+            governance['preview_retry_requested_at'] = timezone.now().isoformat()
+            messages.info(request, 'Preview retry requested. The original file remains available to download while rendering is retried.')
+        elif action == 'run_ai_review':
+            state = _document_review_state(contract, document, review_run, finding_count=0)
+            if state['can_run_ai_review']:
+                from contracts.api.documents_ai import _run_uploaded_contract_review
+                _run_uploaded_contract_review(
+                    request=request, organization=organization, document=document, review_run=review_run,
+                )
+                messages.success(request, 'AI review was started using the confirmed contract information and review basis.')
+            else:
+                messages.error(request, 'Resolve the required review blockers before running AI review.')
+        if contract_fields:
+            contract.save(update_fields=[*contract_fields, 'updated_at'])
+        if action in {'confirm_governing_law', 'confirm_value', 'confirm_payment_terms'}:
+            review_run.extracted_metadata = metadata
+        if action in {'select_playbook', 'retry_preview'}:
+            review_run.governance_sources = governance
+        if action in {
+            'confirm_counterparty', 'confirm_contract_type', 'confirm_governing_law',
+            'confirm_value', 'confirm_payment_terms', 'select_playbook',
+        }:
+            state = _document_review_state(contract, document, review_run, finding_count=0)
+            if not state['classification_complete']:
+                review_run.status = DocumentReviewRun.Status.CLASSIFICATION_REQUIRED
+                review_run.current_step = 'Classifying'
+                review_run.primary_next_action = 'Confirm the required contract information before AI review can begin.'
+            elif not state['playbook_confirmed']:
+                review_run.status = DocumentReviewRun.Status.PLAYBOOK_REQUIRED
+                review_run.current_step = 'Matching playbook'
+                review_run.primary_next_action = 'Select an approved contract playbook before AI review can begin.'
+            elif not state['analysis_completed']:
+                review_run.status = DocumentReviewRun.Status.AI_REVIEW_INCOMPLETE
+                review_run.current_step = 'AI reviewing'
+                review_run.primary_next_action = 'Run AI review using the confirmed contract information and approved playbook.'
+        if action != 'run_ai_review':
+            review_run.save()
+        return redirect('contracts:contract_review_workspace', pk=contract.pk)
+    findings = (
+        ContractReviewFinding.objects.filter(review_run=review_run)
+        .select_related('source_span', 'assigned_reviewer', 'source_span__source_template')
+        .order_by('severity', 'created_at')
+        if review_run else ContractReviewFinding.objects.none()
+    )
+    finding_counts = {severity: findings.filter(severity=severity).count() for severity, _ in ContractReviewFinding.Severity.choices}
+    reviewers = User.objects.filter(
+        organization_memberships__organization=organization,
+        organization_memberships__is_active=True,
+    ).distinct().order_by('first_name', 'last_name', 'username')
+    spans = document.ai_extraction_spans.select_related('source_template').all() if document else []
+    activity = AuditLog.objects.filter(
+        Q(model_name='Contract', object_id=contract.pk)
+        | Q(model_name='Document', object_id=document.pk if document else 0),
+        organization=organization,
+    ).order_by('-timestamp')[:20]
+    review_state = _document_review_state(contract, document, review_run, finding_count=findings.count())
+    return render(request, 'contracts/contract_review_workspace.html', {
+        'contract': contract,
+        'review_run': review_run,
+        'document': document,
+        'findings': findings,
+        'finding_counts': finding_counts,
+        'reviewers': reviewers,
+        'spans': spans,
+        'activity': activity,
+        'review_state': review_state,
+        'playbooks': ClausePlaybook.objects.filter(organization=organization, is_active=True).order_by('name'),
+        'contract_types': Contract.ContractType.choices,
+    })
+
+
+def _document_review_state(contract, document, review_run, *, finding_count):
+    """Derive the visible review state from evidence, never from optimistic labels."""
+    metadata = (review_run.extracted_metadata if review_run else {}) or {}
+    governance = (review_run.governance_sources if review_run else {}) or {}
+    try:
+        extracted_text = document.ocr_review.extracted_text or ''
+    except Exception:
+        extracted_text = ''
+    extraction_complete = bool(extracted_text.strip()) or bool(
+        review_run and governance.get('citation_count') is not None
+    )
+    preview_available = bool(document and document.file and document.file_extension in {'.pdf', '.txt', '.md', '.html'})
+    counterparty_confirmed = bool((contract.counterparty or '').strip())
+    type_confirmed = contract.contract_type != Contract.ContractType.OTHER
+    law_confirmed = bool((contract.governing_law or '').strip() and metadata.get('governing_law_confirmed'))
+    value_confirmed = contract.value is not None and bool(metadata.get('value_confirmed'))
+    payment_confirmed = bool(metadata.get('payment_terms_confirmed'))
+    playbook_confirmed = bool(governance.get('approved_playbook_matched') or governance.get('selected_playbook_id'))
+    analysis_completed = bool(governance.get('ai_analysis_completed'))
+    blockers = []
+    if not counterparty_confirmed:
+        blockers.append({'key': 'counterparty', 'label': 'Counterparty', 'state': 'Needs confirmation', 'action': 'Confirm'})
+    if not type_confirmed:
+        blockers.append({'key': 'contract_type', 'label': 'Contract type', 'state': 'Needs confirmation', 'action': 'Confirm'})
+    if not law_confirmed:
+        blockers.append({'key': 'governing_law', 'label': 'Governing law', 'state': 'Not confidently extracted', 'action': 'Confirm'})
+    if not value_confirmed:
+        blockers.append({'key': 'value', 'label': 'Contract value', 'state': 'Not confidently extracted', 'action': 'Confirm'})
+    if not payment_confirmed:
+        blockers.append({'key': 'payment_terms', 'label': 'Payment terms', 'state': 'Not confidently extracted', 'action': 'Confirm'})
+    if not playbook_confirmed:
+        blockers.append({'key': 'playbook', 'label': 'Review playbook', 'state': 'Not matched', 'action': 'Select playbook'})
+    if not analysis_completed:
+        blockers.append({'key': 'findings', 'label': 'AI findings', 'state': 'Not yet generated', 'action': 'Run review'})
+    classification_complete = (
+        counterparty_confirmed and type_confirmed and law_confirmed and value_confirmed and payment_confirmed
+    )
+    prerequisites_complete = extraction_complete and classification_complete and playbook_confirmed
+    ready = prerequisites_complete and analysis_completed
+    current_status = review_run.status if review_run else DocumentReviewRun.Status.UPLOADED
+    if not extraction_complete:
+        status_label, status_class = 'AI review incomplete', 'badge-red'
+    elif not prerequisites_complete:
+        status_label, status_class = 'Needs input', 'badge-yellow'
+    elif current_status == DocumentReviewRun.Status.AI_REVIEW_IN_PROGRESS:
+        status_label, status_class = 'AI review in progress', 'badge-blue'
+    elif ready and contract.status == Contract.Status.HUMAN_REVIEW_IN_PROGRESS:
+        status_label, status_class = 'Human review in progress', 'badge-blue'
+    elif ready:
+        status_label, status_class = 'AI review ready', 'badge-green'
+    else:
+        status_label, status_class = 'AI review incomplete', 'badge-red'
+    if not extraction_complete:
+        current_step = 'Extracting'
+    elif not classification_complete:
+        current_step = 'Classifying'
+    elif not playbook_confirmed:
+        current_step = 'Matching playbook'
+    elif not ready:
+        current_step = 'AI reviewing'
+    else:
+        current_step = 'Review ready'
+    steps = []
+    labels = ('Uploaded', 'Extracting', 'Classifying', 'Matching playbook', 'AI reviewing', 'Review ready')
+    current_index = labels.index(current_step)
+    for index, label in enumerate(labels):
+        state = 'complete' if index < current_index else ('active' if index == current_index else 'pending')
+        if not extraction_complete and label == 'Extracting':
+            state = 'blocked'
+        elif label == 'Classifying' and extraction_complete and not classification_complete:
+            state = 'blocked'
+        elif label == 'Matching playbook' and extraction_complete and classification_complete and not playbook_confirmed:
+            state = 'blocked'
+        steps.append({'key': label.lower().replace(' ', '-'), 'label': label, 'status': state})
+    return {
+        'status_label': status_label,
+        'status_class': status_class,
+        'stage_label': 'Internal review' if not ready else contract.get_lifecycle_stage_display(),
+        'primary_action': 'Start human review' if ready else ('Run AI review' if prerequisites_complete else 'Resolve review blockers'),
+        'message': (
+            'AI review could not be completed. The document preview failed, no approved playbook was matched and required contract information needs confirmation.'
+            if not ready else 'AI review is ready for a human-owned review decision.'
+        ),
+        'blockers': blockers,
+        'steps': steps,
+        'preview_available': preview_available,
+        'extraction_complete': extraction_complete,
+        'classification_complete': classification_complete,
+        'playbook_confirmed': playbook_confirmed,
+        'analysis_completed': analysis_completed,
+        'findings_ready': ready,
+        'can_run_ai_review': prerequisites_complete and not analysis_completed,
+        'finding_count': finding_count,
+    }
 
 
 @login_required
@@ -445,6 +1052,8 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organization'] = get_user_organization(self.request.user)
+        kwargs['actor'] = self.request.user
+        kwargs['selected_template'] = self._selected_template()
         return kwargs
 
     def _selected_template(self):
@@ -467,11 +1076,14 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         selected_template = self._selected_template()
-        contract_type = self.request.GET.get('type') or (selected_template.contract_type if selected_template else '')
-        org = get_user_organization(self.request.user)
         ctx['selected_template'] = selected_template
         ctx['launch_setup_map'] = get_launch_setup_map()
-        ctx['governance_panel'] = get_governance_panel(org, contract_type, selected_template)
+        ctx['intake_risk_policy'] = intake_risk_client_policy()
+        ctx['intake_routing_policy'] = intake_routing_client_policy()
+        ctx['hide_app_footer'] = True
+        ctx['can_view_approval_routing'] = can_manage_organization(
+            self.request.user, get_user_organization(self.request.user),
+        )
         return ctx
 
     @staticmethod
@@ -515,6 +1127,14 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 'draft_sections': draft_sections,
                 'draft_preview_selected_clause_count': len(draft_sections),
                 'preview_mode': True,
+                'selected_template': form.selected_template_for_intake(),
+                'launch_setup_map': get_launch_setup_map(),
+                'intake_risk_policy': intake_risk_client_policy(),
+                'intake_routing_policy': intake_routing_client_policy(),
+                'hide_app_footer': True,
+                'can_view_approval_routing': can_manage_organization(
+                    self.request.user, get_user_organization(self.request.user),
+                ),
             },
         )
 
@@ -538,6 +1158,10 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         # through ContractLifecycleService transitions (prevents create-as-ACTIVE
         # bypassing the approval prerequisite).
         form.instance.status = Contract.Status.DRAFT
+        form.instance.lifecycle_stage = 'DRAFTING'
+        assessment = form.intake_risk_assessment()
+        route_decision = form.intake_route_decision()
+        form.instance.risk_level = assessment.level or Contract.RiskLevel.LOW
         # Resolve any {{merge_field}} tokens against the instance's own
         # cleaned field values — harmless no-op if the content has none,
         # so this runs whether or not a template was used to start the draft.
@@ -561,6 +1185,20 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 'counterparty': self.object.counterparty,
                 'start_date': self.object.start_date.isoformat() if self.object.start_date else None,
                 'end_date': self.object.end_date.isoformat() if self.object.end_date else None,
+                'risk_assessment': assessment.as_dict(),
+                'routing_decision': route_decision.as_dict(),
+                'selected_template_id': (
+                    form.selected_template_for_intake().pk
+                    if form.selected_template_for_intake() else None
+                ),
+                'selected_template_name': (
+                    form.selected_template_for_intake().name
+                    if form.selected_template_for_intake() else None
+                ),
+                'selected_playbook': assessment.playbook_name,
+                'playbook_applied': assessment.playbook_applied,
+                'review_route': route_decision.reviewers,
+                'approval_route': route_decision.approvers,
             },
             request=self.request,
         )
@@ -587,6 +1225,8 @@ class ContractUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateVi
         ctx = super().get_context_data(**kwargs)
         org = get_user_organization(self.request.user)
         ctx['launch_setup_map'] = get_launch_setup_map()
+        ctx['intake_risk_policy'] = intake_risk_client_policy()
+        ctx['intake_routing_policy'] = intake_routing_client_policy()
         ctx['governance_panel'] = get_governance_panel(org, self.object.contract_type, None, contract=self.object)
         return ctx
 
@@ -759,6 +1399,63 @@ def contract_approval_decision(request, pk, approval_id, decision):
         messages.error(request, str(exc))
     else:
         messages.success(request, f'Approval decision recorded: {decision.replace("-", " ")}.')
+    return redirect('contracts:contract_detail', pk=contract.pk)
+
+
+@login_required
+@require_POST
+def contract_approval_chain_reorder(request, pk, approval_id):
+    organization = get_user_organization(request.user)
+    contract = get_object_or_404(
+        scope_queryset_for_organization(Contract.objects.all(), organization), pk=pk,
+    )
+    if not can_access_contract_action(request.user, contract, ContractAction.EDIT):
+        return HttpResponseForbidden('You do not have permission to edit this contract.')
+
+    approval = get_object_or_404(
+        ApprovalRequest.objects.filter(organization=organization, contract=contract), pk=approval_id,
+    )
+    direction = (request.POST.get('direction') or '').strip().lower()
+    if direction not in {'up', 'down'}:
+        return HttpResponseForbidden('Invalid approval chain move.')
+
+    approvals = list(
+        ApprovalRequest.objects.filter(organization=organization, contract=contract)
+        .order_by('sort_order', 'created_at', 'pk')
+    )
+    current_index = next((index for index, item in enumerate(approvals) if item.pk == approval.pk), None)
+    if current_index is None:
+        messages.error(request, 'That approver is no longer on this contract.')
+        return redirect('contracts:contract_detail', pk=contract.pk)
+
+    next_index = current_index - 1 if direction == 'up' else current_index + 1
+    if next_index < 0 or next_index >= len(approvals):
+        messages.info(request, 'That approver is already at the edge of the chain.')
+        return redirect('contracts:contract_detail', pk=contract.pk)
+
+    approvals[current_index], approvals[next_index] = approvals[next_index], approvals[current_index]
+    with transaction.atomic():
+        for position, item in enumerate(approvals, start=1):
+            new_sort_order = position * 10
+            if item.sort_order != new_sort_order:
+                item.sort_order = new_sort_order
+                item.save(update_fields=['sort_order'])
+
+    log_action(
+        request.user,
+        AuditLog.Action.UPDATE,
+        'ApprovalRequest',
+        approval.pk,
+        str(approval),
+        changes={
+            'event': 'contract.approval_chain_reordered',
+            'contract_id': contract.pk,
+            'direction': direction,
+            'new_sort_order': approval.sort_order,
+        },
+        request=request,
+    )
+    messages.success(request, 'Approval chain updated.')
     return redirect('contracts:contract_detail', pk=contract.pk)
 
 
@@ -1209,7 +1906,9 @@ def dashboard(request):
                 'due_overdue': bool(due and due < today and contract.status not in TERMINAL_STATUSES),
                 'due_today': bool(due and due == today),
                 'status_label': contract.get_status_display(),
-                'status_badge_class': status_badge_class(contract.status),
+                'status_badge_class': legacy_badge_class_for_tone(
+                    contract_status_badge_tone(contract.status)
+                ),
                 'action_label': _QUEUE_ACTION_LABELS.get(contract.lifecycle_stage, 'View'),
                 'current_stage': COMPACT_LIFECYCLE_LABELS.get(
                     contract.lifecycle_stage,
@@ -1557,6 +2256,7 @@ def dashboard(request):
     priority_feature_history_label = 'No prior snapshot'
     priority_feature_contributors = []
     priority_feature_additional_contributors = []
+    priority_feature_status = 'Review required'
     if priority_feature:
         if priority_feature.get('due_overdue'):
             priority_feature_reason = 'Selected because the next action is overdue'
@@ -1587,14 +2287,20 @@ def dashboard(request):
                     severity__in=['HIGH', 'CRITICAL'],
                 ).exclude(status__in=['RESOLVED', 'FALSE_POSITIVE']).count()
             )
-            feature_approval_count = approvals_qs.filter(
+            feature_pending_approvals = approvals_qs.filter(
                 contract=feature_contract, status='PENDING',
-            ).count()
+            )
+            feature_approval_count = feature_pending_approvals.count()
             feature_conflict_count = DPARiskItem.objects.filter(
                 review_pack__organization=org,
                 review_pack__contract=feature_contract,
                 is_cross_document_conflict=True,
             ).exclude(status__in=['RESOLVED', 'FALSE_POSITIVE']).count()
+            pending_approval_steps = list(
+                feature_pending_approvals.values_list('approval_step', flat=True)
+            )
+        else:
+            pending_approval_steps = []
         if (
             feature_deviation_count == 0
             and priority_feature.get('risk_level') in ('HIGH', 'CRITICAL')
@@ -1629,6 +2335,17 @@ def dashboard(request):
             {'value': score_data['contributors']['expired_exceptions'], 'label': 'expired exceptions'},
             {'value': score_data['contributors']['missing_approval_authority'], 'label': 'missing approval authority'},
         ] if item['value']]
+        current_stage = (priority_feature.get('current_stage') or '').strip()
+        if priority_feature.get('status_label') == 'Blocked':
+            priority_feature_status = 'Exception'
+        elif any('finance' in step.lower() for step in pending_approval_steps):
+            priority_feature_status = 'Finance review required'
+        elif feature_approval_count:
+            priority_feature_status = 'Awaiting approval'
+        elif current_stage.lower() == 'draft':
+            priority_feature_status = 'Review required'
+        elif current_stage:
+            priority_feature_status = current_stage
 
     # Compact, real-data readiness indicators for the Command Center health
     # panel.  These are derived from the same organization-scoped querysets
@@ -1661,20 +2378,55 @@ def dashboard(request):
         approval_path_percent,
         governing_law_percent,
     )) / 5)
-    if contract_count:
-        portfolio_health_penalty = (
-            min(clm_high_severity_count * 12, 42)
-            + min(clm_pending_approvals_count * 5, 20)
-            + min((clm_renewals_count + clm_deadline_overdue_count) * 4, 16)
-            + min(clm_policy_exception_count * 6, 12)
-            + min(clm_conflict_count * 9, 18)
-        )
+    # Portfolio health is a measurement of actual contract records. Workspace
+    # configuration remains useful elsewhere on the Command Center, but must
+    # never be presented as a portfolio score before a contract exists.
+    portfolio_health_available = contract_count > 0
+    portfolio_deadline_count = clm_renewals_count + clm_deadline_overdue_count
+    if portfolio_health_available:
+        portfolio_health_factors = [
+            {
+                'label': 'High-risk findings',
+                'count': clm_high_severity_count,
+                'weight': 12,
+                'penalty': min(clm_high_severity_count * 12, 42),
+            },
+            {
+                'label': 'Pending approvals',
+                'count': clm_pending_approvals_count,
+                'weight': 5,
+                'penalty': min(clm_pending_approvals_count * 5, 20),
+            },
+            {
+                'label': 'Upcoming or overdue deadlines',
+                'count': portfolio_deadline_count,
+                'weight': 4,
+                'penalty': min(portfolio_deadline_count * 4, 16),
+            },
+            {
+                'label': 'Policy exceptions',
+                'count': clm_policy_exception_count,
+                'weight': 6,
+                'penalty': min(clm_policy_exception_count * 6, 12),
+            },
+            {
+                'label': 'Cross-document conflicts',
+                'count': clm_conflict_count,
+                'weight': 9,
+                'penalty': min(clm_conflict_count * 9, 18),
+            },
+        ]
+        portfolio_health_penalty = sum(factor['penalty'] for factor in portfolio_health_factors)
         portfolio_health_score = max(0, 100 - portfolio_health_penalty)
     else:
-        portfolio_health_score = workspace_health_percent
-    if not contract_count:
-        portfolio_health_band = 'Getting started'
-        portfolio_health_summary = 'Add your first contract to establish a portfolio health baseline and begin governed monitoring.'
+        portfolio_health_score = None
+        portfolio_health_factors = []
+    if not portfolio_health_available:
+        portfolio_health_band = ''
+        portfolio_health_summary = (
+            'Add your first contract to begin monitoring approvals, risks, '
+            'deadlines, obligations and policy exceptions.'
+        )
     elif portfolio_health_score >= 85:
         portfolio_health_band = 'Healthy'
         portfolio_health_summary = 'Portfolio controls are healthy. Keep monitoring the items below so routine work stays on track.'
@@ -1978,6 +2730,7 @@ def dashboard(request):
         'priority_feature_history_label': priority_feature_history_label,
         'priority_feature_contributors': priority_feature_contributors,
         'priority_feature_additional_contributors': priority_feature_additional_contributors,
+        'priority_feature_status': priority_feature_status,
         'clm_recommended_actions': clm_recommended_actions,
         'priority_filter_options': priority_filter_options,
         'workflow_type_summary': workflow_type_summary,
@@ -2053,9 +2806,12 @@ def dashboard(request):
         'reviewer_setup_required': reviewer_setup_required,
         'clm_setup_required_count': clm_setup_required_count,
         'workspace_health_percent': workspace_health_percent,
+        'portfolio_health_available': portfolio_health_available,
         'portfolio_health_score': portfolio_health_score,
+        'portfolio_health_factors': portfolio_health_factors,
         'portfolio_health_band': portfolio_health_band,
         'portfolio_health_summary': portfolio_health_summary,
+        'portfolio_deadline_count': portfolio_deadline_count,
         'contracts_with_owner_percent': contracts_with_owner_percent,
         'renewal_dates_percent': renewal_dates_percent,
         'playbook_coverage_percent': playbook_coverage_percent,

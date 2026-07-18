@@ -204,6 +204,82 @@ def send_signature_request(signature_request: SignatureRequest, *, actor=None, p
     }
 
 
+def refresh_signature_request(signature_request: SignatureRequest, *, provider=None) -> dict:
+    """Refresh an externally dispatched request without relying on webhooks.
+
+    Documenso webhooks require a team account, while its free personal plan
+    still supports API sends. This explicit refresh keeps the free-plan demo
+    honest and updates the same governed status/audit path used by webhooks.
+    """
+    from contracts.services.signature_providers import SignatureProviderError, get_signature_provider
+
+    if signature_request.esign_provider != 'documenso':
+        raise SignatureProviderError('Status refresh is currently available for Documenso requests only.')
+    if not signature_request.external_id:
+        raise SignatureProviderError('This request does not have a Documenso envelope id.')
+
+    provider = provider or get_signature_provider()
+    fetch_status = getattr(provider, 'fetch_status', None)
+    if not callable(fetch_status):
+        raise SignatureProviderError('The configured e-signature provider does not support status refresh.')
+
+    raw = fetch_status(signature_request.external_id)
+    provider_status = str(raw.get('status') or '').strip().upper()
+    recipients = raw.get('recipients') or raw.get('Recipient') or []
+
+    rejected_recipient = next(
+        (
+            recipient for recipient in recipients
+            if str(recipient.get('signingStatus') or '').strip().upper() == 'REJECTED'
+        ),
+        None,
+    )
+    if rejected_recipient or provider_status == 'REJECTED':
+        normalized_status = 'rejected'
+    elif provider_status == 'COMPLETED':
+        normalized_status = 'completed'
+    elif any(str(recipient.get('readStatus') or '').strip().upper() == 'OPENED' for recipient in recipients):
+        normalized_status = 'opened'
+    elif provider_status == 'PENDING':
+        normalized_status = 'sent'
+    elif provider_status == 'DRAFT':
+        normalized_status = 'created'
+    else:
+        raise ESignReconciliationError(f'Unsupported Documenso envelope status: {provider_status}')
+
+    target_status = _resolve_internal_status(normalized_status)
+    event_at = str(raw.get('completedAt') or raw.get('updatedAt') or raw.get('createdAt') or '').strip()
+    if signature_request.status == target_status:
+        return {
+            'refreshed': True,
+            'changed': False,
+            'status': signature_request.status,
+            'provider_status': provider_status,
+            'signature_request_id': signature_request.id,
+        }
+
+    result = apply_esign_event(
+        signature_request,
+        {
+            'event_id': f'documenso-refresh-{signature_request.external_id}-{normalized_status}-{event_at or "current"}',
+            'provider': 'documenso',
+            'external_id': signature_request.external_id,
+            'status': normalized_status,
+            'event_at': event_at or None,
+            'decline_reason': (rejected_recipient or {}).get('rejectionReason', ''),
+        },
+        dry_run=False,
+    )
+    return {
+        'refreshed': True,
+        'changed': result.get('result') == 'applied',
+        'status': signature_request.status,
+        'provider_status': provider_status,
+        'signature_request_id': signature_request.id,
+        'result': result.get('result'),
+    }
+
+
 def apply_esign_event(signature_request: SignatureRequest, event: dict, *, dry_run: bool = False) -> dict:
     event_id = str(event.get('event_id') or '').strip()
     if not event_id:

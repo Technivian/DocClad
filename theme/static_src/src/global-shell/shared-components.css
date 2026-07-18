@@ -1,0 +1,240 @@
+/* Extracted shared dashboard, list, and repository compatibility components. */
+        /* ── Shared component library ───────────────────────────────────────────
+         * Component classes shared across dashboard, case list, and other
+         * list/detail views. Defined here once to avoid per-template duplication.
+         * ──────────────────────────────────────────────────────────────────── */
+
+        /* Dashboard grid layouts */
+        .dash-grid { display: grid; gap: 24px; }
+        .dash-grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .dash-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .dash-grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .dash-grid-2-1 { grid-template-columns: 2fr 1fr; }
+        @media (max-width: 1024px) {
+            .dash-grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .dash-grid-3 { grid-template-columns: repeat(2, 1fr); }
+            .dash-grid-2-1 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .dash-grid-4, .dash-grid-3, .dash-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        /* KPI stat cards */
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+        .kpi-card:hover { border-color: var(--primary-bg); }
+        .kpi-card .kpi-icon {
+            width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px; position: relative; z-index: 1;
+        }
+        .kpi-card .kpi-icon svg { width: 20px; height: 20px; }
+        .kpi-card .kpi-value { font-size: 24px; font-weight: 750; letter-spacing: 0; line-height: 1; color: var(--text-primary); }
+        .kpi-card .kpi-label { font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-weight: 550; }
+        .kpi-card .kpi-sub { font-size: 11px; margin-top: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; }
+        .kpi-card .kpi-glow {
+            position: absolute; top: -30px; right: -30px; width: 100px; height: 100px;
+            border-radius: 50%; opacity: 0.06; pointer-events: none; transition: opacity 0.3s;
+        }
+        .kpi-card:hover .kpi-glow { opacity: 0.12; }
+
+        /* Compact metric strip — dense variant of the KPI card, for operational
+           dashboards where a row of numbers is a header, not the hero (Dashboard,
+           Repository, Privacy). Pair with .dash-grid + a column-count class for
+           layout; this only tightens type/padding of nested .kpi-card. Extracted
+           from Dashboard's former page-local .ad-kpis override so every page
+           reads from the same recipe instead of re-tuning its own. */
+        .kpi-strip { gap: 10px; margin-bottom: 16px; }
+        .kpi-strip .kpi-card { padding: 12px 14px; }
+        .kpi-strip .kpi-value { font-size: 20px; }
+        .kpi-strip .kpi-label { font-size: 10.5px; margin-top: 2px; }
+
+        /* Content panels (titled card containers) */
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .panel-head {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel-title { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: 0; }
+        .panel-link {
+            font-size: 12px; color: var(--primary-light); font-weight: 600; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;
+        }
+        .panel-link:hover { color: var(--primary); }
+        .panel-link svg { width: 14px; height: 14px; }
+
+        /* List rows inside panels */
+        .list-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 12px 18px; border-bottom: 1px solid var(--card-border);
+            transition: background 0.15s; text-decoration: none; color: inherit;
+        }
+        .list-row:last-child { border-bottom: none; }
+        .list-row:hover { background: var(--sidebar-hover); }
+
+        /* Status indicator dots */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.green { background: #1B7F5A; }
+        .status-dot.blue  { background: #34548A; }
+        .status-dot.yellow{ background: #85540F; }
+        .status-dot.red   { background: #913A35; }
+        .status-dot.gray  { background: #69717C; }
+
+        /* Badge chips — fully rounded pills, tinted background + same-hue text.
+           Six archival pairs (see CLMONE_DESIGN_SYSTEM.md §4): green=positive,
+           blue=in-progress, yellow=pending, red=danger, purple=special, gray=neutral.
+           Compatibility aliases: colour values are sourced entirely from the
+           canonical --status-*-fg/--status-*-bg tokens in clmone-tokens.css
+           (Phase 2 badge/status/empty consolidation) — do not hardcode hex here.
+           Canonical replacement: .dc-ds-badge--{success,progress,attention,danger,special,neutral}. */
+        .badge-sm { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 9999px; white-space: nowrap; letter-spacing: 0.01em; }
+        .badge-green  { background: var(--status-positive-bg); color: var(--status-positive-fg); }
+        .badge-blue   { background: var(--status-progress-bg); color: var(--status-progress-fg); }
+        .badge-yellow { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+        .badge-red    { background: var(--status-danger-bg); color: var(--status-danger-fg); }
+        .badge-purple { background: var(--status-special-bg); color: var(--status-special-fg); }
+        .badge-gray   { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+
+        /* Lifecycle stepper (contract detail process path) */
+        /* Full-width contract lifecycles are linear journeys; use a horizontal
+           track. Narrow intake and sidebar checklists use their own vertical UI. */
+        .lc-track { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 0; }
+        .lc-step { display: flex; flex: 1 1 0; flex-direction: column; align-items: center; gap: 7px; min-width: 70px; position: relative; }
+        .lc-step::before { content: ""; position: absolute; top: 10px; right: 50%; width: 100%; height: 1px; background: var(--border); }
+        .lc-step:first-child::before { display: none; }
+        .lc-step.lc-done::before, .lc-step.lc-current::before { background: var(--seal); }
+        .lc-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--ink-200); border: 0; box-sizing: border-box; position: relative; z-index: 1; flex-shrink: 0; }
+        .lc-done .lc-dot { display: grid; place-items: center; background: var(--seal); }
+        .lc-done .lc-dot::after { content: "✓"; color: #fff; font-size: 12px; font-weight: 800; line-height: 1; }
+        .lc-current .lc-dot { background: var(--card-bg); border: 4px solid var(--seal); }
+        .lc-label { font-size: 11px; font-weight: 650; color: var(--ink-500); text-align: center; line-height: 1.3; padding: 0 6px; }
+        .lc-done .lc-label { color: var(--ink-700); }
+        .lc-current .lc-label { color: var(--ink-900); font-weight: 750; }
+
+        /* StageDots — compact lifecycle indicator for queue/table rows.
+           Reusable across Dashboard, Repository, Tasks, Approvals (see the
+           stage_dots tag in clmone_components.py). Same done/current/
+           upcoming states as the .lc-* detail-page stepper, condensed to a
+           single-row dot strip with an sr-only label for accessibility. */
+        /* Three clearly distinct states, one accent color: upcoming is a
+           faint hollow outline, done is a solid dot at reduced strength,
+           current is full-strength with a halo ring — so "you are here"
+           reads at a glance even at table-row size, without adding a
+           second hue. */
+        .stage-dots { display: inline-flex; align-items: center; gap: 4px; }
+        .stage-dot {
+            display: inline-block; width: 6px; height: 6px; border-radius: 9999px;
+            border: 1px solid var(--border); background: transparent; opacity: 0.4;
+        }
+        .stage-dot-done {
+            background: var(--primary); border-color: var(--primary); opacity: 0.6;
+        }
+        .stage-dot-current {
+            background: var(--primary); border-color: var(--primary); opacity: 1;
+            box-shadow: 0 0 0 2px var(--primary-subtle);
+        }
+
+        /* Progress bars */
+        .progress-bar-bg   { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; width: 100%; }
+        .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+        /* Empty state placeholders */
+        .empty-state { padding: 32px 22px; text-align: center; color: var(--text-muted); font-size: 13px; }
+        .empty-state svg { width: 32px; height: 32px; margin: 0 auto 10px; opacity: 0.3; }
+
+        /* Filter chips (canonical filter tab controls for QueuePage / ExceptionPage filter toolbars) */
+        .chip {
+            display: inline-flex; align-items: center;
+            padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            text-decoration: none; transition: background 0.15s, color 0.15s; cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .chip-active   { background: var(--color-control-selected-bg); color: var(--color-control-selected-text); border-color: var(--color-control-selected-border); }
+        .chip-inactive { background: var(--surface); color: var(--text-secondary); border-color: var(--border); }
+        .chip-inactive:hover { background: var(--border); color: var(--text-primary); }
+
+        /* BoardView primitives */
+        .board-track { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+        .board-col { width: 320px; flex-shrink: 0; background: var(--surface); border-radius: 10px; padding: 16px; }
+        .board-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .board-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; transition: border-color 0.15s; }
+        .board-card + .board-card { margin-top: 12px; }
+        .board-card:hover { border-color: var(--text-dim); }
+
+        /* Alert banners */
+        .alert-banner {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+        }
+        .alert-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .alert-banner-red    { background: #FBECEA; border: 1px solid #EACAC7; color: #913A35; }
+        .alert-banner-yellow { background: #FBF3E3; border: 1px solid #ECD8B3; color: #85540F; }
+
+        /* Audit log action labels */
+        .audit-action { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 4px; }
+
+        /* Circular stat rings */
+        .stat-ring {
+            width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800; color: var(--text-primary);
+            border: 3px solid var(--border); position: relative;
+        }
+
+        /* ── Repository page ────────────────────────────────────────────────── */
+        .repo-drawer {
+            position: fixed; top: 56px; right: -420px; width: 420px;
+            height: calc(100vh - 56px); background: var(--card-bg);
+            border-left: 1px solid var(--card-border);
+            box-shadow: var(--shadow-overlay);
+            transition: right 0.3s ease; overflow-y: auto; z-index: 40;
+        }
+        .repo-drawer.active { right: 0; }
+        .repo-bulk-bar {
+            display: none; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 14px 18px; margin-bottom: 16px;
+            border-radius: 14px; background: var(--primary-subtle);
+            border: 1px solid var(--primary-bg);
+        }
+        .repo-mini-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 12px; border-radius: 10px; font-size: 12px;
+            font-weight: 600; border: 1px solid var(--card-border);
+            background: var(--card-bg); color: var(--text-secondary);
+        }
+        .repo-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .repo-saved-view:not(.dc-ds-choice), .repo-filter-chip:not(.dc-ds-choice) {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 12px; border-radius: 9999px; font-size: 12px;
+            font-weight: 600; border: 1px solid var(--border);
+            background: var(--surface); color: var(--text-secondary);
+        }
+        .repo-filter-chip:not(.dc-ds-choice) { cursor: pointer; }
+        .repo-filter-chip span, .repo-saved-view-delete {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px; border-radius: 9999px;
+            background: rgba(148,163,184,0.18); color: var(--text-muted);
+            font-size: 11px; line-height: 1;
+        }
+        .repo-saved-view:not(.dc-ds-choice) {
+            cursor: pointer;
+        }
+        .repo-saved-view-wrap {
+            display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; margin-bottom: 8px;
+        }
+        .repo-saved-view-delete {
+            border: 0; cursor: pointer;
+        }
+
+

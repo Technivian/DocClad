@@ -1,26 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ object }} – CLM One{% endblock %}
+{% block authenticated_page_title %}{{ object }}{% endblock %}
+{% block authenticated_page_subtitle %}{{ object.service_type }}{% if object.country %} &middot; {{ object.country }}{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:subprocessor_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to subprocessors" title="Back to subprocessors">{% include "design_system/icon.html" with name="arrow-left" %}</a>
+{% endblock %}
 {% block content %}
-<div class="page-wrap">
-  <a href="{% url 'contracts:subprocessor_list' %}" class="text-sm c-muted hover:underline mb-2 inline-block">&larr; Back to list</a>
-  <div class="page-header">
-    <h1 class="page-title">{{ object }}</h1>
-    <div class="page-actions">
-      <a href="{% url 'contracts:subprocessor_update' object.pk %}" class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">Edit</a>
-    </div>
-  </div>
-  <div class="max-w-3xl">
-    <div class="panel panel-inner space-y-0">
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Service Type</span><p class="mt-1 text-sm">{{ object.service_type }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Country</span><p class="mt-1 text-sm">{{ object.country }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">EU Based</span><p class="mt-1 text-sm">{{ object.is_eu_based|yesno:"Yes,No" }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">DPA in Place</span><p class="mt-1 text-sm">{{ object.dpa_in_place|yesno:"Yes,No" }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">SCC in Place</span><p class="mt-1 text-sm">{{ object.scc_in_place|yesno:"Yes,No" }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">DPF Certified</span><p class="mt-1 text-sm">{{ object.dpf_certified|yesno:"Yes,No" }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Data Categories</span><p class="mt-1 text-sm">{{ object.data_categories|default:"-" }}</p></div>
-      <div class="py-3 border-b"><span class="text-xs font-medium c-muted uppercase">Last Audit</span><p class="mt-1 text-sm">{{ object.last_audit_date|default:"Never" }}</p></div>
-      <div class="py-3"><span class="text-xs font-medium c-muted uppercase">Notes</span><p class="mt-1 text-sm">{{ object.notes|default:"-" }}</p></div>
-    </div>
-  </div>
+<div class="dc-ds-page dc-ds-page-flow dc-ds-record-page">
+  <header class="dc-ds-page-hero"><div class="dc-ds-actions"><a href="{% url 'contracts:subprocessor_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad">Edit</a></div></header>
+  <div class="dc-ds-record-content dc-ds-record-content--narrow"><div class="panel panel-inner dc-ds-surface dc-ds-record-metadata">
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Service Type</span><p class="dc-ds-record-metadata__value">{{ object.service_type }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Country</span><p class="dc-ds-record-metadata__value">{{ object.country }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">EU Based</span><p class="dc-ds-record-metadata__value">{{ object.is_eu_based|yesno:"Yes,No" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">DPA in Place</span><p class="dc-ds-record-metadata__value">{{ object.dpa_in_place|yesno:"Yes,No" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">SCC in Place</span><p class="dc-ds-record-metadata__value">{{ object.scc_in_place|yesno:"Yes,No" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">DPF Certified</span><p class="dc-ds-record-metadata__value">{{ object.dpf_certified|yesno:"Yes,No" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Data Categories</span><p class="dc-ds-record-metadata__value">{{ object.data_categories|default:"-" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Last Audit</span><p class="dc-ds-record-metadata__value">{{ object.last_audit_date|default:"Never" }}</p></div>
+      <div class="dc-ds-record-metadata__row"><span class="dc-ds-record-metadata__label">Notes</span><p class="dc-ds-record-metadata__value">{{ object.notes|default:"-" }}</p></div>
+  </div></div>
 </div>
 {% endblock %}

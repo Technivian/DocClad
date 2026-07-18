@@ -2,6 +2,11 @@
 {% block title %}Review Extracted Text – CLM One{% endblock %}
 {% block authenticated_page_title %}Review text extraction{% endblock %}
 {% block authenticated_page_subtitle %}{{ form.instance.document.title }} · Confirm the extracted text before it is used in review work.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:document_ocr_queue' %}" class="topbar-back-link" data-workspace-back aria-label="Back to queue" title="Back to queue">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
 .ocr-pre {

@@ -50,14 +50,14 @@
             </td>
             <td class="px-5 py-3.5 tbl-td">{{ deadline.get_deadline_type_display }}</td>
             <td class="px-5 py-3.5 tbl-td">
-              <span class="badge-sm {% if deadline.priority == 'CRITICAL' %}badge-red{% elif deadline.priority == 'HIGH' %}badge-red{% elif deadline.priority == 'MEDIUM' %}badge-yellow{% else %}badge-gray{% endif %}">{{ deadline.get_priority_display }}</span>
+              <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if deadline.priority == 'CRITICAL' %}badge-red{% elif deadline.priority == 'HIGH' %}badge-red{% elif deadline.priority == 'MEDIUM' %}badge-yellow{% else %}badge-gray{% endif %}">{{ deadline.get_priority_display }}</span>
             </td>
             <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}overdue-date font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
             <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
             <td class="px-5 py-3.5 tbl-td">
-              {% if deadline.is_completed %}<span class="badge-sm badge-green">Done</span>
-              {% elif deadline.is_overdue %}<span class="badge-sm badge-red">Overdue</span>
-              {% else %}<span class="badge-sm badge-gray">{{ deadline.days_remaining }}d left</span>{% endif %}
+              {% if deadline.is_completed %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-green">Done</span>
+              {% elif deadline.is_overdue %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-red">Overdue</span>
+              {% else %}<span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-gray">{{ deadline.days_remaining }}d left</span>{% endif %}
             </td>
             <td class="px-5 py-3.5 tbl-td wq-col-action">
               <details class="wq-kebab">

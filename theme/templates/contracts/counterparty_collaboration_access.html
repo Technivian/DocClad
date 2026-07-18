@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Secure collaboration – CLM One{% endblock %}
+{% block content %}
+<main class="page-wrap" style="max-width:560px;padding-top:64px" aria-labelledby="collaboration-access-title">
+  <section class="surface-panel" style="padding:28px">
+    <p class="eyebrow">CLM One secure collaboration</p>
+    <h1 id="collaboration-access-title" class="arch-title">Confirm your email</h1>
+    <p class="c-secondary" style="margin-top:8px">Enter the email address this invitation was sent to. This workspace is limited to the invited contract and expires on {{ participant.expires_at|date:"M d, Y" }}.</p>
+    {% if invalid_email %}<p class="alert alert-error" role="alert" style="margin-top:16px">That email does not match this invitation.</p>{% endif %}
+    <form method="post" class="space-y-4" style="margin-top:20px">{% csrf_token %}
+      <div><label class="form-label" for="collaboration-email">Invited email</label><input class="input-base w-full" id="collaboration-email" name="email" type="email" autocomplete="email" required></div>
+      <button class="btn-cta" type="submit">Open collaboration workspace</button>
+    </form>
+  </section>
+</main>
+{% endblock %}

@@ -7,7 +7,7 @@ Trademark Request: {{ trademark_request.region }} - Class {{ trademark_request.c
 {% endblock %}
 
 {% block page_actions %}
-<a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="btn-primary-grad text-white shadow-sm">Edit Request</a>
+<a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white shadow-sm">Edit Request</a>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +24,7 @@ Trademark Request: {{ trademark_request.region }} - Class {{ trademark_request.c
       <p class="arch-subtitle">{{ trademark_request.region }} · Class {{ trademark_request.class_number }}</p>
     </div>
     <div class="arch-header-right">
-      <a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="btn-cta">Edit Request</a>
+      <a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="dc-ds-button dc-ds-button--primary btn-cta">Edit Request</a>
     </div>
   </div>
   <div class="panel p-8">

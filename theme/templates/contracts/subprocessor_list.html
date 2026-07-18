@@ -8,7 +8,7 @@
       <p class="page-subtitle">Manage subprocessor registry</p>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:subprocessor_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent btn-primary-grad">
+      <a href="{% url 'contracts:subprocessor_create' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white border border-transparent dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
       </a>
@@ -35,8 +35,8 @@
           <td class="tbl-td">{{ item.country }}</td>
           <td class="tbl-td">{% if item.dpa_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
           <td class="tbl-td">{% if item.scc_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
-          <td class="tbl-td"><span class="badge-sm {% if item.risk_level == 'HIGH' %}badge-red{% elif item.risk_level == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %}">{{ item.risk_level }}</span></td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:subprocessor_update' item.pk %}" class="btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
+          <td class="tbl-td"><span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if item.risk_level == 'HIGH' %}badge-red{% elif item.risk_level == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %}">{{ item.risk_level }}</span></td>
+          <td class="tbl-td text-right"><a href="{% url 'contracts:subprocessor_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-1 text-sm rounded-lg">Edit</a></td>
         </tr>
         {% empty %}
         <tr><td colspan="7"><div class="empty-state">No subprocessor registry found</div></td></tr>

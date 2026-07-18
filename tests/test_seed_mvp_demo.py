@@ -35,6 +35,15 @@ class SeedMvpDemoCommandTests(TestCase):
             ).exists()
         )
 
+    def test_single_user_mode_keeps_all_walkthrough_work_assigned_to_mvp_admin(self):
+        call_command('seed_mvp_demo', '--single-user')
+
+        users = get_user_model().objects.order_by('username')
+        self.assertEqual(list(users.values_list('username', flat=True)), ['mvp_admin'])
+        admin = users.get()
+        self.assertTrue(Contract.objects.filter(organization__slug='clmone-mvp', owner=admin).exists())
+        self.assertTrue(CommandCenterWorkItem.objects.filter(organization__slug='clmone-mvp', owner=admin).exists())
+
     def test_reset_removes_stale_demo_work_and_restores_northstar_priority(self):
         output = StringIO()
         call_command('seed_mvp_demo', stdout=output)

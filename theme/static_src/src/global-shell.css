@@ -1,0 +1,10 @@
+/*
+ * Phase 1 shell compatibility entry point.
+ *
+ * The imported files preserve the exact former base.html stylesheet order:
+ * foundations, shared compatibility components, then legacy layout and
+ * responsive overrides. This entry is compiled after optional page CSS.
+ */
+@import "./global-shell/foundations.css";
+@import "./global-shell/shared-components.css";
+@import "./global-shell/legacy-layout.css";

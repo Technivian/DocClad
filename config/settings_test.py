@@ -21,6 +21,9 @@ os.environ.setdefault('DJANGO_DEBUG', 'false')
 os.environ.setdefault('GEMINI_API_KEY', '')
 os.environ.setdefault('STRIPE_SECRET_KEY', '')
 os.environ.setdefault('STRIPE_WEBHOOK_SECRET', '')
+os.environ['ESIGN_PROVIDER'] = 'null'
+os.environ['ESIGN_DOCUMENSO_API_KEY'] = ''
+os.environ['ESIGN_DOCUMENSO_WEBHOOK_SECRET'] = ''
 
 from .settings_development import *  # noqa: E402,F401,F403
 

@@ -13,7 +13,7 @@
             <p class="page-subtitle c-muted">Track regulatory compliance across all active checklists.</p>
         </div>
         <div class="page-actions">
-            <a href="{% url 'contracts:compliance_checklist_create' %}" class="btn-primary-grad text-white">
+            <a href="{% url 'contracts:compliance_checklist_create' %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white">
                 <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 New Checklist
             </a>
@@ -35,7 +35,7 @@
             </select>
         </div>
         <div>
-            <button type="submit" class="btn-primary-grad text-white w-full">Apply Filters</button>
+            <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white w-full">Apply Filters</button>
         </div>
     </form>
 
@@ -57,7 +57,7 @@
                     <td class="px-5 py-3 font-medium tbl-td">{{ checklist.name }}</td>
                     <td class="px-5 py-3 tbl-td">{{ checklist.regulation }}</td>
                     <td class="px-5 py-3">
-                        <span class="badge-sm {% if checklist.status == 'COMPLETE' %}badge-green{% elif checklist.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ checklist.get_status_display }}</span>
+                        <span class="dc-ds-badge dc-ds-badge--sm badge-sm {% if checklist.status == 'COMPLETE' %}badge-green{% elif checklist.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-gray{% endif %}">{{ checklist.get_status_display }}</span>
                     </td>
                     <td class="px-5 py-3 tbl-td">{{ checklist.due_date|default:"—" }}</td>
                     <td class="px-5 py-3 tbl-td">{{ checklist.reviewed_by.username|default:"—" }}</td>

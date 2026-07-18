@@ -5,10 +5,11 @@
   "description": "",
   "scripts": {
     "start": "npm run dev",
-    "build": "npm run build:clean && npm run build:tailwind",
+    "build": "npm run build:clean && npm run build:tailwind && npm run build:shell",
     "build:clean": "rimraf ../static/css/dist",
     "build:tailwind": "cross-env NODE_ENV=production postcss ./src/styles.css -o ../static/css/dist/styles.css --minify",
-    "dev": "cross-env NODE_ENV=development postcss ./src/styles.css -o ../static/css/dist/styles.css --watch"
+    "build:shell": "cross-env NODE_ENV=production postcss ./src/global-shell.css -o ../static/css/dist/global-shell.css --minify",
+    "dev": "npm run build:shell && cross-env NODE_ENV=development postcss ./src/styles.css -o ../static/css/dist/styles.css --watch"
   },
   "keywords": [],
   "author": "",

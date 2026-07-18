@@ -13,106 +13,116 @@
   .repo-page #contracts-table tbody tr.wq-row-selected td,
   .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
   .repo-page #contracts-table tbody td .font-medium { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-  .repo-page #contracts-table tbody td .text-sm, .repo-muted-text { color: var(--text-muted); }
-  .repo-page #contracts-table tbody td .text-sm { font-size: 11px; margin-top: 2px; }
-  .repo-page .repo-filter-shell { display: grid; gap: var(--space-16); width: 100%; }
-  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; width: 100%; }
-  .repo-page .repo-filter-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; width: 100%; }
+  .repo-page #contracts-table tbody td .text-sm, .repo-page .repo-muted-text { color: var(--ink-600); }
+  .repo-page #contracts-table tbody td .text-sm { font-size: 12px; margin-top: 2px; }
+  body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0 0 var(--space-12); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+  .repo-page .repo-view-header { display: contents; }
+  .repo-page .repo-view-tabs { grid-area: tabs; align-self: center; }
+  .repo-page .repo-view-actions { grid-area: actions; justify-self: end; }
+  .repo-page .repo-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+  .repo-page .repo-view-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .repo-page .repo-filter-controls { grid-area: tools; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%; }
   .repo-page .repo-filter-controls > * { min-width: 0; }
-  .repo-page .repo-filter-controls .repo-search-field { flex: 1 1 320px; }
-  .repo-page .repo-filter-controls .repo-sort-select { flex: 0 0 220px; }
-  .repo-page .repo-filter-controls .repo-filter-toggle { flex: 0 0 auto; }
+  .repo-page .repo-filter-controls .repo-search-field { flex: 1 1 360px; }
+  .repo-page .repo-filter-controls .repo-sort-select { flex: 0 0 196px; color: var(--ink-600); background: transparent; }
+  .repo-page .repo-filter-controls .repo-actions-stack { flex: 0 0 auto; margin-left: auto; }
+  .repo-page .repo-filter-controls .repo-filter-toggle { flex: 0 0 auto; color: var(--ink-600); background: transparent; font-weight: 600; }
+  .repo-page .repo-view-actions .repo-add-contract { min-height: 38px; padding-inline: var(--space-16); font-weight: 700; }
   .repo-page .repo-filter-drawer { display: none; width: 100%; max-width: none; }
   .repo-page .repo-filter-drawer.is-open { display: block; }
-  .repo-page .repo-filter-drawer__body { display: grid; gap: var(--space-12); grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .repo-page .repo-filter-drawer__views { grid-column: 1 / -1; display: grid; gap: var(--space-8); }
-  .repo-page .repo-filter-drawer__view-list { display: flex; gap: 8px; flex-wrap: wrap; }
-  .repo-page .repo-filter-drawer label { display: grid; gap: 6px; color: var(--text-muted); font-size: 12px; font-weight: 650; }
+  .repo-page .repo-filter-drawer__body { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .repo-page .repo-filter-drawer__views { grid-column: 1 / -1; display: grid; gap: var(--space-6); }
+  .repo-page .repo-filter-drawer__view-list { display: flex; gap: 6px; flex-wrap: wrap; }
+  .repo-page .repo-filter-drawer label { display: grid; gap: 5px; color: var(--text-muted); font-size: 12px; font-weight: 650; }
   .repo-page .repo-filter-drawer select { min-width: 0; }
+  .repo-page .repo-filter-drawer .repo-filter-drawer__header { margin-bottom: 0; }
+  .repo-page .repo-filter-drawer .repo-filter-drawer__title { font-size: 14px; }
+  .repo-page #filter-chips:empty { display: none; }
   .repo-page .repo-row-action { color: var(--text-muted); font-size: 20px; line-height: 1; padding: 4px 8px; }
   .repo-page .repo-row-action:hover { color: var(--primary); }
+  body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input { height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600); }
+  body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input:focus-visible { border-color: var(--line) !important; background: var(--card) !important; }
+  body[data-design-system=casefile]:has(.repo-page) .app-footer { display: none; }
   @media (max-width: 1100px) { .repo-page .repo-filter-drawer__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px) {
+    .repo-page .repo-filter-shell { grid-template-columns: 1fr; grid-template-areas: "tabs" "actions" "tools"; }
+    .repo-page .repo-view-actions { width: 100%; }
+    .repo-page .repo-view-actions .repo-add-contract { width: 100%; }
     .repo-page .repo-filter-drawer__body { grid-template-columns: 1fr; }
     .repo-page .repo-filter-controls .repo-search-field,
     .repo-page .repo-filter-controls .repo-sort-select,
-    .repo-page .repo-filter-controls .repo-filter-toggle { flex-basis: 100%; }
+    .repo-page .repo-filter-controls .repo-actions-stack { flex-basis: 100%; margin-left: 0; }
   }
 </style>
 
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow repo-page">
-  <div class="dc-ds-page-actions">
-    <div class="dc-ds-actions">
-      <details class="relative">
-        <summary class="dc-ds-button dc-ds-button--primary cursor-pointer">Add contract</summary>
-        <div class="absolute right-0 z-20 mt-2 min-w-64 dc-ds-surface p-2">
-          <a href="{% url 'contracts:contract_template_picker' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Create from approved template</a>
-          <a href="{% url 'contracts:upload_signed_contract' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Upload existing agreement</a>
-        </div>
-      </details>
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page repo-page">
+  <header class="repo-filter-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Contracts workspace controls">
+    <div class="repo-view-header">
+      <nav class="repo-view-tabs dc-ds-list-tabs" aria-label="Contract operations">
+        <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
+        <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
+        <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
+        <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
+        <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
+      </nav>
+      <div class="repo-view-actions">
+        <details class="relative">
+          <summary class="repo-add-contract dc-ds-button dc-ds-button--primary cursor-pointer">Add contract</summary>
+          <div class="absolute right-0 z-20 mt-2 min-w-64 dc-ds-surface p-2">
+            <a href="{% url 'contracts:contract_template_picker' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Create from approved template</a>
+            <a href="{% url 'contracts:upload_signed_contract' %}" class="block px-3 py-2 rounded-lg hover:bg-hover">Upload existing agreement</a>
+          </div>
+        </details>
+      </div>
     </div>
-  </div>
-
-  <div class="dc-ds-summary" aria-label="Contract repository summary">
-    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Total contracts</span><strong class="dc-ds-summary__value">{{ total_contracts }}</strong></div>
-    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Awaiting action</span><strong class="dc-ds-summary__value">{{ awaiting_action_contracts }}</strong></div>
-    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Active</span><strong class="dc-ds-summary__value">{{ active_contracts }}</strong></div>
-    <div class="dc-ds-summary__item dc-ds-summary__item--info"><span class="dc-ds-summary__label">Expiring soon</span><strong class="dc-ds-summary__value">{{ expiring_contracts }}</strong></div>
-  </div>
-
-  <div class="repo-filter-shell dc-ds-surface p-4">
-    <nav class="repo-view-tabs" aria-label="Contract operations">
-      <a href="{% url 'contracts:repository' %}" class="dc-ds-choice chip-active">All contracts</a>
-      <a href="{% url 'dashboard' %}" class="dc-ds-choice">My work</a>
-      <a href="{% url 'contracts:approval_request_list' %}" class="dc-ds-choice">Approvals</a>
-      <a href="{% url 'contracts:signature_request_list' %}" class="dc-ds-choice">Signatures</a>
-      <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-choice">Risks</a>
-    </nav>
     <div class="repo-filter-controls">
       <div class="relative repo-search-field">
         {% include "design_system/icon.html" with name="search" class_name="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none c-muted" %}
-        <input type="search" id="search-input" placeholder="Search contracts" class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
+        <input type="search" id="search-input" placeholder="Search contracts" class="dc-ds-control w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none input-base">
       </div>
-      <select id="sort-select" class="repo-sort-select px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
+      <select id="sort-select" class="dc-ds-control repo-sort-select px-3 py-2 text-sm rounded-lg border focus:outline-none select-base" aria-label="Sort contracts">
         <option value="updated_desc">Recently updated</option><option value="updated_asc">Oldest first</option><option value="title">Contract A–Z</option><option value="status">Status</option>
       </select>
-      <button id="repo-filter-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
+      <div class="repo-actions-stack">
+        <button id="repo-filter-toggle" type="button" class="repo-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="repository-filters">Filters and views</button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-4" aria-label="Filters and views">
-    <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-semibold">Filters and views</h2><button type="button" data-action="clear-repository-filters" class="btn-ghost text-sm">Clear filters</button></div>
+  <section id="repository-filters" class="repo-filter-drawer dc-ds-surface p-3" aria-label="Filters and views">
+    <div class="repo-filter-drawer__header flex items-center justify-between gap-3 mb-2"><h2 class="repo-filter-drawer__title font-semibold">Filters and views</h2><button type="button" data-action="clear-repository-filters" class="dc-ds-button dc-ds-button--quiet btn-ghost text-sm">Clear filters</button></div>
     <div class="repo-filter-drawer__body">
       <div class="repo-filter-drawer__views">
-        <p class="text-xs font-semibold c-muted mb-0">Quick views</p>
+        <p class="text-[11px] font-semibold c-muted mb-0">Quick views</p>
         <div class="repo-filter-drawer__view-list">
           <button type="button" class="dc-ds-choice repo-quick-view chip-active" data-rail-view="all" aria-pressed="true">All contracts</button>
           <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="active" aria-pressed="false">Active contracts</button>
           <button type="button" class="dc-ds-choice repo-quick-view" data-rail-view="draft" aria-pressed="false">Draft contracts</button>
         </div>
       </div>
-      <label>Status<select id="status-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
-      <label>Contract type<select id="type-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All contract types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
-      <label>Owner<select id="owner-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
-      <label>Counterparty<select id="counterparty-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
-      <label>Risk level<select id="risk-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
-      <label>Approval state<select id="approval-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any approval state</option>{% for value, label in approval_states %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
-      <label>Expiry<select id="expiry-filter-select" class="select-base px-3 py-2 rounded-lg border"><option value="">Any key date</option><option value="30">Expiring in 30 days</option></select></label>
+      <label>Status<select id="status-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All statuses</option><option value="DRAFT">Draft</option><option value="IN_REVIEW">Internal review</option><option value="PENDING">Approval</option><option value="APPROVED">Signature</option><option value="ACTIVE">Active</option><option value="EXPIRED">Expired</option></select></label>
+      <label>Contract type<select id="type-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All contract types</option>{% for value, label in contract_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Owner<select id="owner-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All owners</option>{% for owner in repository_owners %}<option value="{{ owner.pk }}">{{ owner.get_full_name|default:owner.username }}</option>{% endfor %}</select></label>
+      <label>Counterparty<select id="counterparty-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
+      <label>Risk level<select id="risk-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Approval state<select id="approval-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">Any approval state</option>{% for value, label in approval_states %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+      <label>Expiry<select id="expiry-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">Any key date</option><option value="30">Expiring in 30 days</option></select></label>
     </div>
   </section>
 
-  <div id="filter-chips"></div>
+  <div id="filter-chips" hidden></div>
   {# Saved views deliberately stay hidden until they are backed by workspace persistence. #}
-  <div id="bulk-action-bar" class="repo-bulk-bar"><div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div><div class="flex items-center gap-2 flex-wrap"><button id="repo-bulk-status" class="repo-mini-btn">Change status</button><button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button><button data-action="clear-selection" class="repo-mini-btn">Clear selection</button></div></div>
+  <div id="bulk-action-bar" class="repo-bulk-bar dc-ds-table-selection"><div class="font-medium c-primary" id="selected-count" aria-live="polite">0 selected</div><div class="flex items-center gap-2 flex-wrap"><button id="repo-bulk-status" class="repo-mini-btn">Change status</button><button id="repo-bulk-export" class="repo-mini-btn">Export CSV</button><button data-action="clear-selection" class="repo-mini-btn">Clear selection</button></div></div>
 
   <div class="dc-ds-table-wrap table-sticky">
-    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server">
+    <table id="contracts-table" class="dc-ds-table w-full text-sm" data-table-core="server" aria-label="Contracts repository">
       <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
       <thead class="tbl-head"><tr><th class="tbl-th" scope="col"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th><th class="tbl-th" scope="col">Contract</th><th class="tbl-th" scope="col">Contract type</th><th class="tbl-th" scope="col">Counterparty</th><th class="tbl-th" scope="col">Stage</th><th class="tbl-th" scope="col">Assigned owner</th><th class="tbl-th" scope="col">Latest activity</th><th class="tbl-th wq-col-num" scope="col">Key date</th><th class="tbl-th wq-col-num" scope="col">Value</th><th class="tbl-th" scope="col"><span class="sr-only">Actions</span></th></tr></thead>
       <tbody id="contracts-tbody"><tr><td colspan="10" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading contracts…</td></tr></tbody>
     </table>
   </div>
-  <div id="pagination-container" class="mt-4"></div>
+  <div id="pagination-container" class="dc-ds-table-pagination" aria-live="polite"></div>
   <div id="details-drawer" class="repo-drawer" aria-hidden="true"></div>
 </div>
 <script src="{% static 'js/clmone-repository.js' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}"></script>

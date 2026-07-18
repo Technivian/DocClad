@@ -98,6 +98,7 @@ from .views_domains.privacy_approvals import (
     SignatureRequestListView,
     SignatureRequestUpdateView,
     SignaturePacketDetailView,
+    signature_request_refresh,
     signature_request_send,
     signature_request_send_reminder,
     signature_request_transition,
@@ -154,13 +155,15 @@ from .views_domains.contracts import (
     RepositoryView,
     contract_ai_assistant,
     contract_approval_decision,
+    contract_approval_chain_reorder,
     contract_submit_for_review,
     contract_template_picker,
     dashboard,
     legal_front_door,
     upload_signed_contract,
+    contract_review_workspace,
 )
-from .views_domains.dpa_workflow import DPAWorkflowBuilderView
+from .views_domains.dpa_workflow import DPAReviewAndGenerateView, DPAWorkflowBuilderView
 from .views_domains.msa_workflow import (
     MSAWorkflowBuilderView,
     msa_export_document,
@@ -222,6 +225,16 @@ from .views_domains.actions import (
     settings_hub,
     toggle_dd_item,
     toggle_redesign,
+)
+from .views_domains.counterparty_collaboration import (
+    counterparty_collaboration_add_comment,
+    counterparty_collaboration_complete_task,
+    counterparty_collaboration_create_item,
+    counterparty_collaboration_document_download,
+    counterparty_collaboration_invite,
+    counterparty_collaboration_portal,
+    counterparty_collaboration_revoke,
+    counterparty_collaboration_upload_revision,
 )
 from .views_domains.core import (
     csp_report,

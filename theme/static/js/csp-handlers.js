@@ -40,4 +40,24 @@
       e.preventDefault();
     }
   });
+
+  // DPA option pickers use native <details> elements so their checkboxes work
+  // without JavaScript. Match expected menu behaviour by closing an open list
+  // when the user continues elsewhere on the page, or presses Escape.
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('.dpa-option-picker[open]').forEach(function (picker) {
+      if (!picker.contains(e.target)) {
+        picker.removeAttribute('open');
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') {
+      return;
+    }
+    document.querySelectorAll('.dpa-option-picker[open]').forEach(function (picker) {
+      picker.removeAttribute('open');
+    });
+  });
 })();

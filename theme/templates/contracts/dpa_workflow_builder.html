@@ -1,914 +1,478 @@
 {% extends "base.html" %}
 {% load dpa_workflow_tags %}
-{% block title %}DPA Privacy Review Workflow – CLM One{% endblock %}
+{% block title %}New DPA – CLM One{% endblock %}
+{% block authenticated_page_title %}New DPA <span class="dpa-title-context">DPA intake · Step {{ active_step }} of {{ steps|length }}</span>{% endblock %}
+{% block authenticated_page_subtitle %}Capture the processing details required to generate and govern the agreement.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:contract_template_picker' %}" class="topbar-back-link" data-workspace-back aria-label="Back to templates" title="Back to templates">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-/* Mirrors Command Center spacing, card treatment, and hierarchy, while
-   keeping this page isolated from unrelated workspace shells. */
-.page-wrap.dpa-workflow-page { padding: var(--space-24) var(--space-32) var(--space-56); background: var(--paper); }
-.dpa-workspace-grid { display: grid; grid-template-columns: minmax(0, .39fr) minmax(0, .61fr); gap: var(--space-24); align-items: start; margin-top: var(--space-20); }
-.dpa-input-column,
-.dpa-output-column { min-width: 0; display: grid; gap: var(--space-16); }
-.dpa-column-head,
-.dpa-tab-shell,
-.dpa-step,
-.dpa-gov-card,
-.dpa-audit-card,
-.dpa-clause-drawer { border: 1px solid var(--line); border-radius: 10px; background: var(--card); box-shadow: 0 8px 22px rgba(15, 23, 42, .05); }
-.dpa-column-head { padding: var(--space-20); }
-.dpa-column-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-16); }
-.dpa-column-title { margin: 2px 0 0; color: var(--color-brand-foundation); font: var(--text-heading); }
-.dpa-column-subtitle { margin: var(--space-6) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.5; }
-.dpa-column-metrics { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-8); }
-.dpa-column-badges { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-12); }
-.dpa-column-badge,
-.dpa-summary-badge,
-.dpa-tab-button,
-.dpa-step-status { display: inline-flex; align-items: center; gap: var(--space-4); min-height: 26px; padding: 0 var(--space-8); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--well); color: var(--ink-600); font: var(--text-meta); font-weight: 650; white-space: nowrap; }
-.dpa-column-badge strong,
-.dpa-summary-badge strong { color: var(--color-brand-foundation); font-weight: 650; }
-.dpa-column-badge.is-clear,
-.dpa-summary-badge.is-clear,
-.dpa-step-status--clear { border-color: var(--color-status-success-border); background: var(--status-positive-bg); color: var(--status-positive-fg); }
-.dpa-column-badge.is-attention,
-.dpa-summary-badge.is-warn,
-.dpa-step-status--attention { border-color: var(--color-status-warning-border); background: var(--status-pending-bg); color: var(--status-pending-fg); }
-.dpa-column-badge.is-neutral,
-.dpa-summary-badge.is-neutral,
-.dpa-step-status--neutral { border-color: var(--line); background: var(--well); color: var(--ink-600); }
-.dpa-header-progress-track { height: 4px; width: 100%; max-width: 420px; margin-top: var(--space-12); border-radius: 999px; background: var(--hairline); overflow: hidden; }
-.dpa-header-progress-fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, var(--seal), var(--color-brand-primary-hover)); transition: width 0.25s ease; }
-.dpa-missing-chips { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-12); }
-.dpa-missing-chip,
-.dpa-missing-empty { display: inline-flex; align-items: center; min-height: 28px; padding: 0 var(--space-8); border-radius: var(--radius-pill); font: var(--text-meta); font-weight: 650; }
-.dpa-missing-chip { border: 1px solid var(--color-status-warning-border); background: var(--status-pending-bg); color: var(--status-pending-fg); }
-.dpa-missing-empty { border: 1px dashed var(--line); background: transparent; color: var(--ink-500); }
-.dpa-stepper { display: grid; gap: var(--space-12); }
-.dpa-step { overflow: hidden; }
-.dpa-step[open] { border-color: color-mix(in srgb, var(--seal) 40%, var(--line)); }
-.dpa-step-summary { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-16); padding: var(--space-16) var(--space-20); cursor: pointer; list-style: none; }
-.dpa-step-summary::-webkit-details-marker { display: none; }
-.dpa-step-summary-main { display: flex; align-items: flex-start; gap: var(--space-12); min-width: 0; }
-.dpa-step-number { width: 28px; height: 28px; display: grid; place-items: center; flex: none; border-radius: 999px; border: 1px solid var(--line); background: var(--well); color: var(--ink-600); font: var(--text-meta); font-weight: 700; }
-.dpa-step-title { margin: 0; color: var(--color-brand-foundation); font: var(--text-subheading); }
-.dpa-step-summary-copy { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.45; }
-.dpa-step-body { padding: 0 var(--space-20) var(--space-20); }
-.dpa-step-body .cform-section-grid { margin-top: var(--space-12); }
-.dpa-step-body .cform-field .form-label { color: var(--color-brand-foundation); }
-.dpa-step-body .cform-field input:not([type="checkbox"]), .dpa-step-body .cform-field select, .dpa-step-body .cform-field textarea { background: var(--card); }
-.dpa-output-column { position: relative; }
-.dpa-tab-shell { padding: var(--space-8); }
-.dpa-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-8); }
-.dpa-tab-button { min-height: 38px; justify-content: center; border-radius: var(--radius-control); cursor: pointer; background: var(--well); color: var(--ink-600); }
-.dpa-tab-button[aria-selected="true"] { border-color: var(--seal); background: var(--seal); color: var(--clmone-white); }
-.dpa-tab-panels { display: grid; gap: var(--space-16); margin-top: var(--space-16); }
-.dpa-tab-panel { display: none; gap: var(--space-16); }
-.dpa-tab-panel.is-active { display: grid; }
-.dpa-governance-summary { display: flex; flex-wrap: wrap; gap: var(--space-8); }
-.dpa-summary-badge { min-width: 0; align-items: flex-start; flex-direction: column; padding: var(--space-8) var(--space-12); cursor: pointer; text-align: left; white-space: normal; line-height: 1.3; }
-.dpa-summary-badge strong { color: var(--color-brand-foundation); font-size: 12px; line-height: 1.3; }
-.dpa-summary-badge.is-clear { background: var(--status-positive-bg); }
-.dpa-summary-badge.is-warn { background: var(--status-pending-bg); }
-.dpa-summary-badge.is-neutral { background: var(--well); }
-.dpa-draft-panel { background: var(--well); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.cform-draft-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-12); padding: var(--space-16) var(--space-20); border-bottom: 1px solid var(--line); background: var(--card); }
-.cform-draft-toolbar { display: flex; flex-wrap: wrap; gap: var(--space-8); padding: var(--space-12) var(--space-16); border-bottom: 1px solid var(--line); background: var(--card); }
-.cform-ai-pill { display: inline-flex; align-items: center; gap: var(--space-4); min-height: 34px; padding: 0 var(--space-10); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--well); color: var(--ink-700); font: var(--text-meta); font-weight: 650; cursor: pointer; }
-.cform-ai-pill:hover { border-color: var(--seal); color: var(--seal-dark); }
-.cform-ai-pill.is-disabled { opacity: .55; cursor: default; }
-.cform-doc-canvas { padding: var(--space-20); }
-.cform-doc { max-width: 76ch; margin: 0 auto; min-height: 560px; padding: var(--space-32) var(--space-12) var(--space-44); border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--card); color: var(--ink-700); font-family: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif; font-size: 13.5px; line-height: 1.8; }
-.cform-doc h2 { margin: 0 0 4px; font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: .03em; text-align: center; }
-.cform-doc-letterhead-rule { max-width: 72ch; margin: 0 auto 26px; border-bottom: 1px solid var(--line); }
-.cform-doc p { margin: 0 0 12px; padding: 0 22px; }
-.cform-doc-empty { padding: var(--space-40) var(--space-20); text-align: center; color: var(--ink-500); font-family: var(--font-sans); font-size: 12.5px; }
-.cform-clause { border: 1px solid var(--line); border-radius: 7px; padding: var(--space-16) 17px; background: var(--surface-alt); margin: 0 22px 13px; scroll-margin-top: 130px; }
-.cform-clause.is-linked { border-color: rgba(10, 114, 100, .35); box-shadow: 0 0 0 2px rgba(10, 114, 100, .14); background: rgba(10, 114, 100, .05); }
-.cform-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; font-family: Inter, system-ui, sans-serif; font-size: 9.5px; font-weight: 800; border: 1px solid var(--line); color: var(--ink-500); background: var(--card); white-space: nowrap; flex-shrink: 0; cursor: pointer; }
-.cform-source.ai, .cform-source.library { border-color: rgba(10,114,100,.22); color: var(--seal-dark); background: var(--seal-bg); }
-.cform-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
-.dpa-governance-grid,
-.dpa-audit-grid { display: grid; gap: var(--space-16); }
-.dpa-gov-card,
-.dpa-audit-card { overflow: hidden; padding: 0; }
-.dpa-gov-card .cform-rail-head,
-.dpa-audit-card .cform-rail-head { padding: var(--space-16) var(--space-20) var(--space-12); border-bottom: 1px solid var(--line); }
-.dpa-gov-card .cform-rail-body,
-.dpa-audit-card .cform-rail-body { padding: var(--space-16) var(--space-20) var(--space-20); }
-.dpa-gov-section-title,
-.dpa-audit-section-title { margin: 0; color: var(--color-brand-foundation); font: var(--text-heading); }
-.dpa-gov-section-copy,
-.dpa-audit-section-copy { margin: var(--space-6) 0 0; color: var(--ink-500); font: var(--text-small); line-height: 1.5; }
-.dpa-gov-rule { display: grid; gap: var(--space-8); }
-.dpa-gov-chip-list { display: flex; flex-wrap: wrap; gap: var(--space-8); margin-top: var(--space-12); }
-.dpa-gov-chip { display: inline-flex; align-items: center; gap: var(--space-4); min-height: 28px; padding: 0 var(--space-8); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--well); color: var(--ink-600); font: var(--text-meta); font-weight: 650; }
-.dpa-gov-chip.is-emphasis { border-color: var(--status-pending-fg); background: var(--status-pending-bg); color: var(--status-pending-fg); }
-.dpa-gov-chip[data-clause-link] { cursor: pointer; }
-.dpa-gov-chip[data-clause-link]:hover { filter: brightness(.98); }
-.dpa-gov-detail-list { display: grid; gap: var(--space-8); margin-top: var(--space-12); }
-.dpa-gov-detail { padding: var(--space-12); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
-.dpa-gov-detail strong { display: block; color: var(--color-brand-foundation); font: var(--text-meta); }
-.dpa-gov-detail span { display: block; margin-top: var(--space-4); color: var(--ink-600); font: var(--text-small); line-height: 1.45; }
-.dpa-audit-timeline { display: grid; gap: var(--space-8); }
-.dpa-audit-row { padding: var(--space-12); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
-.dpa-audit-row strong { display: block; color: var(--color-brand-foundation); font: var(--text-meta); }
-.dpa-audit-row span { display: block; margin-top: var(--space-4); color: var(--ink-600); font: var(--text-small); line-height: 1.45; }
-.dpa-audit-row em { display: block; margin-top: var(--space-4); color: var(--ink-500); font: var(--text-small); font-style: normal; }
-.dpa-clause-drawer { width: min(460px, calc(100vw - 24px)); min-height: 100dvh; margin: 0 0 0 auto; padding: 0; border: 0; }
-.dpa-clause-drawer::backdrop { background: rgba(11, 23, 40, .32); }
-.dpa-clause-drawer-inner { height: 100%; overflow-y: auto; padding: var(--space-24); }
-.dpa-clause-drawer-head { position: sticky; top: calc(var(--space-24) * -1); z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-16); padding: var(--space-16) 0; background: var(--card); border-bottom: 1px solid var(--line); }
-.dpa-clause-drawer-title { margin: 0; color: var(--color-brand-foundation); font: var(--text-section); }
-.dpa-clause-drawer-meta { margin: var(--space-4) 0 0; color: var(--ink-500); font: var(--text-small); }
-.dpa-clause-drawer-body { display: grid; gap: var(--space-12); padding: var(--space-20) 0 0; color: var(--ink-700); font: var(--text-small); line-height: 1.55; }
-.dpa-clause-drawer-clause { padding: var(--space-12); border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--well); }
-.dpa-clause-drawer-clause strong { display: block; color: var(--color-brand-foundation); font: var(--text-meta); }
-.dpa-clause-drawer-clause span { display: block; margin-top: var(--space-4); color: var(--ink-600); }
-.dpa-clause-drawer-close { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-control); background: var(--card); color: var(--ink-600); cursor: pointer; }
-
-.cform-intake-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; overflow: hidden; }
-.cform-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 13px 16px; border-bottom: 1px solid var(--card-border); background: var(--card-bg); }
-.cform-panel-head-title-row { display: flex; align-items: center; gap: 10px; }
-.cform-panel-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; background: var(--well); border: 1px solid var(--border); color: var(--text-secondary); font-size: 10.5px; font-weight: 800; flex-shrink: 0; }
-.cform-panel-title { color: var(--text-primary); font-size: 13px; line-height: 1.25; font-weight: 800; }
-.cform-panel-meta { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; border-radius: 999px; padding: 4px 10px; font-size: 10.5px; font-weight: 800; }
-.cform-panel-meta.is-required { background: var(--primary-subtle); color: var(--primary); }
-.cform-panel-meta.is-optional { background: var(--well); color: var(--text-muted); }
-.cform-panel-body { padding: 15px 16px 17px; }
-.dpa-badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.dpa-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 11px; font-weight: 750; border: 1px solid rgba(10,114,100,.18); }
-.cform-collapsible { padding: 0; }
-.cform-collapsible > .cform-summary { cursor: pointer; list-style: none; }
-.cform-collapsible > .cform-summary::-webkit-details-marker { display: none; }
-.cform-collapsible[open] > .cform-summary { border-bottom: 1px solid var(--card-border); }
-.cform-collapsible .details-chevron { transition: transform 0.15s ease; }
-.cform-collapsible[open] .details-chevron { transform: rotate(90deg); }
-.cform-section-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 14px; row-gap: 12px; }
-.cform-field { grid-column: span 6; min-width: 0; }
-.cform-field-full { grid-column: 1 / -1; }
-.cform-field .form-label { color: var(--text-primary); font-size: 11px; font-weight: 700; display: block; margin-bottom: 4px; }
-.cform-field .text-xs.c-muted { color: var(--text-muted); }
-.cform-field input:not([type="checkbox"]), .cform-field select, .cform-field textarea {
-  min-height: 42px; border-radius: 5px; font-size: 13px; padding: 7px 10px;
-  width: 100%; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-primary);
-}
-.cform-field.is-invalid input, .cform-field.is-invalid select { border-color: var(--msg-error-border); }
-.cform-field-error { color: var(--msg-error-text); font-size: 10.5px; margin-top: 3px; }
-.cform-checkbox-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.cform-checkbox-card { display: flex; align-items: flex-start; gap: 8px; min-height: 48px; padding: 9px 10px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--card-bg); }
-.cform-checkbox-card .form-label { margin: 0; font-size: 12px; line-height: 1.25; }
-.cform-rail-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; box-shadow: none; }
-.cform-rail-card + .cform-rail-card { margin-top: 14px; }
-.cform-rail-head { padding: 13px 15px 11px; border-bottom: 1px solid var(--card-border); }
-.cform-rail-body { padding: 12px 15px 15px; }
-
-/* AI Smart Questions */
-.cform-smart-intro { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 12px; padding: 9px 11px; border: 1px solid rgba(10,114,100,.18); border-radius: 6px; background: var(--primary-subtle); }
-.cform-why { display: block; margin-top: 3px; font-size: 10.5px; color: var(--primary); font-weight: 650; line-height: 1.35; }
-.cform-smart-divider { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 2px 0 -2px; color: var(--text-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
-.cform-smart-divider::after { content: ''; flex: 1; height: 1px; background: var(--card-border); }
-
-/* Header progress */
-.dpa-progress-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 12px; font-weight: 800; border: 1px solid rgba(10,114,100,.2); white-space: nowrap; }
-.dpa-progress-copy { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
-.dpa-progress-copy.is-ready { color: var(--primary); font-weight: 650; }
-.dpa-header-progress-track { height: 4px; width: 220px; max-width: 100%; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
-.dpa-header-progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 2px; transition: width 0.25s ease; }
-
-/* Premium document canvas */
-.cform-draft-panel { background: var(--well); border: 1px solid var(--card-border); border-radius: 10px; overflow: hidden; }
-.cform-draft-header { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--card-border); background: var(--card-bg); }
-.cform-draft-header-title { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--text-primary); }
-.cform-draft-header-title svg { width: 14px; height: 14px; color: var(--primary); }
-.cform-draft-toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--card-border); background: var(--card-bg); }
-.cform-ai-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: var(--well); border: 1px solid var(--border); font-size: 10.5px; font-weight: 650; color: var(--text-primary); cursor: pointer; }
-.cform-ai-pill svg { width: 11px; height: 11px; color: var(--primary); }
-.cform-ai-pill:hover { border-color: var(--primary); color: var(--primary); }
-.cform-ai-pill.is-disabled { opacity: 0.55; cursor: default; }
-.cform-ai-pill.is-disabled:hover { border-color: var(--border); color: var(--text-primary); }
-.cform-doc-canvas { padding: 22px; }
-.cform-doc { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 34px 8px 44px; font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif; color: var(--text-primary); font-size: 13.5px; line-height: 1.8; max-width: 72ch; margin: 0 auto; min-height: 560px; }
-.cform-doc h2 { font-family: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.03em; text-align: center; margin: 0 0 4px; }
-.cform-doc-letterhead-rule { max-width: 72ch; margin: 0 auto 26px; border-bottom: 1px solid var(--card-border); }
-.cform-doc p { margin: 0 0 12px; padding: 0 22px; }
-.cform-doc-empty { padding: 40px 20px; text-align: center; color: var(--text-muted); font-family: Inter, system-ui, sans-serif; font-size: 12.5px; }
-.cform-var { background: var(--primary-subtle); color: var(--primary); padding: 1px 5px; border-radius: 4px; font-weight: 650; font-family: -apple-system, sans-serif; font-size: 11.5px; }
-.cform-var-empty { background: rgba(181,80,46,0.1); color: var(--btn-gradient); }
-[data-theme="light"] .cform-var-empty { background: #F8E8E3; color: #A63A2B; }
-
-/* Live draft clause blocks */
-.cform-clause { border: 1px solid var(--card-border); border-radius: 7px; padding: 15px 17px; background: var(--surface-alt); margin: 0 22px 13px; scroll-margin-top: 130px; }
-.cform-clause.is-linked { border-color: rgba(10,114,100,.35); box-shadow: 0 0 0 2px rgba(10,114,100,.14); background: rgba(10,114,100,.05); }
-.cform-clause-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.cform-clause-title-group { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.cform-clause-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: var(--primary-subtle); color: var(--primary); font-size: 10px; font-weight: 800; flex-shrink: 0; font-family: Inter, system-ui, sans-serif; }
-.cform-clause-title { font-family: Inter, system-ui, sans-serif; font-size: 10.5px; color: var(--text-primary); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.cform-clause p:last-child { margin-bottom: 0; }
-.cform-source { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; font-family: Inter, system-ui, sans-serif; font-size: 9.5px; font-weight: 800; border: 1px solid var(--border); color: var(--text-secondary); background: var(--card-bg); white-space: nowrap; flex-shrink: 0; }
-.cform-source.ai, .cform-source.library { border-color: rgba(10,114,100,.22); color: var(--primary); background: var(--primary-subtle); }
-.cform-source.risk { border-color: var(--msg-warning-border); color: var(--msg-warning-text); background: var(--msg-warning-bg); }
-
-.cform-gov-group-label { padding: 12px 0 7px; color: var(--text-muted); font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; border-top: 1px solid var(--card-border); margin-top: 6px; }
-.cform-gov-group-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
-.cform-gov-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
-.cform-gov-item:last-child { border-bottom: none; }
-.cform-gov-icon { width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-subtle); color: var(--primary); }
-.cform-gov-icon svg { width: 13px; height: 13px; }
-.cform-gov-icon.tone-amber { background: rgba(196,145,51,0.16); color: #8A5A14; }
-[data-theme="dark"] .cform-gov-icon.tone-amber { color: #D9A75B; }
-.cform-gov-title { font-size: 11px; font-weight: 700; color: var(--text-primary); }
-.cform-gov-copy { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
-.cform-gov-reasons { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
-.cform-gov-reason { font-size: 10.5px; color: var(--text-secondary); line-height: 1.4; }
-.cform-gov-reason strong { color: var(--text-primary); }
-.cform-risk-list { display: grid; gap: 7px; margin-top: 10px; }
-.cform-risk-chip { display: flex; align-items: flex-start; gap: 7px; border: 1px solid var(--msg-warning-border); background: var(--msg-warning-bg); color: var(--msg-warning-text); border-radius: 6px; padding: 8px 9px; font-size: 11px; line-height: 1.35; font-weight: 650; }
-.cform-risk-chip.is-high { border-color: var(--msg-error-border); background: var(--msg-error-bg); color: var(--msg-error-text); }
-.cform-risk-chip.is-safe { border-color: var(--msg-success-border); background: var(--msg-success-bg); color: var(--msg-success-text); }
-.cform-risk-chip[data-clause-link] { cursor: pointer; }
-.cform-risk-chip[data-clause-link]:hover { filter: brightness(0.97); }
-.cform-risk-dot { width: 7px; height: 7px; margin-top: 4px; border-radius: 999px; background: currentColor; flex: 0 0 auto; }
-.cform-risk-link-hint { margin-left: auto; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; opacity: 0.75; white-space: nowrap; }
-
-.cform-readiness-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
-.cform-check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--card-border); font-size: 12px; }
-.cform-check-row:last-child { border-bottom: none; }
-.cform-check-value { font-weight: 700; color: var(--text-primary); }
-.cform-check-value.is-positive { color: var(--primary); }
-.cform-route-track { display: flex; align-items: flex-start; gap: 0; margin-top: 8px; }
-.cform-route-step { flex: 1; text-align: center; position: relative; }
-.cform-route-step:not(:last-child)::after { content: ''; position: absolute; top: 11px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 1px; background: var(--border); }
-.cform-route-step-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--card-bg); border: 2px solid var(--primary); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 750; margin: 0 auto 6px; position: relative; z-index: 1; }
-.cform-route-step.is-conditional .cform-route-step-dot { border-style: dashed; border-color: #8A5A14; color: #8A5A14; }
-[data-theme="dark"] .cform-route-step.is-conditional .cform-route-step-dot { border-color: #D9A75B; color: #D9A75B; }
-.cform-route-step.is-active-now .cform-route-step-dot { background: var(--primary); color: #fff; }
-.cform-route-step-name { font-size: 10.5px; font-weight: 650; color: var(--text-primary); }
-.cform-route-step-note { font-size: 9px; color: var(--text-muted); margin-top: 1px; }
-.cform-disclaimer-row { margin-top: 18px; display: flex; align-items: center; gap: 6px; }
-.cform-mt-18 { margin-top: 18px; }
-.cform-help { margin-top: 4px; display: block; }
-.cform-route-label { margin-bottom: 8px; }
-
-.btn-cta.is-guarded { opacity: 0.6; }
-
-@media (max-width: 1280px) {
-  .dpa-workspace-grid { grid-template-columns: minmax(0, 1fr); }
-}
-
-@media (max-width: 1400px) {
-  .dpa-workflow-page .arch-workspace-grid { grid-template-columns: minmax(0, 1fr); }
-  .dpa-workflow-page .arch-workspace-sidebar { position: static; }
-  .cform-readiness-grid { grid-template-columns: 1fr; }
-}
+  /* Match the wider Command Center work area while retaining readable form columns. */
+  .dpa-intake { display:grid; grid-template-columns:220px minmax(0, 1fr); gap:var(--space-32); width:100%; max-width:1180px; margin:0 auto; }
+  .topbar-page-title .dpa-title-context { display:inline-block; margin-left:var(--space-12); padding-left:var(--space-12); border-left:1px solid var(--line); color:var(--ink-500); font:var(--text-small); font-weight:600; letter-spacing:0; vertical-align:middle; }
+  .dpa-step-card { border:1px solid var(--color-border-soft); border-radius:var(--radius-subpanel); background:var(--card); box-shadow:var(--shadow-card); }
+  .dpa-step-list { display:grid; align-content:start; gap:var(--space-12); margin:0; padding-top:var(--space-16); }
+  .dpa-workflow-heading { margin:0 0 var(--space-4); color:var(--ink-500); font:var(--text-eyebrow); }
+  .dpa-step-nav { display:grid; grid-template-columns:24px minmax(0, 1fr); align-items:center; min-width:0; gap:var(--space-12); color:var(--ink-500); }
+  .dpa-step-nav--link { cursor:pointer; text-decoration:none; }
+  .dpa-step-nav--link:hover .dpa-step-nav-title, .dpa-step-nav--link:focus-visible .dpa-step-nav-title { color:var(--seal-dark); outline:0; }
+  .dpa-step-nav-num { display:grid; width:20px; height:20px; place-items:center; border-radius:50%; background:var(--ink-200); color:transparent; font-size:11px; font-weight:800; }
+  .dpa-step-nav.is-active { color:var(--ink-900); }
+  .dpa-step-nav.is-active .dpa-step-nav-num { border:4px solid var(--seal); background:var(--card); }
+  .dpa-step-nav.is-complete { color:var(--ink-700); }
+  .dpa-step-nav.is-complete .dpa-step-nav-num { background:var(--seal); color:#fff; }
+  .dpa-step-nav-title { min-width:0; font:var(--text-small); font-weight:650; line-height:1.35; }
+  .dpa-step-nav.is-active .dpa-step-nav-title { font-weight:750; }
+  .dpa-step-card { padding:var(--space-24); }
+  .dpa-step-eyebrow { margin:0 0 var(--space-8); color:var(--seal-dark); font:var(--text-eyebrow); }
+  .dpa-step-title { margin:0; color:var(--ink-900); font:var(--text-section); }
+  .dpa-step-copy { max-width:68ch; margin:var(--space-8) 0 0; color:var(--ink-500); font:var(--text-small); line-height:1.55; }
+  .dpa-field-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-16); margin-top:var(--space-24); }
+  .dpa-field { min-width:0; }
+  .dpa-field--wide { grid-column:1 / -1; }
+  /* Keep descriptive inputs together before the yes/no decisions. */
+  .dpa-field:not(.dpa-field--choice) { order:1; }
+  .dpa-field--choice { order:2; }
+  .dpa-field--choice-start { grid-column:1; }
+  .dpa-field .form-label { display:block; margin-bottom:var(--space-8); color:var(--ink-800); font:var(--text-meta); font-weight:700; }
+  .dpa-label-row { display:flex; align-items:center; gap:var(--space-6); margin-bottom:var(--space-8); }
+  .dpa-label-row .form-label { margin-bottom:0; }
+  .dpa-field-guidance { position:relative; }
+  .dpa-field-guidance summary { display:grid; width:20px; height:20px; place-items:center; border:0; border-radius:50%; background:transparent; color:var(--ink-500); cursor:pointer; list-style:none; }
+  .dpa-field-guidance summary::-webkit-details-marker { display:none; }
+  .dpa-field-guidance summary:hover, .dpa-field-guidance[open] summary { background:var(--seal-bg); color:var(--seal-dark); }
+  .dpa-field-guidance summary:focus-visible { outline:2px solid var(--seal); outline-offset:2px; }
+  .dpa-field-guidance .dc-ds-icon { width:16px; height:16px; }
+  .dpa-field-guidance-panel { position:absolute; z-index:10; top:calc(100% + var(--space-6)); left:0; width:min(340px, calc(100vw - var(--space-48))); padding:var(--space-12); border:1px solid var(--color-status-info-border); border-radius:var(--radius-control); background:var(--card); box-shadow:var(--shadow-card); color:var(--ink-700); font:var(--text-meta); line-height:1.45; }
+  .dpa-field-guidance-panel p { margin:0; }
+  .dpa-field-guidance-panel p + p { margin-top:var(--space-8); }
+  .dpa-field-guidance-panel strong { color:var(--ink-900); }
+  .dpa-field :is(input:not([type="checkbox"]), select, textarea) { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-900); }
+  .dpa-field textarea { min-height:112px; resize:vertical; }
+  .dpa-field-help { display:block; margin-top:var(--space-4); color:var(--ink-500); font:var(--text-meta); line-height:1.45; }
+  .dpa-choice { display:flex; align-items:flex-start; gap:var(--space-8); padding:var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
+  .dpa-choice input { width:18px; height:18px; flex:0 0 18px; margin:2px 0 0; accent-color:var(--seal); }
+  .dpa-choice .form-label { margin-bottom:var(--space-4); }
+  .dpa-field-error { margin:var(--space-4) 0 0; color:var(--status-danger-fg); font:var(--text-meta); }
+  .dpa-step3 { display:grid; gap:var(--space-24); margin-top:var(--space-24); }
+  .dpa-step3-section { padding-top:var(--space-20); border-top:1px solid var(--line); }
+  .dpa-step3-section:first-child { padding-top:0; border-top:0; }
+  .dpa-step3-section-title { margin:0; color:var(--ink-900); font:var(--text-heading); }
+  .dpa-step3-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-16); margin-top:var(--space-16); }
+  .dpa-step3-field { min-width:0; }
+  .dpa-step3-field--wide { grid-column:1 / -1; }
+  .dpa-step3-label { display:block; margin-bottom:var(--space-8); color:var(--ink-800); font:var(--text-meta); font-weight:700; }
+  .dpa-multiselect { position:relative; }
+  /* The native select holds the submitted values; the adjacent search control
+     is the only visible picker. Native multi-selects retain a browser minimum
+     width, so clipping alone can still leak them into the layout. */
+  .dpa-multiselect-native { display:none !important; }
+  .dpa-multiselect-control { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-8); min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); cursor:text; }
+  .dpa-multiselect-control:focus-within { border-color:var(--seal); box-shadow:0 0 0 3px var(--seal-bg); }
+  .dpa-multiselect-selections { display:contents; }
+  .dpa-multiselect-placeholder { color:var(--ink-500); font:var(--text-small); }
+  .dpa-multiselect-chip { display:inline-flex; align-items:center; gap:var(--space-4); min-height:26px; padding:0 var(--space-8); border:0; border-radius:999px; background:var(--seal-bg); color:var(--seal-dark); font:var(--text-meta); font-weight:650; cursor:pointer; }
+  .dpa-multiselect-chip span { font-size:16px; font-weight:500; line-height:1; }
+  .dpa-multiselect-control .dpa-multiselect-search { flex:1 1 144px; min-width:120px; min-height:26px; padding:0; border:0 !important; border-radius:0; outline:0; box-shadow:none !important; background:transparent; color:var(--ink-900); font:var(--text-small); }
+  .dpa-multiselect-indicator { display:grid; flex:0 0 18px; width:18px; height:18px; place-items:center; color:var(--ink-500); pointer-events:none; transition:transform 160ms ease; }
+  .dpa-multiselect-indicator .dc-ds-icon { width:16px; height:16px; }
+  .dpa-multiselect-control:focus-within .dpa-multiselect-indicator { transform:rotate(180deg); color:var(--seal-dark); }
+  .dpa-multiselect-menu { position:absolute; z-index:20; top:calc(100% + var(--space-4)); right:0; left:0; display:grid; gap:var(--space-2); max-height:240px; overflow:auto; padding:var(--space-8); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); box-shadow:var(--shadow-card); }
+  .dpa-multiselect-menu[hidden] { display:none; }
+  .dpa-multiselect-option { display:flex; align-items:center; gap:var(--space-8); width:100%; min-height:36px; padding:var(--space-8); border:0; border-radius:var(--radius-control); background:transparent; color:var(--ink-800); font:var(--text-small); text-align:left; cursor:pointer; }
+  .dpa-multiselect-option:hover, .dpa-multiselect-option:focus-visible { background:var(--well); outline:0; }
+  .dpa-multiselect-option[aria-selected="true"] { background:var(--seal-bg); color:var(--seal-dark); font-weight:700; }
+  .dpa-multiselect-check { display:grid; width:16px; height:16px; place-items:center; border:1px solid var(--line); border-radius:4px; color:transparent; font-size:12px; }
+  .dpa-multiselect-option[aria-selected="true"] .dpa-multiselect-check { border-color:var(--seal); background:var(--seal); color:#fff; }
+  .dpa-option-picker { position:relative; }
+  .dpa-option-picker summary { display:flex; align-items:center; justify-content:space-between; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-500); font:var(--text-small); cursor:pointer; list-style:none; }
+  .dpa-option-picker summary::-webkit-details-marker { display:none; }
+  .dpa-option-picker summary::after { content:'⌄'; color:var(--ink-500); font-size:18px; line-height:1; transition:transform 160ms ease; }
+  .dpa-option-picker[open] summary { border-color:var(--seal); border-bottom-right-radius:0; border-bottom-left-radius:0; color:var(--ink-800); box-shadow:0 0 0 3px var(--seal-bg); }
+  .dpa-option-picker[open] summary::after { transform:rotate(180deg); color:var(--seal-dark); }
+  .dpa-option-picker summary:focus-visible { outline:2px solid var(--seal); outline-offset:2px; }
+  .dpa-option-picker-options { position:absolute; z-index:30; top:100%; right:0; left:0; display:grid; gap:var(--space-4); max-height:240px; overflow:auto; padding:var(--space-8); border:1px solid var(--seal); border-top:0; border-bottom-right-radius:var(--radius-control); border-bottom-left-radius:var(--radius-control); background:var(--card); box-shadow:var(--shadow-card); }
+  .dpa-option-picker-option { display:flex; align-items:center; gap:var(--space-8); min-height:36px; padding:var(--space-8); border-radius:var(--radius-control); color:var(--ink-800); font:var(--text-small); cursor:pointer; user-select:none; }
+  .dpa-option-picker-option:hover { background:var(--well); }
+  .dpa-option-picker-option:has(input:checked) { background:var(--seal-bg); color:var(--seal-dark); font-weight:700; }
+  .dpa-option-picker-option input { width:16px; height:16px; margin:0; accent-color:var(--seal); }
+  .dpa-step3-single-select { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-900); }
+  .dpa-step3-option-row { display:flex; flex-wrap:wrap; gap:var(--space-8); }
+  .dpa-step3-option { display:inline-flex; align-items:center; gap:var(--space-8); min-height:38px; padding:0 var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); font:var(--text-small); font-weight:650; cursor:pointer; }
+  .dpa-step3-option:has(input:checked) { border-color:var(--seal); background:var(--seal-bg); color:var(--seal-dark); }
+  .dpa-step3-option input { width:16px; height:16px; margin:0; accent-color:var(--seal); }
+  .dpa-subprocessor-list { display:grid; gap:var(--space-12); margin-top:var(--space-16); }
+  .dpa-subprocessor-row { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--space-12); padding:var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
+  .dpa-subprocessor-row input { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); }
+  .dpa-subprocessor-actions { margin-top:var(--space-16); }
+  .dpa-step3-review-note { margin:var(--space-12) 0 0; padding:var(--space-12); border:1px solid var(--color-status-warning-border); border-radius:var(--radius-control); background:var(--status-pending-bg); color:var(--status-pending-fg); font:var(--text-small); line-height:1.45; }
+  .dpa-outcomes { display:grid; gap:var(--space-8); padding:var(--space-16); border:1px solid var(--color-status-info-border); border-radius:var(--radius-control); background:var(--status-progress-bg); }
+  .dpa-outcomes-title { margin:0; color:var(--ink-900); font:var(--text-heading); }
+  .dpa-outcome { margin:0; color:var(--ink-700); font:var(--text-meta); line-height:1.45; }
+  .dpa-outcome strong { color:var(--ink-900); }
+  [data-step3-reveal][hidden] { display:none; }
+  .dpa-step4 { display:grid; gap:var(--space-24); margin-top:var(--space-24); }
+  .dpa-step4-section { padding-top:var(--space-20); border-top:1px solid var(--line); }
+  .dpa-step4-section:first-child { padding-top:0; border-top:0; }
+  .dpa-step4-section-title { margin:0; color:var(--ink-900); font:var(--text-heading); }
+  .dpa-step4-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--space-16); margin-top:var(--space-16); }
+  .dpa-step4-field { min-width:0; }
+  .dpa-step4-field--wide { grid-column:1 / -1; }
+  .dpa-step4-label { display:block; margin-bottom:var(--space-8); color:var(--ink-800); font:var(--text-meta); font-weight:700; }
+  .dpa-step4-input, .dpa-step4-select { width:100%; min-height:var(--control-height); padding:var(--space-8) var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--card); color:var(--ink-900); }
+  .dpa-step4-file { width:100%; padding:var(--space-10); border:1px dashed var(--line); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); }
+  .dpa-step4-choice-row { display:flex; flex-wrap:wrap; gap:var(--space-8); }
+  .dpa-step4-choice { display:inline-flex; align-items:center; gap:var(--space-8); min-height:38px; padding:0 var(--space-12); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); color:var(--ink-700); font:var(--text-small); font-weight:650; cursor:pointer; }
+  .dpa-step4-choice:has(input:checked) { border-color:var(--seal); background:var(--seal-bg); color:var(--seal-dark); }
+  .dpa-step4-choice input { width:16px; height:16px; margin:0; accent-color:var(--seal); }
+  .dpa-step4-reveal { display:grid; gap:var(--space-12); margin-top:var(--space-12); padding:var(--space-16); border:1px solid var(--color-status-info-border); border-radius:var(--radius-control); background:var(--status-progress-bg); }
+  [data-step4-reveal][hidden], [data-step4-position-reveal][hidden] { display:none; }
+  .dpa-step4-position { padding:var(--space-16); border:1px solid var(--line); border-radius:var(--radius-control); background:var(--well); }
+  .dpa-evidence-name { display:block; margin-top:var(--space-4); color:var(--status-positive-fg); font:var(--text-meta); }
+  .dpa-form-actions { display:flex; align-items:center; gap:var(--space-12); margin-top:var(--space-24); }
+  .dpa-form-actions .dpa-spacer { flex:1; }
+  @media (min-width:1000px) { .dpa-field-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+  @media (max-width:700px) { .dpa-intake { grid-template-columns:1fr; gap:var(--space-16); } .topbar-page-title .dpa-title-context { display:none; } .dpa-step-list { grid-template-columns:repeat(2, minmax(0, 1fr)); } .dpa-workflow-heading { grid-column:1 / -1; } .dpa-field-grid, .dpa-step3-grid, .dpa-step4-grid, .dpa-subprocessor-row { grid-template-columns:1fr; } .dpa-field--wide, .dpa-step3-field--wide, .dpa-step4-field--wide { grid-column:auto; } .dpa-form-actions { flex-wrap:wrap; } .dpa-form-actions .dpa-spacer { display:none; } }
 </style>
 
-<div class="page-wrap page-wrap-fluid dpa-workflow-page">
-  <form method="post" action="{% url 'contracts:dpa_workflow_builder' %}" id="dpa-workflow-form">
-    {% csrf_token %}
-
-    <a href="{% url 'contracts:contract_template_picker' %}" class="arch-back">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-      Contract type
+<div class="dc-ds-page dpa-intake">
+  <nav class="dpa-step-list" aria-label="DPA intake steps">
+    <p class="dpa-workflow-heading">Workflow checklist</p>
+    {% for step in steps %}
+    {% if step.number < active_step and step.completed_count == step.required_count %}
+    <a class="dpa-step-nav dpa-step-nav--link is-complete" href="{% url 'contracts:dpa_workflow_builder' %}?step={{ step.number }}" aria-label="Return to step {{ step.number }}: {{ step.title }}">
+    {% else %}
+    <div class="dpa-step-nav{% if step.is_active %} is-active{% elif step.completed_count == step.required_count %} is-complete{% endif %}"{% if step.number > active_step %} aria-disabled="true"{% endif %}>
+    {% endif %}
+      <span class="dpa-step-nav-num">{% if step.completed_count == step.required_count and step.required_count %}✓{% else %}{{ step.number }}{% endif %}</span>
+      <span class="dpa-step-nav-title">{{ step.title }}</span>
+    {% if step.number < active_step and step.completed_count == step.required_count %}
     </a>
-
-    <div class="arch-header">
-      <div class="arch-header-left">
-        <div class="arch-title-row">
-          <h1 class="arch-title">New DPA Draft</h1>
-        </div>
-        <p class="arch-subtitle">Generated from approved template: GDPR Processor DPA · Netherlands · B2B</p>
-      </div>
-      <div class="arch-header-right">
-        <a href="{% url 'contracts:contract_template_picker' %}" class="btn-link">Cancel</a>
-        <button type="submit" class="btn-cta" id="submit-dpa-btn">Generate governed draft</button>
-      </div>
+    {% else %}
     </div>
+    {% endif %}
+    {% endfor %}
+  </nav>
 
-    <div class="dpa-workspace-grid">
-      <section class="dpa-input-column" aria-labelledby="dpa-input-column-title">
-        <div class="dpa-column-head">
-          <div class="dpa-column-head-top">
-            <div>
-              <p class="dc-ds-eyebrow">Input workspace</p>
-              <h2 class="dpa-column-title" id="dpa-input-column-title">Required fields</h2>
-              <p class="dpa-column-subtitle">Complete the remaining fields to generate the governed draft.</p>
+  <form method="post" action="{% url 'contracts:dpa_workflow_builder' %}" class="dpa-step-card" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="step" value="{{ active_step }}">
+    {% for step in steps %}
+      {% if step.is_active %}
+      <p class="dpa-step-eyebrow">Step {{ step.number }}</p>
+      <h2 class="dpa-step-title">{{ step.title }}</h2>
+      <p class="dpa-step-copy">{{ step.summary }}</p>
+      {% if step.slug == 'data-and-transfers' %}
+      <div class="dpa-step3">
+        <section class="dpa-step3-section">
+          <h3 class="dpa-step3-section-title">1. Data involved</h3>
+          <div class="dpa-step3-grid">
+            <div class="dpa-step3-field">
+              <label class="dpa-step3-label" for="step3-data-categories">What personal data will be processed? *</label>
+              <details class="dpa-option-picker">
+                <summary>Choose data categories</summary>
+                <div class="dpa-option-picker-options">
+                  {% for option in data_category_options %}<label class="dpa-option-picker-option"><input type="checkbox" name="step3_data_categories" value="{{ option }}"{% if option in step3_facts.data_categories %} checked{% endif %}>{{ option }}</label>{% endfor %}
+                </div>
+              </details>
+              {% if errors.step3_data_categories %}<p class="dpa-field-error">{{ errors.step3_data_categories }}</p>{% endif %}
             </div>
-            <div class="dpa-column-metrics" aria-label="Draft readiness summary">
-              <span class="dpa-column-badge is-clear"><span id="dpa-column-progress-pct">{{ completion_percent|default:0 }}</span>% complete</span>
-              <span id="dpa-progress-pct" hidden>{{ completion_percent|default:0 }}</span>
-              <span class="dpa-column-badge{% if missing_required_fields %} is-attention{% else %} is-clear{% endif %}"><strong>{{ missing_required_fields|default:0 }}</strong> missing</span>
+            <div class="dpa-step3-field">
+              <label class="dpa-step3-label" for="step3-data-subjects">Whose data will be processed? *</label>
+              <details class="dpa-option-picker">
+                <summary>Choose data subjects</summary>
+                <div class="dpa-option-picker-options">
+                  {% for option in data_subject_options %}<label class="dpa-option-picker-option"><input type="checkbox" name="step3_data_subjects" value="{{ option }}"{% if option in step3_facts.data_subjects %} checked{% endif %}>{{ option }}</label>{% endfor %}
+                </div>
+              </details>
+              {% if errors.step3_data_subjects %}<p class="dpa-field-error">{{ errors.step3_data_subjects }}</p>{% endif %}
+            </div>
+            <fieldset class="dpa-step3-field dpa-step3-field--wide"><legend class="dpa-step3-label">Does it include sensitive or criminal-offence data? *</legend><div class="dpa-step3-option-row">{% for value, label in yes_no_not_sure_choices %}<label class="dpa-step3-option"><input type="radio" name="step3_sensitive_data" value="{{ value }}"{% if step3_facts.sensitive_data == value %} checked{% endif %}>{{ label }}</label>{% endfor %}</div>{% if errors.step3_sensitive_data %}<p class="dpa-field-error">{{ errors.step3_sensitive_data }}</p>{% endif %}</fieldset>
+            <p class="dpa-step3-review-note" data-step3-reveal="sensitive-data-uncertain"{% if step3_facts.sensitive_data != 'not_sure' %} hidden{% endif %}>A “Not sure” answer can continue through intake, but the DPA is blocked from approval or signature until Privacy and the DPO confirm whether sensitive or criminal-offence data is involved.</p>
+          </div>
+        </section>
+
+        <section class="dpa-step3-section">
+          <h3 class="dpa-step3-section-title">2. Subprocessors</h3>
+          <fieldset class="dpa-step3-field"><legend class="dpa-step3-label">Will the counterparty use other organisations to process the data? *</legend><div class="dpa-step3-option-row">{% for value, label in yes_no_not_sure_choices %}<label class="dpa-step3-option"><input type="radio" name="step3_subprocessors" value="{{ value }}"{% if step3_facts.subprocessors_answer == value %} checked{% endif %}>{{ label }}</label>{% endfor %}</div>{% if errors.step3_subprocessors %}<p class="dpa-field-error">{{ errors.step3_subprocessors }}</p>{% endif %}</fieldset>
+          <p class="dpa-step3-review-note" data-step3-reveal="subprocessors-uncertain"{% if step3_facts.subprocessors_answer != 'not_sure' %} hidden{% endif %}>A “Not sure” answer can continue through intake, but the DPA is blocked from approval or signature until Privacy and the DPO confirm the subprocessor position.</p>
+          <div data-step3-reveal="subprocessors"{% if step3_facts.subprocessors_answer != 'yes' %} hidden{% endif %}>
+            <div class="dpa-subprocessor-list" data-subprocessor-list>
+              {% for row in step3_subprocessor_rows %}<div class="dpa-subprocessor-row"><label><span class="dpa-step3-label">Name</span><input name="step3_subprocessor_name" value="{{ row.name }}"></label><label><span class="dpa-step3-label">Service</span><input name="step3_subprocessor_service" value="{{ row.service }}"></label><label><span class="dpa-step3-label">Processing location</span><input name="step3_subprocessor_location" value="{{ row.location }}"></label><label><span class="dpa-step3-label">Data involved</span><input name="step3_subprocessor_data" value="{{ row.data }}"></label></div>{% endfor %}
+            </div>
+            <div class="dpa-subprocessor-actions"><button class="dc-ds-button dc-ds-button--ghost" type="button" data-add-subprocessor>Add another subprocessor</button></div>
+            {% if errors.step3_subprocessor_list %}<p class="dpa-field-error">{{ errors.step3_subprocessor_list }}</p>{% endif %}
+          </div>
+        </section>
+
+        <section class="dpa-step3-section">
+          <h3 class="dpa-step3-section-title">3. Processing locations</h3>
+          <div class="dpa-step3-grid">
+            <div class="dpa-step3-field dpa-step3-field--wide">
+              <label class="dpa-step3-label" for="step3-processing-countries">In which countries will data be stored or accessed? *</label>
+              <div class="dpa-multiselect" data-multiselect>
+                <select id="step3-processing-countries" name="step3_processing_countries" multiple data-multiselect-native>
+                  {% for country, is_eea in country_options %}<option value="{{ country }}" data-eea="{{ is_eea|yesno:'true,false' }}"{% if country in step3_facts.processing_countries %} selected{% endif %}>{{ country }}{% if is_eea %} (EEA){% endif %}</option>{% endfor %}
+                </select>
+                <div class="dpa-multiselect-control" data-multiselect-control>
+                  <div class="dpa-multiselect-selections" data-multiselect-selections></div>
+                  <input class="dpa-multiselect-search" type="search" placeholder="Search processing countries…" autocomplete="off" aria-label="Search processing countries" aria-expanded="false" data-multiselect-search>
+                  <span class="dpa-multiselect-indicator" aria-hidden="true">⌄</span>
+                </div>
+                <div class="dpa-multiselect-menu" data-multiselect-menu hidden>
+                  {% for country, is_eea in country_options %}<button class="dpa-multiselect-option" type="button" data-value="{{ country }}"><span class="dpa-multiselect-check" aria-hidden="true">✓</span>{{ country }}{% if is_eea %} (EEA){% endif %}</button>{% endfor %}
+                </div>
+              </div>
+              {% if errors.step3_processing_countries %}<p class="dpa-field-error">{{ errors.step3_processing_countries }}</p>{% endif %}
             </div>
           </div>
-          <div class="dpa-header-progress-track" aria-hidden="true"><div class="dpa-header-progress-fill" id="dpa-header-progress-fill"></div></div>
-          <div class="dpa-progress-copy" id="dpa-progress-copy">{% if missing_required_fields %}{{ missing_required_fields }} required field{{ missing_required_fields|pluralize }} missing before the governed draft can be generated.{% else %}All required fields complete — ready to generate the governed draft.{% endif %}</div>
-          <div class="dpa-column-badges" id="dpa-missing-chips">
-            {% for label in missing_required_labels|slice:":4" %}
-            <span class="dpa-missing-chip">{{ label }}</span>
-            {% empty %}
-            <span class="dpa-missing-empty">No required fields are missing.</span>
+        </section>
+
+        <section class="dpa-step3-section" data-step3-reveal="transfer"{% if not step3_has_non_eea %} hidden{% endif %}>
+          <h3 class="dpa-step3-section-title">4. International transfers</h3>
+          <div class="dpa-step3-grid"><div class="dpa-step3-field"><label class="dpa-step3-label" for="step3-transfer-safeguard">Which transfer safeguard has been confirmed? *</label><select class="dpa-step3-single-select" id="step3-transfer-safeguard" name="step3_transfer_safeguard"><option value="">Select a safeguard…</option>{% for safeguard in transfer_safeguards %}<option value="{{ safeguard }}"{% if step3_facts.transfer_safeguard == safeguard %} selected{% endif %}>{{ safeguard }}</option>{% endfor %}</select>{% if errors.step3_transfer_safeguard %}<p class="dpa-field-error">{{ errors.step3_transfer_safeguard }}</p>{% endif %}</div></div>
+        </section>
+
+      </div>
+      {% elif step.slug == 'security-and-review' %}
+      <div class="dpa-step4">
+        <section class="dpa-step4-section">
+          <h3 class="dpa-step4-section-title">Security assurances</h3>
+          <div class="dpa-step4-grid">
+            {% for key, label in security_assurance_fields %}
+            <fieldset class="dpa-step4-field"><legend class="dpa-step4-label">{{ label }} *</legend><div class="dpa-step4-choice-row">{% for value, choice_label in yes_no_not_sure_choices %}<label class="dpa-step4-choice"><input type="radio" name="step4_{{ key }}" value="{{ value }}"{% if step4_facts|get_item:key == value %} checked{% endif %}>{{ choice_label }}</label>{% endfor %}</div>{% if errors|get_item:key %}<p class="dpa-field-error">{{ errors|get_item:key }}</p>{% endif %}</fieldset>
+            {% endfor %}
+            <div class="dpa-step4-field dpa-step4-field--wide">
+              <label class="dpa-step4-label" for="step4-security-document">Security documentation upload</label>
+              <input class="dpa-step4-file" id="step4-security-document" name="step4_security_document" type="file">
+              {% if step4_facts.evidence.security_document %}<span class="dpa-evidence-name">Evidence attached: {{ step4_facts.evidence.security_document.original_name }}</span>{% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="dpa-step4-section">
+          <h3 class="dpa-step4-section-title">Incident management</h3>
+          <div class="dpa-step4-grid">
+            <div class="dpa-step4-field"><label class="dpa-step4-label" for="step4-privacy-name">Counterparty privacy contact — name *</label><input class="dpa-step4-input" id="step4-privacy-name" name="step4_privacy_contact_name" value="{{ step4_facts.privacy_contact_name }}">{% if errors.privacy_contact_name %}<p class="dpa-field-error">{{ errors.privacy_contact_name }}</p>{% endif %}</div>
+            <div class="dpa-step4-field"><label class="dpa-step4-label" for="step4-privacy-role">Role *</label><input class="dpa-step4-input" id="step4-privacy-role" name="step4_privacy_contact_role" value="{{ step4_facts.privacy_contact_role }}">{% if errors.privacy_contact_role %}<p class="dpa-field-error">{{ errors.privacy_contact_role }}</p>{% endif %}</div>
+            <div class="dpa-step4-field"><label class="dpa-step4-label" for="step4-privacy-email">Email *</label><input class="dpa-step4-input" id="step4-privacy-email" name="step4_privacy_contact_email" type="email" value="{{ step4_facts.privacy_contact_email }}">{% if errors.privacy_contact_email %}<p class="dpa-field-error">{{ errors.privacy_contact_email }}</p>{% endif %}</div>
+            <div class="dpa-step4-field"><label class="dpa-step4-label" for="step4-privacy-phone">Phone <span aria-hidden="true">optional</span></label><input class="dpa-step4-input" id="step4-privacy-phone" name="step4_privacy_contact_phone" type="tel" value="{{ step4_facts.privacy_contact_phone }}"></div>
+            <fieldset class="dpa-step4-field dpa-step4-field--wide"><legend class="dpa-step4-label">Breach-notification commitment *</legend><div class="dpa-step4-choice-row">{% for value, label in breach_commitments %}<label class="dpa-step4-choice"><input type="radio" name="step4_breach_notification_commitment" value="{{ value }}"{% if step4_facts.breach_notification_commitment == value %} checked{% endif %}>{{ label }}</label>{% endfor %}</div>{% if errors.breach_notification_commitment %}<p class="dpa-field-error">{{ errors.breach_notification_commitment }}</p>{% endif %}</fieldset>
+            <div class="dpa-step4-field dpa-step4-field--wide" data-step4-reveal="other-breach"{% if step4_facts.breach_notification_commitment != 'other' %} hidden{% endif %}><label class="dpa-step4-label" for="step4-other-breach">Describe the other proposed period *</label><input class="dpa-step4-input" id="step4-other-breach" name="step4_breach_other_period" value="{{ step4_facts.breach_other_period }}">{% if errors.breach_other_period %}<p class="dpa-field-error">{{ errors.breach_other_period }}</p>{% endif %}</div>
+          </div>
+        </section>
+
+        <section class="dpa-step4-section">
+          <h3 class="dpa-step4-section-title">Contract positions</h3>
+          <div class="dpa-step4-grid">
+            <div class="dpa-step4-field dpa-step4-field--wide"><label class="dpa-step4-label" for="step4-related-msa">Related MSA</label><select class="dpa-step4-select" id="step4-related-msa" name="step4_related_msa_id"><option value="">No related MSA available</option>{% for msa in related_msas %}<option value="{{ msa.id }}"{% if step4_facts.related_msa_id == msa.id|stringformat:'s' %} selected{% endif %}>{{ msa.title }} — {{ msa.governing_law }}</option>{% endfor %}</select>{% if errors.related_msa_id %}<p class="dpa-field-error">{{ errors.related_msa_id }}</p>{% endif %}</div>
+            <fieldset class="dpa-step4-field dpa-step4-field--wide"><legend class="dpa-step4-label">Governing law *</legend><div class="dpa-step4-choice-row"><label class="dpa-step4-choice"><input type="radio" name="step4_governing_law_mode" value="inherit"{% if step4_facts.governing_law_mode == 'inherit' or not step4_facts.governing_law_mode and related_msas %} checked{% endif %}>Inherit from related MSA</label><label class="dpa-step4-choice"><input type="radio" name="step4_governing_law_mode" value="manual"{% if step4_facts.governing_law_mode == 'manual' or not step4_facts.governing_law_mode and not related_msas %} checked{% endif %}>Use a controlled alternative</label></div>{% if errors.governing_law_mode %}<p class="dpa-field-error">{{ errors.governing_law_mode }}</p>{% endif %}</fieldset>
+            <div class="dpa-step4-field dpa-step4-field--wide" data-step4-reveal="manual-law"{% if step4_facts.governing_law_mode == 'inherit' or not step4_facts.governing_law_mode and related_msas %} hidden{% endif %}><label class="dpa-step4-label" for="step4-governing-law">Controlled governing law *</label><select class="dpa-step4-select" id="step4-governing-law" name="step4_governing_law"><option value="">Select governing law…</option>{% for law in governing_law_options %}<option value="{{ law }}"{% if step4_facts.governing_law == law %} selected{% endif %}>{{ law }}</option>{% endfor %}</select>{% if errors.governing_law %}<p class="dpa-field-error">{{ errors.governing_law }}</p>{% endif %}</div>
+          </div>
+          <div class="dpa-step4-grid">
+            {% for key, label in position_fields %}
+            <fieldset class="dpa-step4-field dpa-step4-field--wide dpa-step4-position" data-position-key="{{ key }}"><legend class="dpa-step4-label">{{ label }} *</legend><div class="dpa-step4-choice-row">{% for value, choice_label in position_choices %}<label class="dpa-step4-choice"><input type="radio" name="step4_{{ key }}_position" value="{{ value }}"{% if step4_facts.positions|get_item:key|get_item:'status' == value %} checked{% endif %}>{{ choice_label }}</label>{% endfor %}</div><div data-step4-position-reveal{% if step4_facts.positions|get_item:key|get_item:'status' != 'deviation' %} hidden{% endif %}><div class="dpa-step4-reveal"><label class="dpa-step4-label" for="step4-{{ key }}-wording">Upload or paste proposed wording *</label><textarea class="dpa-step4-input" id="step4-{{ key }}-wording" name="step4_{{ key }}_wording">{{ step4_facts.positions|get_item:key|get_item:'wording' }}</textarea><input class="dpa-step4-file" name="step4_{{ key }}_document" type="file"><label class="dpa-step4-label" for="step4-{{ key }}-explanation">Optional explanation</label><input class="dpa-step4-input" id="step4-{{ key }}-explanation" name="step4_{{ key }}_explanation" value="{{ step4_facts.positions|get_item:key|get_item:'explanation' }}"></div></div></fieldset>
             {% endfor %}
           </div>
-        </div>
-
-        <div class="dpa-stepper">
-          {% for section in section_cards %}
-          <details class="dpa-step{% if section.is_open %} is-active{% endif %}" data-section-slug="{{ section.slug }}"{% if section.is_open %} open{% endif %}>
-            <summary class="dpa-step-summary">
-              <div class="dpa-step-summary-main">
-                <span class="dpa-step-number">{{ section.number }}</span>
-                <div>
-                  <div class="arch-section-label">{{ section.eyebrow }}</div>
-                  <h3 class="dpa-step-title">{{ section.title }}</h3>
-                  <p class="dpa-step-summary-copy">{{ section.summary }}</p>
-                </div>
-              </div>
-              <span class="dpa-step-status dpa-step-status--{{ section.status_tone }}" data-section-status="{{ section.slug }}">{{ section.status_label }}</span>
-            </summary>
-            <div class="dpa-step-body">
-              {% if section.slug == "privacy-questions" %}
-              <div class="dpa-gov-detail" style="margin-bottom: var(--space-12);">
-                <strong>Why it matters</strong>
-                <span>CLM One is checking whether this DPA requires SCC language, subprocessor review, Legal approval, or DPO approval.</span>
-              </div>
-              {% endif %}
-              <div class="cform-section-grid">
-                {% for field in section.fields %}
-                <div class="cform-field{% if errors|get_item:field.key %} is-invalid{% endif %}{% if field.field_type == 'TEXTAREA' or field.field_type == 'BOOLEAN' %} cform-field-full{% endif %}">
-                  {% if field.field_type == 'BOOLEAN' %}
-                  <label class="cform-checkbox-card">
-                    <input type="checkbox" name="field_{{ field.id }}" data-field-key="{{ field.key }}" data-section-slug="{{ section.slug }}"{% if field.is_required %} data-required="1"{% endif %}{% if posted|get_item:field.key %} checked{% endif %}>
-                    <span>
-                      <span class="form-label">{{ field.label }}</span>
-                      {% if field.help_text %}<span class="text-xs c-muted cform-help">{{ field.help_text }}</span>{% endif %}
-                    </span>
-                  </label>
-                  {% else %}
-                  <label class="form-label">{{ field.label }}{% if field.is_required %}<span class="text-red-400 ml-0.5" aria-hidden="true">*</span>{% endif %}</label>
-                  {% include "contracts/_dpa_field_input.html" %}
-                  {% if field.help_text %}<p class="text-xs c-muted cform-help">{{ field.help_text }}</p>{% endif %}
-                  {% endif %}
-                  {% if errors|get_item:field.key %}<p class="cform-field-error">{{ errors|get_item:field.key }}</p>{% endif %}
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </details>
-          {% endfor %}
-        </div>
-      </section>
-
-      <section class="dpa-output-column" aria-labelledby="dpa-output-column-title">
-        <div class="dpa-tab-shell">
-          <div class="dpa-tabs" role="tablist" aria-label="DPA workspace tabs">
-            <button type="button" class="dpa-tab-button" id="dpa-tab-draft-btn" role="tab" aria-selected="true" aria-controls="dpa-tab-draft" data-dpa-tab="draft">Contract draft</button>
-            <button type="button" class="dpa-tab-button" id="dpa-tab-governance-btn" role="tab" aria-selected="false" aria-controls="dpa-tab-governance" data-dpa-tab="governance">Governance</button>
-            <button type="button" class="dpa-tab-button" id="dpa-tab-audit-btn" role="tab" aria-selected="false" aria-controls="dpa-tab-audit" data-dpa-tab="audit">Audit trail</button>
-          </div>
-
-          <div class="dpa-tab-panels">
-            <section class="dpa-tab-panel is-active" id="dpa-tab-draft" role="tabpanel" aria-labelledby="dpa-tab-draft-btn" data-dpa-pane="draft">
-              <div class="dpa-governance-summary" aria-label="Governance summary">
-                {% for badge in governance_badges %}
-                <button type="button" class="dpa-summary-badge dpa-summary-badge--{{ badge.tone }}" data-dpa-jump-tab="{{ badge.tab }}" data-dpa-jump-target="{{ badge.target }}">
-                  <span>{{ badge.label }}</span>
-                  <strong>{{ badge.value }}</strong>
-                </button>
-                {% endfor %}
-              </div>
-
-              <div class="dpa-draft-panel">
-                <div class="cform-draft-header">
-                  <span class="cform-draft-header-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-                    Live contract preview
-                  </span>
-                </div>
-                <div class="cform-draft-toolbar">
-                  <button type="button" class="cform-ai-pill" data-ai-action="suggest_missing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Suggest missing values</button>
-                  <button type="button" class="cform-ai-pill" data-ai-action="suggest_fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5Z"/></svg>Suggest fallback clause</button>
-                  <button type="button" class="cform-ai-pill" data-ai-action="explain_clause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Explain clause</button>
-                  <button type="button" class="cform-ai-pill" data-ai-action="generate_summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 13h6M9 17h6"/></svg>Generate DPA summary</button>
-                  <button type="button" class="cform-ai-pill" data-ai-action="compare_playbook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>Compare to playbook</button>
-                </div>
-                <div class="cform-doc-canvas"><div class="cform-doc" id="dpa-draft-doc"></div></div>
-              </div>
-            </section>
-
-            <section class="dpa-tab-panel" id="dpa-tab-governance" role="tabpanel" aria-labelledby="dpa-tab-governance-btn" data-dpa-pane="governance" hidden>
-              <div class="dpa-governance-grid">
-                <article class="dpa-gov-card" id="dpa-gov-template">
-                  <div class="cform-rail-head">
-                    <div class="dpa-gov-section-title">Template &amp; playbook</div>
-                    <div class="dpa-gov-section-copy">Source-backed configuration that governs the draft before it is generated.</div>
-                  </div>
-                  <div class="cform-rail-body">
-                    <div class="cform-gov-item">
-                      <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></span>
-                      <div><div class="cform-gov-title">Template selected</div><div class="cform-gov-copy">{% if template_body %}GDPR Processor DPA · Netherlands · B2B{% else %}No approved template yet{% endif %}</div></div>
-                    </div>
-                    <div class="cform-gov-item">
-                      <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3Z"/></svg></span>
-                      <div><div class="cform-gov-title">Playbook applied</div><div class="cform-gov-copy">GDPR Processor DPA playbook</div></div>
-                    </div>
-                    <div class="cform-gov-item">
-                      <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/></svg></span>
-                      <div><div class="cform-gov-title">Clause library active</div><div class="cform-gov-copy">{{ clause_library_count }} approved clause{{ clause_library_count|pluralize }} for DPA</div></div>
-                    </div>
-                  </div>
-                </article>
-
-                <article class="dpa-gov-card" id="dpa-gov-risk">
-                  <div class="cform-rail-head">
-                    <div class="dpa-gov-section-title">Risk &amp; compliance</div>
-                    <div class="dpa-gov-section-copy">These signals drive the required review path and any clause explanations.</div>
-                  </div>
-                  <div class="cform-rail-body">
-                    <div class="cform-gov-item">
-                      <span class="cform-gov-icon tone-amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span>
-                      <div><div class="cform-gov-title">Risk checks active</div><div class="cform-gov-copy" id="dpa-gov-risk-checks">Privacy, SCC, and subprocessor rules are monitoring this draft</div></div>
-                    </div>
-                    <div class="cform-risk-list" id="dpa-risk-signal-list" aria-live="polite"></div>
-                    <div class="dpa-gov-detail-list" id="dpa-gov-risk-summary"></div>
-                  </div>
-                </article>
-
-                <article class="dpa-gov-card" id="dpa-gov-approval">
-                  <div class="cform-rail-head">
-                    <div class="dpa-gov-section-title">Approval &amp; audit</div>
-                    <div class="dpa-gov-section-copy">Route the draft through the right reviewers and keep the audit path ready.</div>
-                  </div>
-                  <div class="cform-rail-body">
-                    <div class="cform-gov-item">
-                      <span class="cform-gov-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
-                      <div>
-                        <div class="cform-gov-title">Approval route</div>
-                        <div class="cform-gov-copy" id="dpa-gov-approval-route">{% for step in approval_route %}{{ step.name }}{% if not forloop.last %} → {% endif %}{% endfor %}</div>
-                        <div class="cform-gov-reasons" id="dpa-gov-approval-reasons"></div>
-                      </div>
-                    </div>
-                    <div class="dpa-gov-detail-list">
-                      <div class="dpa-gov-detail">
-                        <strong>Audit trail readiness</strong>
-                        <span>When the draft is generated, the workflow will record template selection, field capture, risk checks, and the generated route in the audit trail.</span>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </section>
-
-            <section class="dpa-tab-panel" id="dpa-tab-audit" role="tabpanel" aria-labelledby="dpa-tab-audit-btn" data-dpa-pane="audit" hidden>
-              <div class="dpa-audit-grid">
-                <article class="dpa-audit-card" id="dpa-audit-readiness">
-                  <div class="cform-rail-head">
-                    <div class="dpa-audit-section-title">Draft Readiness</div>
-                    <div class="dpa-audit-section-copy">Review the generation checkpoints before creating the governed draft.</div>
-                  </div>
-                  <div class="cform-rail-body">
-                    <div class="cform-readiness-grid">
-                      <div>
-                        <div class="cform-check-row"><span>Required fields completed</span><span class="cform-check-value tabular" id="dpa-readiness-fields">{{ completed_required_fields|default:0 }} / {{ total_required_fields|default:0 }}</span></div>
-                        <div class="cform-check-row"><span>Missing required fields</span><span class="cform-check-value tabular" id="dpa-readiness-missing">{{ missing_required_fields|default:0 }}</span></div>
-                        <div class="arch-missing-list" id="dpa-readiness-missing-list">{% for label in missing_required_labels %}<div class="arch-missing-item"><div class="arch-missing-dot"></div>{{ label }}</div>{% endfor %}</div>
-                        <div class="cform-check-row"><span>Active risk signals</span><span class="cform-check-value" id="dpa-readiness-risk">Detected on start</span></div>
-                        <div class="cform-check-row"><span>Required approvals</span><span class="cform-check-value tabular" id="dpa-readiness-approvals">{{ approval_route|length }}</span></div>
-                        <div class="cform-check-row"><span>Blocking errors</span><span class="cform-check-value tabular" id="dpa-readiness-blockers">{{ missing_required_fields|default:0 }}</span></div>
-                        <div class="cform-check-row"><span>Audit trail</span><span class="cform-check-value is-positive">Activates on generate</span></div>
-                      </div>
-                      <div>
-                        <div class="arch-section-label cform-route-label">Approval route</div>
-                        <div class="cform-route-track">
-                          {% for step in approval_route %}
-                          <div class="cform-route-step{% if step.is_conditional %} is-conditional{% endif %}" data-route-name="{{ step.name }}">
-                            <div class="cform-route-step-dot">{{ forloop.counter }}</div>
-                            <div class="cform-route-step-name">{{ step.name }}</div>
-                            <div class="cform-route-step-note">{{ step.condition_note|default:step.role_label }}</div>
-                          </div>
-                          {% endfor %}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-
-                <article class="dpa-audit-card" id="dpa-audit-trail">
-                  <div class="cform-rail-head">
-                    <div class="dpa-audit-section-title">Audit trail</div>
-                    <div class="dpa-audit-section-copy">The generated workflow will persist this chain of events.</div>
-                  </div>
-                  <div class="cform-rail-body">
-                    <div class="dpa-audit-timeline">
-                      {% for entry in audit_preview %}
-                      <div class="dpa-audit-row">
-                        <strong>{{ entry.event }}</strong>
-                        <span>{{ entry.meta }}</span>
-                        <em>Recorded when the governed draft is generated.</em>
-                      </div>
-                      {% endfor %}
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </section>
-          </div>
-        </div>
-      </section>
-    </div>
-
-  </form>
-</div>
-
-<dialog class="dpa-clause-drawer" id="dpa-clause-drawer" aria-labelledby="dpa-clause-drawer-title">
-  <div class="dpa-clause-drawer-inner">
-    <div class="dpa-clause-drawer-head">
-      <div>
-        <p class="dc-ds-eyebrow">Clause explanation</p>
-        <h2 class="dpa-clause-drawer-title" id="dpa-clause-drawer-title">Clause</h2>
-        <p class="dpa-clause-drawer-meta" id="dpa-clause-drawer-meta"></p>
+        </section>
+        <aside class="dpa-outcomes" aria-live="polite"><h3 class="dpa-outcomes-title">Automatically derived outcomes</h3>{% for title, detail in step4_outcomes %}<p class="dpa-outcome"><strong>{{ title }}</strong><br>{{ detail }}</p>{% endfor %}</aside>
       </div>
-      <button type="button" class="dpa-clause-drawer-close" aria-label="Close clause explanation" data-dpa-drawer-close>×</button>
+      {% else %}
+      <div class="dpa-field-grid">
+        {% for field in step.fields %}
+        <div class="dpa-field{% if field.field_type == 'TEXTAREA' %} dpa-field--wide{% endif %}{% if field.field_type == 'BOOLEAN' %} dpa-field--choice{% endif %}{% if field.key == 'personal_data_involved' %} dpa-field--choice-start{% endif %}">
+          {% if field.field_type == 'BOOLEAN' %}
+          <label class="dpa-choice">
+            <input type="checkbox" name="field_{{ field.id }}"{% if posted|get_item:field.key %} checked{% endif %}>
+            <span><span class="form-label">{{ field.label }}{% if field.is_required %}<span aria-hidden="true"> *</span>{% endif %}</span>{% if field.help_text %}<span class="dpa-field-help">{{ field.help_text }}</span>{% endif %}</span>
+          </label>
+          {% else %}
+          {% if field.key == 'processing_purpose' %}
+          <div class="dpa-label-row">
+            <label class="form-label" for="field-{{ field.id }}">{{ field.label }}{% if field.is_required %}<span aria-hidden="true"> *</span>{% endif %}</label>
+            <details class="dpa-field-guidance">
+              <summary aria-label="What should I enter for Processing purpose?">{% include "design_system/icon.html" with name="info" %}</summary>
+              <div class="dpa-field-guidance-panel" role="note">
+                <p><strong>Describe why the counterparty needs to process personal data to provide the service.</strong> Do not list data types or people here; those are captured in the next step.</p>
+                <p>Example: “To provide, operate and support the service, including user authentication, contract workflow management, customer support, security monitoring and incident response.”</p>
+              </div>
+            </details>
+          </div>
+          {% else %}
+          <label class="form-label" for="field-{{ field.id }}">{{ field.label }}{% if field.is_required %}<span aria-hidden="true"> *</span>{% endif %}</label>
+          {% endif %}
+          {% include "contracts/_dpa_field_input.html" %}
+          {% if field.help_text %}<span class="dpa-field-help">{{ field.help_text }}</span>{% elif field.key == 'processing_purpose' %}<span id="field-{{ field.id }}-help" class="dpa-field-help">State the service purpose in plain language. Data categories and data subjects are captured next.</span>{% elif field.key == 'transfer_mechanism' %}<span class="dpa-field-help">Choose the safeguard that applies if personal data leaves the EEA.</span>{% endif %}
+          {% endif %}
+          {% if errors|get_item:field.key %}<p class="dpa-field-error">{{ errors|get_item:field.key }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endif %}
+    {% endfor %}
+    <div class="dpa-form-actions">
+      {% if active_step > 1 %}<button class="dc-ds-button dc-ds-button--ghost" type="submit" name="action" value="previous">Previous</button>{% endif %}
+      <button class="dc-ds-button dc-ds-button--ghost" type="submit" name="action" value="save_exit">Save and exit</button>
+      <span class="dpa-spacer"></span>
+      <button class="dc-ds-button dc-ds-button--primary" type="submit" name="action" value="continue">{% if active_step == steps|length %}Review and generate{% else %}Continue{% endif %}</button>
     </div>
-    <div class="dpa-clause-drawer-body" id="dpa-clause-drawer-body"></div>
-  </div>
-</dialog>
+  </form>
+  <script nonce="{{ csp_nonce }}">
+    (function () {
+      var countrySelect = document.querySelector('select[name="step3_processing_countries"]');
+      var transfer = document.querySelector('[data-step3-reveal="transfer"]');
+      var sensitiveDataUncertain = document.querySelector('[data-step3-reveal="sensitive-data-uncertain"]');
+      var subprocessorReveal = document.querySelector('[data-step3-reveal="subprocessors"]');
+      var subprocessorUncertain = document.querySelector('[data-step3-reveal="subprocessors-uncertain"]');
+      var subprocessorList = document.querySelector('[data-subprocessor-list]');
+      var addSubprocessor = document.querySelector('[data-add-subprocessor]');
+      var otherBreach = document.querySelector('[data-step4-reveal="other-breach"]');
+      var manualLaw = document.querySelector('[data-step4-reveal="manual-law"]');
 
-{{ template_body|json_script:"dpa-template-body-data" }}
+      function initialiseMultiselect(multiselect) {
+        var nativeSelect = multiselect.querySelector('[data-multiselect-native]');
+        var control = multiselect.querySelector('[data-multiselect-control]');
+        var selections = multiselect.querySelector('[data-multiselect-selections]');
+        var search = multiselect.querySelector('[data-multiselect-search]');
+        var menu = multiselect.querySelector('[data-multiselect-menu]');
+        var options = Array.prototype.slice.call(menu.querySelectorAll('[data-value]'));
+        if (!nativeSelect || !control || !selections || !search || !menu) return;
 
-<script nonce="{{ csp_nonce }}">
-(function () {
-    const form = document.getElementById('dpa-workflow-form');
-    const draftDocEl = document.getElementById('dpa-draft-doc');
-    const TEMPLATE_BODY_EL = document.getElementById('dpa-template-body-data');
-    let TEMPLATE_BODY = null;
-    if (TEMPLATE_BODY_EL) {
-        try { TEMPLATE_BODY = JSON.parse(TEMPLATE_BODY_EL.textContent); } catch (e) { /* leave null */ }
-    }
-    // {{token}} in the DPA template body maps directly to a FieldDefinition
-    // key of the same name, except these two aliases (title has no
-    // FieldDefinition — the DPA builder doesn't collect an org name).
-    const TOKEN_ALIASES = { effective_date: 'start_date' };
-    const PLACEHOLDER_LABELS = {
-        counterparty: 'Counterparty Name',
-        effective_date: 'Effective Date',
-        start_date: 'Effective Date',
-        processing_purpose: 'Processing Purpose',
-        personal_data_categories: 'Personal Data Categories',
-        data_transfer_position: 'Data Transfer Position',
-        subprocessor_position: 'Subprocessor Position'
-    };
+        menu.id = nativeSelect.id + '-options';
+        search.setAttribute('aria-controls', menu.id);
 
-    function fieldEl(key) {
-        return form.querySelector('[data-field-key="' + key + '"]');
-    }
-
-    function fieldRawValue(el) {
-        if (!el) return '';
-        if (el.type === 'checkbox') return el.checked ? 'Yes' : '';
-        return (el.value || '').trim();
-    }
-
-    function boolValue(key) {
-        const el = fieldEl(key);
-        return !!(el && el.type === 'checkbox' && el.checked);
-    }
-
-    function computedTokenValue(token) {
-        if (token === 'data_transfer_position') {
-            if (!boolValue('cross_border_transfer')) return 'No transfer outside the EEA is currently selected';
-            return boolValue('include_scc_fallback')
-                ? 'Data leaves the EEA; the parties incorporate the approved Standard Contractual Clauses (SCC) fallback language as the transfer mechanism'
-                : 'Data leaves the EEA; Standard Contractual Clauses or an approved transfer mechanism must be included';
+        function setOpen(isOpen) {
+          menu.hidden = !isOpen;
+          search.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         }
-        if (token === 'subprocessor_position') {
-            return boolValue('subprocessors_used')
-                ? 'Subprocessors are involved; approved flow-down obligations and review are required'
-                : 'No subprocessors are currently selected';
-        }
-        return '';
-    }
 
-    function isFilled(el) {
-        if (!el) return false;
-        if (el.type === 'checkbox') return true; // a checkbox always has an answer (checked or not)
-        return (el.value || '').trim() !== '';
-    }
+        function render() {
+          selections.textContent = '';
+          var selected = Array.prototype.filter.call(nativeSelect.options, function (option) { return option.selected; });
+          if (!selected.length) {
+            var placeholder = document.createElement('span');
+            placeholder.className = 'dpa-multiselect-placeholder';
+            placeholder.textContent = 'Select one or more';
+            selections.appendChild(placeholder);
+          }
+          selected.forEach(function (option) {
+            var chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'dpa-multiselect-chip';
+            chip.setAttribute('aria-label', 'Remove ' + option.text);
+            chip.dataset.value = option.value;
+            chip.textContent = option.text;
+            var remove = document.createElement('span');
+            remove.setAttribute('aria-hidden', 'true');
+            remove.textContent = '×';
+            chip.appendChild(remove);
+            selections.appendChild(chip);
+          });
+          options.forEach(function (option) {
+            var nativeOption = Array.prototype.find.call(nativeSelect.options, function (item) { return item.value === option.dataset.value; });
+            option.setAttribute('aria-selected', nativeOption && nativeOption.selected ? 'true' : 'false');
+          });
+        }
 
-    function escapeHtml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
+        function filter() {
+          var query = search.value.trim().toLowerCase();
+          options.forEach(function (option) {
+            option.hidden = query && option.textContent.toLowerCase().indexOf(query) === -1;
+          });
+        }
 
-    function labelFor(el) {
-        const wrapper = el.closest('.cform-field, .cform-checkbox-card');
-        const labelEl = wrapper ? wrapper.querySelector('.form-label') : null;
-        if (labelEl) return labelEl.textContent.replace('*', '').trim();
-        return (el.dataset.fieldKey || el.name || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    }
+        function toggleValue(value) {
+          Array.prototype.forEach.call(nativeSelect.options, function (option) {
+            if (option.value === value) option.selected = !option.selected;
+          });
+          nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          render();
+        }
 
-    const sectionSlugs = ['basic-details', 'privacy-details', 'legal-position', 'privacy-questions'];
-    const drawerEl = document.getElementById('dpa-clause-drawer');
-    const drawerTitleEl = document.getElementById('dpa-clause-drawer-title');
-    const drawerMetaEl = document.getElementById('dpa-clause-drawer-meta');
-    const drawerBodyEl = document.getElementById('dpa-clause-drawer-body');
-    const riskSummaryEl = document.getElementById('dpa-gov-risk-summary');
-    const columnProgressPctEl = document.getElementById('dpa-column-progress-pct');
-    const legacyProgressPctEl = document.getElementById('dpa-progress-pct');
-
-    // Mirrors contracts/views_domains/workflow_management.py's
-    // _dpa_document_sections() paragraph→clause mapping, so risk signals and
-    // source badges resolve to the same anchored clauses used on the
-    // generated DPA workspace.
-    function describeParagraph(text, index) {
-        if (index === 1) {
-            return { id: 'generated-dpa-draft', title: 'Generated DPA Draft', source: 'Approved template', tone: 'template', detail: 'The opening section mirrors the approved template and anchors the governed draft.' };
-        }
-        if (/Subject Matter|Categories of Data/.test(text)) {
-            return { id: 'processing-details', title: 'Processing Details', source: 'AI-assisted suggestion', tone: 'ai', detail: 'This section turns the intake values into a governed processing summary.' };
-        }
-        if (/Sub-processors/.test(text)) {
-            const library = boolValue('subprocessors_used');
-            return { id: 'subprocessors', title: 'Subprocessor Clause', source: library ? 'Approved clause library' : 'Approved template', tone: library ? 'library' : 'template', detail: library ? 'Subprocessor language is sourced from the approved clause library because subprocessors are selected.' : 'Subprocessor language remains on the approved template because subprocessors are not selected.' };
-        }
-        if (/International Transfers/.test(text)) {
-            const risk = boolValue('cross_border_transfer');
-            return { id: 'international-transfers', title: 'Transfer Clause', source: risk ? 'Risk-triggered fallback' : 'Approved template', tone: risk ? 'risk' : 'template', detail: risk ? 'The transfer clause switches to a risk-triggered fallback because data leaves the EEA.' : 'The approved template transfer clause remains in place because no cross-border transfer is selected.' };
-        }
-        if (/Security\./.test(text)) {
-            return { id: 'security', title: 'Security Clause', source: 'Approved clause library', tone: 'library', detail: 'Security language is pulled from the approved clause library to keep the draft aligned with the workspace playbook.' };
-        }
-        if (/Breach Notification/.test(text)) {
-            return { id: 'breach-notification', title: 'Breach Notice Clause', source: 'Approved template', tone: 'template', detail: 'The breach notice window is merged from the intake field and remains anchored to the approved template.' };
-        }
-        if (/Governing Law/.test(text)) {
-            return { id: 'governing-law', title: 'Governing Law', source: 'Approved template', tone: 'template', detail: 'The governing law clause reflects the legal position selected in the intake form.' };
-        }
-        return { id: 'dpa-clause-' + index, title: 'DPA Clause', source: 'Approved template', tone: 'template', detail: 'This clause is rendered from the approved template and retained in the governed draft.' };
-    }
-
-    function openTab(tabName, targetId) {
-        document.querySelectorAll('[data-dpa-tab]').forEach(function (button) {
-            button.setAttribute('aria-selected', String(button.dataset.dpaTab === tabName));
+        control.addEventListener('click', function () {
+          search.focus();
+          setOpen(true);
         });
-        document.querySelectorAll('[data-dpa-pane]').forEach(function (pane) {
-            const isActive = pane.getAttribute('data-dpa-pane') === tabName;
-            pane.classList.toggle('is-active', isActive);
-            pane.toggleAttribute('hidden', !isActive);
+        search.addEventListener('focus', function () { setOpen(true); });
+        search.addEventListener('input', function () { filter(); setOpen(true); });
+        search.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape') { search.value = ''; filter(); setOpen(false); }
         });
-        if (targetId) {
-            requestAnimationFrame(function () {
-                const target = document.getElementById(targetId);
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        }
-    }
-
-    function openClauseDrawerFromClauseId(clauseId) {
-        if (!drawerEl || !drawerTitleEl || !drawerMetaEl || !drawerBodyEl || !clauseId) return;
-        const clause = document.getElementById(clauseId);
-        if (!clause) return;
-        document.querySelectorAll('.cform-clause.is-linked').forEach(function (node) {
-            node.classList.remove('is-linked');
+        options.forEach(function (option) {
+          option.addEventListener('click', function () { toggleValue(option.dataset.value); });
         });
-        clause.classList.add('is-linked');
-        const title = clause.getAttribute('data-clause-title') || clauseId;
-        const source = clause.getAttribute('data-clause-source') || '';
-        const detail = clause.getAttribute('data-clause-detail') || '';
-        const bodyEl = clause.querySelector('p');
-        const bodyHtml = bodyEl ? bodyEl.innerHTML : clause.textContent;
-        drawerTitleEl.textContent = title;
-        drawerMetaEl.textContent = source;
-        drawerBodyEl.innerHTML = '<div class="dpa-clause-drawer-clause"><strong>Why it matters</strong><span>' + escapeHtml(detail) + '</span></div><div class="dpa-clause-drawer-clause"><strong>Clause excerpt</strong><span>' + bodyHtml + '</span></div>';
-        if (typeof drawerEl.showModal === 'function') drawerEl.showModal();
-        else drawerEl.setAttribute('open', '');
-    }
-
-    function renderLivePreview() {
-        if (!draftDocEl) return;
-        if (!TEMPLATE_BODY) {
-            draftDocEl.innerHTML = '<div class="cform-doc-empty">No approved template for DPA yet.</div>';
-            return;
-        }
-        const escaped = escapeHtml(TEMPLATE_BODY);
-        const substituted = escaped.replace(/\{\{\s*(\w+)\s*\}\}/g, function (match, token) {
-            const computed = computedTokenValue(token);
-            if (computed) return '<span class="cform-var">' + escapeHtml(computed) + '</span>';
-            const key = TOKEN_ALIASES[token] || token;
-            const el = fieldEl(key);
-            const raw = fieldRawValue(el);
-            if (raw) return '<span class="cform-var">' + escapeHtml(raw) + '</span>';
-            return '<span class="cform-var cform-var-empty">[' + escapeHtml(PLACEHOLDER_LABELS[token] || token.replace(/_/g, ' ')) + ']</span>';
+        selections.addEventListener('click', function (event) {
+          var chip = event.target.closest('[data-value]');
+          if (chip) { event.stopPropagation(); toggleValue(chip.dataset.value); }
         });
-        const paragraphs = substituted.split(/\n{2,}/).map(function (p) { return p.trim(); }).filter(Boolean);
-        let clauseNum = 0;
-        draftDocEl.innerHTML = paragraphs.map(function (text, index) {
-            const body = '<p>' + text.replace(/\n/g, '<br>') + '</p>';
-            if (index === 0) return '<h2>' + text + '</h2><div class="cform-doc-letterhead-rule"></div>';
-            clauseNum += 1;
-            const meta = describeParagraph(text, index);
-            return '<article class="cform-clause" id="' + meta.id + '" data-clause-title="' + escapeHtml(meta.title) + '" data-clause-source="' + escapeHtml(meta.source) + '" data-clause-detail="' + escapeHtml(meta.detail) + '">'
-                + '<div class="cform-clause-head">'
-                + '<span class="cform-clause-title-group"><span class="cform-clause-num">' + clauseNum + '</span><span class="cform-clause-title">' + escapeHtml(meta.title) + '</span></span>'
-                + '<button type="button" class="cform-source ' + meta.tone + '" data-clause-explain="' + meta.id + '">' + escapeHtml(meta.source) + '</button>'
-                + '</div>'
-                + body + '</article>';
-        }).join('');
-    }
-
-    function updateReadiness() {
-        const requiredEls = Array.from(form.querySelectorAll('[data-field-key][data-required="1"]'));
-        const filled = requiredEls.filter(isFilled);
-        const missing = requiredEls.filter(function (el) { return !isFilled(el); });
-        const total = requiredEls.length;
-        const completedPct = total ? Math.round((filled.length / total) * 100) : 100;
-
-        const progressCopyEl = document.getElementById('dpa-progress-copy');
-        const headerFillEl = document.getElementById('dpa-header-progress-fill');
-        const headerMissingEl = document.getElementById('dpa-missing-chips');
-        if (columnProgressPctEl) columnProgressPctEl.textContent = String(completedPct);
-        if (legacyProgressPctEl) legacyProgressPctEl.textContent = String(completedPct);
-        if (headerFillEl) headerFillEl.style.width = completedPct + '%';
-        if (progressCopyEl) {
-            if (missing.length) {
-                progressCopyEl.textContent = missing.length + ' required field' + (missing.length === 1 ? '' : 's') + ' missing before the governed draft can be generated.';
-                progressCopyEl.classList.remove('is-ready');
-            } else {
-                progressCopyEl.textContent = 'All required fields complete — ready to generate the governed draft.';
-                progressCopyEl.classList.add('is-ready');
-            }
-        }
-        if (headerMissingEl) {
-            headerMissingEl.innerHTML = missing.slice(0, 4).map(function (el) {
-                return '<span class="dpa-missing-chip">' + escapeHtml(labelFor(el)) + '</span>';
-            }).join('') || '<span class="dpa-missing-empty">No required fields are missing.</span>';
-        }
-
-        const fieldsEl = document.getElementById('dpa-readiness-fields');
-        const missingCountEl = document.getElementById('dpa-readiness-missing');
-        const missingListEl = document.getElementById('dpa-readiness-missing-list');
-        const riskEl = document.getElementById('dpa-readiness-risk');
-        const approvalsEl = document.getElementById('dpa-readiness-approvals');
-        const blockersEl = document.getElementById('dpa-readiness-blockers');
-        const riskListEl = document.getElementById('dpa-risk-signal-list');
-        const govRouteEl = document.getElementById('dpa-gov-approval-route');
-        const govReasonsEl = document.getElementById('dpa-gov-approval-reasons');
-        const riskSummary = document.getElementById('dpa-gov-risk-summary');
-        const submitBtn = document.getElementById('submit-dpa-btn');
-
-        if (fieldsEl) fieldsEl.textContent = filled.length + ' / ' + total;
-        if (missingCountEl) missingCountEl.textContent = String(missing.length);
-        if (missingListEl) {
-            missingListEl.innerHTML = missing.map(function (el) {
-                return '<div class="arch-missing-item"><div class="arch-missing-dot"></div>' + escapeHtml(labelFor(el)) + '</div>';
-            }).join('');
-        }
-        if (blockersEl) blockersEl.textContent = String(missing.length);
-
-        const signals = [];
-        if (boolValue('personal_data_involved')) {
-            signals.push({ tone: 'warn', text: 'Personal data processing review: Legal review required.', link: 'processing-details' });
-        }
-        if (boolValue('special_categories_data')) {
-            signals.push({ tone: 'high', text: 'Elevated privacy risk: special categories of data selected. Legal + DPO review required.', link: 'processing-details' });
-        }
-        if (boolValue('cross_border_transfer')) {
-            signals.push({ tone: 'high', text: 'SCC / international transfer risk: data leaves the EEA. DPO approval required.', link: 'international-transfers' });
-        }
-        if (boolValue('include_scc_fallback')) {
-            signals.push({ tone: 'safe', text: 'Approved SCC fallback clause language will be included in the draft.', link: 'international-transfers' });
-        }
-        if (boolValue('subprocessors_used')) {
-            signals.push({ tone: 'warn', text: 'Subprocessor review signal: approved flow-down language must be reviewed.', link: 'subprocessors' });
-        }
-        const activeCount = signals.filter(function (s) { return s.tone === 'warn' || s.tone === 'high'; }).length;
-        if (!signals.length) {
-            signals.push({ tone: 'safe', text: 'No privacy risk signal selected yet; CLM One is monitoring the smart questions.', link: null });
-        }
-        if (riskEl) riskEl.textContent = activeCount ? activeCount + ' active' : 'None active';
-        if (riskListEl) {
-            riskListEl.innerHTML = signals.map(function (signal) {
-                const cls = signal.tone === 'high' ? ' is-high' : signal.tone === 'safe' ? ' is-safe' : '';
-                const link = signal.link ? ' data-clause-link="' + signal.link + '"' : '';
-                const hint = signal.link ? '<span class="cform-risk-link-hint">Open clause →</span>' : '';
-                return '<button type="button" class="cform-risk-chip' + cls + '"' + link + '><span class="cform-risk-dot"></span><span>' + escapeHtml(signal.text) + '</span>' + hint + '</button>';
-            }).join('');
-        }
-        if (riskSummary) {
-            riskSummary.innerHTML = '<div class="dpa-gov-detail"><strong>' + String(activeCount) + ' active privacy signal' + (activeCount === 1 ? '' : 's') + '</strong><span>Click a risk chip or source badge to open a clause explanation in the slide-over drawer.</span></div>';
-        }
-
-        const approvals = ['Contract Owner', 'Legal'];
-        const dpoReasons = [];
-        if (boolValue('cross_border_transfer')) dpoReasons.push('data may leave the EEA');
-        if (boolValue('special_categories_data')) dpoReasons.push('special categories of data are involved');
-        if (boolValue('personal_data_involved') && !dpoReasons.length) dpoReasons.push('personal data processing is in scope');
-        const dpoTriggered = boolValue('personal_data_involved') || boolValue('cross_border_transfer') || boolValue('special_categories_data');
-        if (dpoTriggered) approvals.push('DPO');
-        if (approvalsEl) approvalsEl.textContent = String(approvals.length);
-        if (govRouteEl) govRouteEl.textContent = approvals.concat(['Signature']).join(' → ');
-        if (govReasonsEl) {
-            let legalReason = 'Legal required: personal data processing and approved DPA playbook checks are in scope.';
-            if (boolValue('subprocessors_used')) legalReason = 'Legal required: personal data processing is selected, and subprocessor flow-down language needs review.';
-            const reasons = ['<div class="cform-gov-reason"><strong>Legal required:</strong> ' + escapeHtml(legalReason.replace('Legal required: ', '')) + '</div>'];
-            if (dpoTriggered) {
-                reasons.push('<div class="cform-gov-reason"><strong>DPO required:</strong> ' + escapeHtml(dpoReasons.join(', ') + '.') + '</div>');
-            }
-            govReasonsEl.innerHTML = reasons.join('');
-        }
-
-        document.querySelectorAll('.cform-route-step[data-route-name]').forEach(function (stepEl) {
-            const name = stepEl.getAttribute('data-route-name');
-            stepEl.classList.toggle('is-active-now', approvals.indexOf(name) !== -1 || name === 'Contract Owner');
+        nativeSelect.addEventListener('change', render);
+        document.addEventListener('click', function (event) {
+          if (!multiselect.contains(event.target)) setOpen(false);
         });
+        render();
+      }
 
-        sectionSlugs.forEach(function (slug) {
-            const stepEl = document.querySelector('.dpa-step[data-section-slug="' + slug + '"]');
-            if (!stepEl) return;
-            const sectionRequired = Array.from(stepEl.querySelectorAll('[data-required="1"]'));
-            const sectionMissing = sectionRequired.filter(function (el) { return !isFilled(el); });
-            const statusEl = stepEl.querySelector('[data-section-status="' + slug + '"]');
-            if (statusEl) {
-                statusEl.classList.remove('dpa-step-status--clear', 'dpa-step-status--attention', 'dpa-step-status--neutral');
-                if (!sectionRequired.length) {
-                    statusEl.classList.add('dpa-step-status--neutral');
-                    statusEl.textContent = 'Optional';
-                } else if (sectionMissing.length) {
-                    statusEl.classList.add('dpa-step-status--attention');
-                    statusEl.textContent = sectionMissing.length + ' missing';
-                } else {
-                    statusEl.classList.add('dpa-step-status--clear');
-                    statusEl.textContent = 'Complete';
-                }
-            }
+      function updateConditionalSections() {
+        if (countrySelect && transfer) {
+          var hasNonEea = Array.prototype.some.call(countrySelect.options, function (option) {
+            return option.selected && option.dataset.eea === 'false';
+          });
+          transfer.hidden = !hasNonEea;
+        }
+        if (sensitiveDataUncertain) {
+          var sensitiveData = document.querySelector('input[name="step3_sensitive_data"]:checked');
+          sensitiveDataUncertain.hidden = !sensitiveData || sensitiveData.value !== 'not_sure';
+        }
+        if (subprocessorReveal) {
+          var selected = document.querySelector('input[name="step3_subprocessors"]:checked');
+          subprocessorReveal.hidden = !selected || selected.value !== 'yes';
+          if (subprocessorUncertain) subprocessorUncertain.hidden = !selected || selected.value !== 'not_sure';
+        }
+        if (otherBreach) {
+          var breach = document.querySelector('input[name="step4_breach_notification_commitment"]:checked');
+          otherBreach.hidden = !breach || breach.value !== 'other';
+        }
+        if (manualLaw) {
+          var lawMode = document.querySelector('input[name="step4_governing_law_mode"]:checked');
+          manualLaw.hidden = !lawMode || lawMode.value !== 'manual';
+        }
+        document.querySelectorAll('[data-position-key]').forEach(function (position) {
+          var key = position.dataset.positionKey;
+          var reveal = position.querySelector('[data-step4-position-reveal]');
+          var selected = document.querySelector('input[name="step4_' + key + '_position"]:checked');
+          if (reveal) reveal.hidden = !selected || selected.value !== 'deviation';
         });
+      }
 
-        if (submitBtn) {
-            submitBtn.classList.toggle('is-guarded', missing.length > 0);
-            if (missing.length) {
-                submitBtn.title = missing.length + ' required field' + (missing.length === 1 ? '' : 's') + ' missing.';
-            } else {
-                submitBtn.removeAttribute('title');
-            }
-        }
-    }
+      function addSubprocessorRow() {
+        if (!subprocessorList) return;
+        var row = document.createElement('div');
+        row.className = 'dpa-subprocessor-row';
+        row.innerHTML = '<label><span class="dpa-step3-label">Name</span><input name="step3_subprocessor_name"></label>' +
+          '<label><span class="dpa-step3-label">Service</span><input name="step3_subprocessor_service"></label>' +
+          '<label><span class="dpa-step3-label">Processing location</span><input name="step3_subprocessor_location"></label>' +
+          '<label><span class="dpa-step3-label">Data involved</span><input name="step3_subprocessor_data"></label>';
+        subprocessorList.appendChild(row);
+      }
 
-    document.querySelectorAll('[data-ai-action]').forEach(function (pill) {
-        const action = pill.dataset.aiAction;
-        const generative = action === 'explain_clause' || action === 'generate_summary' || action === 'suggest_missing';
-        if (generative) {
-            pill.classList.add('is-disabled');
-            pill.setAttribute('aria-disabled', 'true');
-            pill.setAttribute('title', 'AI-assisted drafting isn’t enabled for this workspace yet — this action needs a configured AI provider.');
-        }
-        pill.addEventListener('click', function () {
-            let message;
-            if (generative) {
-                message = 'AI-assisted drafting isn’t enabled for this workspace yet — this action needs a configured AI provider.';
-            } else if (action === 'suggest_fallback') {
-                message = 'Approved fallback clause — based on your approved clause library. Requires legal approval before use.';
-            } else {
-                message = 'Compare to playbook — source-backed suggestion based on the approved GDPR / DPA playbook.';
-            }
-            pill.setAttribute('title', message);
-            pill.setAttribute('aria-label', message);
-        });
-    });
-
-    document.addEventListener('click', function (event) {
-        const closeBtn = event.target.closest('[data-dpa-drawer-close]');
-        if (closeBtn && drawerEl) {
-            if (typeof drawerEl.close === 'function') drawerEl.close();
-            else drawerEl.removeAttribute('open');
-            return;
-        }
-
-        const tab = event.target.closest('[data-dpa-tab]');
-        if (tab) {
-            openTab(tab.dataset.dpaTab);
-            return;
-        }
-
-        const jump = event.target.closest('[data-dpa-jump-target]');
-        if (jump) {
-            openTab(jump.dataset.dpaJumpTab || 'governance', jump.dataset.dpaJumpTarget);
-            return;
-        }
-
-        const source = event.target.closest('[data-clause-explain]');
-        if (source) {
-            openClauseDrawerFromClauseId(source.getAttribute('data-clause-explain'));
-            return;
-        }
-
-        const chip = event.target.closest('[data-clause-link]');
-        if (chip) {
-            openClauseDrawerFromClauseId(chip.getAttribute('data-clause-link'));
-        }
-    });
-
-    form.addEventListener('input', function () { renderLivePreview(); updateReadiness(); });
-    form.addEventListener('change', function () { renderLivePreview(); updateReadiness(); });
-    renderLivePreview();
-    updateReadiness();
-    openTab('draft');
-})();
-</script>
+      document.querySelectorAll('[data-multiselect]').forEach(initialiseMultiselect);
+      if (countrySelect) countrySelect.addEventListener('change', updateConditionalSections);
+      document.querySelectorAll('input[name="step3_sensitive_data"]').forEach(function (input) {
+        input.addEventListener('change', updateConditionalSections);
+      });
+      document.querySelectorAll('input[name="step3_subprocessors"]').forEach(function (input) {
+        input.addEventListener('change', updateConditionalSections);
+      });
+      document.querySelectorAll('input[name="step4_breach_notification_commitment"], input[name="step4_governing_law_mode"], [data-position-key] input').forEach(function (input) {
+        input.addEventListener('change', updateConditionalSections);
+      });
+      if (addSubprocessor) addSubprocessor.addEventListener('click', addSubprocessorRow);
+      updateConditionalSections();
+    }());
+  </script>
+</div>
 {% endblock %}

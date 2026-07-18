@@ -55,7 +55,7 @@
         <h1 class="page-title mt-1">{{ object }}</h1>
         <p class="page-subtitle">Editing this clause creates a new immutable version.</p>
       </div>
-      <a href="{% url 'contracts:clause_template_update' object.pk %}" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Edit</a>
+      <a href="{% url 'contracts:clause_template_update' object.pk %}" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Edit</a>
     </div>
 
     <div class="space-y-6">
@@ -160,7 +160,7 @@
             <label class="form-label" for="{{ variant_form.is_active.id_for_label }}">Active</label>
           </div>
           <div class="md:col-span-2 flex justify-end">
-            <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add variant</button>
+            <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add variant</button>
           </div>
         </form>
       </div>
@@ -207,7 +207,7 @@
             <label class="form-label" for="{{ playbook_form.is_active.id_for_label }}">Active</label>
           </div>
           <div class="md:col-span-2 flex justify-end">
-            <button type="submit" class="btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add playbook</button>
+            <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad text-white px-4 py-2 text-sm font-semibold rounded-lg">Add playbook</button>
           </div>
         </form>
       </div>

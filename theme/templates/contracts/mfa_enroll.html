@@ -22,7 +22,7 @@
     <form method="post" style="margin-bottom:1rem">
       {% csrf_token %}
       <input type="hidden" name="action" value="send">
-      <button type="submit" class="btn-primary-grad" style="width:100%;justify-content:center">
+      <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad" style="width:100%;justify-content:center">
         Send verification code
       </button>
     </form>
@@ -44,13 +44,13 @@
           class="form-input"
         >
       </div>
-      <button type="submit" class="btn-primary-grad" style="width:100%;justify-content:center">Enable MFA</button>
+      <button type="submit" class="dc-ds-button dc-ds-button--primary btn-primary-grad" style="width:100%;justify-content:center">Enable MFA</button>
     </form>
 
     <form method="post" style="margin-top:0.75rem">
       {% csrf_token %}
       <input type="hidden" name="action" value="send">
-      <button type="submit" class="btn-ghost" style="width:100%;justify-content:center;font-size:0.875rem">
+      <button type="submit" class="dc-ds-button dc-ds-button--quiet btn-ghost" style="width:100%;justify-content:center;font-size:0.875rem">
         Resend code
       </button>
     </form>

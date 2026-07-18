@@ -12,7 +12,7 @@
       <p class="page-subtitle c-muted">Manage counterparties</p>
     </div>
     <div class="page-actions">
-      <a href="{% url 'contracts:counterparty_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+      <a href="{% url 'contracts:counterparty_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         Add New
       </a>
@@ -39,9 +39,9 @@
           <td class="tbl-td px-5 py-3 text-sm">{{ item.contact_name|default:"-" }}</td>
           <td class="tbl-td px-5 py-3 text-sm">
             {% if item.is_active %}
-            <span class="badge-sm badge-green">Active</span>
+            <span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-green">Active</span>
             {% else %}
-            <span class="badge-sm badge-gray">Inactive</span>
+            <span class="dc-ds-badge dc-ds-badge--sm badge-sm badge-gray">Inactive</span>
             {% endif %}
           </td>
           <td class="tbl-td px-5 py-3 text-right">

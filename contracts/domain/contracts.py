@@ -66,7 +66,8 @@ class ContractData:
     # StageDots/AssigneeChip/ActivityLine visual contract as the Dashboard
     # queue, computed server-side so the JS-rendered table never invents its
     # own status colors, stage ordering, or activity phrasing.
-    status_badge_class: str = ""
+    status_badge_tone: str = ""
+    stage_badge_tone: str = ""
     stage_steps: list = field(default_factory=list)
     assignee_name: Optional[str] = None
     assignee_initial: Optional[str] = None

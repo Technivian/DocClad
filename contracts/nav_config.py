@@ -11,12 +11,46 @@ from django.utils.safestring import mark_safe
 
 from .permissions import can_manage_organization
 
-_ICON_DASHBOARD = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>')
-_ICON_PLUS = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>')
-_ICON_UPLOAD = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"></path></svg>')
-_ICON_FOLDER = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>')
-_ICON_TASK = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>')
-_ICON_SETTINGS = mark_safe('<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l.478.239a1 1 0 00.894 0l.478-.239a1 1 0 011.35.936l.067.53a1 1 0 00.611.822l.49.198a1 1 0 01.554 1.266l-.18.52a1 1 0 00.174.952l.325.44a1 1 0 010 1.19l-.325.44a1 1 0 00-.174.952l.18.52a1 1 0 01-.554 1.266l-.49.198a1 1 0 00-.611.822l-.067.53a1 1 0 01-1.35.936l-.478-.239a1 1 0 00-.894 0l-.478.239a1 1 0 01-1.35-.936l-.067-.53a1 1 0 00-.611-.822l-.49-.198a1 1 0 01-.554-1.266l.18-.52a1 1 0 00-.174-.952l-.325-.44a1 1 0 010-1.19l.325-.44a1 1 0 00.174-.952l-.18-.52a1 1 0 01.554-1.266l.49-.198a1 1 0 00.611-.822l.067-.53z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path></svg>')
+
+def _nav_icon(name, body):
+    return mark_safe(
+        f'<svg class="nav-icon-svg nav-icon-svg--{name}" fill="none" stroke="currentColor" '
+        f'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" '
+        f'aria-hidden="true">{body}</svg>'
+    )
+
+
+_ICON_DASHBOARD = _nav_icon(
+    'dashboard',
+    '<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H9v6H4V6.5ZM11 4h3.5A2.5 2.5 0 0 1 17 6.5V10h-6V4ZM4 14h5v6H6.5A2.5 2.5 0 0 1 4 17.5V14ZM11 14h6v3.5A2.5 2.5 0 0 1 14.5 20H11v-6Z"/>'
+    '<circle cx="12" cy="12" r="1.2"/>'
+)
+_ICON_PLUS = _nav_icon(
+    'new-contract',
+    '<path d="M6 3.8h8l4.2 4.2V20.2H6z"/><path d="M14 3.8V8h4.2"/><path d="M9.5 13h5M12 10.5v5.5"/>'
+)
+_ICON_UPLOAD = _nav_icon(
+    'upload-review',
+    '<path d="M12 4v8"/><path d="M8.5 8.5 12 5l3.5 3.5"/><path d="M5 14v5h14v-5"/><path d="M8 14h8"/>'
+)
+_ICON_FOLDER = _nav_icon(
+    'contracts',
+    '<path d="M4 7.2A2.2 2.2 0 0 1 6.2 5h4.1l1.4 1.8H20v10.7A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5z"/>'
+    '<path d="M8 11h8M8 15h5"/>'
+)
+_ICON_TASK = _nav_icon(
+    'obligations',
+    '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m8.5 14.5 2 2 4-4"/>'
+)
+_ICON_SETTINGS = _nav_icon(
+    'admin',
+    '<rect x="5" y="5" width="14" height="14" rx="3"/>'
+    '<path d="M9 9h6M9 12h6M9 15h6"/>'
+)
+_ICON_DPA_REVIEWS = _nav_icon(
+    'dpa-reviews',
+    '<path d="M12 3.5 6 6.2v4.1c0 4.2 2.6 7.7 6 9.5 3.4-1.8 6-5.3 6-9.5V6.2z"/><path d="m9.5 12.1 1.7 1.7 3.4-3.7"/><path d="M8.8 8.8h6.4"/>'
+)
 
 
 def _always(user, organization):
@@ -39,8 +73,8 @@ _STANDARD_NAV = [
     # Workspace remains available by direct URL for active legacy work, but
     # primary navigation must not send people back into that screen family.
     {'kind': 'item', 'label': 'Contracts', 'url_name': 'contracts:repository', 'icon': _ICON_FOLDER,
-     'active': lambda n: n in ('repository', 'contract_list', 'contract_detail', 'contract_update', 'contract_create'), 'visible': _always},
-    {'kind': 'item', 'label': 'DPA Reviews', 'url_name': 'contracts:dpa_review_pack_list', 'icon': _ICON_FOLDER,
+     'active': lambda n: n in ('repository', 'contract_list', 'contract_detail', 'contract_update'), 'visible': _always},
+    {'kind': 'item', 'label': 'DPA Reviews', 'url_name': 'contracts:dpa_review_pack_list', 'icon': _ICON_DPA_REVIEWS,
      'active': lambda n: bool(n) and 'dpa_review' in n, 'visible': _always},
     {'kind': 'item', 'label': 'Obligations', 'url_name': 'contracts:obligations_workspace', 'icon': _ICON_TASK,
      'active': lambda n: bool(n) and ('obligations' in n or 'deadline' in n), 'visible': _always},

@@ -34,6 +34,11 @@ class Command(BaseCommand):
             action='store_true',
             help='Remove existing MVP workspace operational records before recreating the curated demo journey.',
         )
+        parser.add_argument(
+            '--single-user',
+            action='store_true',
+            help='Populate the walkthrough with mvp_admin as its only user account.',
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -53,9 +58,12 @@ class Command(BaseCommand):
         users = {}
         user_specs = (
             ('mvp_admin', 'Alex', 'Admin', 'mvp_admin@clmone.local', OrganizationMembership.Role.OWNER, UserProfile.Role.ADMIN),
-            ('mvp_owner', 'Olivia', 'Owner', 'mvp_owner@clmone.local', OrganizationMembership.Role.MEMBER, UserProfile.Role.ASSOCIATE),
-            ('mvp_reviewer', 'Ravi', 'Reviewer', 'mvp_reviewer@clmone.local', OrganizationMembership.Role.MEMBER, UserProfile.Role.SENIOR_ASSOCIATE),
         )
+        if not options['single_user']:
+            user_specs += (
+                ('mvp_owner', 'Olivia', 'Owner', 'mvp_owner@clmone.local', OrganizationMembership.Role.MEMBER, UserProfile.Role.ASSOCIATE),
+                ('mvp_reviewer', 'Ravi', 'Reviewer', 'mvp_reviewer@clmone.local', OrganizationMembership.Role.MEMBER, UserProfile.Role.SENIOR_ASSOCIATE),
+            )
         for username, first_name, last_name, email, membership_role, profile_role in user_specs:
             user, _ = User.objects.update_or_create(
                 username=username,
@@ -75,6 +83,12 @@ class Command(BaseCommand):
             )
             UserProfile.objects.update_or_create(user=user, defaults={'role': profile_role})
             users[username] = user
+
+        if options['single_user']:
+            # The walkthrough remains fully populated, but its operational
+            # records are all assigned to the one retained administrator.
+            users['mvp_owner'] = users['mvp_admin']
+            users['mvp_reviewer'] = users['mvp_admin']
 
         template, _ = ContractTemplate.objects.update_or_create(
             name='Approved Mutual NDA',
@@ -187,7 +201,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'MVP demo ready: workspace={org.slug}, template={template.name}, password={DEMO_PASSWORD}'
         ))
-        for username in users:
+        for username in sorted({user.username for user in users.values()}):
             self.stdout.write(f'  {username} / {DEMO_PASSWORD}')
 
     @staticmethod

@@ -101,6 +101,8 @@ from contracts.api.documents_ai import (
     document_upload_api,
     contract_ai_extract_api,
     ai_extraction_span_review_api,
+    contract_review_finding_action_api,
+    contract_review_confirm_api,
     ai_suggest_clauses_api,
     ai_clause_recommendations_api,
     ai_accept_clause_api,

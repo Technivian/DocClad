@@ -1,0 +1,103 @@
+# Phase 4A: standard record and form page scaffolds
+
+Status: complete, pending Phase 4 review.
+
+This is incremental to Phase 3B and covers five representative standard record
+and administration templates only. Complex contract workspaces, builders,
+review studios, dashboards, public pages, legal-document rendering, tables,
+and the component families consolidated in prior phases are unchanged.
+
+## Canonical scaffold contract
+
+| API | Responsibility | Scoped runtime consumers after |
+|---|---|---:|
+| `.dc-ds-record-page` | Record/form page marker within the authenticated shell | 5 |
+| `.dc-ds-record-content` + `--narrow` / `--centered` | Standard content width and alignment | 3 |
+| `.dc-ds-record-sections` + `.dc-ds-record-section` | Detail-page vertical rhythm | 1 |
+| `.dc-ds-record-layout--with-rail` | Main form and contextual rail, collapsing below 980px | 1 |
+| `.dc-ds-record-form` + `__field` | Standard form rhythm while retaining shared field controls | 1 |
+| `.dc-ds-record-notice` | Validation/status notice placement | 1 |
+| `.dc-ds-form-actions` | Form actions; full-width, reversed order below 640px | 1 |
+| `.dc-ds-record-rail` + `__*` | Supporting guidance and ordered process steps | 1 |
+
+The authenticated shell is the single rendered source for page title, optional
+subtitle, and labelled back navigation. The clause-library forms and approval
+form now declare that context through `authenticated_page_*`; client detail
+retains its contextual canvas header only for its existing actions, with the
+duplicate context visually suppressed by the shared page-hero rule. Client
+creation intentionally has no subtitle. No route, permission, field,
+validation, submission, tab, or business-state logic changed.
+
+## Families migrated
+
+- Client record: create/edit form and detail.
+- Clause-library administration: category and clause-template create/edit.
+- Approval administration: approval-request create/edit, including its
+  existing guidance rail and pending-state notice.
+
+## Consumer and removal evidence
+
+Counts use automated `rg` searches over runtime templates and source CSS;
+tests, documentation, and generated CSS are excluded.
+
+| Item | Before | After | Evidence / result |
+|---|---:|---:|---|
+| Scoped runtime templates using a canonical record scaffold | 0 | 5 | Five complete representative templates now use the APIs above. |
+| Scoped legacy canvas header/scaffold consumers | 5 | 0 | `page-wrap`, `page-header`, `page-title`, and `page-subtitle` are absent from every migrated template. |
+| Approval-request local runtime class occurrences | 23 | 0 | The full local family maps to canonical record, notice, action, and rail APIs. |
+| Approval-request local CSS rules | 25 | 0 | Removed from the template after the runtime zero-consumer check. |
+| Shared `.approval-request-actions` compatibility references | 3 | 0 | Removed from `premium.css` after the source/runtime zero-consumer check. |
+| Canonical record API occurrences in scoped templates | 0 | 31 | Includes modifiers and element APIs; intentional co-application is documented by the table above. |
+
+The shared `page-wrap`, `page-header`, and page-title compatibility selectors
+remain: there are 113 runtime users outside this phase, so the repository-wide
+zero-consumer gate is not met. No other legacy selector was removed.
+
+### Legacy-to-canonical mapping
+
+| Removed family | Canonical replacement |
+|---|---|
+| `approval-request-page`, `approval-request-layout`, `approval-request-panel` | `.dc-ds-record-page`, `.dc-ds-page--wide`, `.dc-ds-record-layout--with-rail`, `dc-ds-surface` |
+| `approval-request-form`, `approval-request-field`, `approval-request-help`, `approval-request-error` | `.dc-ds-record-form`, `__field`, existing `.dc-ds-form-field__help` and `__errors` |
+| `approval-request-status*` | `.dc-ds-record-notice` and its elements |
+| `approval-request-actions` | `.dc-ds-form-actions` |
+| `approval-request-rail*`, `approval-request-steps`, `approval-request-step-number` | `.dc-ds-record-rail` and its elements |
+
+## Visual baseline decision
+
+No baseline was regenerated. The first deterministic Phase 2B.5 replay
+showed 550 pixels (0.01%) on the client form and 24,027 pixels on the approval
+form. The approval difference was traced to the old shared compatibility
+selector's effective action-row gap. `.dc-ds-form-actions` now uses the
+previous computed `var(--space-8)` gap; the approval replay consequently
+reduced to the same 550 pixels as the client form.
+
+The final 550 pixels in both images are confined to anti-aliased sidebar
+glyph rasterisation, with no differing record canvas, form, notice, rail, or
+action pixels. The mismatch is stable across both unrelated pages and is not a
+Phase 4A product regression. This is a renderer-level baseline variance;
+snapshots remain unchanged and no tolerance or baseline was altered.
+
+## Validation
+
+- `npm --prefix theme/static_src run build:tailwind`: passed; `styles.css`
+  was generated by the Tailwind v4 build and not hand-edited.
+- `manage.py check`: passed.
+- Focused Django suite: 47 passing tests (`test_design_system_phase2a` and
+  `test_approvals_inbox`), including the new scaffold contract assertions.
+- `phase-4a-record-scaffolds.spec.js`: 3 passing tests. Covers client
+  validation, form focus, labelled back navigation, blank subtitle, long
+  shell title at 390px, approval notice/action/rail semantics, and compact
+  layout.
+- `phase-2b5-standard-forms-panels.spec.js --update-snapshots=none`:
+  functional assertions pass but both snapshots retain the documented
+  550-pixel sidebar-glyph variance; no baseline updated.
+- `git diff --check`: passed.
+
+## Deferred work
+
+No business, permission, security, or accessibility decision is unresolved.
+Phase 4B should consolidate the remaining standard record/detail and
+administration families onto this scaffold, starting with counterparties and
+the non-workspace governance records, while leaving complex contract detail
+layouts, builders, review studios, dashboards, and tables separately scoped.

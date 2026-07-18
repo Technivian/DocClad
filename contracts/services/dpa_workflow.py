@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from django.db import transaction
+from django.core.files import File
+from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.utils import timezone
 
@@ -29,6 +31,7 @@ from contracts.models import (
     Contract,
     ContractTemplate,
     DraftDocument,
+    Document,
     FieldDefinition,
     FieldValue,
     RiskSignal,
@@ -116,11 +119,16 @@ def render_dpa_live_preview(template_body: Optional[str], field_values_by_key: d
 
     values = dict(field_values_by_key or {})
     if values.get('cross_border_transfer'):
-        transfer_default = (
-            'Data leaves the EEA; the parties incorporate the approved Standard Contractual '
-            'Clauses (SCC) fallback language as the transfer mechanism'
-            if values.get('include_scc_fallback')
-            else 'Data leaves the EEA; SCCs or an approved transfer mechanism must be included'
+        transfer_positions = {
+            'Adequacy Decision': 'Data leaves the EEA under a confirmed adequacy decision; the approved adequacy transfer position applies.',
+            'SCC': 'Data leaves the EEA; the parties incorporate the approved Standard Contractual Clauses (SCC) language as the transfer mechanism.',
+            'BCR': 'Data leaves the EEA under confirmed Binding Corporate Rules; the approved BCR transfer position applies.',
+            'EU-US Data Privacy Framework': 'Data leaves the EEA under the confirmed EU-US Data Privacy Framework; the approved DPF transfer position applies.',
+            'Other': 'Data leaves the EEA under a documented alternative safeguard; Privacy must confirm the approved transfer position.',
+        }
+        transfer_default = transfer_positions.get(
+            values.get('transfer_mechanism'),
+            'Data leaves the EEA; a confirmed transfer safeguard is required before the DPA can progress.',
         )
     else:
         transfer_default = 'No transfer outside the EEA is currently selected'
@@ -163,15 +171,16 @@ def detect_dpa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> Li
     field values. Persists RiskSignal rows scoped to the Workflow."""
     signals = []
 
-    personal_data = bool(field_values_by_key.get('personal_data_involved', True))
-    if personal_data:
-        signals.append(('dpa_review_required', 'Personal data processing selected; DPA review and Legal review are required.', RiskSignal.Severity.MEDIUM))
+    # A DPA is itself the governed record for personal-data processing; this
+    # baseline must not depend on a redundant user checkbox.
+    signals.append(('dpa_review_required', 'DPA baseline: Privacy and Legal review are required.', RiskSignal.Severity.MEDIUM))
 
     cross_border = bool(field_values_by_key.get('cross_border_transfer'))
     mechanism = field_values_by_key.get('transfer_mechanism')
     if cross_border:
-        signals.append(('scc_transfer_review', 'Data may leave the EEA; SCC transfer position and DPO approval are required.', RiskSignal.Severity.HIGH))
-        if not mechanism or mechanism == 'None':
+        if mechanism == 'SCC':
+            signals.append(('scc_transfer_review', 'Standard Contractual Clauses apply to a non-EEA transfer; DPO approval is required.', RiskSignal.Severity.HIGH))
+        elif not mechanism or mechanism == 'None':
             signals.append(('cross_border_no_mechanism', 'Cross-border transfer flagged but no transfer mechanism selected.', RiskSignal.Severity.HIGH))
 
     if not field_values_by_key.get('dpo_contact'):
@@ -179,14 +188,30 @@ def detect_dpa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> Li
 
     if field_values_by_key.get('subprocessors_used'):
         signals.append(('subprocessor_review', 'Subprocessors are involved; approved subprocessor flow-down language must be reviewed.', RiskSignal.Severity.MEDIUM))
-        if not field_values_by_key.get('liability_position'):
-            signals.append(('subprocessors_undisclosed', 'Subprocessors are involved but no fallback/liability position was captured.', RiskSignal.Severity.MEDIUM))
 
     if field_values_by_key.get('special_categories_data'):
         signals.append(('special_categories_risk', 'Special categories of personal data are processed; elevated privacy risk requires Legal and DPO review.', RiskSignal.Severity.HIGH))
 
     if field_values_by_key.get('include_scc_fallback'):
         signals.append(('scc_fallback_included', 'Approved SCC fallback clause language will be included in the draft.', RiskSignal.Severity.LOW))
+
+    facts = field_values_by_key.get('_dpa_step3', {})
+    if facts.get('sensitive_data') == 'not_sure' or facts.get('subprocessors_answer') == 'not_sure':
+        signals.append(('privacy_fact_uncertain', 'A privacy intake answer is not confirmed; Privacy and DPO review are required before approval or signature.', RiskSignal.Severity.HIGH))
+
+    step4 = field_values_by_key.get('_dpa_step4', {})
+    if step4:
+        if any(step4.get(key) in {'no', 'not_sure'} for key in (
+            'security_measures_provided', 'security_assurance_available',
+            'encryption_confirmed', 'access_controls_mfa_confirmed',
+        )):
+            signals.append(('security_evidence_missing', 'Security assurance or evidence is missing or not confirmed.', RiskSignal.Severity.MEDIUM))
+        if step4.get('breach_notification_commitment') not in {'approved_standard', ''}:
+            signals.append(('breach_term_deviation', 'Breach-notification commitment deviates from the approved playbook.', RiskSignal.Severity.MEDIUM))
+        if field_values_by_key.get('governing_law_changed'):
+            signals.append(('governing_law_deviation', 'Governing law differs from the related MSA.', RiskSignal.Severity.MEDIUM))
+        if any(position.get('status') in {'deviation', 'not_confirmed'} for position in step4.get('positions', {}).values()):
+            signals.append(('standard_position_deviation', 'A standard DPA position is not accepted or is not confirmed.', RiskSignal.Severity.MEDIUM))
 
     breach_hours = field_values_by_key.get('breach_notification_hours')
     try:
@@ -200,6 +225,32 @@ def detect_dpa_risk_signals(workflow: Workflow, field_values_by_key: dict) -> Li
     for code, description, severity in signals:
         created.append(RiskSignal.objects.create(workflow=workflow, code=code, description=description, severity=severity))
     return created
+
+
+def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values):
+    """Promote staged Step 4 evidence to contract-scoped Documents."""
+    step4 = cleaned_values.get('_dpa_step4', {})
+    for evidence_key, evidence in step4.get('evidence', {}).items():
+        storage_name = evidence.get('storage_name')
+        if not storage_name or not default_storage.exists(storage_name):
+            continue
+        title = (
+            'Security documentation'
+            if evidence_key == 'security_document'
+            else f'{evidence_key.replace("_document", "").replace("_", " ").title()} proposed wording'
+        )
+        with default_storage.open(storage_name, 'rb') as source:
+            document = Document(
+                organization=organization,
+                contract=workflow.contract,
+                title=title,
+                document_type=Document.DocType.EXHIBIT,
+                status=Document.Status.REVIEW,
+                description='Evidence captured during DPA Step 4 operational intake.',
+                uploaded_by=user,
+            )
+            document.file.save(evidence.get('original_name') or 'evidence', File(source), save=True)
+        default_storage.delete(storage_name)
 
 
 def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCenterWorkItem:
@@ -299,6 +350,15 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
             setattr(contract, field.maps_to_contract_field, cleaned_values[field.key])
     contract.save()
 
+    related_msa_id = cleaned_values.get('related_msa_id')
+    if related_msa_id:
+        related_msa = Contract.objects.filter(
+            pk=related_msa_id, organization=organization, contract_type=Contract.ContractType.MSA,
+        ).first()
+        if related_msa:
+            contract.parent_contract = related_msa
+            contract.save(update_fields=['parent_contract', 'updated_at'])
+
     workflow = Workflow.objects.create(
         title='DPA Privacy Review Workflow',
         description=f"Privacy review for the DPA with {cleaned_values.get('counterparty') or 'this counterparty'}.",
@@ -319,6 +379,10 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
     preview_content = render_dpa_live_preview(contract_template.body if contract_template else None, cleaned_values)
     DraftDocument.objects.create(
         workflow=workflow, contract=contract, content=preview_content, version=1, is_current=True, created_by=user,
+    )
+
+    _attach_dpa_intake_evidence(
+        workflow=workflow, organization=organization, user=user, cleaned_values=cleaned_values,
     )
 
     risk_signals = detect_dpa_risk_signals(workflow, cleaned_values)

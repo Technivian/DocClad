@@ -8,14 +8,14 @@
     </div>
   </div>
   <div class="max-w-3xl">
-    <form method="post" class="panel panel-inner space-y-4">
+    <form method="post" class="panel panel-inner dc-ds-surface space-y-4">
       {% csrf_token %}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {% for field in form %}
-        <div class="{% if field.name == 'description' or field.name == 'notes' or field.name == 'title' %}md:col-span-2{% endif %}">
-          <label class="form-label block mb-1">{{ field.label }}</label>
-          {{ field }}
-          {% if field.errors %}<p class="c-danger text-xs mt-1">{{ field.errors.0 }}</p>{% endif %}
+        <div class="dc-ds-form-field {% if field.name == 'description' or field.name == 'notes' or field.name == 'title' %}md:col-span-2{% endif %}{% if field.errors %} dc-ds-form-field--error{% endif %}">
+          <label class="dc-ds-form-field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <div class="dc-ds-form-field__control">{{ field }}</div>
+          {% if field.errors %}<div class="dc-ds-form-field__errors" role="alert"><p>{{ field.errors.0 }}</p></div>{% endif %}
         </div>
         {% endfor %}
       </div>

@@ -752,6 +752,20 @@ class Matter(models.Model):
 
 class Contract(models.Model):
     class Status(models.TextChoices):
+        NEEDS_INPUT = 'NEEDS_INPUT', 'Needs input'
+        UPLOADED = 'UPLOADED', 'Uploaded'
+        PROCESSING = 'PROCESSING', 'Processing'
+        CLASSIFICATION_REQUIRED = 'CLASSIFICATION_REQUIRED', 'Classification Required'
+        AI_REVIEW_IN_PROGRESS = 'AI_REVIEW_IN_PROGRESS', 'AI Review in Progress'
+        AI_REVIEW_READY = 'AI_REVIEW_READY', 'AI Review Ready'
+        HUMAN_REVIEW_IN_PROGRESS = 'HUMAN_REVIEW_IN_PROGRESS', 'Human Review in Progress'
+        INFORMATION_REQUIRED = 'INFORMATION_REQUIRED', 'Information Required'
+        INTERNAL_APPROVAL_REQUIRED = 'INTERNAL_APPROVAL_REQUIRED', 'Internal Approval Required'
+        NEGOTIATION_IN_PROGRESS = 'NEGOTIATION_IN_PROGRESS', 'Negotiation in Progress'
+        READY_FOR_SIGNATURE = 'READY_FOR_SIGNATURE', 'Ready for Signature'
+        SIGNATURE_IN_PROGRESS = 'SIGNATURE_IN_PROGRESS', 'Signature in Progress'
+        EXECUTED = 'EXECUTED', 'Executed'
+        OBLIGATIONS_ACTIVE = 'OBLIGATIONS_ACTIVE', 'Obligations Active'
         DRAFT = 'DRAFT', 'Draft'
         PENDING = 'PENDING', 'Pending'
         IN_REVIEW = 'IN_REVIEW', 'In Review'
@@ -800,11 +814,15 @@ class Contract(models.Model):
         AUD = 'AUD', 'AUD (A$)'
         OTHER = 'OTHER', 'Other'
 
+    class PaperSource(models.TextChoices):
+        OUR_PAPER = 'OUR_PAPER', 'Our paper'
+        COUNTERPARTY_PAPER = 'COUNTERPARTY_PAPER', 'Counterparty paper'
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='contracts')
     title = models.CharField(max_length=200)
     contract_type = models.CharField(max_length=20, choices=ContractType.choices, default=ContractType.OTHER)
     content = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.DRAFT)
     case_phase = models.CharField(
         max_length=20,
         choices=[
@@ -823,12 +841,16 @@ class Contract(models.Model):
         help_text='Timestamp when the case entered the current phase',
     )
     counterparty = models.CharField(max_length=200, blank=True)
+    business_unit = models.CharField(max_length=120, blank=True)
     value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=5, choices=Currency.choices, default=Currency.USD)
     governing_law = models.CharField(max_length=200, blank=True, help_text='Governing law jurisdiction')
     jurisdiction = models.CharField(max_length=200, blank=True, help_text='Contract jurisdiction')
     language = models.CharField(max_length=50, default='English', blank=True)
     risk_level = models.CharField(max_length=10, choices=RiskLevel.choices, default=RiskLevel.LOW)
+    personal_data_processing = models.BooleanField(default=False, help_text='Agreement involves processing personal data')
+    sensitive_data_flag = models.BooleanField(default=False, help_text='Sensitive, high-volume, or non-standard personal data is involved')
+    counterparty_privacy_review_required = models.BooleanField(default=False, help_text='Counterparty requires privacy review')
     data_transfer_flag = models.BooleanField(default=False, help_text='Involves cross-border data transfer (EU/US)')
     dpa_attached = models.BooleanField(default=False, help_text='Data Processing Agreement attached')
     scc_attached = models.BooleanField(default=False, help_text='Standard Contractual Clauses attached')
@@ -870,6 +892,7 @@ class Contract(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_contracts')
     approved_at = models.DateTimeField(null=True, blank=True)
+    paper_source = models.CharField(max_length=24, choices=PaperSource.choices, blank=True, default='')
     source_system = models.CharField(max_length=40, blank=True, default='')
     source_system_id = models.CharField(max_length=255, blank=True, default='')
     source_system_url = models.URLField(blank=True)
@@ -972,6 +995,13 @@ class Document(models.Model):
     tags = models.CharField(max_length=500, blank=True)
     is_privileged = models.BooleanField(default=False)
     is_confidential = models.BooleanField(default=False)
+    # A deliberate, document-level boundary for the counterparty workspace.
+    # Never infer sharing from a contract invitation: documents can contain
+    # internal legal analysis, even when the contract itself is shared.
+    share_with_counterparty = models.BooleanField(
+        default=False,
+        help_text='Make this document available to approved counterparty collaborators.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1198,6 +1228,119 @@ class AIExtractionSpan(models.Model):
     @property
     def label_display(self):
         return self.label.replace('_', ' ').title()
+
+
+class DocumentReviewRun(models.Model):
+    """The governed, auditable processing record for one uploaded version."""
+
+    class Status(models.TextChoices):
+        UPLOADED = 'UPLOADED', 'Uploaded'
+        EXTRACTING = 'EXTRACTING', 'Extracting'
+        CLASSIFICATION_REQUIRED = 'CLASSIFICATION_REQUIRED', 'Classification required'
+        PLAYBOOK_REQUIRED = 'PLAYBOOK_REQUIRED', 'Playbook required'
+        AI_REVIEW_IN_PROGRESS = 'AI_REVIEW_IN_PROGRESS', 'AI review in progress'
+        AI_REVIEW_INCOMPLETE = 'AI_REVIEW_INCOMPLETE', 'AI review incomplete'
+        READY = 'READY', 'AI review ready'
+        HUMAN_REVIEW_IN_PROGRESS = 'HUMAN_REVIEW_IN_PROGRESS', 'Human review in progress'
+        REVIEW_COMPLETED = 'REVIEW_COMPLETED', 'Review completed'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='document_review_runs')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='document_review_runs')
+    document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='review_run')
+    status = models.CharField(max_length=24, choices=Status.choices, default=Status.UPLOADED)
+    current_step = models.CharField(max_length=64, default='Uploaded')
+    progress_steps = models.JSONField(default=list, blank=True)
+    extracted_metadata = models.JSONField(default=dict, blank=True)
+    governance_sources = models.JSONField(default=dict, blank=True)
+    primary_next_action = models.CharField(max_length=300, blank=True)
+    review_objective = models.CharField(max_length=300, blank=True)
+    review_model = models.CharField(max_length=100, blank=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['contract', '-started_at'], name='drr_contract_started_ix'),
+            models.Index(fields=['organization', 'status'], name='drr_org_status_ix'),
+        ]
+
+    def __str__(self):
+        return f'Review of {self.document} ({self.get_status_display()})'
+
+
+class ContractReviewFinding(models.Model):
+    """A human-owned assessment grounded in an extracted clause citation."""
+
+    class Severity(models.TextChoices):
+        CRITICAL = 'CRITICAL', 'Critical'
+        HIGH = 'HIGH', 'High'
+        MEDIUM = 'MEDIUM', 'Medium'
+        LOW = 'LOW', 'Low'
+        INFORMATION = 'INFORMATION', 'Information'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        IN_PROGRESS = 'IN_PROGRESS', 'In progress'
+        DISMISSED = 'DISMISSED', 'Dismissed'
+        RESOLVED = 'RESOLVED', 'Resolved'
+        ESCALATED = 'ESCALATED', 'Escalated'
+        INFORMATION_REQUESTED = 'INFORMATION_REQUESTED', 'Information requested'
+        EXCEPTION_REQUESTED = 'EXCEPTION_REQUESTED', 'Exception requested'
+
+    class DismissalReason(models.TextChoices):
+        ACCEPTED_BUSINESS_RISK = 'ACCEPTED_BUSINESS_RISK', 'Accepted business risk'
+        FALSE_POSITIVE = 'FALSE_POSITIVE', 'False positive'
+        COVERED_ELSEWHERE = 'COVERED_ELSEWHERE', 'Covered elsewhere'
+        APPROVED_EXCEPTION = 'APPROVED_EXCEPTION', 'Approved exception'
+        NOT_APPLICABLE = 'NOT_APPLICABLE', 'Not applicable'
+        OTHER = 'OTHER', 'Other'
+
+    review_run = models.ForeignKey(DocumentReviewRun, on_delete=models.CASCADE, related_name='findings')
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='review_findings')
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='review_findings')
+    source_span = models.OneToOneField(
+        AIExtractionSpan, on_delete=models.SET_NULL, null=True, blank=True, related_name='review_finding'
+    )
+    risk_log = models.OneToOneField(
+        'RiskLog', on_delete=models.SET_NULL, null=True, blank=True, related_name='review_finding'
+    )
+    title = models.CharField(max_length=240)
+    severity = models.CharField(max_length=12, choices=Severity.choices, default=Severity.MEDIUM)
+    source_clause = models.CharField(max_length=120, blank=True)
+    source_page = models.PositiveIntegerField(null=True, blank=True)
+    source_excerpt = models.TextField(blank=True)
+    explanation = models.TextField(blank=True)
+    business_legal_impact = models.TextField(blank=True)
+    conflicting_rule = models.TextField(blank=True)
+    approved_position = models.TextField(blank=True)
+    acceptable_fallback = models.TextField(blank=True)
+    suggested_redline = models.TextField(blank=True)
+    confidence = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
+    recommended_action = models.TextField(blank=True)
+    assigned_reviewer = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_review_findings'
+    )
+    status = models.CharField(max_length=28, choices=Status.choices, default=Status.OPEN)
+    assessment = models.TextField(blank=True)
+    redline_draft = models.TextField(blank=True)
+    comment = models.TextField(blank=True)
+    dismissal_reason = models.CharField(max_length=32, choices=DismissalReason.choices, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_review_findings')
+    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_review_findings')
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['severity', 'created_at']
+        indexes = [
+            models.Index(fields=['contract', 'status'], name='crf_contract_status_ix'),
+            models.Index(fields=['review_run', 'severity'], name='crf_run_severity_ix'),
+        ]
+
+    def __str__(self):
+        return self.title
 
 
 class TimeEntry(models.Model):
@@ -1521,7 +1664,19 @@ class AuditLog(models.Model):
         Organization, on_delete=models.PROTECT, null=True, blank=True,
         related_name='audit_logs',
     )
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    # Audit hashes include user_id. Keep this historical identifier immutable
+    # when an account is removed instead of nulling it and breaking the chain.
+    # The missing user is intentionally represented as an unavailable actor in
+    # the UI; a database constraint would prevent the account-retention policy
+    # from being applied.
+    user = models.ForeignKey(
+        User,
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+        db_constraint=False,
+    )
     actor_type = models.CharField(max_length=20, choices=ActorType.choices, default=ActorType.SYSTEM)
     action = models.CharField(max_length=20, choices=Action.choices)
     # Canonical, stable event key (e.g. 'approval.approved'). Free-form display
@@ -2631,6 +2786,105 @@ class NegotiationThread(models.Model):
         return f"{self.contract.title} - {self.title}"
 
 
+class CounterpartyCollaborationParticipant(models.Model):
+    """A revocable, contract-scoped participant in the external workspace.
+
+    This is intentionally not an OrganizationMembership. A counterparty never
+    becomes a member of the customer workspace and cannot reach its internal
+    records, search, or navigation.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        ACTIVE = 'ACTIVE', 'Active'
+        REVOKED = 'REVOKED', 'Revoked'
+        EXPIRED = 'EXPIRED', 'Expired'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='counterparty_collaboration_participants'
+    )
+    contract = models.ForeignKey(
+        Contract, on_delete=models.CASCADE, related_name='counterparty_collaboration_participants'
+    )
+    name = models.CharField(max_length=200, blank=True)
+    email = models.EmailField()
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PENDING)
+    can_view_documents = models.BooleanField(default=True)
+    can_comment = models.BooleanField(default=True)
+    can_upload_revisions = models.BooleanField(default=False)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='sent_counterparty_collaboration_invites')
+    expires_at = models.DateTimeField(null=True, blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['contract', 'status'], name='ccp_contract_status_ix'),
+            models.Index(fields=['organization', 'email'], name='ccp_org_email_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.email} · {self.contract.title}'
+
+    @property
+    def is_accessible(self):
+        return (
+            self.status in (self.Status.PENDING, self.Status.ACTIVE)
+            and (self.expires_at is None or self.expires_at > timezone.now())
+            and self.organization.is_active
+        )
+
+
+class CounterpartyCollaborationItem(models.Model):
+    """A shared comment, revision hand-off, or task within one contract."""
+
+    class Kind(models.TextChoices):
+        COMMENT = 'COMMENT', 'Comment'
+        REVISION = 'REVISION', 'Revision'
+        TASK = 'TASK', 'Task'
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        COMPLETED = 'COMPLETED', 'Completed'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='counterparty_collaboration_items'
+    )
+    contract = models.ForeignKey(
+        Contract, on_delete=models.CASCADE, related_name='counterparty_collaboration_items'
+    )
+    participant = models.ForeignKey(
+        CounterpartyCollaborationParticipant, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='items'
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                   related_name='counterparty_collaboration_items')
+    document = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='counterparty_collaboration_items')
+    kind = models.CharField(max_length=12, choices=Kind.choices, default=Kind.COMMENT)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.OPEN)
+    title = models.CharField(max_length=200, blank=True)
+    content = models.TextField(blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    completed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='completed_counterparty_collaboration_items')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['contract', 'status', '-created_at'], name='cci_contract_status_ix')]
+
+    def __str__(self):
+        return self.title or f'{self.get_kind_display()} for {self.contract.title}'
+
+
 class Counterparty(models.Model):
     class EntityType(models.TextChoices):
         CORPORATION = 'CORPORATION', 'Corporation'
@@ -3487,6 +3741,7 @@ class ApprovalRequest(models.Model):
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='approval_requests')
     rule = models.ForeignKey(ApprovalRule, on_delete=models.SET_NULL, null=True, blank=True)
     approval_step = models.CharField(max_length=50)
+    sort_order = models.PositiveSmallIntegerField(default=0)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_assignments')
     delegated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_approval_assignments')
@@ -3500,6 +3755,12 @@ class ApprovalRequest(models.Model):
 
     def __str__(self):
         return f'{self.contract.title} - {self.approval_step} ({self.get_status_display()})'
+
+    class Meta:
+        ordering = ['sort_order', 'created_at']
+        indexes = [
+            models.Index(fields=['contract', 'sort_order'], name='ar_contract_sort_ix'),
+        ]
 
     def can_transition_to(self, new_status):
         if not new_status:

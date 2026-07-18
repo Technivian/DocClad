@@ -9,7 +9,7 @@
         <h1 class="page-title">Budgets</h1>
         <p class="page-subtitle">Plan allocations and monitor spend across departments.</p>
     </div>
-    <a href="{% url 'contracts:budget_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+    <a href="{% url 'contracts:budget_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
         New Budget
     </a>
@@ -54,9 +54,9 @@
             <option value="">All Years</option>
             <option value="{{ current_year }}" {% if selected_year == current_year|stringformat:'s' %}selected{% endif %}>{{ current_year }}</option>
         </select>
-        <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border btn-ghost">Search</button>
+        <button type="submit" class="flex-shrink-0 px-3 py-2 text-sm font-medium rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Search</button>
         {% if search_query or selected_year %}
-        <a href="{% url 'contracts:budget_list' %}" class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 btn-ghost">Clear</a>
+        <a href="{% url 'contracts:budget_list' %}" class="flex-shrink-0 px-3 py-2 text-sm rounded-lg border inline-flex items-center gap-1.5 dc-ds-button dc-ds-button--quiet btn-ghost">Clear</a>
         {% endif %}
     </form>
 </div>
@@ -86,7 +86,7 @@
                 <td class="px-5 py-3.5 font-medium tabular-nums c-primary">${{ budget.allocated_amount|floatformat:2 }}</td>
                 <td class="px-5 py-3.5 tabular-nums tbl-td">${{ budget.spent_amount|floatformat:2 }}</td>
                 <td class="px-5 py-3.5 tabular-nums {% if budget.is_over_budget %}c-danger{% else %}tbl-td{% endif %}">${{ budget.remaining_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="btn-ghost px-3 py-1 text-xs font-medium rounded-md">View</a></td>
+                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="dc-ds-button dc-ds-button--quiet btn-ghost px-3 py-1 text-xs font-medium rounded-md">View</a></td>
             </tr>
             {% empty %}
             <tr><td colspan="7" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg></div><div><p class="font-medium c-primary">No budgets found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_year %}Try adjusting your filters or <a href="{% url 'contracts:budget_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:budget_create' %}" class="c-link">creating your first budget</a>.{% endif %}</p></div></div></td></tr>

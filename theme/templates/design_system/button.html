@@ -1,11 +1,13 @@
 {% if href %}
-<a class="dc-ds-button{% if tone %} dc-ds-button--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}" href="{{ href }}"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}>
+<a class="dc-ds-button{% if variant %} dc-ds-button--{{ variant }}{% elif tone %} dc-ds-button--{{ tone }}{% else %} dc-ds-button--default{% endif %}{% if size %} dc-ds-button--{{ size }}{% endif %}{% if loading %} is-loading{% endif %}{% if class_name %} {{ class_name }}{% endif %}" href="{{ href }}"{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if disabled or loading %} aria-disabled="true" tabindex="-1"{% endif %}{% if loading %} aria-busy="true"{% endif %}{% if pressed %} aria-pressed="true"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}>
   {% if icon %}{% include "design_system/icon.html" with name=icon %}{% endif %}
-  {% if label %}<span>{{ label }}</span>{% endif %}
+  {% if loading %}<span class="dc-ds-button__loader" aria-hidden="true"></span>{% endif %}
+  {% if label %}<span class="dc-ds-button__label">{{ label }}</span>{% endif %}
 </a>
 {% else %}
-<button class="dc-ds-button{% if tone %} dc-ds-button--{{ tone }}{% endif %}{% if class_name %} {{ class_name }}{% endif %}" type="{{ type|default:'button' }}"{% if disabled %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if action %} data-action="{{ action }}"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}{% if toast_message %} data-toast-message="{{ toast_message }}" data-toast-tone="{{ toast_tone|default:'info' }}"{% endif %}>
+<button class="dc-ds-button{% if variant %} dc-ds-button--{{ variant }}{% elif tone %} dc-ds-button--{{ tone }}{% else %} dc-ds-button--default{% endif %}{% if size %} dc-ds-button--{{ size }}{% endif %}{% if loading %} is-loading{% endif %}{% if class_name %} {{ class_name }}{% endif %}" type="{{ type|default:'button' }}"{% if disabled or loading %} disabled{% endif %}{% if aria_label %} aria-label="{{ aria_label }}"{% endif %}{% if loading %} aria-busy="true"{% endif %}{% if pressed %} aria-pressed="true"{% endif %}{% if action %} data-action="{{ action }}"{% endif %}{% if command_trigger %} data-command-trigger{% endif %}{% if toast_message %} data-toast-message="{{ toast_message }}" data-toast-tone="{{ toast_tone|default:'info' }}"{% endif %}>
   {% if icon %}{% include "design_system/icon.html" with name=icon %}{% endif %}
-  {% if label %}<span>{{ label }}</span>{% endif %}
+  {% if loading %}<span class="dc-ds-button__loader" aria-hidden="true"></span>{% endif %}
+  {% if label %}<span class="dc-ds-button__label">{{ label }}</span>{% endif %}
 </button>
 {% endif %}

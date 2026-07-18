@@ -1,0 +1,16 @@
+{% if help_text %}
+  <span class="dc-ds-info-hint-wrap">
+    <button
+      type="button"
+      class="dc-ds-info-hint"
+      data-info-hint
+      aria-haspopup="true"
+      aria-expanded="false"
+      aria-label="More information: {{ help_text }}"
+      title="{{ help_text }}"
+    >
+      <span aria-hidden="true">i</span>
+    </button>
+    <span class="dc-ds-info-hint__panel" role="tooltip">{{ help_text }}</span>
+  </span>
+{% endif %}

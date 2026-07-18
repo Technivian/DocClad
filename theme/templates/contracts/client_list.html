@@ -8,7 +8,7 @@
         <h1 class="page-title">Clients</h1>
         <p class="page-subtitle">{{ total_clients }} total &middot; {{ active_clients }} active</p>
     </div>
-    <a href="{% url 'contracts:client_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 btn-primary-grad">
+    <a href="{% url 'contracts:client_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-opacity hover:opacity-90 dc-ds-button dc-ds-button--primary btn-primary-grad">
         <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         New Client
     </a>
@@ -22,7 +22,7 @@
         <option value="INACTIVE" {% if request.GET.status == 'INACTIVE' %}selected{% endif %}>Inactive</option>
         <option value="PROSPECTIVE" {% if request.GET.status == 'PROSPECTIVE' %}selected{% endif %}>Prospective</option>
     </select>
-    <button type="submit" class="px-3 py-2 text-sm rounded-lg border btn-ghost">Search</button>
+    <button type="submit" class="px-3 py-2 text-sm rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Search</button>
 </form>
 
 <div class="panel">
@@ -45,12 +45,12 @@
                 </td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.get_client_type_display }}</td>
                 <td class="px-5 py-3.5">
-                    <span class="badge-sm {{ client.status|client_status_badge_class }}">{{ client.get_status_display }}</span>
+                    <span class="dc-ds-badge dc-ds-badge--sm badge-sm {{ client.status|client_status_badge_class }}">{{ client.get_status_display }}</span>
                 </td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.industry|default:"—" }}</td>
                 <td class="px-5 py-3.5 tbl-td">{{ client.email|default:"—" }}</td>
                 <td class="px-5 py-3.5 text-right">
-                    <a href="{% url 'contracts:client_update' client.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 btn-ghost">Edit</a>
+                    <a href="{% url 'contracts:client_update' client.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet btn-ghost">Edit</a>
                 </td>
             </tr>
             {% empty %}
@@ -63,9 +63,9 @@
 
 {% if is_paginated %}
 <div class="mt-4 flex items-center justify-center gap-2">
-    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border btn-ghost">Previous</a>{% endif %}
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Previous</a>{% endif %}
     <span class="px-3 py-1.5 text-sm c-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border btn-ghost">Next</a>{% endif %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 text-sm rounded-lg border dc-ds-button dc-ds-button--quiet btn-ghost">Next</a>{% endif %}
 </div>
 {% endif %}
 </div>
