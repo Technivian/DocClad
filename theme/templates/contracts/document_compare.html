@@ -58,32 +58,37 @@
         </div>
     </div>
 
-    <div class="panel overflow-hidden mt-6">
+    <div class="mt-6">
         <div class="panel-head">
             <div class="panel-title">Field Differences</div>
         </div>
-        {% if comparison.field_diffs %}
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+        <div class="dc-ds-table-wrap">
+          <table class="dc-ds-table" aria-label="Document field differences">
+            <caption class="sr-only">Field-level differences between the compared document versions.</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide tbl-th">Field</th>
-                    <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide tbl-th">Current</th>
-                    <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide tbl-th">Compared</th>
+                    <th scope="col">Field</th>
+                    <th scope="col">Current</th>
+                    <th scope="col">Compared</th>
                 </tr>
             </thead>
             <tbody>
                 {% for field_name, left_value, right_value in comparison.field_diffs %}
-                <tr class="border-b tbl-row">
-                    <td class="px-4 py-3 font-medium">{{ field_name }}</td>
-                    <td class="px-4 py-3 tbl-td whitespace-pre-wrap">{{ left_value|default:"—" }}</td>
-                    <td class="px-4 py-3 tbl-td whitespace-pre-wrap">{{ right_value|default:"—" }}</td>
+                <tr>
+                    <td>{{ field_name }}</td>
+                    <td class="whitespace-pre-wrap">{{ left_value|default:"—" }}</td>
+                    <td class="whitespace-pre-wrap">{{ right_value|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">
+                      {% include "design_system/empty_state.html" with icon="file" title="No differences detected" reason="These document versions match on compared fields." how="Choose another version pair if you expect changes." class_name="dc-ds-empty--compact" %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
-        </table>
-        {% else %}
-        <div class="panel-inner"><p class="text-sm c-muted">No differences detected.</p></div>
-        {% endif %}
+          </table>
+        </div>
     </div>
 </div>
 {% endblock %}

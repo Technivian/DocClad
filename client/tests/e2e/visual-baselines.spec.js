@@ -37,7 +37,7 @@ async function capture(page, path, marker, name) {
     options.mask = [
       page.locator('.cc-v3-action-date'),
       page.locator('.cc-v3-date-status'),
-      page.locator('.cc-v3-table tbody td:last-child'),
+      page.locator('.cc-v3-matters .dc-ds-table tbody td:last-child'),
     ];
   }
   await expect(page).toHaveScreenshot(`phase-1-${name}.png`, options);

@@ -83,21 +83,44 @@
 
     <section class="cc-v3-card cc-v3-matters dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recent-matters-title">
         <div class="cc-v3-section-head"><h2 id="recent-matters-title">Recent Matters</h2><a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:repository' %}">View all</a></div>
-        <div class="cc-v3-table-wrap">
-          <table class="cc-v3-table">
-            <thead><tr><th>Contract / Matter</th><th>Counterparty</th><th>Owner</th><th>Stage</th><th>Next action</th><th>Risk</th><th>Updated</th></tr></thead>
+        <div class="dc-ds-table-wrap">
+          <table class="dc-ds-table dc-ds-table--fixed" aria-label="Recent matters">
+            <caption class="sr-only">Priority queue of recent contracts and matters in Command Center.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Contract / Matter</th>
+                <th scope="col">Counterparty</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Stage</th>
+                <th scope="col">Next action</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Updated</th>
+              </tr>
+            </thead>
             <tbody>
               {% for row in priority_queue_rows|slice:":5" %}
               <tr>
-                <td><a class="cc-v3-doc" href="{{ row.workspace_href }}" aria-label="{{ row.title }}. {{ row.next_action }}. {{ row.highest_risk_signal }}. {{ row.risk_personality }}"><span class="cc-v3-doc-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span><span class="cc-v3-doc-copy"><strong>{{ row.title }}</strong><span>{{ row.item_type|default:"Contract" }}</span></span></a></td>
-                <td title="{{ row.counterparty|default:'No counterparty' }}">{{ row.counterparty|default:"No counterparty" }}</td>
+                <td>
+                  <a class="cc-v3-doc" href="{{ row.workspace_href }}" aria-label="{{ row.title }}. {{ row.next_action }}. {{ row.highest_risk_signal }}. {{ row.risk_personality }}">
+                    <span class="cc-v3-doc-icon" aria-hidden="true">{% include "design_system/icon.html" with name="file-text" %}</span>
+                    <span class="cc-v3-doc-copy"><strong>{{ row.title }}</strong><span>{{ row.item_type|default:"Contract" }}</span></span>
+                  </a>
+                </td>
+                <td title="{{ row.counterparty|default:'No counterparty' }}"><span class="dc-ds-table-cell-text">{{ row.counterparty|default:"No counterparty" }}</span></td>
                 <td><span class="cc-v3-owner"><span class="cc-v3-owner-avatar" aria-hidden="true">{{ row.owner_label|slice:":1"|upper }}</span>{{ row.owner_label }}</span></td>
                 <td><span class="cc-v3-stage">{{ row.current_stage|default:"Review" }}</span></td>
-                <td class="cc-v3-next-action">{{ row.next_action|default:row.action_label|default:"Open" }}</td>
+                <td class="cc-v3-next-action"><span class="dc-ds-table-cell-text">{{ row.next_action|default:row.action_label|default:"Open" }}</span></td>
                 <td><span class="cc-v3-risk {{ row.risk_level|lower }}">{{ row.risk_label|default:"Review" }}</span></td>
                 <td>{% if row.updated_label %}{{ row.updated_label }}{% elif row.activity %}{{ row.activity.timestamp|timesince }} ago{% else %}No activity yet{% endif %}</td>
               </tr>
-              {% empty %}<tr><td colspan="7"><div class="cc-v3-empty"><span class="cc-v3-empty-icon" aria-hidden="true">{% include "design_system/icon.html" with name="folder" %}</span><strong>No recent matters</strong><span>Imported agreements and governed workflows will appear here.</span></div></td></tr>{% endfor %}
+              {% empty %}
+              <tr>
+                <td colspan="7">
+                  {% url 'contracts:repository' as repository_url %}
+                  {% include "design_system/empty_state.html" with icon="folder" title="No recent matters" reason="Imported agreements and governed workflows will appear here." how="Start a contract or open the repository to populate this queue." action_url=repository_url action_label="Open contracts" class_name="dc-ds-empty--compact" %}
+                </td>
+              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>

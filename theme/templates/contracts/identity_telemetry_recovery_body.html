@@ -1,22 +1,25 @@
-<div class="overflow-x-auto">
-  <table class="w-full text-sm">
+<div class="dc-ds-table-wrap">
+  <table class="dc-ds-table" aria-label="Identity recovery codes">
+    <caption class="sr-only">Active members and MFA recovery-code readiness.</caption>
     <thead>
       <tr>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">User</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">Recovery codes</th>
-        <th class="text-left px-4 py-2 text-xs font-semibold uppercase tracking-wide">MFA enabled</th>
+        <th scope="col">User</th>
+        <th scope="col">Recovery codes</th>
+        <th scope="col">MFA enabled</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-100">
+    <tbody>
       {% for profile in recovery_code_counts %}
       <tr>
-        <td class="px-4 py-3">{{ profile.user.get_full_name|default:profile.user.username }}</td>
-        <td class="px-4 py-3">{{ profile.mfa_recovery_code_count }}</td>
-        <td class="px-4 py-3">{% if profile.mfa_enabled %}Yes{% else %}No{% endif %}</td>
+        <td>{{ profile.user.get_full_name|default:profile.user.username }}</td>
+        <td data-numeric>{{ profile.mfa_recovery_code_count }}</td>
+        <td>{% if profile.mfa_enabled %}Yes{% else %}No{% endif %}</td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="3" class="px-4 py-6 text-center c-muted">No active members found.</td>
+        <td colspan="3">
+          {% include "design_system/empty_state.html" with icon="users" title="No active members found" reason="This organization has no active member profiles to report." how="Invite teammates to populate recovery readiness." class_name="dc-ds-empty--compact" %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
