@@ -239,12 +239,30 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'clause_template_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
             'approval_request_list.html': ('dc-ds-table-wrap',),
             'approval_rule_list_table.html': ('dc-ds-table-wrap', 'dc-ds-table'),
+            # App-wide table standardization closeout (Contracts as source of truth).
+            'matter_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html', 'scope="col"'),
+            'client_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'counterparty_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'budget_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'invoice_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'risk_log_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'dsar_list.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
+            'workflow_template_detail.html': ('dc-ds-table-wrap', 'dc-ds-table', 'design_system/empty_state.html'),
         }
         for template_name, required in expectations.items():
             content = (templates / template_name).read_text()
             for value in required:
                 with self.subTest(template=template_name, value=value):
                     self.assertIn(value, content)
+            with self.subTest(template=template_name, banned='tbl-row'):
+                self.assertNotIn('tbl-row', content)
+            with self.subTest(template=template_name, banned='wf-table'):
+                self.assertNotIn('wf-table', content)
+        dashboard = (self.root / 'theme' / 'templates' / 'dashboard.html').read_text()
+        self.assertIn('dc-ds-table-wrap', dashboard)
+        self.assertIn('dc-ds-table', dashboard)
+        self.assertIn('design_system/empty_state.html', dashboard)
+        self.assertNotIn('cc-v3-table', dashboard)
         repository_js = (self.root / 'theme' / 'static' / 'js' / 'clmone-repository.js').read_text()
         self.assertIn('dc-ds-table-state', repository_js)
         self.assertIn('aria-selected', repository_js)
@@ -266,7 +284,7 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'document_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_category_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_template_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
-            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', 'dc-ds-workspace-tabs', '_workflow_operations_tabs.html'),
+            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),
             # Intentional Workflow Ops unification: approval rules use the shared
             # list-page toolbar + workflow ops tabs include (not page_scaffold).
             'approval_rule_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),

@@ -89,6 +89,7 @@ and must pass a no-update replay.
 ## Deferred work
 
 No unresolved business, permission, security, or accessibility decision was
-found. Phase 3B should consolidate page headers and standard record-list
-scaffolds, then separately consider the remaining standard list families.
-Dashboards and workflow/workspace tables require their own bounded phase.
+found. Phase 3B consolidates page headers and standard record-list scaffolds.
+**Phase 3C** (`PHASE_3C_APP_WIDE_TABLES.md`) closes the remaining primary list,
+Workflow Designer, and Command Center table families against the Contracts
+Repository contract.
