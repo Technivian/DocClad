@@ -108,28 +108,6 @@
   }
   .cw-table-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
   .cw-table-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .cw-table { width: 100%; border-collapse: collapse; }
-  .cw-table th {
-    padding: 10px 16px;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    text-align: left;
-    border-bottom: 1px solid var(--card-border);
-    white-space: nowrap;
-  }
-  .cw-table td {
-    height: 58px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--card-border);
-    color: var(--text-secondary);
-    font-size: 13px;
-    vertical-align: middle;
-  }
-  .cw-table tbody tr:last-child td { border-bottom: 0; }
-  .cw-table tbody tr:hover td { background: var(--sidebar-hover); }
   .cw-contract-link {
     display: inline-flex;
     max-width: 300px;
@@ -313,29 +291,30 @@
           </div>
           <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ page_obj.paginator.count|default:total_contracts }} shown</span>
         </div>
-        <div class="overflow-x-auto">
-          <table class="cw-table">
+        <div class="dc-ds-table-wrap">
+          <table class="dc-ds-table" aria-label="Active contracts">
+            <caption class="sr-only">Contracts moving through review, approval, signature, and execution</caption>
             <thead>
               <tr>
                 {% with qs=search_query st=current_status %}
-                <th>
+                <th scope="col">
                   <a class="cw-sort-link" href="?sort={% if sort == 'title' %}-title{% else %}title{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Contract</a>
                 </th>
-                <th>Counterparty</th>
-                <th>
+                <th scope="col">Counterparty</th>
+                <th scope="col">
                   <a class="cw-sort-link" href="?sort={% if sort == 'lifecycle_stage' %}-lifecycle_stage{% else %}lifecycle_stage{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Stage</a>
                 </th>
-                <th>Owner</th>
-                <th>
+                <th scope="col">Owner</th>
+                <th scope="col">
                   <a class="cw-sort-link" href="?sort={% if sort == 'updated_at' %}-updated_at{% else %}updated_at{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Last activity</a>
                 </th>
-                <th>
+                <th scope="col">
                   <a class="cw-sort-link" href="?sort={% if sort == 'end_date' %}-end_date{% else %}end_date{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Due</a>
                 </th>
-                <th>
+                <th scope="col">
                   <a class="cw-sort-link" href="?sort={% if sort == 'risk_level' %}-risk_level{% else %}risk_level{% endif %}{% if qs %}&q={{ qs|urlencode }}{% endif %}{% if st %}&status={{ st|urlencode }}{% endif %}">Risk</a>
                 </th>
-                <th class="text-right">Action</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 {% endwith %}
               </tr>
             </thead>
@@ -349,7 +328,7 @@
                 <td>
                   <span class="c-primary">{{ contract.client.name|default:contract.counterparty|default:"—" }}</span>
                   {% if contract.value %}
-                  <div class="cw-row-meta">{{ contract.value|money:contract.currency }}</div>
+                  <div class="cw-row-meta" data-numeric>{{ contract.value|money:contract.currency }}</div>
                   {% endif %}
                 </td>
                 <td>
@@ -383,30 +362,22 @@
                 <td>
                   <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ contract.risk_level|contract_risk_badge_class|legacy_badge_tone }}">{{ contract.get_risk_level_display }}</span>
                 </td>
-                <td class="text-right">
-                  <a href="{% url 'contracts:contract_detail' contract.pk %}" class="cw-action">
+                <td data-col="actions">
+                  <a href="{% url 'contracts:contract_detail' contract.pk %}" class="dc-ds-button dc-ds-button--quiet">
                     {% if contract.lifecycle_stage == 'APPROVAL' %}Approve{% elif contract.lifecycle_stage == 'SIGNATURE' %}Track{% elif contract.status == 'DRAFT' %}Review{% else %}Open{% endif %}
                   </a>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="8" class="px-5 py-20 text-center">
-                  <div class="flex flex-col items-center gap-3">
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                      {% include "design_system/icon.html" with name="file-text" class_name="w-6 h-6 c-muted" %}
-                    </div>
-                    <div>
-                      <p class="font-medium c-primary">No contract work found</p>
-                      <p class="text-sm mt-1 c-muted">
-                        {% if search_query or current_status %}
-                        Adjust your filters or <a href="{% url 'contracts:contract_list' %}" class="c-link">clear all</a>.
-                        {% else %}
-                        Start with <a href="{% url 'contracts:contract_create' %}" class="c-link">your first contract</a>.
-                        {% endif %}
-                      </p>
-                    </div>
-                  </div>
+                <td colspan="8">
+                  {% if search_query or current_status %}
+                  {% url 'contracts:contract_list' as contract_list_clear_url %}
+                  {% include "design_system/empty_state.html" with icon="file-text" title="No contract work found" reason="No active contract matches the current filters." how="Adjust your filters or clear them to see all workspace contracts." action_url=contract_list_clear_url action_label="Clear filters" class_name="dc-ds-empty--compact" %}
+                  {% else %}
+                  {% url 'contracts:contract_create' as contract_create_url %}
+                  {% include "design_system/empty_state.html" with icon="file-text" title="No contract work found" reason="No contracts are moving through review, approval, signature, or execution yet." how="Start with your first contract to populate this workspace." action_url=contract_create_url action_label="Create first contract" class_name="dc-ds-empty--compact" %}
+                  {% endif %}
                 </td>
               </tr>
               {% endfor %}

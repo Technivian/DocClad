@@ -24,29 +24,30 @@
     <button type="submit" class="px-3 py-2 text-sm rounded-lg border dc-ds-button dc-ds-button--quiet">Search</button>
 </form>
 
-<div class="panel">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Matters">
+        <caption class="sr-only">Matters for this workspace</caption>
+        <thead>
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter #</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Client</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Practice Area</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Attorney</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Matter #</th>
+                <th scope="col">Title</th>
+                <th scope="col">Client</th>
+                <th scope="col">Practice Area</th>
+                <th scope="col">Status</th>
+                <th scope="col">Attorney</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for matter in matters %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5 text-sm font-mono tbl-td">{{ matter.matter_number }}</td>
-                <td class="px-5 py-3.5"><a href="{% url 'contracts:matter_detail' matter.pk %}" class="font-medium c-link">{{ matter.title|truncatechars:40 }}</a></td>
-                <td class="px-5 py-3.5 tbl-td">{{ matter.client.name|truncatechars:25 }}</td>
-                <td class="px-5 py-3.5 tbl-td">{{ matter.get_practice_area_display }}</td>
-                <td class="px-5 py-3.5"><span class="dc-ds-badge dc-ds-badge--sm {% if matter.status == 'ACTIVE' %}dc-ds-badge--success{% elif matter.status == 'ON_HOLD' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ matter.get_status_display }}</span></td>
-                <td class="px-5 py-3.5 tbl-td">{{ matter.responsible_attorney.get_full_name|default:"—" }}</td>
-                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:matter_update' matter.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet">Edit</a></td>
+            <tr>
+                <td class="font-mono">{{ matter.matter_number }}</td>
+                <td><a href="{% url 'contracts:matter_detail' matter.pk %}" class="font-medium c-link">{{ matter.title|truncatechars:40 }}</a></td>
+                <td>{{ matter.client.name|truncatechars:25 }}</td>
+                <td>{{ matter.get_practice_area_display }}</td>
+                <td><span class="dc-ds-badge dc-ds-badge--sm {% if matter.status == 'ACTIVE' %}dc-ds-badge--success{% elif matter.status == 'ON_HOLD' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ matter.get_status_display }}</span></td>
+                <td>{{ matter.responsible_attorney.get_full_name|default:"—" }}</td>
+                <td data-col="actions"><a href="{% url 'contracts:matter_update' matter.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a></td>
             </tr>
             {% empty %}
             {% url 'contracts:matter_create' as matter_create_url %}

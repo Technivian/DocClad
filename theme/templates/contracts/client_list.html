@@ -25,32 +25,33 @@
     <button type="submit" class="px-3 py-2 text-sm rounded-lg border dc-ds-button dc-ds-button--quiet">Search</button>
 </form>
 
-<div class="panel">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Clients">
+        <caption class="sr-only">Clients for this workspace</caption>
+        <thead>
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Name</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Industry</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contact</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Status</th>
+                <th scope="col">Industry</th>
+                <th scope="col">Contact</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for client in clients %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     <a href="{% url 'contracts:client_detail' client.pk %}" class="font-medium c-link">{{ client.name }}</a>
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ client.get_client_type_display }}</td>
-                <td class="px-5 py-3.5">
+                <td>{{ client.get_client_type_display }}</td>
+                <td>
                     <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ client.status|client_status_badge_class|legacy_badge_tone }}">{{ client.get_status_display }}</span>
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ client.industry|default:"—" }}</td>
-                <td class="px-5 py-3.5 tbl-td">{{ client.email|default:"—" }}</td>
-                <td class="px-5 py-3.5 text-right">
-                    <a href="{% url 'contracts:client_update' client.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet">Edit</a>
+                <td>{{ client.industry|default:"—" }}</td>
+                <td>{{ client.email|default:"—" }}</td>
+                <td data-col="actions">
+                    <a href="{% url 'contracts:client_update' client.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
                 </td>
             </tr>
             {% empty %}

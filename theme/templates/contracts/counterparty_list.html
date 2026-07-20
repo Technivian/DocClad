@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Counterparties – CLM One{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .tbl-row { border-bottom: 1px solid var(--card-border); }
-  .tbl-row:hover { background: var(--sidebar-hover); }
-</style>
 <div class="page-wrap">
   <div class="page-header">
     <div>
@@ -18,34 +14,35 @@
       </a>
     </div>
   </div>
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Counterparties">
+      <caption class="sr-only">Counterparties for this workspace</caption>
+      <thead>
         <tr>
-          <th class="tbl-th text-left px-5 py-3">Name</th>
-          <th class="tbl-th text-left px-5 py-3">Type</th>
-          <th class="tbl-th text-left px-5 py-3">Jurisdiction</th>
-          <th class="tbl-th text-left px-5 py-3">Contact</th>
-          <th class="tbl-th text-left px-5 py-3">Status</th>
-          <th class="tbl-th text-right px-5 py-3">Actions</th>
+          <th scope="col">Name</th>
+          <th scope="col">Type</th>
+          <th scope="col">Jurisdiction</th>
+          <th scope="col">Contact</th>
+          <th scope="col">Status</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in counterparties %}
-        <tr class="tbl-row">
-          <td class="tbl-td px-5 py-3 text-sm">{{ item.name }}</td>
-          <td class="tbl-td px-5 py-3 text-sm">{{ item.get_entity_type_display }}</td>
-          <td class="tbl-td px-5 py-3 text-sm">{{ item.jurisdiction|default:"-" }}</td>
-          <td class="tbl-td px-5 py-3 text-sm">{{ item.contact_name|default:"-" }}</td>
-          <td class="tbl-td px-5 py-3 text-sm">
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.get_entity_type_display }}</td>
+          <td>{{ item.jurisdiction|default:"-" }}</td>
+          <td>{{ item.contact_name|default:"-" }}</td>
+          <td>
             {% if item.is_active %}
             <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Active</span>
             {% else %}
             <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Inactive</span>
             {% endif %}
           </td>
-          <td class="tbl-td px-5 py-3 text-right">
-            <a href="{% url 'contracts:counterparty_update' item.pk %}" class="text-sm c-link">Edit</a>
+          <td data-col="actions">
+            <a href="{% url 'contracts:counterparty_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
           </td>
         </tr>
         {% empty %}
