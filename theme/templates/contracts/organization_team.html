@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Organization Team – CLM One{% endblock %}
 {% block authenticated_page_title %}Organization Team{% endblock %}
-{% block authenticated_page_subtitle %}Manage reviewers, owners, and workspace access.{% endblock %}
+{% block authenticated_page_subtitle %}Manage organization access, roles, invitations, and team activity.{% endblock %}
 {% block content %}
 {% include "design_system/page_scaffold.html" with main_template="contracts/organization_team_content.html" wide=True %}
+<script src="{% static 'js/clmone-organization-team.js' %}" defer></script>
 {% endblock %}

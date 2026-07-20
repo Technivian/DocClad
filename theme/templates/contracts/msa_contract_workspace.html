@@ -1,32 +1,72 @@
-<div class="dc-ds-workspace dc-ds-workspace--msa">
+<div class="dc-ds-workspace dc-ds-workspace--msa" data-workspace-drafting data-open-exceptions="{{ msa_workspace.open_exceptions }}" data-default-filter="{{ msa_workspace.document_overview.default_filter }}">
+  {% csrf_token %}
   <section class="dc-ds-workspace__header">
     <div class="dc-ds-workspace__title-row">
       <div class="dc-ds-workspace__title-block">
         <div class="dc-ds-workspace__title-line">
           <h1 class="dc-ds-workspace__title">{{ msa_workspace.display_title }}</h1>
           <div class="dc-ds-workspace__status-pills" aria-label="Contract status">
+            {% include "design_system/status_badge.html" with label=msa_workspace.current_stage tone="progress" size="sm" %}
             {% include "design_system/status_badge.html" with label=msa_workspace.risk_badge_label tone=msa_workspace.risk_badge_tone size="sm" %}
             {% if msa_workspace.open_exceptions %}
-            <button type="button" class="dc-ds-workspace__status-trigger" data-workspace-open-governance aria-label="{{ msa_workspace.open_exceptions_label }}">
+            <button type="button" class="dc-ds-workspace__status-trigger" data-workspace-open-exceptions aria-label="{{ msa_workspace.open_exceptions_label }}">
               <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">{{ msa_workspace.open_exceptions_label }}</span>
             </button>
             {% else %}
             {% include "design_system/status_badge.html" with label=msa_workspace.open_exceptions_label tone="success" size="sm" %}
             {% endif %}
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Version {{ msa_workspace.document_version }}</span>
           </div>
         </div>
+        {% if msa_workspace.risk_drivers %}
+        <div class="dc-ds-workspace__risk-drivers" aria-label="Risk drivers">
+          <span class="dc-ds-workspace__risk-drivers-label">Triggered by:</span>
+          <ul class="dc-ds-workspace__risk-drivers-list">
+            {% for driver in msa_workspace.risk_drivers %}
+            <li>{{ driver }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
       </div>
       <div class="dc-ds-workspace__header-actions">
+        {% if msa_workspace.primary_cta_mode == 'resolve_exceptions' %}
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-workspace-open-exceptions>{{ msa_workspace.primary_cta }}</button>
+        {% elif msa_workspace.primary_cta_mode == 'submit_commercial' %}
+        <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'legal' %}">{% csrf_token %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ msa_workspace.primary_cta }}</button>
+        </form>
+        {% else %}
         <button type="button" class="dc-ds-button dc-ds-button--primary" data-workspace-open-governance>{{ msa_workspace.primary_cta }}</button>
+        {% endif %}
         <details class="dc-ds-workspace__actions-menu">
           <summary class="dc-ds-button dc-ds-button--ghost">Actions</summary>
           <div class="dc-ds-workspace__actions-panel dc-ds-surface" role="menu" aria-label="Secondary workflow actions">
+            <button type="button" class="dc-ds-workspace__actions-item" role="menuitem" data-workspace-open-governance>Review approval route</button>
+            <button type="button" class="dc-ds-workspace__actions-item" role="menuitem" data-msa-preview-mode="full">Preview full contract</button>
+            {% if workflow.contract %}
+            <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-workspace__actions-item" role="menuitem">Save and exit</a>
+            {% else %}
+            <a href="{% url 'contracts:repository' %}" class="dc-ds-workspace__actions-item" role="menuitem">Save and exit</a>
+            {% endif %}
             {% if workflow.contract %}
             <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-workspace__actions-item" role="menuitem">View contract record</a>
             {% endif %}
+            {% if msa_workspace.open_exceptions %}
+            <span class="dc-ds-workspace__actions-item is-disabled" role="menuitem" aria-disabled="true" title="Resolve open exceptions before submitting for review">Send to Legal Review · blocked</span>
+            {% if msa_workspace.finance_approval_triggered %}
+            <span class="dc-ds-workspace__actions-item is-disabled" role="menuitem" aria-disabled="true" title="Resolve open exceptions before submitting for review">Send to Finance · blocked</span>
+            {% endif %}
+            {% elif not msa_workspace.can_submit_commercial %}
+            <span class="dc-ds-workspace__actions-item is-disabled" role="menuitem" aria-disabled="true" title="Confirm remaining drafting sections before submitting for review">Send to Legal Review · blocked</span>
+            {% if msa_workspace.finance_approval_triggered %}
+            <span class="dc-ds-workspace__actions-item is-disabled" role="menuitem" aria-disabled="true" title="Confirm remaining drafting sections before submitting for review">Send to Finance · blocked</span>
+            {% endif %}
+            {% else %}
             <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'legal' %}" role="none">{% csrf_token %}<button type="submit" class="dc-ds-workspace__actions-item" role="menuitem">Send to Legal Review</button></form>
             {% if msa_workspace.finance_approval_triggered %}
             <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'finance' %}" role="none">{% csrf_token %}<button type="submit" class="dc-ds-workspace__actions-item" role="menuitem">Send to Finance</button></form>
+            {% endif %}
             {% endif %}
             <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'summary' %}" role="none">{% csrf_token %}<button type="submit" class="dc-ds-workspace__actions-item" role="menuitem">Download MSA summary</button></form>
             <form method="post" action="{% url 'contracts:msa_export_document' workflow.pk 'word' %}" role="none">{% csrf_token %}<button type="submit" class="dc-ds-workspace__actions-item" role="menuitem">Export Word</button></form>
@@ -34,31 +74,45 @@
         </details>
       </div>
     </div>
-    <div class="dc-ds-workspace__metadata-grid dc-ds-workspace__metadata-grid--compact">
-      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Current stage</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.current_stage }}</div></div>
-      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Owner</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.owner }}</div></div>
-      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Risk</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.risk_level }}</div></div>
-      <div class="dc-ds-workspace__metadata-item"><div class="dc-ds-workspace__metadata-label">Next action</div><div class="dc-ds-workspace__metadata-value">{{ msa_workspace.next_action }}</div></div>
-    </div>
+
+    <dl class="dc-ds-workspace__command-summary" aria-label="Contract command summary">
+      <div><dt>Stage</dt><dd>{{ msa_workspace.current_stage }}</dd></div>
+      <div><dt>Owner</dt><dd>{{ msa_workspace.owner }}</dd></div>
+      <div><dt>Risk</dt><dd>{{ msa_workspace.risk_level }}</dd></div>
+      <div><dt>Exceptions</dt><dd>{% if msa_workspace.open_exceptions %}{{ msa_workspace.open_exceptions }} open{% else %}None{% endif %}</dd></div>
+      <div class="dc-ds-workspace__command-summary-next"><dt>Next action</dt><dd>{{ msa_workspace.next_action }}</dd></div>
+      <div><dt>Version</dt><dd>{{ msa_workspace.document_version }}</dd></div>
+    </dl>
   </section>
 
-  <section class="dc-ds-workspace__timeline" aria-label="Lifecycle stages">
-    <div class="dc-ds-workspace__timeline-title">Lifecycle</div>
-    <div class="dc-ds-workspace__timeline-track">
-      {% for step in msa_workspace.timeline %}
-      <div class="dc-ds-workspace__timeline-step{% if forloop.counter0 < msa_workspace.active_timeline_index %} is-done{% elif forloop.counter0 == msa_workspace.active_timeline_index %} is-active{% endif %}">
-        <div class="dc-ds-workspace__timeline-dot">{% if forloop.counter0 < msa_workspace.active_timeline_index %}✓{% else %}{{ forloop.counter }}{% endif %}</div>
-        <div>{{ step }}</div>
+  <details class="dc-ds-workspace__timeline" aria-label="Lifecycle stages">
+    <summary class="dc-ds-workspace__timeline-compact">
+      <span class="dc-ds-workspace__timeline-compact-main">
+        <span class="dc-ds-workspace__timeline-title">Lifecycle</span>
+        <strong>{{ msa_workspace.lifecycle_step_label }}</strong>
+        <span class="dc-ds-workspace__copy">{{ msa_workspace.lifecycle_next_label }}</span>
+      </span>
+      <span class="dc-ds-workspace__timeline-expand">Show full lifecycle</span>
+    </summary>
+    <div class="dc-ds-workspace__timeline-expanded">
+      <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="Lifecycle stages">
+        {% for step in msa_workspace.timeline %}
+        <li class="contract-progress-track__step{% if forloop.counter0 < msa_workspace.active_timeline_index %} contract-progress-track__step--done{% elif forloop.counter0 == msa_workspace.active_timeline_index %} contract-progress-track__step--current{% elif msa_workspace.open_exceptions and forloop.counter0 > msa_workspace.active_timeline_index %} contract-progress-track__step--blocked{% endif %}"{% if forloop.counter0 == msa_workspace.active_timeline_index %} aria-current="step"{% endif %}>
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label">{% if forloop.counter0 == msa_workspace.active_timeline_index %}<strong>{{ step }}</strong>{% else %}{{ step }}{% endif %}</span>
+          {% if msa_workspace.open_exceptions and forloop.counter0 > msa_workspace.active_timeline_index and forloop.counter0 == msa_workspace.active_timeline_index|add:1 %}
+          <span class="contract-progress-track__note">Blocked by {{ msa_workspace.open_exceptions }} open exception{{ msa_workspace.open_exceptions|pluralize }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      <div class="dc-ds-workspace__timeline-active" aria-live="polite">
+        <div><span class="dc-ds-workspace__timeline-active-label">Active stage owner</span><strong>{{ msa_workspace.active_stage_owner }}</strong></div>
+        <div><span class="dc-ds-workspace__timeline-active-label">Status</span><strong>{{ msa_workspace.active_stage_status }}</strong></div>
       </div>
-      {% endfor %}
     </div>
-    <div class="dc-ds-workspace__timeline-active" aria-live="polite">
-      <div><span class="dc-ds-workspace__timeline-active-label">Active stage owner</span><strong>{{ msa_workspace.active_stage_owner }}</strong></div>
-      <div><span class="dc-ds-workspace__timeline-active-label">Status</span><strong>{{ msa_workspace.active_stage_status }}</strong></div>
-    </div>
-  </section>
+  </details>
 
-  {# In-page MSA panes: underline tabs; buttons because panes are not routed. #}
   <nav class="dc-ds-workspace-tabs" role="tablist" aria-label="MSA workspace panels">
     <div class="dc-ds-workspace-tabs__list">
       <button type="button" class="dc-ds-workspace-tabs__tab is-active" role="tab" aria-selected="true" aria-controls="msa-drafting-pane" data-msa-pane="msa-drafting-pane">Guided drafting</button>
@@ -72,32 +126,59 @@
         <div class="dc-ds-workspace__surface-head">
           <div>
             <div class="dc-ds-workspace__surface-title">Guided drafting</div>
-            <p class="dc-ds-workspace__copy">Section status drives the next review move. Provenance stays secondary.</p>
+            <p class="dc-ds-workspace__copy">Select a section to inspect the clause, resolve exceptions, and progress the draft.</p>
           </div>
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ msa_workspace.document_sections|length }} sections</span>
         </div>
         <div class="dc-ds-workspace__surface-body">
-          <div class="dc-ds-workspace__drafting-list">
-            {% for section in msa_workspace.document_sections %}
-            <details class="dc-ds-workspace__drafting-step" data-section-id="{{ section.section_id }}"{% if forloop.first %} open{% endif %}>
-              <summary>
-                <span class="dc-ds-workspace__drafting-summary-main">
-                  <span class="dc-ds-workspace__drafting-title">{{ section.title }}</span>
-                  <span class="dc-ds-workspace__drafting-provenance">{{ section.source }}</span>
-                </span>
-                {% include "design_system/status_badge.html" with label=section.state tone=section.state_tone size="sm" %}
-              </summary>
-              <div class="dc-ds-workspace__drafting-content">
-                <div class="dc-ds-workspace__copy">{{ section.source_detail }}</div>
-                {% if section.fields %}<div class="dc-ds-workspace__field-chip-row">{% for field in section.fields %}<span class="dc-ds-workspace__field-chip">{{ field }}</span>{% endfor %}</div>{% endif %}
-                <a class="dc-ds-workspace__risk-link" href="#{{ section.section_id }}" data-clause-link="{{ section.section_id }}">Open in contract preview</a>
+          <div class="dc-ds-workspace__doc-overview" aria-label="Document overview">
+            <div class="dc-ds-workspace__doc-overview-head">
+              <div>
+                <div class="dc-ds-workspace__doc-overview-title">Document overview</div>
+                <p class="dc-ds-workspace__copy">{{ msa_workspace.document_overview.total }} sections · {{ msa_workspace.document_overview.complete }} complete · {{ msa_workspace.document_overview.exceptions }} exceptions · {{ msa_workspace.document_overview.needs_review }} need review</p>
               </div>
-            </details>
+            </div>
+            <div class="dc-ds-workspace__filter-row" role="group" aria-label="Filter drafting sections">
+              <button type="button" class="dc-ds-workspace__filter-chip{% if msa_workspace.document_overview.default_filter == 'all' %} is-active{% endif %}" data-msa-filter="all" aria-pressed="{% if msa_workspace.document_overview.default_filter == 'all' %}true{% else %}false{% endif %}">All</button>
+              <button type="button" class="dc-ds-workspace__filter-chip{% if msa_workspace.document_overview.default_filter == 'needs_review' %} is-active{% endif %}" data-msa-filter="needs_review" aria-pressed="{% if msa_workspace.document_overview.default_filter == 'needs_review' %}true{% else %}false{% endif %}">Needs review</button>
+              <button type="button" class="dc-ds-workspace__filter-chip{% if msa_workspace.document_overview.default_filter == 'exceptions' %} is-active{% endif %}" data-msa-filter="exceptions" aria-pressed="{% if msa_workspace.document_overview.default_filter == 'exceptions' %}true{% else %}false{% endif %}">Exceptions</button>
+              <button type="button" class="dc-ds-workspace__filter-chip{% if msa_workspace.document_overview.default_filter == 'complete' %} is-active{% endif %}" data-msa-filter="complete" aria-pressed="{% if msa_workspace.document_overview.default_filter == 'complete' %}true{% else %}false{% endif %}">Complete</button>
+            </div>
+          </div>
+
+          <div class="dc-ds-workspace__drafting-list" role="listbox" aria-label="Drafting sections" aria-activedescendant="">
+            {% for section in msa_workspace.document_sections %}
+            <div
+              class="dc-ds-workspace__drafting-step"
+              id="draft-row-{{ section.section_id }}"
+              role="option"
+              tabindex="0"
+              aria-selected="false"
+              data-section-id="{{ section.section_id }}"
+              data-section-state="{{ section.state }}"
+              data-filter-bucket="{% if section.state == 'Exception' %}exceptions{% elif section.state == 'Complete' or section.state == 'Approved' %}complete{% else %}needs_review{% endif %}"
+              {% if section.state == 'Needs review' %}data-confirm-url="{% url 'contracts:msa_confirm_section' workflow.pk section.section_id %}"{% endif %}
+            >
+              <div class="dc-ds-workspace__drafting-summary-main">
+                <span class="dc-ds-workspace__drafting-title">{{ section.title }}</span>
+                <span class="dc-ds-workspace__drafting-provenance">{{ section.provenance_summary }}</span>
+                {% if section.owner %}<span class="dc-ds-workspace__drafting-owner">Owner: {{ section.owner }}</span>{% endif %}
+              </div>
+              <div class="dc-ds-workspace__drafting-meta">
+                {% include "design_system/status_badge.html" with label=section.state tone=section.state_tone size="sm" %}
+                {% if section.action_label %}
+                <button type="button" class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm" data-section-action="{{ section.section_id }}" data-action-mode="{% if section.state == 'Exception' %}resolve{% elif section.state == 'Needs review' %}confirm{% else %}review{% endif %}">{{ section.action_label }}</button>
+                {% endif %}
+              </div>
+            </div>
             {% endfor %}
           </div>
+          <p class="dc-ds-workspace__empty-filter" data-msa-empty-filter hidden>No sections match this filter.</p>
+          <div class="sr-only" aria-live="polite" data-msa-selection-live></div>
         </div>
       </section>
     </section>
+
+    <div class="dc-ds-workspace__divider" data-msa-divider role="separator" aria-orientation="vertical" aria-label="Resize drafting and preview" tabindex="0"></div>
 
     <section class="dc-ds-workspace__pane" id="msa-preview-pane" role="tabpanel">
       <section class="dc-ds-workspace__surface dc-ds-workspace__preview-card" data-msa-preview>
@@ -107,7 +188,14 @@
             <p class="dc-ds-workspace__copy">Synced with the selected drafting section. Exception and changed clauses are highlighted.</p>
           </div>
           <div class="dc-ds-workspace__preview-tools">
-            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">Version {{ msa_workspace.draft_document.version|default:"1" }}</span>
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">Version {{ msa_workspace.document_version }}</span>
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{% if msa_workspace.unsaved_changes %}attention{% else %}success{% endif %}" data-msa-save-state>{% if msa_workspace.unsaved_changes %}Unsaved changes{% else %}Saved{% endif %}</span>
+            <div class="dc-ds-workspace__preview-modes" role="group" aria-label="Preview mode">
+              <button type="button" class="dc-ds-workspace__filter-chip is-active" data-msa-preview-mode="selected" aria-pressed="true">Selected clause</button>
+              <button type="button" class="dc-ds-workspace__filter-chip" data-msa-preview-mode="full" aria-pressed="false">Full contract</button>
+              <button type="button" class="dc-ds-workspace__filter-chip" data-msa-preview-mode="changes" aria-pressed="false">Changes</button>
+              <button type="button" class="dc-ds-workspace__filter-chip" data-msa-preview-mode="clean" aria-pressed="false">Clean version</button>
+            </div>
             <button type="button" class="dc-ds-button dc-ds-button--ghost dc-ds-button--sm" data-msa-preview-expand aria-pressed="false">Expand</button>
           </div>
         </div>
@@ -117,7 +205,11 @@
             <article
               class="dc-ds-workspace__clause{% if section.state == 'Exception' %} is-exception{% endif %}{% if section.has_changes %} is-changed{% endif %}"
               id="{{ section.section_id }}"
+              data-section-id="{{ section.section_id }}"
               data-section-state="{{ section.state }}"
+              tabindex="0"
+              role="button"
+              aria-label="Select {{ section.title }}"
             >
               <div class="dc-ds-workspace__clause-head">
                 <div class="dc-ds-workspace__clause-title">{{ section.title }}</div>
@@ -131,6 +223,91 @@
       </section>
     </section>
   </div>
+
+  <div class="dc-ds-workspace__sticky-bar" data-msa-sticky-bar aria-live="polite">
+    <p class="dc-ds-workspace__sticky-copy">{{ msa_workspace.blocker_message }}</p>
+    <div class="dc-ds-workspace__sticky-actions">
+      {% if workflow.contract %}
+      <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--ghost">{{ msa_workspace.sticky_secondary_label }}</a>
+      {% else %}
+      <a href="{% url 'contracts:repository' %}" class="dc-ds-button dc-ds-button--ghost">{{ msa_workspace.sticky_secondary_label }}</a>
+      {% endif %}
+      {% if msa_workspace.primary_cta_mode == 'resolve_exceptions' %}
+      <button type="button" class="dc-ds-button dc-ds-button--primary" data-workspace-open-exceptions>{{ msa_workspace.sticky_primary_label }}</button>
+      {% elif msa_workspace.can_submit_commercial %}
+      <form method="post" action="{% url 'contracts:msa_submit_for_review' workflow.pk 'legal' %}">{% csrf_token %}
+        <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ msa_workspace.sticky_primary_label }}</button>
+      </form>
+      {% else %}
+      <button type="button" class="dc-ds-button dc-ds-button--primary" data-workspace-open-governance>{{ msa_workspace.sticky_primary_label }}</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <dialog class="dc-ds-workspace__drawer" id="msa-exception-drawer" aria-labelledby="msa-exception-drawer-title">
+    <div class="dc-ds-workspace__drawer-inner">
+      <div class="dc-ds-workspace__drawer-head">
+        <h2 id="msa-exception-drawer-title">Resolve exception</h2>
+        <form method="dialog"><button class="dc-ds-workspace__drawer-close" aria-label="Close exception resolution">×</button></form>
+      </div>
+      {% for risk in msa_workspace.open_risk_cards %}
+      <section class="dc-ds-workspace__drawer-section" data-exception-panel="{{ risk.id }}" data-section-anchor="{{ risk.section_anchor }}"{% if not forloop.first %} hidden{% endif %}>
+        <h3>{{ risk.title }}</h3>
+        <div class="dc-ds-workspace__risk-grid">
+          <div><div class="dc-ds-workspace__kv-label">Risk severity</div><div class="dc-ds-workspace__kv-value">{{ risk.severity }}</div></div>
+          <div><div class="dc-ds-workspace__kv-label">Required reviewer</div><div class="dc-ds-workspace__kv-value">{{ risk.required_reviewer }}</div></div>
+          <div><div class="dc-ds-workspace__kv-label">Playbook rule</div><div class="dc-ds-workspace__kv-value">{{ risk.playbook_rule }}</div></div>
+          <div><div class="dc-ds-workspace__kv-label">Impact</div><div class="dc-ds-workspace__kv-value">{{ risk.legal_commercial_impact }}</div></div>
+        </div>
+        <div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Reason for deviation</div>
+        <div class="dc-ds-workspace__kv-value">{{ risk.reason }}</div>
+        <div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Current contract language</div>
+        <div class="dc-ds-workspace__kv-value">{{ risk.current_language|default:"No clause text available."|linebreaksbr }}</div>
+        <div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Approved company position</div>
+        <div class="dc-ds-workspace__kv-value">{{ risk.approved_position }}</div>
+        <div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">AI recommendation</div>
+        <div class="dc-ds-workspace__kv-value">{{ risk.ai_recommendation }}</div>
+        <div class="dc-ds-workspace__kv-label dc-ds-workspace__approval-trigger">Suggested fallback</div>
+        <div class="dc-ds-workspace__kv-value">{{ risk.suggested_fallback }}</div>
+
+        <form method="post" action="{% url 'contracts:msa_exception_action' workflow.pk risk.id %}" class="dc-ds-workspace__exception-form">
+          {% csrf_token %}
+          <label class="dc-ds-workspace__kv-label" for="exception-comment-{{ risk.id }}">Comments</label>
+          <textarea class="input-base" id="exception-comment-{{ risk.id }}" name="comment" rows="2" placeholder="Optional comment for the audit trail"></textarea>
+          <label class="dc-ds-workspace__kv-label" for="exception-reason-{{ risk.id }}">Reason (required to keep exception)</label>
+          <textarea class="input-base" id="exception-reason-{{ risk.id }}" name="reason" rows="2" placeholder="Why this deviation should remain"></textarea>
+          <label class="dc-ds-workspace__kv-label" for="exception-owner-{{ risk.id }}">Accountable owner</label>
+          <select class="input-base" id="exception-owner-{{ risk.id }}" name="owner_id">
+            <option value="">Select owner…</option>
+            {% for member in msa_workspace.workspace_members %}
+            <option value="{{ member.id }}">{{ member.name }}</option>
+            {% endfor %}
+          </select>
+          <div class="dc-ds-workspace__actions">
+            <button type="submit" name="action" value="use_approved_wording" class="dc-ds-button dc-ds-button--primary">Use approved wording</button>
+            <button type="submit" name="action" value="accept_fallback" class="dc-ds-button dc-ds-button--ghost">Accept suggested fallback</button>
+            <button type="submit" name="action" value="keep_exception" class="dc-ds-button dc-ds-button--quiet">Keep exception</button>
+            <button type="submit" name="action" value="request_approval" class="dc-ds-button dc-ds-button--quiet">Request approval</button>
+            <button type="submit" name="action" value="add_comment" class="dc-ds-button dc-ds-button--quiet">Add comment</button>
+            <a class="dc-ds-button dc-ds-button--ghost" href="#{{ risk.section_anchor }}" data-clause-link="{{ risk.section_anchor }}">Open clause</a>
+          </div>
+        </form>
+      </section>
+      {% empty %}
+      <section class="dc-ds-workspace__drawer-section">
+        <p class="dc-ds-workspace__copy">No open exceptions remain on this draft.</p>
+      </section>
+      {% endfor %}
+      <section class="dc-ds-workspace__drawer-section">
+        <h3>Decision history</h3>
+        {% for entry in msa_workspace.audit_preview %}
+        <div class="dc-ds-workspace__audit-row"><div class="dc-ds-workspace__audit-title">{{ entry.event }}</div><div class="dc-ds-workspace__audit-meta">{{ entry.meta }}</div><div class="dc-ds-workspace__audit-meta">{{ entry.timestamp|date:"M d, Y H:i" }}</div></div>
+        {% empty %}
+        <p class="dc-ds-workspace__copy">No audit events have been recorded for this workflow yet.</p>
+        {% endfor %}
+      </section>
+    </div>
+  </dialog>
 
   <dialog class="dc-ds-workspace__drawer" id="msa-governance-drawer" aria-labelledby="msa-governance-drawer-title">
     <div class="dc-ds-workspace__drawer-inner">
@@ -151,91 +328,240 @@
   </dialog>
 </div>
 <script nonce="{{ csp_nonce }}">
-document.addEventListener('click', function (event) {
-  var governanceTrigger = event.target.closest('[data-workspace-open-governance]');
-  if (governanceTrigger) {
-    var drawer = document.getElementById('msa-governance-drawer');
-    if (drawer && !drawer.open) drawer.showModal();
-    return;
+(function () {
+  var root = document.querySelector('[data-workspace-drafting]');
+  if (!root) return;
+  var layout = root.querySelector('[data-workspace-layout]');
+  var live = root.querySelector('[data-msa-selection-live]');
+  var exceptionDrawer = document.getElementById('msa-exception-drawer');
+  var governanceDrawer = document.getElementById('msa-governance-drawer');
+  var lastFocus = null;
+  var currentFilter = root.getAttribute('data-default-filter') || 'all';
+  var previewMode = 'selected';
+
+  function announce(message) {
+    if (live) live.textContent = message;
   }
 
-  var expand = event.target.closest('[data-msa-preview-expand]');
-  if (expand) {
-    var layout = document.querySelector('[data-workspace-layout]');
-    var pressed = expand.getAttribute('aria-pressed') === 'true';
-    expand.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-    expand.textContent = pressed ? 'Expand' : 'Collapse';
-    if (layout) layout.classList.toggle('is-preview-expanded', !pressed);
-    return;
+  function openDrawer(drawer) {
+    if (!drawer || drawer.open) return;
+    lastFocus = document.activeElement;
+    drawer.showModal();
+    var closeBtn = drawer.querySelector('.dc-ds-workspace__drawer-close');
+    if (closeBtn) closeBtn.focus();
   }
 
-  var tab = event.target.closest('[data-msa-pane]');
-  if (tab) {
-    var workspace = document.querySelector('[data-workspace-layout]');
-    if (!workspace) return;
-    workspace.classList.add('has-tabs');
-    document.querySelectorAll('[data-msa-pane]').forEach(function (button) {
-      var active = button === tab;
-      button.setAttribute('aria-selected', String(active));
-      button.classList.toggle('is-active', active);
-    });
-    workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
-      pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-msa-pane'));
-    });
-    return;
+  function closeDrawer(drawer) {
+    if (drawer && drawer.open) drawer.close();
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   }
 
-  var link = event.target.closest('[data-clause-link]');
-  if (!link) return;
-  event.preventDefault();
-  var targetId = link.getAttribute('data-clause-link');
-  var target = document.getElementById(targetId);
-  if (!target) return;
-  var workspace = document.querySelector('[data-workspace-layout]');
-  if (workspace) {
-    workspace.classList.add('has-tabs');
-    workspace.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
-      pane.classList.toggle('is-active', pane.id === 'msa-preview-pane');
+  function setFilter(filter) {
+    currentFilter = filter;
+    root.querySelectorAll('[data-msa-filter]').forEach(function (chip) {
+      var active = chip.getAttribute('data-msa-filter') === filter;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', String(active));
     });
-    document.querySelectorAll('[data-msa-pane]').forEach(function (button) {
-      var active = button.getAttribute('data-msa-pane') === 'msa-preview-pane';
-      button.setAttribute('aria-selected', String(active));
-      button.classList.toggle('is-active', active);
+    var visible = 0;
+    root.querySelectorAll('.dc-ds-workspace__drafting-step').forEach(function (row) {
+      var bucket = row.getAttribute('data-filter-bucket');
+      var show = filter === 'all' || bucket === filter;
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    var empty = root.querySelector('[data-msa-empty-filter]');
+    if (empty) empty.hidden = visible > 0;
+  }
+
+  function setPreviewMode(mode) {
+    previewMode = mode;
+    root.querySelectorAll('[data-msa-preview-mode]').forEach(function (chip) {
+      var active = chip.getAttribute('data-msa-preview-mode') === mode;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', String(active));
+    });
+    root.querySelectorAll('.dc-ds-workspace__clause').forEach(function (clause) {
+      var state = clause.getAttribute('data-section-state');
+      var changed = clause.classList.contains('is-changed');
+      var selected = clause.classList.contains('is-linked');
+      var show = true;
+      if (mode === 'selected') show = selected || !root.querySelector('.dc-ds-workspace__clause.is-linked');
+      if (mode === 'changes') show = changed || state === 'Exception';
+      if (mode === 'clean') show = state !== 'Exception';
+      clause.hidden = mode !== 'full' && mode !== 'selected' ? !show : false;
+      if (mode === 'selected' && root.querySelector('.dc-ds-workspace__clause.is-linked')) {
+        clause.hidden = !selected;
+      }
     });
   }
-  document.querySelectorAll('.dc-ds-workspace__clause.is-linked').forEach(function (node) {
-    node.classList.remove('is-linked');
-  });
-  document.querySelectorAll('.dc-ds-workspace__drafting-step.is-selected').forEach(function (node) {
-    node.classList.remove('is-selected');
-  });
-  target.classList.add('is-linked');
-  var step = document.querySelector('.dc-ds-workspace__drafting-step[data-section-id="' + targetId + '"]');
-  if (step) step.classList.add('is-selected');
-  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  var drawer = document.getElementById('msa-governance-drawer');
-  if (drawer && drawer.open) drawer.close();
-});
 
-document.addEventListener('toggle', function (event) {
-  var step = event.target.closest('.dc-ds-workspace__drafting-step');
-  if (!step || !step.open) return;
-  var sectionId = step.getAttribute('data-section-id');
-  var target = sectionId && document.getElementById(sectionId);
-  if (!target) return;
-  document.querySelectorAll('.dc-ds-workspace__clause.is-linked').forEach(function (node) {
-    node.classList.remove('is-linked');
-  });
-  document.querySelectorAll('.dc-ds-workspace__drafting-step.is-selected').forEach(function (node) {
-    node.classList.remove('is-selected');
-  });
-  step.classList.add('is-selected');
-  target.classList.add('is-linked');
-}, true);
+  function selectSection(sectionId, opts) {
+    opts = opts || {};
+    if (!sectionId) return;
+    root.querySelectorAll('.dc-ds-workspace__drafting-step').forEach(function (row) {
+      var selected = row.getAttribute('data-section-id') === sectionId;
+      row.classList.toggle('is-selected', selected);
+      row.setAttribute('aria-selected', String(selected));
+    });
+    root.querySelectorAll('.dc-ds-workspace__clause').forEach(function (clause) {
+      clause.classList.toggle('is-linked', clause.id === sectionId);
+    });
+    var list = root.querySelector('.dc-ds-workspace__drafting-list');
+    if (list) list.setAttribute('aria-activedescendant', 'draft-row-' + sectionId);
+    var titleNode = root.querySelector('.dc-ds-workspace__drafting-step[data-section-id="' + sectionId + '"] .dc-ds-workspace__drafting-title');
+    announce(titleNode ? ('Selected section: ' + titleNode.textContent) : 'Section selected');
+    if (opts.scrollPreview !== false) {
+      var target = document.getElementById(sectionId);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (previewMode === 'selected') setPreviewMode('selected');
+    if (opts.openException) {
+      var panel = root.querySelector('[data-exception-panel][data-section-anchor="' + sectionId + '"]') || root.querySelector('[data-exception-panel]');
+      root.querySelectorAll('[data-exception-panel]').forEach(function (node) {
+        node.hidden = panel ? node !== panel : false;
+      });
+      openDrawer(exceptionDrawer);
+    }
+  }
 
-document.addEventListener('click', function (event) {
-  var menu = document.querySelector('.dc-ds-workspace__actions-menu[open]');
-  if (!menu) return;
-  if (!menu.contains(event.target)) menu.removeAttribute('open');
-});
+  function moveSelection(delta) {
+    var rows = Array.prototype.slice.call(root.querySelectorAll('.dc-ds-workspace__drafting-step:not([hidden])'));
+    if (!rows.length) return;
+    var current = rows.findIndex(function (row) { return row.classList.contains('is-selected'); });
+    var next = current < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, current + delta));
+    selectSection(rows[next].getAttribute('data-section-id'));
+    rows[next].focus();
+  }
+
+  root.addEventListener('click', function (event) {
+    var filter = event.target.closest('[data-msa-filter]');
+    if (filter) { setFilter(filter.getAttribute('data-msa-filter')); return; }
+
+    var mode = event.target.closest('[data-msa-preview-mode]');
+    if (mode) { setPreviewMode(mode.getAttribute('data-msa-preview-mode')); return; }
+
+    if (event.target.closest('[data-workspace-open-exceptions]')) {
+      openDrawer(exceptionDrawer);
+      announce(root.getAttribute('data-open-exceptions') + ' open exceptions');
+      return;
+    }
+    if (event.target.closest('[data-workspace-open-governance]')) {
+      openDrawer(governanceDrawer);
+      return;
+    }
+
+    var expand = event.target.closest('[data-msa-preview-expand]');
+    if (expand) {
+      var pressed = expand.getAttribute('aria-pressed') === 'true';
+      expand.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+      expand.textContent = pressed ? 'Expand' : 'Collapse';
+      if (layout) layout.classList.toggle('is-preview-expanded', !pressed);
+      return;
+    }
+
+    var tab = event.target.closest('[data-msa-pane]');
+    if (tab && layout) {
+      layout.classList.add('has-tabs');
+      root.querySelectorAll('[data-msa-pane]').forEach(function (button) {
+        var active = button === tab;
+        button.setAttribute('aria-selected', String(active));
+        button.classList.toggle('is-active', active);
+      });
+      layout.querySelectorAll('.dc-ds-workspace__pane').forEach(function (pane) {
+        pane.classList.toggle('is-active', pane.id === tab.getAttribute('data-msa-pane'));
+      });
+      return;
+    }
+
+    var action = event.target.closest('[data-section-action]');
+    if (action) {
+      var sectionId = action.getAttribute('data-section-action');
+      var actionMode = action.getAttribute('data-action-mode');
+      var row = root.querySelector('.dc-ds-workspace__drafting-step[data-section-id="' + sectionId + '"]');
+      selectSection(sectionId, { openException: actionMode === 'resolve' });
+      if (actionMode === 'confirm' && row && row.getAttribute('data-confirm-url')) {
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = row.getAttribute('data-confirm-url');
+        var csrf = root.querySelector('[name=csrfmiddlewaretoken]') || document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrf) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'csrfmiddlewaretoken';
+          input.value = csrf.value;
+          form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+      }
+      return;
+    }
+
+    var row = event.target.closest('.dc-ds-workspace__drafting-step');
+    if (row) {
+      selectSection(row.getAttribute('data-section-id'), {
+        openException: row.getAttribute('data-section-state') === 'Exception' && event.target.closest('[data-section-action]')
+      });
+      return;
+    }
+
+    var clause = event.target.closest('.dc-ds-workspace__clause');
+    if (clause) {
+      selectSection(clause.getAttribute('data-section-id') || clause.id, { scrollPreview: false });
+      return;
+    }
+
+    var link = event.target.closest('[data-clause-link]');
+    if (link) {
+      event.preventDefault();
+      selectSection(link.getAttribute('data-clause-link'));
+      closeDrawer(exceptionDrawer);
+      closeDrawer(governanceDrawer);
+    }
+  });
+
+  root.addEventListener('keydown', function (event) {
+    var row = event.target.closest('.dc-ds-workspace__drafting-step, .dc-ds-workspace__clause');
+    if (row && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      selectSection(row.getAttribute('data-section-id') || row.id, {
+        openException: row.getAttribute('data-section-state') === 'Exception'
+      });
+    }
+    if (event.key === 'ArrowDown') { event.preventDefault(); moveSelection(1); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); moveSelection(-1); }
+  });
+
+  document.addEventListener('click', function (event) {
+    var menu = root.querySelector('.dc-ds-workspace__actions-menu[open]');
+    if (menu && !menu.contains(event.target)) menu.removeAttribute('open');
+  });
+
+  [exceptionDrawer, governanceDrawer].forEach(function (drawer) {
+    if (!drawer) return;
+    drawer.addEventListener('close', function () {
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    });
+  });
+
+  var divider = root.querySelector('[data-msa-divider]');
+  if (divider && layout) {
+    var dragging = false;
+    function onMove(event) {
+      if (!dragging) return;
+      var rect = layout.getBoundingClientRect();
+      var ratio = ((event.clientX - rect.left) / rect.width) * 100;
+      ratio = Math.max(40, Math.min(70, ratio));
+      layout.style.gridTemplateColumns = 'minmax(0, ' + ratio + '%) 8px minmax(0, ' + (100 - ratio) + '%)';
+    }
+    divider.addEventListener('mousedown', function () { dragging = true; });
+    window.addEventListener('mouseup', function () { dragging = false; });
+    window.addEventListener('mousemove', onMove);
+  }
+
+  setFilter(currentFilter);
+  var firstVisible = root.querySelector('.dc-ds-workspace__drafting-step:not([hidden])');
+  if (firstVisible) selectSection(firstVisible.getAttribute('data-section-id'), { scrollPreview: false });
+})();
 </script>

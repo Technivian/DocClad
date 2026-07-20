@@ -54,7 +54,7 @@ class BoltonRedesignTestCase(TestCase):
             organization=self.organization,
             title='Needs Review Contract',
             content='Seeded content',
-            status='PENDING',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         self._enable_clm_dashboard()
@@ -157,7 +157,7 @@ class BoltonRedesignTestCase(TestCase):
             organization=self.organization,
             title='Test Contract',
             content='Test content',
-            status='DRAFT',
+            status='IN_PROGRESS',
             created_by=self.user
         )
 

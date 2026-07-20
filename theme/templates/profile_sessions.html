@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My sessions – CLM One{% endblock %}
+{% block authenticated_page_title %}My sessions{% endblock %}
+{% block authenticated_page_subtitle %}Review and revoke your personal active sessions.{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/profile.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}">{% endblock %}
+
+{% block content %}
+<main class="profile-sessions-page" aria-labelledby="profile-sessions-heading">
+  <div class="profile-sessions-page__header">
+    <h1 id="profile-sessions-heading">My sessions</h1>
+    <a class="profile-page__text-link" href="{% url 'profile' %}">Back to Account settings <span aria-hidden="true">→</span></a>
+  </div>
+
+  {% if sessions %}
+  <div class="profile-sessions-list">
+    {% for session in sessions %}
+    <div class="profile-sessions-item">
+      <div class="profile-sessions-item__meta">
+        <div class="profile-sessions-item__title">
+          {{ session.user_agent }}
+          {% if session.is_current %}<span class="profile-status profile-status--clear">Current session</span>{% endif %}
+        </div>
+        <div class="profile-sessions-item__detail">
+          Last activity:
+          {% if session.last_activity_at %}{{ session.last_activity_at|date:"j M Y, H:i" }}{% else %}Unknown{% endif %}
+          · Expires {{ session.expire_date|date:"j M Y, H:i" }}
+        </div>
+      </div>
+      {% if not session.is_current %}
+      <form method="post" data-confirm="Revoke this session now?">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="revoke_session">
+        <input type="hidden" name="session_key" value="{{ session.session_key }}">
+        <button type="submit" class="dc-ds-button dc-ds-button--ghost">Revoke</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="dc-ds-surface">
+    <p class="dc-ds-surface__body c-muted">No active personal sessions were found.</p>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

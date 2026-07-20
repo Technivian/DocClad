@@ -27,16 +27,16 @@ test('DPA intake exposes the current accessible heading', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: 'DPA intake steps' })).toBeVisible();
 });
 
-test('DPA governed workspace keeps rail, clause-link, and overflow contracts', async ({ page }) => {
+test('DPA governed workspace keeps drafting layout, clause-link, and overflow contracts', async ({ page }) => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto('/contracts/workflows/1/');
 
   const workspace = page.locator('.dc-ds-workspace');
   await expect(workspace).toBeVisible();
-  await expect(page.getByText('Workflow Timeline')).toBeVisible();
+  await expect(page.getByText('Lifecycle')).toBeVisible();
+  await expect(workspace.locator('[data-workspace-layout]')).toBeVisible();
   await expect(workspace.locator('.dc-ds-workspace__doc')).toBeVisible();
-  await expect(workspace.locator('.dc-ds-workspace__rail-tab')).toHaveCount(3);
 
   const riskLink = workspace.locator('[data-clause-link]').first();
   if (await riskLink.count()) {
@@ -47,10 +47,6 @@ test('DPA governed workspace keeps rail, clause-link, and overflow contracts', a
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  const railTabs = page.locator('.dc-ds-workspace__rail-tab');
-  await railTabs.nth(1).focus();
-  await expect(railTabs.nth(1)).toBeFocused();
-  await railTabs.nth(1).press('Enter');
-  await expect(railTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('[data-workspace-drafting]')).toBeVisible();
   await expectNoHorizontalPageOverflow(page);
 });

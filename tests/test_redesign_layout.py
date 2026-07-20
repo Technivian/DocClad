@@ -42,10 +42,13 @@ class RedesignLayoutTests(TestCase):
         self.assertContains(response, 'Command Center')
         self.assertContains(response, 'New Contract')
         self.assertContains(response, 'Contracts')
-        self.assertContains(response, 'DPA Reviews')
+        self.assertContains(response, 'Privacy Reviews')
         self.assertContains(response, 'Obligations')
+        self.assertContains(response, 'My Work')
         self.assertNotContains(response, 'REFERENCE')
         self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
+        self.assertNotContains(response, 'DPA Reviews')
+        self.assertNotContains(response, 'Upload &amp; Review')
 
     def test_topbar_actions(self):
         response = self.client.get(reverse('dashboard'))
@@ -76,7 +79,7 @@ class RedesignLayoutTests(TestCase):
             organization=organization,
             title='Layout Contract Needing Review',
             content='Seed so the Legal Pulse metric has a nonzero value.',
-            status='PENDING',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))

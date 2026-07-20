@@ -139,6 +139,7 @@ def contracts_api(request):
         params = ListParams(
             q=request.GET.get('q', ''),
             status=[s for s in request.GET.getlist('status') if s],
+            lifecycle_stage=[s for s in request.GET.getlist('lifecycle_stage') if s],
             contract_type=[t for t in request.GET.getlist('contract_type') if t],
             owner=[owner for owner in request.GET.getlist('owner') if owner],
             counterparty=[party for party in request.GET.getlist('counterparty') if party],
@@ -179,6 +180,7 @@ def contracts_api_v1(request):
         params = ListParams(
             q=request.GET.get('q', ''),
             status=[s for s in request.GET.getlist('status') if s],
+            lifecycle_stage=[s for s in request.GET.getlist('lifecycle_stage') if s],
             contract_type=[t for t in request.GET.getlist('contract_type') if t],
             owner=[owner for owner in request.GET.getlist('owner') if owner],
             counterparty=[party for party in request.GET.getlist('counterparty') if party],

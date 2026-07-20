@@ -52,7 +52,7 @@ class CommandCenterDashboardTests(TestCase):
             organization=self.org,
             title='Data Processing Agreement — Payrollminds',
             content='x',
-            status='DRAFT',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         self.counterparty = Counterparty.objects.create(organization=self.org, name='Payrollminds')

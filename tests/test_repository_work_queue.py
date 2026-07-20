@@ -66,7 +66,7 @@ class RepositoryControlsPreservedTests(TestCase):
             counterparty='Atlas Workforce B.V.',
             owner=self.user,
             risk_level=Contract.RiskLevel.HIGH,
-            status=Contract.Status.PENDING,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user,
         )
         response = self.client.get(reverse('contracts:repository'))
@@ -120,8 +120,8 @@ class RepositoryApiRowShapeTests(TestCase):
             organization=self.organization,
             title='Api Row Contract',
             content='Seed content',
-            status='IN_REVIEW',
-            lifecycle_stage='NEGOTIATION',
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage=Contract.LifecycleStage.NEGOTIATION,
             created_by=self.user,
         )
         ApprovalRequest.objects.create(
@@ -157,7 +157,7 @@ class RepositoryApiRowShapeTests(TestCase):
         # never carry the raw enum, a raw ORM class name, or an ISO
         # timestamp. (`status` itself is a legitimate internal identifier,
         # same as `id`; the JS only ever displays `status_display`.)
-        self.assertIn('In Review', row['status_display'])
+        self.assertIn('In progress', row['status_display'])
         human_facing = json.dumps({
             'status_display': row['status_display'],
             'stage_steps': row['stage_steps'],
@@ -167,7 +167,7 @@ class RepositoryApiRowShapeTests(TestCase):
             'value_display': row['value_display'],
             'end_date_display': row['end_date_display'],
         })
-        self.assertNotIn('IN_REVIEW', human_facing)
+        self.assertNotIn('IN_PROGRESS', human_facing)
         for raw_name in ('ApprovalRequest', 'WorkflowStep', 'DSARRequest', 'CaseSignal'):
             self.assertNotIn(raw_name, human_facing)
         self.assertIsNone(ISO_TIMESTAMP_RE.search(row['latest_activity_text'] or ''))
@@ -181,7 +181,7 @@ class RepositoryApiRowShapeTests(TestCase):
             title='MSA — Northstar Consulting B.V. - Exception',
             counterparty='Northstar Consulting B.V. - Exception',
             contract_type=Contract.ContractType.MSA,
-            status='DRAFT',
+            status=Contract.Status.IN_PROGRESS,
             lifecycle_stage='DRAFTING',
             created_by=self.user,
             end_date=date(2027, 7, 16),
@@ -213,14 +213,14 @@ class RepositoryApiRowShapeTests(TestCase):
         payload = json.loads(response.content)
         row = next(c for c in payload['contracts'] if c['title'] == 'Active obligations contract')
         self.assertEqual(row['stage_display'], 'Obligations')
-        self.assertEqual(row['stage_display_full'], 'Obligation Tracking')
+        self.assertEqual(row['stage_display_full'], 'Obligation tracking')
 
     def test_unassigned_contract_has_no_assignee(self):
         Contract.objects.create(
             organization=self.organization,
             title='Unassigned Api Contract',
             content='Seed content',
-            status='DRAFT',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         response = self.client.get(reverse('contracts:contracts_api'))

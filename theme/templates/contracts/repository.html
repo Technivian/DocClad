@@ -23,8 +23,16 @@
     overflow: hidden;
   }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
-  .repo-page #contracts-table tbody tr.wq-row-selected:hover td { background: var(--primary-subtle); }
-  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td { background: var(--color-surface-table-head, var(--well)); }
+  .repo-page #contracts-table tbody tr.wq-row-selected:hover td,
+  .repo-page #contracts-table tbody tr.wq-row-selected:focus-within td,
+  .repo-page #contracts-table tbody tr.wq-row-selected.is-row-active td {
+    background-color: var(--primary-subtle);
+  }
+  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td,
+  .repo-page #contracts-table tbody tr:focus-within:not(.wq-row-selected) td,
+  .repo-page #contracts-table tbody tr.is-row-active:not(.wq-row-selected) td {
+    background-color: var(--color-surface-table-head, var(--well));
+  }
   .repo-page #contracts-table tbody td .font-medium { font-size: 13px; font-weight: 700; color: var(--text-primary); }
   .repo-page #contracts-table tbody td .text-sm, .repo-page .repo-muted-text { color: var(--ink-700, var(--text-secondary)); }
   .repo-page #contracts-table tbody td .text-sm { font-size: 12px; margin-top: 0; }
@@ -35,23 +43,33 @@
   .repo-page #contracts-table th[data-col="select"],
   .repo-page #contracts-table td[data-col="select"] {
     position: sticky; left: 0; z-index: 3; width: 44px; min-width: 44px; max-width: 44px;
-    background: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
+    background-color: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
   }
   .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
   .repo-page #contracts-table th[data-col="title"],
   .repo-page #contracts-table td[data-col="title"] {
     position: sticky; left: 44px; z-index: 3; min-width: 260px; width: 24%;
-    background: var(--card-bg, #fff);
+    background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
   .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
   .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="select"],
-  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="title"] {
-    background: var(--color-surface-table-head, var(--well));
+  .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="title"],
+  .repo-page #contracts-table tbody tr:focus-within:not(.wq-row-selected) td[data-col="select"],
+  .repo-page #contracts-table tbody tr:focus-within:not(.wq-row-selected) td[data-col="title"],
+  .repo-page #contracts-table tbody tr.is-row-active:not(.wq-row-selected) td[data-col="select"],
+  .repo-page #contracts-table tbody tr.is-row-active:not(.wq-row-selected) td[data-col="title"] {
+    background-color: var(--color-surface-table-head, var(--well));
   }
   .repo-page #contracts-table tbody tr.wq-row-selected td[data-col="select"],
-  .repo-page #contracts-table tbody tr.wq-row-selected td[data-col="title"] {
-    background: var(--primary-subtle);
+  .repo-page #contracts-table tbody tr.wq-row-selected td[data-col="title"],
+  .repo-page #contracts-table tbody tr.wq-row-selected:hover td[data-col="select"],
+  .repo-page #contracts-table tbody tr.wq-row-selected:hover td[data-col="title"],
+  .repo-page #contracts-table tbody tr.wq-row-selected:focus-within td[data-col="select"],
+  .repo-page #contracts-table tbody tr.wq-row-selected:focus-within td[data-col="title"],
+  .repo-page #contracts-table tbody tr.wq-row-selected.is-row-active td[data-col="select"],
+  .repo-page #contracts-table tbody tr.wq-row-selected.is-row-active td[data-col="title"] {
+    background-color: var(--primary-subtle);
   }
   .repo-page .repo-title-stack { display: grid; gap: 4px; min-width: 0; }
   .repo-page .repo-title-meta {
@@ -149,7 +167,7 @@
   .repo-page #contracts-table th[aria-sort="ascending"] .repo-sort-ind::after { content: " ▲"; font-size: 9px; }
   .repo-page #contracts-table th[aria-sort="descending"] .repo-sort-ind::after { content: " ▼"; font-size: 9px; }
   .repo-page #contracts-table [data-col].is-hidden { display: none; }
-  body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0 0 var(--space-10); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+  body[data-design-system=casefile] .repo-page .repo-filter-shell { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tabs actions" "tools tools"; gap: var(--space-10) var(--space-16); width: 100%; padding: 0; border: 0; border-bottom: 0; border-radius: 0; background: transparent; }
   .repo-page .repo-view-header { display: contents; }
   .repo-page .repo-view-tabs {
     grid-area: tabs;
@@ -196,7 +214,6 @@
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input { height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600); }
   body[data-design-system=casefile]:has(.repo-page) .top-bar .global-search-input:focus-visible { border-color: var(--line) !important; background: var(--card) !important; }
   body[data-design-system=casefile]:has(.repo-page) .app-footer { display: none; }
-  .repo-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
   .repo-page.dc-ds-list-page > .dc-ds-table-wrap { margin-top: 0; }
   @media (max-width: 1100px) { .repo-page .repo-filter-drawer__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px) {
@@ -214,7 +231,7 @@
     <div class="repo-view-header">
       {% include "components/_workspace_tabs.html" with tabs=hub_tabs aria_label="Contract operations" nav_class="repo-view-tabs" %}
       <div class="repo-view-actions">
-        <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">Risk Register</a>
+        <a href="{% url 'contracts:risk_log_list' %}" class="dc-ds-button dc-ds-button--ghost">{{ risk_review_label }}</a>
         <a href="{% url 'contracts:contract_template_picker' %}" class="dc-ds-button dc-ds-button--primary">Start new contract</a>
       </div>
     </div>

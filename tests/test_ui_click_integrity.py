@@ -77,7 +77,7 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             organization=self.organization,
             title='UI Integrity Contract',
             content='Contract used for link/form target checks.',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user,
         )
         self.client.login(username='uiowner', password='testpass123')
@@ -112,7 +112,28 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             reverse('contracts:contract_create'): reverse('contracts:repository'),
             reverse('contracts:contract_template_picker'): reverse('contracts:repository'),
             reverse('contracts:upload_signed_contract'): reverse('contracts:repository'),
-            reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}): reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk}),
+            reverse('contracts:contract_update', kwargs={'pk': self.contract.pk}): reverse(
+                'contracts:contract_detail', kwargs={'pk': self.contract.pk}
+            ),
+            reverse('contracts:contract_list'): reverse('contracts:repository'),
+            reverse('contracts:document_list'): reverse('contracts:repository'),
+            reverse('contracts:deadline_list'): reverse('contracts:obligations_workspace'),
+            reverse('contracts:legal_task_kanban'): reverse('contracts:obligations_workspace'),
+            reverse('contracts:risk_log_list'): reverse('contracts:privacy_dashboard'),
+            reverse('contracts:budget_list'): reverse('contracts:reports_dashboard'),
+            reverse('contracts:trademark_request_list'): reverse('contracts:repository'),
+            reverse('contracts:due_diligence_list'): reverse('contracts:repository'),
+            reverse('contracts:approval_request_list'): reverse('contracts:workflow_dashboard'),
+            reverse('contracts:reports_dashboard'): reverse('settings_hub'),
+            reverse('contracts:organization_team'): reverse('settings_hub'),
+            reverse('contracts:notification_list'): reverse('settings_hub'),
+            reverse('contracts:privacy_dashboard'): reverse('settings_hub'),
+        }
+        pages_without_back = {
+            reverse('dashboard'),
+            reverse('contracts:repository'),
+            reverse('contracts:workflow_dashboard'),
+            reverse('contracts:global_search'),
         }
 
         pages = [
@@ -145,11 +166,12 @@ class UIButtonAndFlowIntegrityTests(TestCase):
             content = response.content.decode('utf-8')
             self.assertIn('class="topbar-page-title-row"', content)
             self.assertNotIn('<span>Back</span>', content)
-            if page == reverse('dashboard'):
+            if page in pages_without_back:
                 self.assertNotIn('class="topbar-back-link"', content)
             else:
-                expected_href = expected_back_links.get(page, reverse('dashboard'))
+                expected_href = expected_back_links[page]
                 self.assertIn(f'<a href="{expected_href}" class="topbar-back-link"', content)
+                self.assertNotIn(f'<a href="{reverse("dashboard")}" class="topbar-back-link"', content)
 
             parser = _InteractiveElementParser()
             parser.feed(content)

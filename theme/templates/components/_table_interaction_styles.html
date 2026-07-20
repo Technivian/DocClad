@@ -1,0 +1,45 @@
+{# Shared sticky-column hover + row kebab overlay — include on list/table pages. #}
+<style nonce="{{ csp_nonce }}">
+  /*
+    Sticky first columns need an opaque background so scrolled content does not
+    show through. That opaque paint also covers tr:hover, so active rows must
+    recolor every td (including sticky ones).
+  */
+  .dc-ds-table tbody tr:hover > td,
+  .dc-ds-table tbody tr:focus-within > td,
+  .dc-ds-table tbody tr.is-row-active > td,
+  .wq-table tbody tr:hover > td,
+  .wq-table tbody tr:focus-within > td,
+  .wq-table tbody tr.is-row-active > td {
+    background-color: var(--color-surface-table-head, var(--sidebar-hover, var(--well))) !important;
+  }
+  .dc-ds-table tbody tr.wq-row-selected > td,
+  .dc-ds-table tbody tr.wq-row-selected:hover > td,
+  .dc-ds-table tbody tr.wq-row-selected:focus-within > td,
+  .dc-ds-table tbody tr.wq-row-selected.is-row-active > td,
+  .wq-table tbody tr.wq-row-selected > td,
+  .wq-table tbody tr.wq-row-selected:hover > td,
+  .wq-table tbody tr.wq-row-selected:focus-within > td,
+  .wq-table tbody tr.wq-row-selected.is-row-active > td {
+    background-color: var(--primary-subtle) !important;
+  }
+
+  .dc-ds-table td[data-col="actions"],
+  .wq-table td[data-col="actions"],
+  .wf-table td[data-col="actions"],
+  .dc-ds-table .repo-actions-cell,
+  .wq-table .wq-col-action,
+  .wf-table .wf-table__actions {
+    overflow: visible !important;
+  }
+
+  /* Fixed overlay menus — avoid expanding table row height. */
+  details.wq-kebab .wq-kebab-menu {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    right: auto;
+    margin: 0;
+  }
+</style>

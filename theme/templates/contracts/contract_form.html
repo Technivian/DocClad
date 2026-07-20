@@ -168,85 +168,7 @@ body.nav-collapsed .contract-form-page {
   padding: 10px 0 0;
   background: transparent;
 }
-.cform-stepper .lc-track {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-  align-items: start;
-  width: 100%;
-  padding: 0;
-}
-.cform-stepper .lc-step {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 0 2px;
-}
-.cform-stepper .lc-step::before { content: none; }
-.cform-stepper .lc-step:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  top: 8px;
-  left: calc(50% + 7px);
-  width: calc(100% - 14px);
-  height: 2px;
-  background: var(--line);
-  border-radius: 999px;
-}
-.cform-stepper .lc-done:not(:last-child)::after { background: var(--seal); }
-.cform-stepper .lc-dot {
-  position: relative;
-  z-index: 1;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--surface-alt);
-  color: var(--text-secondary);
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
-  box-shadow: 0 0 0 1px rgba(16, 24, 40, 0.06);
-}
-.cform-stepper .lc-current .lc-dot,
-.cform-stepper .lc-done .lc-dot {
-  background: var(--seal);
-  color: var(--clmone-white);
-  box-shadow: none;
-}
-.cform-stepper .lc-done .lc-dot::after {
-  content: "✓";
-  color: var(--clmone-white);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
-}
-.cform-stepper .lc-label {
-  display: block;
-  margin-top: 4px;
-  color: var(--text-secondary);
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 650;
-  text-align: center;
-  letter-spacing: 0;
-  overflow-wrap: normal;
-  text-wrap: balance;
-}
-.cform-stepper .lc-current .lc-label,
-.cform-stepper .lc-done .lc-label {
-  color: var(--text-primary);
-}
-.cform-stepper .lc-current .lc-label { font-weight: 800; }
-.cform-stepper .lc-done .lc-label { color: var(--ink-700); }
+/* Lifecycle progress uses global .contract-progress-track. */
 .cform-intake-panel {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -476,7 +398,6 @@ body.nav-collapsed .contract-form-page {
   .cform-field-third,
   .cform-field-full { grid-column: 1 / -1; }
   .cform-path { padding: 8px 0 0; }
-  .cform-stepper .lc-track { grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); }
   .contract-form-page .arch-workspace-main {
     padding-bottom: 148px;
   }
@@ -665,41 +586,34 @@ body.nav-collapsed .cform-bottom-actions {
               <div class="cform-path">
               {% if form.instance.pk %}
               {% lifecycle_steps form.instance as lc_steps %}
-              <div class="lc-track" role="list" aria-label="Contract lifecycle: currently {{ form.instance.get_lifecycle_stage_display }}">
-                {% for step in lc_steps %}
-                <div class="lc-step lc-{{ step.state }}" role="listitem" {% if step.state == 'current' %}aria-current="step"{% endif %}>
-                  <span class="lc-dot" aria-hidden="true">{{ forloop.counter }}</span>
-                  <span class="lc-label">{{ step.label }}</span>
-                </div>
-                {% endfor %}
-              </div>
+              {% include "components/_lifecycle_progress_track.html" with steps=lc_steps aria_label="Contract lifecycle" %}
               {% else %}
-              <div class="lc-track" role="list" aria-label="Contract lifecycle: intake in progress">
-                <div class="lc-step lc-current" role="listitem" aria-current="step">
-                  <span class="lc-dot" aria-hidden="true">1</span>
-                  <span class="lc-label">Intake</span>
-                </div>
-                <div class="lc-step lc-upcoming" role="listitem">
-                  <span class="lc-dot" aria-hidden="true">2</span>
-                  <span class="lc-label">Drafting</span>
-                </div>
-                <div class="lc-step lc-upcoming" role="listitem">
-                  <span class="lc-dot" aria-hidden="true">3</span>
-                  <span class="lc-label">Internal review</span>
-                </div>
-                <div class="lc-step lc-upcoming" role="listitem">
-                  <span class="lc-dot" aria-hidden="true">4</span>
-                  <span class="lc-label">Negotiation</span>
-                </div>
-                <div class="lc-step lc-upcoming" role="listitem">
-                  <span class="lc-dot" aria-hidden="true">5</span>
-                  <span class="lc-label">Approval</span>
-                </div>
-                <div class="lc-step lc-upcoming" role="listitem">
-                  <span class="lc-dot" aria-hidden="true">6</span>
-                  <span class="lc-label">Signature</span>
-                </div>
-              </div>
+              <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="Contract lifecycle: intake in progress">
+                <li class="contract-progress-track__step contract-progress-track__step--current" aria-current="step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label"><strong>Intake</strong></span>
+                </li>
+                <li class="contract-progress-track__step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label">Drafting</span>
+                </li>
+                <li class="contract-progress-track__step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label">Internal review</span>
+                </li>
+                <li class="contract-progress-track__step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label">Negotiation</span>
+                </li>
+                <li class="contract-progress-track__step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label">Approval</span>
+                </li>
+                <li class="contract-progress-track__step">
+                  <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                  <span class="contract-progress-track__label">Signature</span>
+                </li>
+              </ol>
               {% endif %}
               </div>
             </details>

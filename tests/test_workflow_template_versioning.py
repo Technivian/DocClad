@@ -124,36 +124,48 @@ class WorkflowTemplateVersioningTests(TestCase):
         detail_response = self.client.get(reverse('contracts:workflow_template_detail', args=[self.template.pk]))
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'v1')
-        self.assertContains(detail_response, 'Workflow Steps')
-        self.assertContains(detail_response, 'Add a step')
+        self.assertContains(detail_response, 'Design')
+        self.assertContains(detail_response, 'Activity')
+        self.assertNotContains(detail_response, 'Save changes')
+        self.assertNotContains(detail_response, 'Add a step')
+        self.assertNotContains(detail_response, 'Workflow Steps')
+        versions_response = self.client.get(
+            reverse('contracts:workflow_template_detail', args=[self.template.pk]) + '?tab=versions'
+        )
+        self.assertContains(versions_response, 'Create new version')
+        self.assertContains(versions_response, 'Restore as new draft')
 
     def test_template_detail_add_step_creates_step_and_redirects(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
 
         response = self.client.post(
             reverse('contracts:workflow_template_step_add', args=[self.template.pk]),
             data={
                 'name': 'Signature',
                 'description': 'Collect signatures',
-                'order': '3',
-                'step_kind': 'TASK',
+                'step_kind': 'SIGNATURE',
+                'assignment_mode': 'role',
             },
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(
-            response,
+        self.assertIn(
             reverse('contracts:workflow_template_detail', args=[self.template.pk]),
-            fetch_redirect_response=False,
+            response['Location'],
         )
 
         self.template.refresh_from_db()
         created_step = WorkflowTemplateStep.objects.get(template=self.template, name='Signature')
         self.assertEqual(created_step.description, 'Collect signatures')
         self.assertEqual(created_step.order, 3)
+        self.assertEqual(created_step.step_kind, WorkflowTemplateStep.StepKind.SIGNATURE)
 
     def test_template_detail_delete_step_is_post_only_and_scoped(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         step = self.template.steps.get(order=1)
 
         get_response = self.client.get(reverse('contracts:workflow_template_step_delete', args=[self.template.pk, step.pk]))
@@ -172,6 +184,8 @@ class WorkflowTemplateVersioningTests(TestCase):
 
     def test_template_detail_reorder_steps(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         ordered_ids = list(self.template.steps.order_by('order').values_list('id', flat=True))
         response = self.client.post(
             reverse('contracts:workflow_template_step_reorder', args=[self.template.pk]),
@@ -286,8 +300,9 @@ class WorkflowTemplateVersioningTests(TestCase):
         response = self.client.get(reverse('contracts:workflow_template_list'))
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
-        self.assertIn('Draft · Incomplete', body)
+        self.assertIn('Setup required', body)
         self.assertIn('Open designer', body)
+        self.assertIn('Add at least one stage', body)
         standard = WorkflowTemplate.objects.get(name='Standard', organization=self.org)
         self.assertFalse(standard.is_active)
 
@@ -307,13 +322,17 @@ class WorkflowTemplateVersioningTests(TestCase):
         self.assertEqual(response['Location'], reverse('contracts:workflow_template_detail', args=[created.pk]))
 
     def test_condition_expression_validation(self):
+        import json
         valid_form = WorkflowTemplateStepForm(
             data={
                 'name': 'Approval',
                 'description': '',
-                'order': 1,
                 'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
-                'condition_expression': 'value>=250000',
+                'assignment_mode': 'role',
+                'condition_rules_json': json.dumps({
+                    'logic': 'AND',
+                    'clauses': [{'field': 'value', 'op': '>=', 'value': '250000'}],
+                }),
                 'assignee_role': '',
                 'specific_assignee': '',
                 'sla_hours': '',
@@ -321,14 +340,18 @@ class WorkflowTemplateVersioningTests(TestCase):
             }
         )
         self.assertTrue(valid_form.is_valid(), valid_form.errors)
+        self.assertEqual(valid_form.cleaned_data['condition_expression'], 'value>=250000')
 
         invalid_field = WorkflowTemplateStepForm(
             data={
                 'name': 'Approval',
                 'description': '',
-                'order': 1,
                 'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
-                'condition_expression': 'unknown=HIGH',
+                'assignment_mode': 'role',
+                'condition_rules_json': json.dumps({
+                    'logic': 'AND',
+                    'clauses': [{'field': 'unknown', 'op': '=', 'value': 'HIGH'}],
+                }),
                 'assignee_role': '',
                 'specific_assignee': '',
                 'sla_hours': '',
@@ -336,15 +359,15 @@ class WorkflowTemplateVersioningTests(TestCase):
             }
         )
         self.assertFalse(invalid_field.is_valid())
-        self.assertIn('condition_expression', invalid_field.errors)
+        self.assertIn('condition_rules_json', invalid_field.errors)
 
         invalid_syntax = WorkflowTemplateStepForm(
             data={
                 'name': 'Approval',
                 'description': '',
-                'order': 1,
                 'step_kind': WorkflowTemplateStep.StepKind.APPROVAL,
-                'condition_expression': 'value>>250000',
+                'assignment_mode': 'role',
+                'condition_rules_json': '{not-json',
                 'assignee_role': '',
                 'specific_assignee': '',
                 'sla_hours': '',
@@ -352,7 +375,7 @@ class WorkflowTemplateVersioningTests(TestCase):
             }
         )
         self.assertFalse(invalid_syntax.is_valid())
-        self.assertIn('condition_expression', invalid_syntax.errors)
+        self.assertIn('condition_rules_json', invalid_syntax.errors)
 
     def test_template_list_scopes_other_org_templates_out(self):
         other_org = Organization.objects.create(name='Other Org', slug='other-org')
@@ -388,7 +411,12 @@ class WorkflowTemplateVersioningTests(TestCase):
         clone = WorkflowTemplate.objects.get(version=2)
         self.assertEqual(clone.parent_template_id, self.template.id)
         self.assertEqual(clone.steps.count(), 2)
-        self.assertRedirects(response, reverse('contracts:workflow_template_detail', args=[clone.pk]), fetch_redirect_response=False)
+        self.assertFalse(clone.is_active)
+        self.assertRedirects(
+            response,
+            reverse('contracts:workflow_template_detail', args=[clone.pk]) + '?tab=design',
+            fetch_redirect_response=False,
+        )
 
     def test_template_restore_action_creates_follow_on_version(self):
         self.client.force_login(self.user)
@@ -400,7 +428,12 @@ class WorkflowTemplateVersioningTests(TestCase):
         restored = WorkflowTemplate.objects.get(version=3)
         self.assertEqual(restored.parent_template_id, self.template.id)
         self.assertEqual(restored.steps.count(), 2)
-        self.assertRedirects(response, reverse('contracts:workflow_template_detail', args=[restored.pk]), fetch_redirect_response=False)
+        self.assertFalse(restored.is_active)
+        self.assertRedirects(
+            response,
+            reverse('contracts:workflow_template_detail', args=[restored.pk]) + '?tab=design',
+            fetch_redirect_response=False,
+        )
 
     def test_template_compare_view_shows_field_and_step_differences(self):
         self.client.force_login(self.user)

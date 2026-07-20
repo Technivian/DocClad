@@ -2,11 +2,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Count, Max, Q
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
@@ -21,18 +21,27 @@ from contracts.models import (
     DraftDocument,
     FieldDefinition,
     FieldValue,
+    OrganizationMembership,
     RiskSignal,
     Workflow,
     WorkflowStep,
     WorkflowTemplate,
+    WorkflowTemplateScenario,
     WorkflowTemplateStep,
 )
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization, set_organization_on_instance
 from contracts.services.workflow_routing import build_approval_request_plan_for_contract, suggest_workflow_template_for_contract
-from contracts.services.workflow_execution import advance_workflow_after_completion, materialize_workflow_from_template
+from contracts.services.workflow_execution import (
+    CONDITION_FIELD_CHOICES,
+    CONDITION_OP_CHOICES,
+    advance_workflow_after_completion,
+    materialize_workflow_from_template,
+    step_condition_summary,
+)
 from contracts.services.workflow_audit import (
     build_field_changes,
+    build_workflow_template_audit_rows,
     get_workflow_audit_feed,
     get_workflow_template_audit_feed,
     log_workflow_created,
@@ -41,24 +50,39 @@ from contracts.services.workflow_audit import (
     log_workflow_step_completed,
     log_workflow_step_escalated,
     log_workflow_step_updated,
+    log_workflow_template_audit_exported,
     log_workflow_template_cloned,
     log_workflow_template_created,
     log_workflow_template_publish_toggled,
     log_workflow_template_reordered,
     log_workflow_template_restored,
+    log_workflow_template_scenario_saved,
     log_workflow_template_step_added,
     log_workflow_template_step_deleted,
+    log_workflow_template_step_updated,
     log_workflow_template_updated,
 )
 from contracts.services.workflow_simulation import simulate_workflow_template
 from contracts.services.workflow_templates import COMPARISON_PRESETS, compare_template_versions, clone_template_version, list_template_versions
 from contracts.services.workflow_designer import (
+    DEFAULT_TEST_SCENARIOS,
+    WORKFLOW_TEMPLATE_AUDIT_EVENT_CHOICES,
+    WorkflowLaunchBlocked,
     build_template_card,
+    build_template_version_rows,
+    can_edit_workflow_template,
+    can_mutate_workflow_template,
     duplicate_workflow_template,
     ensure_stepless_templates_unpublished,
     filter_workflow_templates,
+    template_launch_block_reason,
+    template_launch_policy,
+    template_uses_status_condition,
+    unassigned_required_steps,
     validate_template_for_publish,
     workflow_designer_tabs,
+    workflow_hub_tabs,
+    workflow_template_canvas_tabs,
 )
 from contracts.view_support import (
     TenantAssignCreateMixin,
@@ -130,11 +154,16 @@ def _workflow_template_list_context(request, templates_qs):
         or filter_owner
         or (filter_sort and filter_sort != 'updated')
     )
+    selection_mode = (params.get('mode') or '').strip().lower() == 'select'
+    return_url = (params.get('next') or params.get('return_url') or '').strip()
+    cancel_url = (params.get('cancel') or '').strip() or (
+        return_url if return_url else reverse('contracts:workflow_template_list')
+    )
     return {
         'workflow_templates': templates,
         'template_cards': cards,
         'result_count': len(cards),
-        'designer_tabs': workflow_designer_tabs(active='templates'),
+        'hub_tabs': workflow_hub_tabs(active='templates'),
         'filter_q': filter_q,
         'filter_contract_type': filter_contract_type,
         'filter_status': filter_status,
@@ -144,6 +173,9 @@ def _workflow_template_list_context(request, templates_qs):
         'category_choices': WorkflowTemplate.Category.choices,
         'hide_app_footer': True,
         'organization': organization,
+        'selection_mode': selection_mode,
+        'selection_return_url': return_url,
+        'selection_cancel_url': cancel_url,
     }
 
 
@@ -157,15 +189,17 @@ def workflow_template_list(request):
 def workflow_approval_route_list(request):
     organization = get_user_organization(request.user)
     template_qs = _workflow_template_queryset_for_organization(organization)
-    routes = (
+    routes = list(
         ApprovalRoute.objects.filter(workflow_template__in=template_qs)
         .select_related('workflow_template')
         .order_by('workflow_template__name', 'order', 'pk')
     )
+    conditional_count = sum(1 for route in routes if getattr(route, 'is_conditional', False))
     return render(request, 'contracts/workflow_approval_route_list.html', {
         'approval_routes': routes,
-        'designer_tabs': workflow_designer_tabs(active='approval_rules'),
-        'result_count': routes.count(),
+        'hub_tabs': workflow_hub_tabs(active='approval_rules'),
+        'result_count': len(routes),
+        'conditional_count': conditional_count,
         'hide_app_footer': True,
     })
 
@@ -186,9 +220,11 @@ def workflow_designer_history(request):
         .order_by('-timestamp', '-pk')[:100]
     )
     from contracts.services.workflow_audit import build_audit_feed
+    audit_feed = build_audit_feed(logs)
     return render(request, 'contracts/workflow_designer_history.html', {
-        'audit_feed': build_audit_feed(logs),
-        'designer_tabs': workflow_designer_tabs(active='history'),
+        'audit_feed': audit_feed,
+        'event_count': len(audit_feed),
+        'hub_tabs': workflow_hub_tabs(active='history'),
         'hide_app_footer': True,
     })
 
@@ -203,18 +239,14 @@ class WorkflowTemplateDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['steps'] = WorkflowTemplateStep.objects.filter(template=self.object).order_by('order')
-        context['template_versions'] = list_template_versions(self.object)
-        context['step_form'] = apply_form_queryset_scopes(
-            WorkflowTemplateStepForm(),
-            self.get_organization(),
-            {'specific_assignee': organization_user_queryset},
+        context.update(
+            _workflow_template_detail_context(
+                self.object,
+                self.get_organization(),
+                request=self.request,
+                active_tab=(self.request.GET.get('tab') or 'design').strip().lower(),
+            )
         )
-        context['preview_form'] = WorkflowTemplatePreviewForm()
-        context['preview_result'] = None
-        context['step_controls'] = _build_template_step_controls(context['steps'])
-        context['workflow_template_audit_feed'] = get_workflow_template_audit_feed(self.object, limit=6)
-        context['workflow_template_activity_url'] = reverse_lazy('contracts:workflow_template_activity', kwargs={'pk': self.object.pk})
         return context
 
 
@@ -437,23 +469,93 @@ class AddWorkflowTemplateStepView(LoginRequiredMixin, View):
     def post(self, request, pk):
         organization = get_user_organization(request.user)
         template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+        if not can_mutate_workflow_template(request.user, organization, template):
+            return HttpResponseForbidden('Published workflow versions are read-only. Create a new version to edit.')
         form = apply_form_queryset_scopes(WorkflowTemplateStepForm(request.POST), organization, {'specific_assignee': organization_user_queryset})
+        wants_json = 'application/json' in (request.headers.get('Accept') or '')
         if form.is_valid():
             step = form.save(commit=False)
             step.template = template
-            if step.order is None:
-                max_order = WorkflowTemplateStep.objects.filter(template=template).aggregate(max_order=Max('order'))['max_order'] or 0
+            insert_at = form.cleaned_data.get('insert_at')
+            existing = list(WorkflowTemplateStep.objects.filter(template=template).order_by('order', 'pk'))
+            if insert_at and 1 <= insert_at <= len(existing) + 1:
+                for later in existing[insert_at - 1:]:
+                    later.order = later.order + 1
+                WorkflowTemplateStep.objects.bulk_update(existing[insert_at - 1:], ['order'])
+                step.order = insert_at
+            else:
+                max_order = max((s.order for s in existing), default=0)
                 step.order = max_order + 1
             step.save()
             log_workflow_template_step_added(step, request.user, request=request)
+            if wants_json:
+                return JsonResponse({'ok': True, 'step_id': step.pk, 'order': step.order})
             messages.success(request, f"Added step '{step.name}' to {template.name}.")
-            return redirect('contracts:workflow_template_detail', pk=template.pk)
+            return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design&step={step.pk}")
 
+        if wants_json:
+            return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
         return render(
             request,
             'contracts/workflow_template_detail.html',
-            _workflow_template_detail_context(template, organization, step_form=form),
+            _workflow_template_detail_context(template, organization, step_form=form, active_tab='design', request=request),
         )
+
+
+@login_required
+@require_POST
+def workflow_template_step_update(request, pk, step_pk):
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not can_mutate_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('Published workflow versions are read-only. Create a new version to edit.')
+    step = get_object_or_404(WorkflowTemplateStep.objects.select_related('template'), pk=step_pk, template=template)
+    form = apply_form_queryset_scopes(
+        WorkflowTemplateStepForm(request.POST, instance=step),
+        organization,
+        {'specific_assignee': organization_user_queryset},
+    )
+    wants_json = 'application/json' in (request.headers.get('Accept') or '')
+    if form.is_valid():
+        before = {
+            'name': step.name,
+            'step_kind': step.step_kind,
+            'assignee_role': step.assignee_role,
+            'specific_assignee_id': step.specific_assignee_id,
+        }
+        updated = form.save()
+        log_workflow_template_step_updated(
+            updated,
+            request.user,
+            changes={
+                'before': before,
+                'after': {
+                    'name': updated.name,
+                    'step_kind': updated.step_kind,
+                    'assignee_role': updated.assignee_role,
+                    'specific_assignee_id': updated.specific_assignee_id,
+                },
+            },
+            request=request,
+        )
+        if wants_json:
+            return JsonResponse({'ok': True, 'step_id': updated.pk, 'saved_at': timezone.now().isoformat()})
+        messages.success(request, f"Updated step '{updated.name}'.")
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design&step={updated.pk}")
+    if wants_json:
+        return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+    return render(
+        request,
+        'contracts/workflow_template_detail.html',
+        _workflow_template_detail_context(
+            template,
+            organization,
+            step_form=form,
+            active_tab='design',
+            selected_step_id=step.pk,
+            request=request,
+        ),
+    )
 
 
 @login_required
@@ -461,6 +563,8 @@ class AddWorkflowTemplateStepView(LoginRequiredMixin, View):
 def workflow_template_step_delete(request, pk, step_pk):
     organization = get_user_organization(request.user)
     template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not can_mutate_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('Published workflow versions are read-only. Create a new version to edit.')
     step = get_object_or_404(WorkflowTemplateStep.objects.select_related('template'), pk=step_pk, template=template)
     deleted_step_data = {
         'step_id': step.pk,
@@ -474,9 +578,17 @@ def workflow_template_step_delete(request, pk, step_pk):
         'escalation_after_hours': step.escalation_after_hours,
     }
     step.delete()
+    remaining = list(WorkflowTemplateStep.objects.filter(template=template).order_by('order', 'pk'))
+    for index, remaining_step in enumerate(remaining, start=1):
+        remaining_step.order = index
+    if remaining:
+        WorkflowTemplateStep.objects.bulk_update(remaining, ['order'])
     log_workflow_template_step_deleted(deleted_step_data, template, request.user, request=request)
+    wants_json = 'application/json' in (request.headers.get('Accept') or '')
+    if wants_json:
+        return JsonResponse({'ok': True})
     messages.success(request, f"Deleted step '{deleted_step_data['step_name']}' from {template.name}.")
-    return redirect('contracts:workflow_template_detail', pk=template.pk)
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design")
 
 
 @login_required
@@ -484,24 +596,33 @@ def workflow_template_step_delete(request, pk, step_pk):
 def workflow_template_step_reorder(request, pk):
     organization = get_user_organization(request.user)
     template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not can_mutate_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('Published workflow versions are read-only. Create a new version to edit.')
+    wants_json = 'application/json' in (request.headers.get('Accept') or '')
     raw_step_ids = request.POST.getlist('step_ids')
     if len(raw_step_ids) == 1 and ',' in raw_step_ids[0]:
         raw_step_ids = [item for item in raw_step_ids[0].split(',') if item]
     if not raw_step_ids:
+        if wants_json:
+            return JsonResponse({'ok': False, 'error': 'Provide an ordered list of step IDs.'}, status=400)
         messages.error(request, 'Provide an ordered list of step IDs.')
-        return redirect('contracts:workflow_template_detail', pk=template.pk)
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design")
 
     try:
         ordered_step_ids = [int(step_id) for step_id in raw_step_ids]
     except ValueError:
+        if wants_json:
+            return JsonResponse({'ok': False, 'error': 'Invalid step ordering payload.'}, status=400)
         messages.error(request, 'Invalid step ordering payload.')
-        return redirect('contracts:workflow_template_detail', pk=template.pk)
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design")
 
     steps = list(WorkflowTemplateStep.objects.filter(template=template))
     step_map = {step.pk: step for step in steps}
     if len(ordered_step_ids) != len(steps) or set(ordered_step_ids) != set(step_map):
+        if wants_json:
+            return JsonResponse({'ok': False, 'error': 'Step ordering must include every step exactly once.'}, status=400)
         messages.error(request, 'Step ordering must include every step exactly once.')
-        return redirect('contracts:workflow_template_detail', pk=template.pk)
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design")
 
     ordered_steps = [step_map[step_id] for step_id in ordered_step_ids]
     before_orders = {step.pk: step.order for step in steps}
@@ -524,8 +645,10 @@ def workflow_template_step_reorder(request, pk):
         ],
         request=request,
     )
+    if wants_json:
+        return JsonResponse({'ok': True, 'saved_at': timezone.now().isoformat()})
     messages.success(request, f'Updated step order for {template.name}.')
-    return redirect('contracts:workflow_template_detail', pk=template.pk)
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=design")
 
 
 @login_required
@@ -542,7 +665,12 @@ def workflow_template_publish_toggle(request, pk):
 
     old_status = template.is_active
     template.is_active = not template.is_active
-    template.save(update_fields=['is_active'])
+    update_fields = ['is_active']
+    if template.is_active:
+        template.published_at = timezone.now()
+        template.published_by = request.user
+        update_fields.extend(['published_at', 'published_by'])
+    template.save(update_fields=update_fields)
     log_workflow_template_publish_toggled(template, request.user, old_status, template.is_active, request=request)
     messages.success(
         request,
@@ -592,6 +720,7 @@ def workflow_dashboard(request):
         'contract_type_choices': Contract.ContractType.choices,
         'owner_choices': list(organization_user_queryset(organization)) if organization else [],
         'ops_tabs': workflow_operations_tabs(active='active'),
+        'hub_tabs': workflow_operations_tabs(active='active'),
         'ops_clear_url': clear_filters_url(ops_url),
         'workflow_create_url': reverse('contracts:workflow_create'),
         'approval_rules_url': reverse_lazy('contracts:approval_rule_list'),
@@ -616,7 +745,12 @@ def workflow_create(request):
             if workflow.contract and not workflow.template_id:
                 workflow.template = suggest_workflow_template_for_contract(workflow.contract)
                 workflow.save(update_fields=['template'])
-            materialize_workflow_from_template(workflow)
+            try:
+                materialize_workflow_from_template(workflow)
+            except WorkflowLaunchBlocked as exc:
+                workflow.delete()
+                messages.error(request, exc.message)
+                return redirect('contracts:workflow_create')
             log_workflow_created(workflow, request.user, request=request)
             if workflow.contract:
                 from contracts.models import ApprovalRequest
@@ -654,7 +788,10 @@ def workflow_detail(request, pk):
     workflow = get_object_or_404(_scope_workflows_for_organization(organization), pk=pk)
     if workflow.contract and not can_access_contract_action(request.user, workflow.contract, ContractAction.COMMENT):
         return HttpResponseForbidden('You do not have access to this contract workflow.')
-    return render(request, 'contracts/workflow_detail.html', _workflow_detail_context(workflow, actor=request.user))
+    context = _workflow_detail_context(workflow, actor=request.user)
+    if context.get('is_msa_workspace') or context.get('is_dpa_workspace') or context.get('is_nda_workspace'):
+        request.sidebar_nav_contract_context = True
+    return render(request, 'contracts/workflow_detail.html', context)
 
 
 @login_required
@@ -763,7 +900,7 @@ def workflow_template_create(request):
         form = WorkflowTemplateForm(template_queryset=template_qs)
     return render(request, 'contracts/workflow_template_form.html', {
         'form': form,
-        'designer_tabs': workflow_designer_tabs(active='templates'),
+        'hub_tabs': workflow_hub_tabs(active='templates'),
         'hide_app_footer': True,
     })
 
@@ -827,29 +964,34 @@ def workflow_template_delete(request, pk):
 
 @login_required
 def workflow_template_activity(request, pk):
-    organization = get_user_organization(request.user)
-    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
-    return render(
-        request,
-        'contracts/activity_timeline.html',
-        {
-            'page_title': f'{template.name} Activity',
-            'page_subtitle': 'Template event history and compliance trail.',
-            'workflow_template': template,
-            'steps': WorkflowTemplateStep.objects.filter(template=template).order_by('order'),
-            'audit_feed': get_workflow_template_audit_feed(template, limit=50),
-            'back_url': reverse_lazy('contracts:workflow_template_detail', kwargs={'pk': template.pk}),
-        },
-    )
+    """Legacy activity URL — redirect into the Audit trail workspace tab."""
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': pk})}?tab=audit")
 
 
 @login_required
 def workflow_template_detail(request, pk):
-    template = get_object_or_404(_workflow_template_queryset_for_organization(get_user_organization(request.user)), pk=pk)
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    active_tab = (request.GET.get('tab') or 'design').strip().lower()
+    if active_tab == 'audit':
+        active_tab = 'activity'
+    if active_tab not in {'design', 'test', 'versions', 'activity'}:
+        active_tab = 'design'
+    selected_step_id = request.GET.get('step')
+    try:
+        selected_step_id = int(selected_step_id) if selected_step_id else None
+    except (TypeError, ValueError):
+        selected_step_id = None
     return render(
         request,
         'contracts/workflow_template_detail.html',
-        _workflow_template_detail_context(template, get_user_organization(request.user)),
+        _workflow_template_detail_context(
+            template,
+            organization,
+            active_tab=active_tab,
+            selected_step_id=selected_step_id,
+            request=request,
+        ),
     )
 
 
@@ -858,13 +1000,19 @@ def workflow_template_detail(request, pk):
 def workflow_template_preview(request, pk):
     organization = get_user_organization(request.user)
     template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
-    form = WorkflowTemplatePreviewForm(request.POST)
-    context = _workflow_template_detail_context(template, organization, step_form=None)
+    if (request.POST.get('intent') or '').strip().lower() == 'save':
+        return workflow_template_scenario_save(request, pk)
+    show_status = template_uses_status_condition(template)
+    form = WorkflowTemplatePreviewForm(request.POST, show_status=show_status)
+    context = _workflow_template_detail_context(template, organization, active_tab='test', request=request)
     context['preview_form'] = form
+    context['show_status_field'] = show_status
     if form.is_valid():
+        cleaned = dict(form.cleaned_data)
+        cleaned.pop('scenario_name', None)
         preview_result = simulate_workflow_template(
             template,
-            form.cleaned_data,
+            cleaned,
             organization=organization,
             user=request.user,
         )
@@ -873,14 +1021,14 @@ def workflow_template_preview(request, pk):
             template,
             request.user,
             {
-                'contract_type': form.cleaned_data.get('contract_type'),
-                'value': str(form.cleaned_data.get('value')) if form.cleaned_data.get('value') is not None else None,
-                'jurisdiction': form.cleaned_data.get('jurisdiction'),
-                'governing_law': form.cleaned_data.get('governing_law'),
-                'data_transfer_flag': form.cleaned_data.get('data_transfer_flag'),
-                'risk_level': form.cleaned_data.get('risk_level'),
-                'counterparty_name': form.cleaned_data.get('counterparty_name'),
-                'status': form.cleaned_data.get('status'),
+                'contract_type': cleaned.get('contract_type'),
+                'value': str(cleaned.get('value')) if cleaned.get('value') is not None else None,
+                'jurisdiction': cleaned.get('jurisdiction'),
+                'governing_law': cleaned.get('governing_law'),
+                'data_transfer_flag': cleaned.get('data_transfer_flag'),
+                'risk_level': cleaned.get('risk_level'),
+                'counterparty_name': cleaned.get('counterparty_name'),
+                'status': cleaned.get('status'),
                 'active_step_count': preview_result.active_step_count,
                 'skipped_step_count': preview_result.skipped_step_count,
             },
@@ -892,27 +1040,127 @@ def workflow_template_preview(request, pk):
 
 
 @login_required
+@require_POST
+def workflow_template_scenario_save(request, pk):
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    if not can_edit_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('You do not have permission to save scenarios for this workflow.')
+    show_status = template_uses_status_condition(template)
+    form = WorkflowTemplatePreviewForm(request.POST, show_status=show_status)
+    if not form.is_valid():
+        messages.error(request, 'Unable to save scenario. Check the scenario inputs.')
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=test")
+    name = (form.cleaned_data.get('scenario_name') or '').strip()
+    if not name:
+        messages.error(request, 'Enter a scenario name before saving.')
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=test")
+    if request.POST.get('scenario_ran') != '1':
+        messages.error(request, 'Run the scenario before saving it.')
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=test")
+    payload = dict(form.cleaned_data)
+    payload.pop('scenario_name', None)
+    if payload.get('value') is not None:
+        payload['value'] = str(payload['value'])
+    scenario, _created = WorkflowTemplateScenario.objects.update_or_create(
+        template=template,
+        name=name,
+        defaults={
+            'organization': organization or template.organization,
+            'payload': payload,
+            'created_by': request.user,
+        },
+    )
+    log_workflow_template_scenario_saved(template, scenario.name, request.user, request=request)
+    messages.success(request, f'Saved scenario “{scenario.name}”.')
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=test")
+
+
+@login_required
+@require_GET
+def workflow_template_audit_export(request, pk):
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    rows = build_workflow_template_audit_rows(
+        template,
+        actor=request.GET.get('actor', ''),
+        event_type=','.join(v for v in request.GET.getlist('event_type') if v.strip()) or request.GET.get('event_type', ''),
+        version=request.GET.get('version', ''),
+        date_from=request.GET.get('date_from') or None,
+        date_to=request.GET.get('date_to') or None,
+        limit=2000,
+    )
+    log_workflow_template_audit_exported(template, request.user, request=request, row_count=len(rows))
+    import csv
+    from io import StringIO
+
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    export_ts = timezone.now().isoformat()
+    writer.writerow(['# CLM One workflow audit export'])
+    writer.writerow(['# exported_at', export_ts])
+    writer.writerow(['# organization_id', getattr(organization, 'pk', '') or getattr(template.organization, 'pk', '')])
+    writer.writerow(['# organization_name', getattr(organization, 'name', '') or getattr(template.organization, 'name', '')])
+    writer.writerow(['# workflow_template_id', template.pk])
+    writer.writerow(['# workflow_template_name', template.name])
+    writer.writerow(['# workflow_template_version', template.version])
+    writer.writerow([])
+    writer.writerow([
+        'Timestamp', 'Actor', 'Action', 'Affected', 'Previous value', 'New value',
+        'Version', 'Source', 'Event ID',
+    ])
+    for row in rows:
+        writer.writerow([
+            row['timestamp'].isoformat() if row['timestamp'] else '',
+            row['actor'],
+            row['action'],
+            row['affected'],
+            row['previous_value'],
+            row['new_value'],
+            row['version'],
+            row['source'],
+            row.get('event_id', ''),
+        ])
+    response = HttpResponse(buffer.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="workflow-template-{template.pk}-audit.csv"'
+    return response
+
+
+@login_required
 def workflow_template_clone_version(request, pk):
-    template = get_object_or_404(_workflow_template_queryset_for_organization(get_user_organization(request.user)), pk=pk)
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
     if request.method != 'POST':
         return redirect('contracts:workflow_template_detail', pk=template.pk)
+    if not can_edit_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('You do not have permission to edit this workflow template.')
+    if not template.is_active:
+        messages.error(request, 'Create a new version only after the workflow is published.')
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=versions")
 
-    cloned_template = clone_template_version(template)
+    cloned_template = clone_template_version(template, is_active=False, created_by=request.user)
     log_workflow_template_cloned(template, cloned_template, request.user, request=request)
-    messages.success(request, f'Created workflow template version {cloned_template.version}.')
-    return redirect('contracts:workflow_template_detail', pk=cloned_template.pk)
+    messages.success(request, f'Created draft workflow template version {cloned_template.version}.')
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': cloned_template.pk})}?tab=design")
 
 
 @login_required
 def workflow_template_restore_version(request, pk):
-    template = get_object_or_404(_workflow_template_queryset_for_organization(get_user_organization(request.user)), pk=pk)
+    organization = get_user_organization(request.user)
+    template = get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
     if request.method != 'POST':
-        return redirect('contracts:workflow_template_detail', pk=template.pk)
+        return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk})}?tab=versions")
+    if not can_edit_workflow_template(request.user, organization, template):
+        return HttpResponseForbidden('You do not have permission to restore this workflow template.')
 
-    restored_template = clone_template_version(template, is_active=True)
+    # Always restore as a new draft — never overwrite a live published version.
+    restored_template = clone_template_version(template, is_active=False, created_by=request.user)
     log_workflow_template_restored(template, restored_template, request.user, request=request)
-    messages.success(request, f'Restored workflow template version {template.version} as version {restored_template.version}.')
-    return redirect('contracts:workflow_template_detail', pk=restored_template.pk)
+    messages.success(
+        request,
+        f'Restored version {template.version} as draft version {restored_template.version}.',
+    )
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': restored_template.pk})}?tab=design")
 
 
 @login_required
@@ -926,23 +1174,85 @@ def workflow_template_compare(request, pk, other_pk):
     return render(request, 'contracts/workflow_template_compare.html', {'comparison': comparison, 'comparison_presets': COMPARISON_PRESETS})
 
 
-def _build_template_step_controls(steps):
+def _build_template_step_controls(steps, publish_validation=None):
+    from contracts.services.workflow_execution import assignment_required_for_kind
+
     step_list = list(steps)
     ordered_ids = [step.pk for step in step_list]
+    issue_by_step = {}
+    warning_by_step = {}
+    issue_field_by_step = {}
+    if publish_validation:
+        for issue in getattr(publish_validation, 'step_issues', ()) or ():
+            sid = issue.get('step_id')
+            if sid:
+                issue_by_step.setdefault(sid, []).append(issue.get('message') or 'Validation issue')
+                if issue.get('field') and sid not in issue_field_by_step:
+                    issue_field_by_step[sid] = issue['field']
+        for issue in getattr(publish_validation, 'warnings', ()) or ():
+            sid = issue.get('step_id')
+            if sid:
+                warning_by_step.setdefault(sid, []).append(issue.get('message') or 'Warning')
+                if issue.get('field') and sid not in issue_field_by_step:
+                    issue_field_by_step[sid] = issue['field']
     controls = []
     for index, step in enumerate(step_list):
-        move_up_ids = None
-        move_down_ids = None
+        move_left_ids = None
+        move_right_ids = None
         if index > 0:
-            move_up_ids = ordered_ids.copy()
-            move_up_ids[index - 1], move_up_ids[index] = move_up_ids[index], move_up_ids[index - 1]
+            move_left_ids = ordered_ids.copy()
+            move_left_ids[index - 1], move_left_ids[index] = move_left_ids[index], move_left_ids[index - 1]
         if index < len(step_list) - 1:
-            move_down_ids = ordered_ids.copy()
-            move_down_ids[index], move_down_ids[index + 1] = move_down_ids[index + 1], move_down_ids[index]
+            move_right_ids = ordered_ids.copy()
+            move_right_ids[index], move_right_ids[index + 1] = move_right_ids[index + 1], move_right_ids[index]
+        condition_summary = step_condition_summary(step)
+        clauses = ((getattr(step, 'condition_rules', None) or {}).get('clauses') or [])
+        condition_count = len(clauses) if clauses else (1 if condition_summary else 0)
+        has_assignee = bool(step.specific_assignee_id or (step.assignee_role or '').strip())
+        if step.specific_assignee_id:
+            assignment_label = step.specific_assignee.get_full_name() or step.specific_assignee.username
+        elif step.assignee_role:
+            assignment_label = step.get_assignee_role_display() if hasattr(step, 'get_assignee_role_display') else step.assignee_role
+        elif step.step_kind == WorkflowTemplateStep.StepKind.SIGNATURE:
+            assignment_label = 'Signer configuration missing'
+        else:
+            assignment_label = 'Assignment required'
+        assignment_required = (
+            assignment_required_for_kind(step.step_kind)
+            or step.step_kind == WorkflowTemplateStep.StepKind.SIGNATURE
+        )
+        assignment_incomplete = assignment_required and not has_assignee
+        if step.sla_hours:
+            if step.sla_hours % 24 == 0 and step.sla_hours >= 24:
+                days = step.sla_hours // 24
+                sla_label = f'{days}-day SLA'
+            else:
+                sla_label = f'{step.sla_hours}h SLA'
+        else:
+            sla_label = ''
+        issues = issue_by_step.get(step.pk, [])
+        warnings = warning_by_step.get(step.pk, [])
+        is_blocking = bool(issues)
+        primary_issue = (issues or warnings or ([assignment_label] if assignment_incomplete else []))
         controls.append({
             'step': step,
-            'move_up_ids': move_up_ids,
-            'move_down_ids': move_down_ids,
+            'move_left_ids': move_left_ids,
+            'move_right_ids': move_right_ids,
+            'move_up_ids': move_left_ids,
+            'move_down_ids': move_right_ids,
+            'condition_summary': condition_summary,
+            'condition_count': condition_count,
+            'is_conditional': bool(condition_summary) or step.step_kind == WorkflowTemplateStep.StepKind.CONDITION,
+            'assignment_label': assignment_label,
+            'assignment_incomplete': assignment_incomplete,
+            'sla_label': sla_label,
+            'validation_issues': issues,
+            'validation_warnings': warnings,
+            'primary_issue_label': primary_issue[0] if primary_issue else '',
+            'validation_field': issue_field_by_step.get(step.pk, ''),
+            'has_validation_issue': is_blocking or assignment_incomplete or bool(warnings),
+            'is_blocking_error': is_blocking,
+            'is_warning': (not is_blocking) and (bool(warnings) or assignment_incomplete),
         })
     return controls
 
@@ -1084,10 +1394,29 @@ def _risk_detail_for_signal(signal):
         'severity_code': signal.severity.lower(),
         'reason': signal.description,
         'source': data['source'],
+        'playbook_rule': data['source'],
         'recommended_action': data['recommended_action'],
+        'ai_recommendation': data['recommended_action'],
+        'suggested_fallback': data.get(
+            'suggested_fallback',
+            'Use the approved company playbook wording for this clause.',
+        ),
         'approval_impact': data['approval_impact'],
+        'legal_commercial_impact': data['approval_impact'],
         'status': 'Open' if not signal.is_resolved else 'Resolved',
         'section_anchor': data['section_anchor'],
+        'required_reviewer': (
+            'DPO / Privacy'
+            if signal.code in {
+                'scc_transfer_review',
+                'cross_border_no_mechanism',
+                'special_categories_risk',
+                'privacy_fact_uncertain',
+                'missing_dpo_contact',
+                'scc_fallback_included',
+            }
+            else 'Legal'
+        ),
     }
 
 
@@ -1236,36 +1565,163 @@ def _dpa_audit_preview(workflow):
 
 
 def _dpa_workspace_context(workflow):
+    from contracts.services.workflow_operations import split_exception_from_title
+
     values = _field_values_by_key(workflow)
     risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
-    risk_codes = {signal.code for signal in risk_signals}
+    open_signals = [signal for signal in risk_signals if not signal.is_resolved]
+    risk_codes = {signal.code for signal in open_signals}
+    route_risk_codes = {signal.code for signal in risk_signals}
     draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
     template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
-    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    current_step = (
+        WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS)
+        .select_related('assigned_to')
+        .order_by('order')
+        .first()
+    )
     if current_step is None:
-        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+        current_step = (
+            WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING)
+            .select_related('assigned_to')
+            .order_by('order')
+            .first()
+        )
+
+    timeline = ['Intake', 'AI Draft', 'Privacy Review', 'Legal Review', 'DPO Approval', 'Signature', 'Repository']
+    current_stage = current_step.name if current_step else 'AI Draft'
+    if current_stage not in timeline:
+        current_stage = 'Privacy Review' if open_signals else 'AI Draft'
+    active_timeline_index = timeline.index(current_stage)
+    next_stage = timeline[active_timeline_index + 1] if active_timeline_index + 1 < len(timeline) else None
+
+    owner = (
+        workflow.created_by.get_full_name() or workflow.created_by.username
+        if workflow.created_by else 'Unassigned'
+    )
+    if current_step and current_step.assigned_to_id:
+        stage_owner = current_step.assigned_to.get_full_name() or current_step.assigned_to.username
+    else:
+        stage_owner = owner
+    stage_status = current_step.get_status_display() if current_step else 'In progress'
+
+    risk_level = _risk_level_for_signals(open_signals)
+    risk_cards = [_risk_detail_for_signal(signal) for signal in risk_signals]
+    for card, signal in zip(risk_cards, risk_signals):
+        card['id'] = signal.pk
+        card['code'] = signal.code
+    open_risk_cards = [card for card in risk_cards if card.get('status') == 'Open']
+    open_exceptions = len(open_risk_cards)
+    risk_drivers = [card['title'] for card in open_risk_cards]
+    document_sections = _msa_enrich_document_sections(
+        _dpa_document_sections(draft_document.content if draft_document else '', values),
+        values=values,
+        risk_cards=risk_cards,
+        current_stage=current_stage,
+        stage_owner=stage_owner,
+    )
+    overview = _msa_document_overview(document_sections, open_exceptions)
+    drafting_ready = open_exceptions == 0 and overview['needs_review'] == 0 and overview['total'] > 0
+    action_state = _msa_next_action_state(
+        open_exceptions=open_exceptions,
+        risk_codes=risk_codes,
+        drafting_ready=drafting_ready,
+    )
+    if drafting_ready:
+        action_state = {
+            **action_state,
+            'next_action': 'Submit for privacy review',
+            'primary_cta': 'Submit for privacy review',
+            'sticky_primary_label': 'Submit for privacy review',
+        }
+    elif not open_exceptions and overview['needs_review']:
+        action_state = {
+            **action_state,
+            'next_action': f'Confirm {overview["needs_review"]} section{"s" if overview["needs_review"] != 1 else ""}',
+            'primary_cta': 'Confirm drafting sections',
+            'primary_cta_mode': 'governance',
+            'blocker_message': 'Confirm remaining drafting sections before review.',
+            'sticky_primary_label': 'Confirm drafting sections',
+            'can_submit_commercial': False,
+        }
+
+    counterparty_raw = (
+        values.get('counterparty')
+        or (workflow.contract.counterparty if workflow.contract_id else '')
+        or 'Counterparty pending'
+    )
+    counterparty, _ = split_exception_from_title(counterparty_raw)
+    risk_badge_tone = {
+        'Low': 'success',
+        'Medium': 'attention',
+        'High': 'danger',
+        'Critical': 'danger',
+    }.get(risk_level, 'neutral')
+    version = getattr(draft_document, 'version', None) or 1
+    section_content = {section['section_id']: section['content'] for section in document_sections}
+    for card in risk_cards:
+        card['current_language'] = section_content.get(card.get('section_anchor'), '')
+        card['approved_position'] = card.get('suggested_fallback')
+
+    workspace_members = [
+        {
+            'id': membership.user_id,
+            'name': membership.user.get_full_name() or membership.user.username,
+        }
+        for membership in OrganizationMembership.objects.filter(
+            organization=workflow.organization,
+            is_active=True,
+        ).select_related('user').order_by('user__first_name', 'user__username')
+    ]
+    dpo_approval_triggered = bool(
+        values.get('personal_data_involved')
+        or values.get('cross_border_transfer')
+        or values.get('special_categories_data')
+        or {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk', 'privacy_fact_uncertain'} & route_risk_codes
+    )
 
     return {
         'values': values,
-        'current_stage': current_step.name if current_step else 'AI Draft',
-        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
-        'risk_level': _risk_level_for_signals(risk_signals),
-        'next_action': 'Review DPA risk signals',
-        'timeline': ['Intake', 'AI Draft', 'Privacy Review', 'Legal Review', 'DPO Approval', 'Signature', 'Repository'],
-        'active_timeline_index': 2 if risk_signals else 1,
-        'draft_document': draft_document,
-        'document_sections': _dpa_document_sections(draft_document.content if draft_document else '', values),
-        'risk_cards': [_risk_detail_for_signal(signal) for signal in risk_signals],
-        'approval_cards': _dpa_approval_cards(workflow, values, risk_codes),
-        'dpo_approval_triggered': bool(
-            values.get('personal_data_involved')
-            or values.get('cross_border_transfer')
-            or values.get('special_categories_data')
-            or {'scc_transfer_review', 'cross_border_no_mechanism', 'special_categories_risk'} & risk_codes
+        'display_title': f'DPA · {counterparty}',
+        'counterparty': counterparty,
+        'current_stage': current_stage,
+        'owner': owner,
+        'risk_level': risk_level,
+        'risk_badge_label': f'{risk_level} risk',
+        'risk_badge_tone': risk_badge_tone,
+        'risk_drivers': risk_drivers,
+        'open_exceptions': open_exceptions,
+        'open_exceptions_label': (
+            f'{open_exceptions} open exception{"s" if open_exceptions != 1 else ""}'
+            if open_exceptions else 'No open exceptions'
         ),
+        'next_action': action_state['next_action'],
+        'primary_cta': action_state['primary_cta'],
+        'primary_cta_mode': action_state['primary_cta_mode'],
+        'secondary_actions': action_state['secondary_actions'],
+        'blocker_message': action_state['blocker_message'],
+        'sticky_primary_label': action_state['sticky_primary_label'],
+        'sticky_secondary_label': action_state['sticky_secondary_label'],
+        'can_submit_commercial': action_state['can_submit_commercial'],
+        'timeline': timeline,
+        'active_timeline_index': active_timeline_index,
+        'lifecycle_step_label': f'{current_stage} · Step {active_timeline_index + 1} of {len(timeline)}',
+        'lifecycle_next_label': f'Next: {next_stage}' if next_stage else 'Final stage',
+        'active_stage_owner': stage_owner,
+        'active_stage_status': stage_status,
+        'draft_document': draft_document,
+        'document_version': version,
+        'document_sections': document_sections,
+        'document_overview': overview,
+        'risk_cards': risk_cards,
+        'open_risk_cards': open_risk_cards,
+        'approval_cards': _dpa_approval_cards(workflow, values, route_risk_codes),
+        'dpo_approval_triggered': dpo_approval_triggered,
         'template_routes': template_routes,
         'audit_preview': _dpa_audit_preview(workflow),
         'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+        'unsaved_changes': False,
+        'workspace_members': workspace_members,
     }
 
 
@@ -1342,10 +1798,21 @@ def _msa_risk_detail_for_signal(signal):
         'severity_code': signal.severity.lower(),
         'reason': signal.description,
         'source': data['source'],
+        'playbook_rule': data['source'],
         'recommended_action': data['recommended_action'],
+        'ai_recommendation': data['recommended_action'],
+        'suggested_fallback': data.get(
+            'suggested_fallback',
+            'Use the approved company playbook wording for this clause.',
+        ),
         'approval_impact': data['approval_impact'],
+        'legal_commercial_impact': data['approval_impact'],
         'status': 'Open' if not signal.is_resolved else 'Resolved',
         'section_anchor': data['section_anchor'],
+        'required_reviewer': (
+            'Finance' if signal.code in {'finance_approval_required', 'nonstandard_payment_terms'}
+            else 'Legal'
+        ),
     }
 
 
@@ -1399,20 +1866,50 @@ def _msa_approval_cards(workflow, values, risk_codes, actor=None):
     return cards
 
 
+def _msa_fallback_section_identity(paragraph, index, used_titles):
+    """Map unnumbered paragraphs to unique canonical section names."""
+    lower = paragraph.lower()
+    if paragraph.strip().upper() == 'MASTER SERVICES AGREEMENT':
+        return None  # Cover title only — not a drafting section.
+    if 'master services agreement is entered into' in lower or 'this master services agreement' in lower:
+        title, section_id = 'Introduction and parties', 'introduction-parties'
+    elif '8. special conditions' in lower or lower.startswith('special conditions'):
+        title, section_id = 'Special Conditions', 'special-conditions'
+    elif 'definition' in lower:
+        title, section_id = 'Definitions', 'definitions'
+    elif 'general term' in lower:
+        title, section_id = 'General terms', 'general-terms'
+    elif 'execution' in lower or 'in witness' in lower:
+        title, section_id = 'Execution', 'execution'
+    elif 'agreement structure' in lower or 'order of precedence' in lower:
+        title, section_id = 'Agreement structure', 'agreement-structure'
+    else:
+        title, section_id = f'Clause {index + 1}', f'clause-{index + 1}'
+    base_title = title
+    suffix = 2
+    while title in used_titles:
+        title = f'{base_title} ({suffix})'
+        section_id = f'{section_id}-{suffix}'
+        suffix += 1
+    return title, section_id
+
+
 def _msa_document_sections(draft_content, values, risk_codes=None):
     risk_codes = risk_codes or set()
     content = draft_content or ''
     paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
     sections = []
+    used_titles = set()
     for index, paragraph in enumerate(paragraphs):
-        title = 'Generated MSA draft' if index == 0 else 'MSA clause'
         source = 'Approved template'
         source_detail = 'Enterprise Services MSA · Netherlands · B2B'
         tone = 'template'
+        fields = []
+        value_keys = []
         if '1. Services' in paragraph:
             title = 'Services'
-            source = 'AI-assisted suggestion'
-            source_detail = 'Field values mapped into approved services language'
+            source = 'AI-assisted draft'
+            source_detail = 'Field values mapped into approved services language · Human confirmation required'
             tone = 'ai'
             fields = ['Services description', 'Statement of Work required', 'Deliverables defined', 'Acceptance criteria required']
             section_id = 'services'
@@ -1451,8 +1948,12 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             value_keys = ['ip_ownership']
         elif '6. Data Protection' in paragraph:
             title = 'Data Protection'
-            source = 'AI-assisted suggestion' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'Approved template'
-            source_detail = 'Privacy scope and linked DPA guidance'
+            source = 'AI-assisted draft' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'Approved template'
+            source_detail = (
+                'Privacy scope and linked DPA guidance · Human confirmation required'
+                if values.get('personal_data_involved') or values.get('services_involve_personal_data')
+                else 'Privacy scope and linked DPA guidance'
+            )
             tone = 'ai' if values.get('personal_data_involved') or values.get('services_involve_personal_data') else 'template'
             fields = ['Personal data involved']
             section_id = 'data-protection'
@@ -1465,10 +1966,23 @@ def _msa_document_sections(draft_content, values, risk_codes=None):
             fields = ['Governing law', 'Jurisdiction']
             section_id = 'governing-law'
             value_keys = ['governing_law', 'jurisdiction']
+        elif '8. Special Conditions' in paragraph:
+            title = 'Special Conditions'
+            source = 'Approved template'
+            source_detail = 'Additional commercial conditions'
+            tone = 'template'
+            fields = ['Special conditions']
+            section_id = 'special-conditions'
+            value_keys = ['special_conditions']
         else:
-            fields = ['Counterparty name', 'Effective date'] if index == 0 else []
-            section_id = 'generated-msa-draft' if index == 0 else f'msa-clause-{index}'
-            value_keys = ['counterparty', 'start_date'] if index == 0 else []
+            identity = _msa_fallback_section_identity(paragraph, index, used_titles)
+            if identity is None:
+                continue
+            title, section_id = identity
+            if section_id.startswith('introduction'):
+                fields = ['Counterparty name', 'Effective date']
+                value_keys = ['counterparty', 'start_date']
+        used_titles.add(title)
         sections.append({
             'title': title,
             'content': paragraph,
@@ -1517,6 +2031,7 @@ MSA_STAGE_ALIASES = {
 MSA_SECTION_STATE_TONES = {
     'Exception': 'danger',
     'Needs input': 'attention',
+    'Needs review': 'attention',
     'Pending review': 'progress',
     'Approved': 'success',
     'Complete': 'success',
@@ -1539,34 +2054,153 @@ def _msa_section_needs_input(value_keys, values):
     return False
 
 
-def _msa_enrich_document_sections(sections, *, values, risk_cards, current_stage):
-    exception_anchors = {
-        card['section_anchor']
-        for card in risk_cards
-        if card.get('status') == 'Open' and card.get('section_anchor')
-    }
+def _msa_section_confirmed(values, section_id):
+    return bool(values.get(f'_section_confirmed_{section_id}'))
+
+
+def _msa_enrich_document_sections(sections, *, values, risk_cards, current_stage, stage_owner):
+    exception_cards_by_anchor = {}
+    for card in risk_cards:
+        if card.get('status') != 'Open' or not card.get('section_anchor'):
+            continue
+        exception_cards_by_anchor.setdefault(card['section_anchor'], []).append(card)
     review_stages = {'Commercial review', 'Legal review', 'Finance approval'}
     approved_stages = {'Signature', 'Active'}
 
     enriched = []
     for section in sections:
         section = dict(section)
-        has_exception = section['section_id'] in exception_anchors or section.get('has_exception')
+        related_exceptions = exception_cards_by_anchor.get(section['section_id'], [])
+        has_exception = bool(related_exceptions)
         needs_input = _msa_section_needs_input(section.get('value_keys') or [], values)
+        confirmed = _msa_section_confirmed(values, section['section_id'])
+        deviation_count = len(related_exceptions)
         if has_exception:
             state = 'Exception'
+            required_action = 'Resolve exception'
+            action_label = 'Resolve exception'
         elif needs_input:
             state = 'Needs input'
+            required_action = 'Complete required fields'
+            action_label = 'Open clause'
+        elif section.get('tone') == 'ai' and not confirmed and current_stage not in approved_stages:
+            state = 'Needs review'
+            required_action = 'Human confirmation required'
+            action_label = 'Confirm content'
         elif current_stage in approved_stages and not has_exception:
             state = 'Approved'
+            required_action = ''
+            action_label = 'View approved wording'
         elif current_stage in review_stages and (section.get('has_changes') or section.get('tone') in {'ai', 'risk'}):
             state = 'Pending review'
+            required_action = 'Awaiting reviewer'
+            action_label = 'Review clause'
         else:
             state = 'Complete'
-        section['state'] = state
-        section['state_tone'] = MSA_SECTION_STATE_TONES[state]
+            required_action = ''
+            action_label = 'Review clause'
+        if section.get('tone') == 'library' and state == 'Complete':
+            provenance_summary = f"{section['source']} · No deviations"
+        elif deviation_count:
+            provenance_summary = (
+                f"{section['source']} · {deviation_count} deviation{'s' if deviation_count != 1 else ''}"
+            )
+        elif section.get('tone') == 'ai' and state == 'Needs review':
+            provenance_summary = f"{section['source']} · Human confirmation required"
+        else:
+            provenance_summary = section.get('source_detail') or section['source']
+        section.update({
+            'state': state,
+            'state_tone': MSA_SECTION_STATE_TONES[state],
+            'deviation_count': deviation_count,
+            'required_action': required_action,
+            'action_label': action_label,
+            'owner': stage_owner if state in {'Exception', 'Needs review', 'Needs input', 'Pending review'} else '',
+            'provenance_summary': provenance_summary,
+            'related_exceptions': related_exceptions,
+            'has_exception': has_exception,
+        })
         enriched.append(section)
     return enriched
+
+
+def _msa_document_overview(sections, open_exceptions):
+    counts = {
+        'total': len(sections),
+        'complete': sum(1 for section in sections if section['state'] in {'Complete', 'Approved'}),
+        'exceptions': sum(1 for section in sections if section['state'] == 'Exception'),
+        'needs_review': sum(1 for section in sections if section['state'] in {'Needs review', 'Needs input', 'Pending review'}),
+    }
+    if open_exceptions:
+        default_filter = 'exceptions'
+    elif counts['needs_review']:
+        default_filter = 'needs_review'
+    else:
+        default_filter = 'all'
+    return {
+        **counts,
+        'default_filter': default_filter,
+    }
+
+
+def _msa_next_action_state(*, open_exceptions, risk_codes, drafting_ready):
+    """Single source of truth for header CTA, sticky bar, and blockers."""
+    if open_exceptions:
+        label = f'Resolve {open_exceptions} exception{"s" if open_exceptions != 1 else ""}'
+        return {
+            'next_action': label,
+            'primary_cta': label,
+            'primary_cta_mode': 'resolve_exceptions',
+            'blocker_message': (
+                f'{open_exceptions} exception{"s" if open_exceptions != 1 else ""} must be resolved '
+                'before this contract can be submitted for review.'
+            ),
+            'sticky_primary_label': 'Resolve exceptions',
+            'sticky_secondary_label': 'Save draft',
+            'can_submit_commercial': False,
+            'secondary_actions': [
+                {'key': 'approval_route', 'label': 'Review approval route'},
+                {'key': 'preview', 'label': 'Preview full contract'},
+                {'key': 'save_exit', 'label': 'Save and exit'},
+            ],
+        }
+    if drafting_ready:
+        return {
+            'next_action': 'Submit for commercial review',
+            'primary_cta': 'Submit for commercial review',
+            'primary_cta_mode': 'submit_commercial',
+            'blocker_message': 'All drafting sections are ready.',
+            'sticky_primary_label': 'Submit for commercial review',
+            'sticky_secondary_label': 'Save draft',
+            'can_submit_commercial': True,
+            'secondary_actions': [
+                {'key': 'approval_route', 'label': 'Review approval route'},
+                {'key': 'preview', 'label': 'Preview full contract'},
+                {'key': 'save_exit', 'label': 'Save and exit'},
+            ],
+        }
+    if {'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes:
+        next_action = 'Review approval route'
+    elif 'msa_dpa_review_required' in risk_codes:
+        next_action = 'Review privacy scope and linked DPA need'
+    elif risk_codes:
+        next_action = 'Review MSA risk signals'
+    else:
+        next_action = 'Continue drafting'
+    return {
+        'next_action': next_action,
+        'primary_cta': next_action,
+        'primary_cta_mode': 'governance',
+        'blocker_message': 'Complete remaining drafting sections before review.',
+        'sticky_primary_label': next_action,
+        'sticky_secondary_label': 'Save draft',
+        'can_submit_commercial': False,
+        'secondary_actions': [
+            {'key': 'approval_route', 'label': 'Review approval route'},
+            {'key': 'preview', 'label': 'Preview full contract'},
+            {'key': 'save_exit', 'label': 'Save and exit'},
+        ],
+    }
 
 
 def _msa_audit_preview(workflow):
@@ -1575,6 +2209,8 @@ def _msa_audit_preview(workflow):
 
 
 def _msa_workspace_context(workflow, actor=None):
+    from contracts.services.workflow_operations import split_exception_from_title
+
     values = _field_values_by_key(workflow)
     required_definitions = list(
         FieldDefinition.objects.filter(
@@ -1587,7 +2223,9 @@ def _msa_workspace_context(workflow, actor=None):
         for field in required_definitions
     )
     risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
-    risk_codes = {signal.code for signal in risk_signals}
+    open_signals = [signal for signal in risk_signals if not signal.is_resolved]
+    risk_codes = {signal.code for signal in open_signals}
+    route_risk_codes = {signal.code for signal in risk_signals}
     draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
     template_routes = list(ApprovalRoute.objects.filter(workflow_template=workflow.template).order_by('order')) if workflow.template_id else []
     current_step = (
@@ -1604,20 +2242,16 @@ def _msa_workspace_context(workflow, actor=None):
             .first()
         )
 
-    if {'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes:
-        next_action = 'Review Finance approval route'
-    elif 'msa_dpa_review_required' in risk_codes:
-        next_action = 'Review privacy scope and linked DPA need'
-    elif risk_codes:
-        next_action = 'Review MSA risk signals'
-    else:
-        next_action = 'Review generated MSA draft'
-
     raw_stage = current_step.name if current_step else 'Drafting'
     current_stage = _msa_normalize_stage(raw_stage)
     if current_stage not in MSA_LIFECYCLE_STAGES:
-        current_stage = 'Commercial review' if risk_signals else 'Drafting'
+        current_stage = 'Commercial review' if open_signals else 'Drafting'
     active_timeline_index = MSA_LIFECYCLE_STAGES.index(current_stage)
+    next_stage = (
+        MSA_LIFECYCLE_STAGES[active_timeline_index + 1]
+        if active_timeline_index + 1 < len(MSA_LIFECYCLE_STAGES)
+        else None
+    )
 
     owner = (
         workflow.created_by.get_full_name() or workflow.created_by.username
@@ -1629,27 +2263,67 @@ def _msa_workspace_context(workflow, actor=None):
         stage_owner = owner
     stage_status = current_step.get_status_display() if current_step else 'In progress'
 
-    risk_level = _risk_level_for_signals(risk_signals)
+    risk_level = _risk_level_for_signals(open_signals)
     risk_cards = [_msa_risk_detail_for_signal(signal) for signal in risk_signals]
-    open_exceptions = sum(1 for card in risk_cards if card.get('status') == 'Open')
+    for card, signal in zip(risk_cards, risk_signals):
+        card['id'] = signal.pk
+        card['code'] = signal.code
+    open_risk_cards = [card for card in risk_cards if card.get('status') == 'Open']
+    open_exceptions = len(open_risk_cards)
+    risk_drivers = [card['title'] for card in open_risk_cards]
     document_sections = _msa_enrich_document_sections(
         _msa_document_sections(draft_document.content if draft_document else '', values, risk_codes),
         values=values,
         risk_cards=risk_cards,
         current_stage=current_stage,
+        stage_owner=stage_owner,
     )
+    overview = _msa_document_overview(document_sections, open_exceptions)
+    drafting_ready = open_exceptions == 0 and overview['needs_review'] == 0 and overview['total'] > 0
+    action_state = _msa_next_action_state(
+        open_exceptions=open_exceptions,
+        risk_codes=risk_codes,
+        drafting_ready=drafting_ready,
+    )
+    if not open_exceptions and overview['needs_review'] and not drafting_ready:
+        action_state = {
+            **action_state,
+            'next_action': f'Confirm {overview["needs_review"]} section{"s" if overview["needs_review"] != 1 else ""}',
+            'primary_cta': 'Confirm drafting sections',
+            'primary_cta_mode': 'governance',
+            'blocker_message': 'Confirm remaining drafting sections before review.',
+            'sticky_primary_label': 'Confirm drafting sections',
+            'can_submit_commercial': False,
+        }
 
-    counterparty = (
+    counterparty_raw = (
         values.get('counterparty')
         or (workflow.contract.counterparty if workflow.contract_id else '')
         or 'Counterparty pending'
     )
+    counterparty, _ = split_exception_from_title(counterparty_raw)
     risk_badge_tone = {
         'Low': 'success',
         'Medium': 'attention',
         'High': 'danger',
         'Critical': 'danger',
     }.get(risk_level, 'neutral')
+    version = getattr(draft_document, 'version', None) or 1
+    section_content = {section['section_id']: section['content'] for section in document_sections}
+    for card in risk_cards:
+        card['current_language'] = section_content.get(card.get('section_anchor'), '')
+        card['approved_position'] = card.get('suggested_fallback')
+
+    workspace_members = [
+        {
+            'id': membership.user_id,
+            'name': membership.user.get_full_name() or membership.user.username,
+        }
+        for membership in OrganizationMembership.objects.filter(
+            organization=workflow.organization,
+            is_active=True,
+        ).select_related('user').order_by('user__first_name', 'user__username')
+    ]
 
     return {
         'values': values,
@@ -1660,22 +2334,34 @@ def _msa_workspace_context(workflow, actor=None):
         'risk_level': risk_level,
         'risk_badge_label': f'{risk_level} risk',
         'risk_badge_tone': risk_badge_tone,
+        'risk_drivers': risk_drivers,
         'open_exceptions': open_exceptions,
         'open_exceptions_label': (
             f'{open_exceptions} open exception{"s" if open_exceptions != 1 else ""}'
             if open_exceptions else 'No open exceptions'
         ),
-        'next_action': next_action,
-        'primary_cta': next_action,
+        'next_action': action_state['next_action'],
+        'primary_cta': action_state['primary_cta'],
+        'primary_cta_mode': action_state['primary_cta_mode'],
+        'secondary_actions': action_state['secondary_actions'],
+        'blocker_message': action_state['blocker_message'],
+        'sticky_primary_label': action_state['sticky_primary_label'],
+        'sticky_secondary_label': action_state['sticky_secondary_label'],
+        'can_submit_commercial': action_state['can_submit_commercial'],
         'timeline': list(MSA_LIFECYCLE_STAGES),
         'active_timeline_index': active_timeline_index,
+        'lifecycle_step_label': f'{current_stage} · Step {active_timeline_index + 1} of {len(MSA_LIFECYCLE_STAGES)}',
+        'lifecycle_next_label': f'Next: {next_stage}' if next_stage else 'Final stage',
         'active_stage_owner': stage_owner,
         'active_stage_status': stage_status,
         'draft_document': draft_document,
+        'document_version': version,
         'document_sections': document_sections,
+        'document_overview': overview,
         'risk_cards': risk_cards,
-        'approval_cards': _msa_approval_cards(workflow, values, risk_codes, actor=actor),
-        'finance_approval_triggered': bool({'finance_approval_required', 'nonstandard_payment_terms'} & risk_codes),
+        'open_risk_cards': open_risk_cards,
+        'approval_cards': _msa_approval_cards(workflow, values, route_risk_codes, actor=actor),
+        'finance_approval_triggered': bool({'finance_approval_required', 'nonstandard_payment_terms'} & route_risk_codes),
         'template_routes': template_routes,
         'audit_preview': _msa_audit_preview(workflow),
         'field_count': FieldValue.objects.filter(workflow=workflow).count(),
@@ -1683,6 +2369,8 @@ def _msa_workspace_context(workflow, actor=None):
             'completed': required_completed_count,
             'total': len(required_definitions),
         },
+        'unsaved_changes': False,
+        'workspace_members': workspace_members,
     }
 
 
@@ -1730,10 +2418,18 @@ def _nda_risk_detail_for_signal(signal):
         'severity_code': signal.severity.lower(),
         'reason': signal.description,
         'source': data['source'],
+        'playbook_rule': data['source'],
         'recommended_action': data['recommended_action'],
+        'ai_recommendation': data['recommended_action'],
+        'suggested_fallback': data.get(
+            'suggested_fallback',
+            'Use the approved company playbook wording for this clause.',
+        ),
         'approval_impact': data['approval_impact'],
+        'legal_commercial_impact': data['approval_impact'],
         'status': 'Open' if not signal.is_resolved else 'Resolved',
         'section_anchor': data['section_anchor'],
+        'required_reviewer': 'Legal',
     }
 
 
@@ -1855,22 +2551,103 @@ def _nda_audit_preview(workflow):
 
 
 def _nda_workspace_context(workflow):
+    from contracts.services.workflow_operations import split_exception_from_title
+
     values = _field_values_by_key(workflow)
     risk_signals = list(RiskSignal.objects.filter(workflow=workflow).order_by('-severity', 'detected_at'))
-    risk_codes = {signal.code for signal in risk_signals}
+    open_signals = [signal for signal in risk_signals if not signal.is_resolved]
+    risk_codes = {signal.code for signal in open_signals}
+    route_risk_codes = {signal.code for signal in risk_signals}
     draft_document = DraftDocument.objects.filter(workflow=workflow, is_current=True).order_by('-version').first()
-    current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
+    current_step = (
+        WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.IN_PROGRESS)
+        .select_related('assigned_to')
+        .order_by('order')
+        .first()
+    )
     if current_step is None:
-        current_step = WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING).order_by('order').first()
+        current_step = (
+            WorkflowStep.objects.filter(workflow=workflow, status=WorkflowStep.Status.PENDING)
+            .select_related('assigned_to')
+            .order_by('order')
+            .first()
+        )
 
-    if 'nda_privacy_review_required' in risk_codes:
-        next_action = 'Review privacy scope and linked DPA need'
-    elif risk_codes:
-        next_action = 'Review NDA legal risk signals'
+    timeline = ['Intake', 'AI Draft', 'Self-Serve Check', 'Legal Review', 'Signature', 'Repository']
+    current_stage = current_step.name if current_step else 'AI Draft'
+    if current_stage not in timeline:
+        current_stage = 'Legal Review' if open_signals else 'Self-Serve Check'
+    active_timeline_index = timeline.index(current_stage)
+    next_stage = timeline[active_timeline_index + 1] if active_timeline_index + 1 < len(timeline) else None
+
+    owner = (
+        workflow.created_by.get_full_name() or workflow.created_by.username
+        if workflow.created_by else 'Unassigned'
+    )
+    if current_step and current_step.assigned_to_id:
+        stage_owner = current_step.assigned_to.get_full_name() or current_step.assigned_to.username
     else:
-        next_action = 'Review generated NDA draft'
+        stage_owner = owner
+    stage_status = current_step.get_status_display() if current_step else 'In progress'
 
+    risk_level = _risk_level_for_signals(open_signals)
     risk_cards = [_nda_risk_detail_for_signal(signal) for signal in risk_signals]
+    for card, signal in zip(risk_cards, risk_signals):
+        card['id'] = signal.pk
+        card['code'] = signal.code
+    open_risk_cards = [card for card in risk_cards if card.get('status') == 'Open']
+    open_exceptions = len(open_risk_cards)
+    risk_drivers = [card['title'] for card in open_risk_cards]
+    self_serve_eligible = not route_risk_codes
+    legal_review_triggered = bool(route_risk_codes)
+
+    document_sections = _msa_enrich_document_sections(
+        _nda_document_sections(draft_document.content if draft_document else '', values),
+        values=values,
+        risk_cards=risk_cards,
+        current_stage=current_stage,
+        stage_owner=stage_owner,
+    )
+    overview = _msa_document_overview(document_sections, open_exceptions)
+    drafting_ready = open_exceptions == 0 and overview['needs_review'] == 0 and overview['total'] > 0
+    action_state = _msa_next_action_state(
+        open_exceptions=open_exceptions,
+        risk_codes=risk_codes,
+        drafting_ready=drafting_ready,
+    )
+    if self_serve_eligible and drafting_ready:
+        action_state = {
+            **action_state,
+            'next_action': 'Review generated NDA draft',
+            'primary_cta': 'View contract record',
+            'primary_cta_mode': 'governance',
+            'blocker_message': 'Self-serve eligible. No Legal submission is required.',
+            'sticky_primary_label': 'View contract record',
+            'can_submit_commercial': False,
+        }
+    elif drafting_ready and legal_review_triggered:
+        action_state = {
+            **action_state,
+            'next_action': 'Submit for Legal review',
+            'primary_cta': 'Submit for Legal review',
+            'sticky_primary_label': 'Submit for Legal review',
+        }
+    elif not open_exceptions and overview['needs_review']:
+        action_state = {
+            **action_state,
+            'next_action': f'Confirm {overview["needs_review"]} section{"s" if overview["needs_review"] != 1 else ""}',
+            'primary_cta': 'Confirm drafting sections',
+            'primary_cta_mode': 'governance',
+            'blocker_message': 'Confirm remaining drafting sections before review.',
+            'sticky_primary_label': 'Confirm drafting sections',
+            'can_submit_commercial': False,
+        }
+    elif 'nda_privacy_review_required' in risk_codes and not open_exceptions:
+        action_state = {
+            **action_state,
+            'next_action': 'Review privacy scope and linked DPA need',
+        }
+
     if not risk_cards:
         risk_cards = [{
             'title': 'Self-serve eligible',
@@ -1884,22 +2661,78 @@ def _nda_workspace_context(workflow):
             'section_anchor': 'purpose',
         }]
 
+    counterparty_raw = (
+        values.get('counterparty')
+        or (workflow.contract.counterparty if workflow.contract_id else '')
+        or 'Counterparty pending'
+    )
+    counterparty, _ = split_exception_from_title(counterparty_raw)
+    risk_badge_tone = {
+        'Low': 'success',
+        'Medium': 'attention',
+        'High': 'danger',
+        'Critical': 'danger',
+    }.get(risk_level, 'neutral')
+    version = getattr(draft_document, 'version', None) or 1
+    section_content = {section['section_id']: section['content'] for section in document_sections}
+    for card in risk_cards:
+        if card.get('id'):
+            card['current_language'] = section_content.get(card.get('section_anchor'), '')
+            card['approved_position'] = card.get('suggested_fallback')
+
+    workspace_members = [
+        {
+            'id': membership.user_id,
+            'name': membership.user.get_full_name() or membership.user.username,
+        }
+        for membership in OrganizationMembership.objects.filter(
+            organization=workflow.organization,
+            is_active=True,
+        ).select_related('user').order_by('user__first_name', 'user__username')
+    ]
+
     return {
         'values': values,
-        'current_stage': current_step.name if current_step else 'AI Draft',
-        'owner': workflow.created_by.get_full_name() or workflow.created_by.username if workflow.created_by else 'Unassigned',
-        'risk_level': _risk_level_for_signals(risk_signals),
-        'next_action': next_action,
-        'timeline': ['Intake', 'AI Draft', 'Self-Serve Check', 'Legal Review', 'Signature', 'Repository'],
-        'active_timeline_index': 3 if risk_signals else 2,
+        'display_title': f'NDA · {counterparty}',
+        'counterparty': counterparty,
+        'current_stage': current_stage,
+        'owner': owner,
+        'risk_level': risk_level,
+        'risk_badge_label': f'{risk_level} risk',
+        'risk_badge_tone': risk_badge_tone,
+        'risk_drivers': risk_drivers,
+        'open_exceptions': open_exceptions,
+        'open_exceptions_label': (
+            f'{open_exceptions} open exception{"s" if open_exceptions != 1 else ""}'
+            if open_exceptions else 'No open exceptions'
+        ),
+        'next_action': action_state['next_action'],
+        'primary_cta': action_state['primary_cta'],
+        'primary_cta_mode': action_state['primary_cta_mode'],
+        'secondary_actions': action_state['secondary_actions'],
+        'blocker_message': action_state['blocker_message'],
+        'sticky_primary_label': action_state['sticky_primary_label'],
+        'sticky_secondary_label': action_state['sticky_secondary_label'],
+        'can_submit_commercial': action_state['can_submit_commercial'] and legal_review_triggered,
+        'timeline': timeline,
+        'active_timeline_index': active_timeline_index,
+        'lifecycle_step_label': f'{current_stage} · Step {active_timeline_index + 1} of {len(timeline)}',
+        'lifecycle_next_label': f'Next: {next_stage}' if next_stage else 'Final stage',
+        'active_stage_owner': stage_owner,
+        'active_stage_status': stage_status,
         'draft_document': draft_document,
-        'document_sections': _nda_document_sections(draft_document.content if draft_document else '', values),
+        'document_version': version,
+        'document_sections': document_sections,
+        'document_overview': overview,
         'risk_cards': risk_cards,
-        'approval_cards': _nda_approval_cards(workflow, risk_codes),
-        'self_serve_eligible': not risk_codes,
-        'legal_review_triggered': bool(risk_codes),
+        'open_risk_cards': open_risk_cards,
+        'approval_cards': _nda_approval_cards(workflow, route_risk_codes),
+        'self_serve_eligible': self_serve_eligible,
+        'legal_review_triggered': legal_review_triggered,
         'audit_preview': _nda_audit_preview(workflow),
         'field_count': FieldValue.objects.filter(workflow=workflow).count(),
+        'unsaved_changes': False,
+        'workspace_members': workspace_members,
     }
 
 
@@ -1934,26 +2767,212 @@ def _workflow_detail_context(workflow, add_step_form=None, actor=None):
     return context
 
 
-def _workflow_template_detail_context(template, organization, step_form=None):
-    steps = WorkflowTemplateStep.objects.filter(template=template).order_by('order')
+def _workflow_template_detail_context(
+    template,
+    organization,
+    step_form=None,
+    *,
+    active_tab='design',
+    selected_step_id=None,
+    request=None,
+):
+    if active_tab == 'audit':
+        active_tab = 'activity'
+    steps = list(WorkflowTemplateStep.objects.filter(template=template).order_by('order', 'pk').select_related('specific_assignee'))
     template_versions = list_template_versions(template)
     form = step_form or WorkflowTemplateStepForm()
     form = apply_form_queryset_scopes(form, organization, {'specific_assignee': organization_user_queryset})
     publish_validation = validate_template_for_publish(template)
+    selected_step = None
+    if selected_step_id:
+        selected_step = next((step for step in steps if step.pk == selected_step_id), None)
+    elif active_tab == 'design' and steps:
+        # Make the inspector useful immediately unless the URL selects another step.
+        selected_step = steps[0]
+    can_manage = can_edit_workflow_template(
+        getattr(request, 'user', None) if request else None,
+        organization,
+        template,
+    )
+    can_mutate = can_mutate_workflow_template(
+        getattr(request, 'user', None) if request else None,
+        organization,
+        template,
+    )
+    is_published = bool(template.is_active)
+    show_status = template_uses_status_condition(template)
+    # Prefer instance bound to selected step when editing.
+    if selected_step and step_form is None:
+        form = WorkflowTemplateStepForm(instance=selected_step)
+        form = apply_form_queryset_scopes(form, organization, {'specific_assignee': organization_user_queryset})
+    if not can_mutate:
+        for field in form.fields.values():
+            field.disabled = True
+
+    audit_filters = {
+        'actor': '',
+        'event_types': [],
+        'version': '',
+        'date_from': '',
+        'date_to': '',
+    }
+    audit_filters_active = False
+    if request is not None and active_tab == 'activity':
+        event_types = [v for v in request.GET.getlist('event_type') if v.strip()]
+        if not event_types and request.GET.get('event_type'):
+            event_types = [request.GET.get('event_type').strip()]
+        audit_filters = {
+            'actor': (request.GET.get('actor') or '').strip(),
+            'event_types': event_types,
+            'version': (request.GET.get('version') or '').strip(),
+            'date_from': (request.GET.get('date_from') or '').strip(),
+            'date_to': (request.GET.get('date_to') or '').strip(),
+        }
+        audit_filters_active = any([
+            audit_filters['actor'],
+            audit_filters['event_types'],
+            audit_filters['version'],
+            audit_filters['date_from'],
+            audit_filters['date_to'],
+        ])
+    audit_rows = build_workflow_template_audit_rows(
+        template,
+        actor=audit_filters['actor'],
+        event_type=','.join(audit_filters['event_types']),
+        version=audit_filters['version'],
+        date_from=audit_filters['date_from'] or None,
+        date_to=audit_filters['date_to'] or None,
+        limit=200,
+    ) if active_tab == 'activity' else []
+
+    audit_actor_choices = []
+    audit_has_any_activity = False
+    if active_tab == 'activity':
+        unfiltered_probe = build_workflow_template_audit_rows(template, limit=1)
+        audit_has_any_activity = bool(unfiltered_probe)
+        seen_actors = set()
+        for item in get_workflow_template_audit_feed(template, limit=200):
+            actor = (item.get('actor') or '').strip()
+            if actor and actor not in seen_actors and actor.lower() != 'system':
+                seen_actors.add(actor)
+                audit_actor_choices.append(actor)
+
+    saved_scenarios = []
+    if active_tab == 'test' and (organization or template.organization_id):
+        saved_scenarios = list(
+            WorkflowTemplateScenario.objects.filter(template=template).order_by('name')
+        )
+
+    published_has_blocking_issues = bool(is_published and not publish_validation.ok)
+    blocking_count = publish_validation.blocking_count
+    warning_count = publish_validation.warning_count
+    assignment_gaps = unassigned_required_steps(template) if published_has_blocking_issues else []
+    unresolved_assignment_count = len(assignment_gaps) or sum(
+        1 for issue in publish_validation.step_issues
+        if (issue.get('field') or '') == 'assignment'
+    )
+    launch_policy = template_launch_policy(template) if is_published else {
+        'blocked': False,
+        'uses_fallback': False,
+        'label': 'Allowed',
+        'reason': None,
+    }
+    new_launches_blocked = bool(launch_policy.get('blocked'))
+    selected_step_issues = []
+    selected_step_warnings = []
+    primary_blocking_issue = (publish_validation.step_issues[0] if publish_validation.step_issues else None)
+    if selected_step and publish_validation:
+        selected_step_issues = [
+            issue for issue in publish_validation.step_issues
+            if issue.get('step_id') == selected_step.pk
+        ]
+        selected_step_warnings = [
+            issue for issue in publish_validation.warnings
+            if issue.get('step_id') == selected_step.pk
+        ]
+    lifecycle_label = 'Published' if is_published else 'Draft'
+    if published_has_blocking_issues:
+        validation_status_label = 'Configuration issue'
+        validation_status_tone = 'attention'
+    elif blocking_count:
+        validation_status_label = f'{blocking_count} blocking issue{"s" if blocking_count != 1 else ""}'
+        validation_status_tone = 'attention'
+    elif warning_count:
+        validation_status_label = f'{warning_count} warning{"s" if warning_count != 1 else ""}'
+        validation_status_tone = 'attention'
+    else:
+        validation_status_label = 'Valid'
+        validation_status_tone = 'success'
+    edit_state_label = 'Editable' if can_mutate else 'Read-only'
+
+    active_workflow_usage_count = Workflow.objects.filter(
+        template=template,
+        status=Workflow.Status.ACTIVE,
+    ).count()
+
     return {
         'workflow_template': template,
         'steps': steps,
         'template_versions': template_versions,
+        'version_rows': build_template_version_rows(template, current_pk=template.pk),
         'step_form': form,
-        'preview_form': WorkflowTemplatePreviewForm(),
+        'preview_form': WorkflowTemplatePreviewForm(show_status=show_status),
         'preview_result': None,
-        'step_controls': _build_template_step_controls(steps),
-        'workflow_template_audit_feed': get_workflow_template_audit_feed(template, limit=6),
-        'workflow_template_activity_url': reverse_lazy('contracts:workflow_template_activity', kwargs={'pk': template.pk}),
+        'show_status_field': show_status,
+        'default_test_scenarios': DEFAULT_TEST_SCENARIOS,
+        'saved_scenarios': saved_scenarios,
+        'saved_scenario_payloads': [
+            {'name': item.name, 'payload': item.payload}
+            for item in saved_scenarios
+        ],
+        'step_controls': _build_template_step_controls(steps, publish_validation),
+        'workflow_template_audit_feed': get_workflow_template_audit_feed(template, limit=50),
+        'audit_rows': audit_rows,
+        'audit_filters': audit_filters,
+        'audit_filters_active': audit_filters_active,
+        'audit_has_any_activity': audit_has_any_activity,
+        'audit_actor_choices': audit_actor_choices,
+        'audit_event_choices': WORKFLOW_TEMPLATE_AUDIT_EVENT_CHOICES,
+        'audit_version_choices': [v.version for v in template_versions],
+        'workflow_template_activity_url': reverse_lazy('contracts:workflow_template_detail', kwargs={'pk': template.pk}) + '?tab=activity',
         'publish_validation': publish_validation,
-        'can_publish': publish_validation.ok and not template.is_active,
+        'published_has_blocking_issues': published_has_blocking_issues,
+        'blocking_count': blocking_count,
+        'warning_count': warning_count,
+        'unresolved_assignment_count': unresolved_assignment_count,
+        'new_launches_blocked': new_launches_blocked,
+        'launch_policy': launch_policy,
+        'primary_blocking_issue': primary_blocking_issue,
+        'validation_issue_count': blocking_count,
+        'lifecycle_label': lifecycle_label,
+        'validation_status_label': validation_status_label,
+        'validation_status_tone': validation_status_tone,
+        'edit_state_label': edit_state_label,
+        'selected_step_issues': selected_step_issues,
+        'selected_step_warnings': selected_step_warnings,
+        'can_publish': publish_validation.ok and not is_published and can_mutate,
         'is_incomplete_template': not bool(steps),
+        'is_published': is_published,
         'designer_tabs': workflow_designer_tabs(active='templates'),
+        'hub_tabs': workflow_hub_tabs(active='templates'),
+        'canvas_tabs': workflow_template_canvas_tabs(template_pk=template.pk, active=active_tab),
+        'active_tab': active_tab,
+        'selected_step': selected_step,
+        'selected_step_id': selected_step.pk if selected_step else None,
+        'selected_step_rules': selected_step.condition_rules if selected_step else None,
+        'can_edit_template': can_mutate,  # canvas/inspector mutate gate
+        'can_manage_template': can_manage,  # create version / unpublish
+        'show_create_version': is_published and can_manage,
+        'show_header_create_version': is_published and can_manage,
+        'create_version_label': (
+            'Create corrected version'
+            if published_has_blocking_issues
+            else 'Create new version'
+        ),
+        'active_workflow_usage_count': active_workflow_usage_count,
+        'condition_field_choices': CONDITION_FIELD_CHOICES,
+        'condition_op_choices': CONDITION_OP_CHOICES,
+        'hide_app_footer': True,
     }
 
 

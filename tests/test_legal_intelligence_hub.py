@@ -75,6 +75,14 @@ class LegalIntelligenceHubFramingTests(_HubFixtureMixin, TestCase):
         response = self._get()
         self.assertContains(response, 'Legal Intelligence Hub')
 
+    def test_ops_list_shell_present(self):
+        response = self._get()
+        self.assertContains(response, 'clm-list-shell')
+        self.assertContains(response, 'clm-list-summary')
+        self.assertContains(response, 'legal-hub-filter-toggle')
+        self.assertContains(response, 'id="legal-hub-table"')
+        self.assertContains(response, 'Search legal signals')
+
     def test_kpi_strip_present(self):
         response = self._get()
         self.assertContains(response, 'Critical/High Signals')
@@ -299,6 +307,22 @@ class LegalIntelligenceHubFilterTests(_HubFixtureMixin, TestCase):
         response = self._get()
         for text in ('Contract-side risk', 'DPA-side risk', 'Legal approval', 'Filter deadline'):
             self.assertContains(response, text)
+
+    def test_search_query_filters_by_title(self):
+        response = self._get(q='Contract-side')
+        self.assertContains(response, 'Contract-side risk')
+        self.assertNotContains(response, 'DPA-side risk')
+        self.assertNotContains(response, 'Filter deadline')
+
+    def test_severity_filter_excludes_non_matching(self):
+        RiskLog.objects.create(
+            contract=self.contract, matter=self.matter, title='Low severity risk',
+            description='...', risk_level='LOW', status='OPEN',
+        )
+        response = self._get(severity='LOW')
+        self.assertContains(response, 'Low severity risk')
+        self.assertNotContains(response, 'Contract-side risk')
+        self.assertNotContains(response, 'DPA-side risk')
 
 
 class LegalIntelligenceHubLinkTests(_HubFixtureMixin, TestCase):

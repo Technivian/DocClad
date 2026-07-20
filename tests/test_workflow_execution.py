@@ -71,7 +71,7 @@ class WorkflowExecutionTests(TestCase):
             name='Auto Archive',
             description='Complete automatically',
             order=3,
-            step_kind=WorkflowTemplateStep.StepKind.AUTOMATIC,
+            step_kind=WorkflowTemplateStep.StepKind.AUTOMATION,
         )
 
         self.high_value_contract = Contract.objects.create(

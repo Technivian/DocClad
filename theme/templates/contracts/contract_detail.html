@@ -2,13 +2,12 @@
 {% load clmone_format %}
 {% load clmone_components %}
 {% block title %}{{ contract.title }} – CLM One{% endblock %}
-{% block authenticated_page_title %}{% endblock %}
+{% block authenticated_page_title %}{{ contract.title }}{% endblock %}
 {% block authenticated_page_subtitle %}{% endblock %}
 {% block authenticated_page_context_attrs %} data-suppress-title-promotion{% endblock %}
 {% block authenticated_page_back %}
 <a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
   {% include "design_system/icon.html" with name="arrow-left" %}
-  <span class="topbar-back-label">Back to Contracts</span>
 </a>
 {% endblock %}
 {% block content %}
@@ -295,11 +294,11 @@
             </div>
           </div>
           <div class="dc-ds-workspace__surface-body">
-            <ol class="contract-lifecycle-stepper" aria-label="Full contract lifecycle">
+            <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="Full contract lifecycle">
               {% for step in overview_progress.lifecycle_path %}
-              <li class="contract-lifecycle-step contract-lifecycle-step--{{ step.state }}">
-                <span class="contract-lifecycle-step__marker" aria-hidden="true"></span>
-                <span class="contract-lifecycle-step__label">{% if step.state == 'current' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}</span>
+              <li class="contract-progress-track__step contract-progress-track__step--{{ step.state }}" {% if step.state == 'current' %}aria-current="step"{% endif %}>
+                <span class="contract-progress-track__dot" aria-hidden="true"></span>
+                <span class="contract-progress-track__label">{% if step.state == 'current' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}</span>
               </li>
               {% endfor %}
             </ol>
@@ -396,7 +395,7 @@
       {% elif active_tab == 'risks' %}
       <div id="contract-tab-risks" role="tabpanel" aria-labelledby="tab-risks">
         <section class="dc-ds-workspace__surface" id="open-findings" aria-labelledby="findings-heading">
-          <div class="dc-ds-workspace__surface-head"><div><h2 id="findings-heading" class="dc-ds-workspace__surface-title">Risks</h2><p class="dc-ds-workspace__surface-kicker">Risk status reflects unresolved findings, not an optimistic record-level default.</p></div><a href="{% url 'contracts:risk_log_list' %}" class="contract-head-link">Risk register</a></div>
+          <div class="dc-ds-workspace__surface-head"><div><h2 id="findings-heading" class="dc-ds-workspace__surface-title">Risks</h2><p class="dc-ds-workspace__surface-kicker">Risk status reflects unresolved findings, not an optimistic record-level default.</p></div><a href="{% url 'contracts:risk_log_list' %}" class="contract-head-link">{{ risk_review_label }}</a></div>
           <div class="dc-ds-workspace__surface-body">{% if open_findings %}<div class="contract-finding-list">{% for risk in open_findings %}<div class="contract-finding-row"><div class="contract-finding-copy"><strong>{{ risk.title }}</strong><span>{% if risk.assigned_to %}Assigned to {{ risk.assigned_to.get_full_name|default:risk.assigned_to.username }}{% else %}Unassigned{% endif %} · {{ risk.status|risk_status_label }}</span></div><span class="dc-ds-badge dc-ds-badge--sm {% if risk.risk_level == 'CRITICAL' %}dc-ds-badge--danger{% elif risk.risk_level == 'HIGH' %}dc-ds-badge--attention{% elif risk.risk_level == 'MEDIUM' %}dc-ds-badge--progress{% else %}dc-ds-badge--success{% endif %}">{{ risk.get_risk_level_display }}</span></div>{% endfor %}</div>{% else %}<p class="contract-empty">No unresolved risk findings are recorded for this contract.</p>{% endif %}</div>
         </section>
       </div>

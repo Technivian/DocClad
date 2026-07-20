@@ -34,7 +34,7 @@ class WorkspaceTabsCanonicalPatternTests(TestCase):
             organization=self.organization,
             title='Tabs Contract',
             content='Seed',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user,
         )
 

@@ -195,10 +195,12 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
 
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         for text in (
-            'Generated NDA Draft',
+            'Guided drafting',
+            'Document overview',
             'View contract record',
             'No NDA risk triggers were detected',
-            'Audit history',
+            'Audit details',
+            'Send to Legal Review · not required',
         ):
             self.assertContains(workspace, text)
         for hidden in (
@@ -207,6 +209,9 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
         ):
             self.assertNotContains(workspace, hidden)
         self.assertNotContains(workspace, 'type="button" class="dc-ds-button dc-ds-button--primary">Send for signature')
+        nda = workspace.context['nda_workspace']
+        self.assertTrue(nda['self_serve_eligible'])
+        self.assertEqual(nda['open_exceptions'], 0)
 
     def test_high_risk_nda_workspace_renders_risks_and_legal_action(self):
         self.client_.post(reverse('contracts:nda_workflow_builder'), self._high_risk_payload())
@@ -217,11 +222,40 @@ class NDAWorkflowBuilderIntegrationTests(TestCase):
             'Privacy / DPA review signal',
             'Residual knowledge risk',
             'Governing law escalation',
-            'Approval Route',
-            'Audit history',
+            'Resolve ',
+            'Send to Legal Review · blocked',
+            'Audit details',
         ):
             self.assertContains(workspace, text)
-        self.assertNotContains(workspace, 'Send to Legal Review')
+        self.assertNotContains(workspace, '>Send to Legal Review</button>')
+        nda = workspace.context['nda_workspace']
+        self.assertTrue(nda['legal_review_triggered'])
+        self.assertTrue(nda['open_exceptions'] >= 1)
+
+    def test_nda_workspace_highlights_contracts_nav(self):
+        self.client_.post(reverse('contracts:nda_workflow_builder'), self._low_risk_payload())
+        workflow = Workflow.objects.latest('id')
+        response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        nav = response.context['SIDEBAR_NAV']
+        contracts = next(item for item in nav if item.get('label') == 'Contracts')
+        designer = next(item for item in nav if item.get('label') == 'Workflow Designer')
+        self.assertTrue(contracts['is_active'])
+        self.assertFalse(designer['is_active'])
+        self.assertContains(response, 'Back to contract')
+
+    def test_nda_submit_for_review_blocked_while_exceptions_open(self):
+        self.client_.post(reverse('contracts:nda_workflow_builder'), self._high_risk_payload())
+        workflow = Workflow.objects.latest('id')
+        response = self.client_.post(
+            reverse('contracts:nda_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
+        )
+        self.assertRedirects(
+            response,
+            reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}),
+            fetch_redirect_response=False,
+        )
+        follow = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertContains(follow, 'before submitting this NDA for review')
 
     def test_command_center_row_links_back_to_generated_workspace(self):
         self.client_.post(reverse('contracts:nda_workflow_builder'), self._low_risk_payload())

@@ -56,7 +56,7 @@ class _Base(TestCase):
         cls.client_b = ClientModel.objects.create(organization=cls.org_b, name='BETA-SECRET-CLIENT')
         cls.matter_b = Matter.objects.create(organization=cls.org_b, client=cls.client_b, title='BETA-SECRET-MATTER')
         cls.contract_b = Contract.objects.create(organization=cls.org_b, title='BETA-SECRET-CONTRACT',
-                                                 created_by=cls.owner_b, status='DRAFT')
+                                                 created_by=cls.owner_b, status='IN_PROGRESS')
         cls.doc_b = Document.objects.create(organization=cls.org_b, uploaded_by=cls.owner_b,
                                             title='BETA-SECRET-DOC',
                                             file=SimpleUploadedFile('b.txt', b'secret', content_type='text/plain'))
@@ -68,7 +68,7 @@ class _Base(TestCase):
                                                       status='SUCCESS')
         # Org A resources
         cls.contract_a = Contract.objects.create(organization=cls.org_a, title='ALPHA-CONTRACT',
-                                                 created_by=cls.admin_a, status='DRAFT')
+                                                 created_by=cls.admin_a, status='IN_PROGRESS')
 
     _LEAK_TOKENS = ['BETA-SECRET-CLIENT', 'BETA-SECRET-MATTER', 'BETA-SECRET-CONTRACT',
                     'BETA-SECRET-DOC', 'Beta Borough', 'x@beta.example']

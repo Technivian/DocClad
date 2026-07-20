@@ -50,11 +50,11 @@
           </div>
         </div>
         <div class="dc-ds-workspace__surface-body">
-          <ol class="contract-lifecycle-stepper" aria-label="Document review progress">
+          <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="Document review progress">
             {% for step in review_state.steps %}
-            <li class="contract-lifecycle-step{% if step.status == 'complete' %} contract-lifecycle-step--done{% elif step.status == 'active' %} contract-lifecycle-step--current{% elif step.status == 'blocked' %} contract-lifecycle-step--blocked{% endif %}">
-              <span class="contract-lifecycle-step__marker" aria-hidden="true"></span>
-              <span>{{ step.label }}{% if step.status == 'blocked' %} · Action needed{% endif %}</span>
+            <li class="contract-progress-track__step{% if step.status == 'complete' %} contract-progress-track__step--done{% elif step.status == 'active' %} contract-progress-track__step--current{% elif step.status == 'blocked' %} contract-progress-track__step--blocked{% endif %}" {% if step.status == 'active' %}aria-current="step"{% endif %}>
+              <span class="contract-progress-track__dot" aria-hidden="true"></span>
+              <span class="contract-progress-track__label">{% if step.status == 'active' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}{% if step.status == 'blocked' %} · Action needed{% endif %}</span>
             </li>
             {% endfor %}
           </ol>

@@ -1,11 +1,23 @@
 {% extends 'base.html' %}
-{% block title %}{% if is_msa_workspace %}{{ msa_workspace.display_title }}{% else %}{{ workflow.title }}{% endif %}{% endblock %}
-{% block authenticated_page_title %}{% if is_msa_workspace %}{{ msa_workspace.display_title }}{% else %}{{ workflow.title }}{% endif %}{% endblock %}
-{% block authenticated_page_subtitle %}{% if is_msa_workspace %}{{ msa_workspace.current_stage }} · {{ msa_workspace.next_action }}{% elif workflow.contract %}{{ workflow.get_status_display }} workflow · {{ workflow.contract.get_contract_type_display }}{% else %}{{ workflow.get_status_display }} workflow{% endif %}{% endblock %}
+{% block title %}{% if is_msa_workspace %}{{ msa_workspace.display_title }}{% elif is_dpa_workspace %}{{ dpa_workspace.display_title }}{% elif is_nda_workspace %}{{ nda_workspace.display_title }}{% else %}{{ workflow.title }}{% endif %}{% endblock %}
+{% block authenticated_page_title %}{% if is_msa_workspace %}{{ msa_workspace.display_title }}{% elif is_dpa_workspace %}{{ dpa_workspace.display_title }}{% elif is_nda_workspace %}{{ nda_workspace.display_title }}{% else %}{{ workflow.title }}{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}{% if is_msa_workspace %}{{ msa_workspace.current_stage }} · {{ msa_workspace.next_action }}{% elif is_dpa_workspace %}{{ dpa_workspace.current_stage }} · {{ dpa_workspace.next_action }}{% elif is_nda_workspace %}{{ nda_workspace.current_stage }} · {{ nda_workspace.next_action }}{% elif workflow.contract %}{{ workflow.get_status_display }} workflow · {{ workflow.contract.get_contract_type_display }}{% else %}{{ workflow.get_status_display }} workflow{% endif %}{% endblock %}
 {% block authenticated_page_back %}
+{% if is_msa_workspace or is_dpa_workspace or is_nda_workspace %}
+{% if workflow.contract %}
+<a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="topbar-back-link" data-workspace-back aria-label="Back to contract" title="Back to contract">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% else %}
+<a href="{% url 'contracts:repository' %}" class="topbar-back-link" data-workspace-back aria-label="Back to contracts" title="Back to contracts">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endif %}
+{% else %}
 <a href="{% url 'contracts:workflow_dashboard' %}" class="topbar-back-link" data-workspace-back aria-label="Back to workflows" title="Back to workflows">
   {% include "design_system/icon.html" with name="arrow-left" %}
 </a>
+{% endif %}
 {% endblock %}
 {% block content %}
 <style nonce="{{ csp_nonce }}">
@@ -49,7 +61,7 @@
                 {% if workflow.contract %}
                 <a href="{% url 'contracts:contract_detail' workflow.contract.pk %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">View Contract</a>
                 {% endif %}
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Dashboard</a>
+                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to workflows</a>
             </div>
         </div>
         <div class="workspace-toolbar">

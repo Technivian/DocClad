@@ -777,3 +777,21 @@ class DPAReviewAndGenerateView(DPAWorkflowBuilderView):
         request.session.pop(_DPA_INTAKE_SESSION_KEY, None)
         messages.success(request, f'“{workflow.title}” generated and ready for review.')
         return redirect('contracts:workflow_detail', pk=workflow.pk)
+
+
+def dpa_submit_for_review(request, pk, approval_step):
+    from contracts.views_domains.drafting_workspace_actions import drafting_submit_for_review
+
+    return drafting_submit_for_review(request, pk, approval_step, kind='dpa')
+
+
+def dpa_exception_action(request, pk, signal_id):
+    from contracts.views_domains.drafting_workspace_actions import drafting_exception_action
+
+    return drafting_exception_action(request, pk, signal_id, kind='dpa')
+
+
+def dpa_confirm_section(request, pk, section_id):
+    from contracts.views_domains.drafting_workspace_actions import drafting_confirm_section
+
+    return drafting_confirm_section(request, pk, section_id, kind='dpa')

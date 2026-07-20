@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{% if form.instance.pk %}Edit Risk{% else %}Log New Risk{% endif %}{% endblock %}
 {% block authenticated_page_title %}{% if form.instance.pk %}Edit Risk{% else %}Log a New Risk{% endif %}{% endblock %}
-{% block authenticated_page_back %}<a href="{% url 'contracts:risk_log_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to risk register" title="Back to risk register">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
+{% block authenticated_page_back %}<a href="{% url 'contracts:risk_log_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to {{ risk_review_label|lower }}" title="Back to {{ risk_review_label }}">{% include "design_system/icon.html" with name="arrow-left" %}</a>{% endblock %}
 {% block content %}
 <div class="dc-ds-page dc-ds-page-flow dc-ds-record-page"><div class="dc-ds-record-content dc-ds-record-content--narrow">
             <form method="post" class="panel panel-inner dc-ds-surface dc-ds-record-form">

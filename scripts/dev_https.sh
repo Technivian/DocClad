@@ -209,13 +209,27 @@ start_server() {
 
   if [[ "$MODE" == "background" ]]; then
     : > "$LOG_FILE"
-    nohup env DATABASE_URL="$DATABASE_URL" \
-      DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
-      DJANGO_DEBUG="$DJANGO_DEBUG" \
-      "${cmd[@]}" >> "$LOG_FILE" 2>&1 &
-    local pid=$!
-    disown "$pid" 2>/dev/null || true
-    echo "$pid" > "$PID_FILE"
+    rm -f "$PID_FILE"
+    # Double-fork via Python so the server is reparented to launchd and survives
+    # Cursor/agent shells that reap nohup children when the invoking group exits.
+    local pid
+    pid="$(
+      env DATABASE_URL="$DATABASE_URL" \
+        DJANGO_SETTINGS_MODULE="$DJANGO_SETTINGS_MODULE" \
+        DJANGO_DEBUG="$DJANGO_DEBUG" \
+        "$ROOT_DIR/.venv/bin/python" "$ROOT_DIR/scripts/_daemonize_exec.py" \
+          --pid-file "$PID_FILE" \
+          --log-file "$LOG_FILE" \
+          --workdir "$ROOT_DIR" \
+          -- "${cmd[@]}"
+    )"
+
+    if [[ -z "$pid" ]] || ! kill -0 "$pid" 2>/dev/null; then
+      echo "HTTPS dev server failed to start. See $LOG_FILE"
+      rm -f "$PID_FILE"
+      tail -30 "$LOG_FILE" || true
+      return 1
+    fi
 
     local tries=0
     while [[ $tries -lt 40 ]]; do

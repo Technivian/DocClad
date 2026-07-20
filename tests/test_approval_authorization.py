@@ -66,7 +66,7 @@ class ApprovalAuthorizationTests(TestCase):
         # to approver_a.
         self.contract_a = Contract.objects.create(
             organization=self.org_a, title='Alpha NDA',
-            contract_type='NDA', status='DRAFT', created_by=self.creator_a,
+            contract_type='NDA', status='IN_PROGRESS', created_by=self.creator_a,
         )
         self.approval_a = ApprovalRequest.objects.create(
             organization=self.org_a, contract=self.contract_a,

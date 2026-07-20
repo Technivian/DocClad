@@ -113,7 +113,7 @@ def _make_org_and_contract(text=RISKY_DPA_TEXT, org_slug='dpa-test-firm'):
     OrganizationMembership.objects.create(organization=organization, user=user, role=OrganizationMembership.Role.ADMIN, is_active=True)
     contract = Contract.objects.create(
         organization=organization, title='Payrollminds DPA', content=text,
-        contract_type=Contract.ContractType.DPA, status='IN_REVIEW', created_by=user,
+        contract_type=Contract.ContractType.DPA, status='IN_PROGRESS', created_by=user,
     )
     return organization, user, contract
 
@@ -124,7 +124,7 @@ def _make_msa(organization, user, text=None, title='Payrollminds MSA'):
         title=title,
         content=text or 'MASTER SERVICE AGREEMENT. Limitation of liability: each party aggregate liability shall not exceed the fees paid in the twelve months before the claim.',
         contract_type=Contract.ContractType.MSA,
-        status='IN_REVIEW',
+        status='IN_PROGRESS',
         created_by=user,
     )
 
@@ -413,7 +413,7 @@ class DPAReviewPackViewTests(TestCase):
         body = response.content.decode()
         self.assertIn('dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page dpa-review-page', body)
         self.assertIn('topbar-page-title', body)
-        self.assertIn('DPA Reviews', body)
+        self.assertIn('Privacy Reviews', body)
         self.assertNotIn('<header class="dc-ds-page-hero', body)
         self.assertNotIn('dc-ds-scaffold--with-rail', body)
         self.assertIn('dc-ds-summary clm-list-summary dpa-review-summary', body)
@@ -501,7 +501,7 @@ class DPAReviewPackViewTests(TestCase):
         self.assertIn('View memo', body)
         self.assertIn('View contract record', body)
         self.assertIn('wq-kebab', body)
-        self.assertIn('min-width: 1200px', body)
+        self.assertIn('min-width: 1080px', body)
         self.assertIn('position: sticky; left: 0', body)
 
     def test_list_filters_by_review_status_and_role(self):

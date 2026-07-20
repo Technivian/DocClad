@@ -249,6 +249,12 @@ def _apply_filters(signals: List[LegalSignal], filters: Optional[Dict[str, Any]]
     severity = filters.get('severity')
     if severity:
         signals = [s for s in signals if s.severity == severity]
+    query = (filters.get('q') or '').strip().lower()
+    if query:
+        signals = [
+            s for s in signals
+            if query in (s.title or '').lower() or query in (s.summary or '').lower()
+        ]
     return signals
 
 

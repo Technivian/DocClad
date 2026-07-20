@@ -75,6 +75,7 @@ def clone_template_version(
     category: Optional[str] = None,
     is_active: bool = True,
     copy_steps: bool = True,
+    created_by=None,
 ) -> WorkflowTemplate:
     next_version = _next_version_number(template)
     clone = WorkflowTemplate.objects.create(
@@ -86,6 +87,8 @@ def clone_template_version(
         version=next_version,
         parent_template=template,
         is_active=is_active,
+        created_by=created_by,
+        fallback_signer=getattr(template, 'fallback_signer', None),
     )
 
     if copy_steps:
@@ -98,6 +101,7 @@ def clone_template_version(
                 estimated_duration=step.estimated_duration,
                 step_kind=step.step_kind,
                 condition_expression=step.condition_expression,
+                condition_rules=getattr(step, 'condition_rules', None),
                 assignee_role=step.assignee_role,
                 specific_assignee=step.specific_assignee,
                 sla_hours=step.sla_hours,

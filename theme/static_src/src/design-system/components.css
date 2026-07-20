@@ -344,8 +344,18 @@
   border-bottom: 0;
   align-self: end;
 }
-.clm-list-page .clm-list-shell {
-  border-bottom: 1px solid var(--line);
+.clm-list-page .clm-list-shell,
+.clm-list-page .dc-ds-filterbar.clm-list-shell,
+.repo-page .repo-filter-shell,
+.repo-page .dc-ds-filterbar.repo-filter-shell {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.clm-list-page.dc-ds-page-flow,
+.repo-page.dc-ds-page-flow {
+  gap: var(--space-12);
 }
 
 .dc-ds-list-tabs {
@@ -358,15 +368,16 @@
 
 .dc-ds-list-toolbar { min-width: 0; }
 
-/* Filter bars already establish the separator that attaches them to the table.
-   Cancel the page-flow gap after that separator so standard lists retain the
-   pre-scaffold filter-to-table rhythm. */
+/* List pages use page-flow gap for toolbar → content rhythm; no under-search rule. */
 .dc-ds-list-page > .dc-ds-filterbar {
-  margin-bottom: calc(-1 * var(--space-4));
+  margin-bottom: 0;
 }
 
-.dc-ds-list-page > .dc-ds-filterbar + .dc-ds-table-wrap {
-  margin-top: var(--space-2);
+.dc-ds-list-page > .dc-ds-filterbar + .dc-ds-table-wrap,
+.dc-ds-list-page > .dc-ds-filterbar + .clm-list-summary,
+.dc-ds-list-page > form:has(.dc-ds-filterbar) + .clm-list-summary,
+.dc-ds-list-page > form:has(.dc-ds-filterbar) + .dc-ds-table-wrap {
+  margin-top: 0;
 }
 
 .dc-ds-list-meta {
@@ -1336,6 +1347,20 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 
 .dc-ds-table tr:last-child td { border-bottom: 0; }
 .dc-ds-table tbody tr:hover { background: var(--color-surface-table-head); }
+.dc-ds-table tbody tr:hover > td,
+.dc-ds-table tbody tr:focus-within > td,
+.dc-ds-table tbody tr.is-row-active > td {
+  background-color: var(--color-surface-table-head, var(--well)) !important;
+}
+.dc-ds-table tbody tr.wq-row-selected > td,
+.dc-ds-table tbody tr.wq-row-selected:hover > td,
+.dc-ds-table tbody tr.wq-row-selected:focus-within > td,
+.dc-ds-table tbody tr.wq-row-selected.is-row-active > td {
+  background-color: var(--primary-subtle) !important;
+}
+.dc-ds-table td[data-col="actions"] {
+  overflow: visible;
+}
 .dc-ds-table tbody tr:focus-within { background: var(--ds-color-trust-soft); }
 .dc-ds-table [data-numeric] { text-align: right; font-variant-numeric: tabular-nums; }
 .dc-ds-table [aria-sort] { color: var(--ds-color-text-secondary); }

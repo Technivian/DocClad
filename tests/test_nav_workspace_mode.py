@@ -6,7 +6,7 @@ URL surfaces until rebuilt, but they are not product navigation.
 """
 from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from contracts.models import (
@@ -16,16 +16,58 @@ from contracts.models import (
     Organization,
     OrganizationMembership,
 )
+from contracts.nav_config import nav_item_labels
 
 User = get_user_model()
 
 STANDARD_NAV_LABELS = [
     'Command Center',
-    'New Contract',
-    'Upload &amp; Review',
+    'My Work',
     'Contracts',
-    'Workflow Operations',
-    'DPA Reviews',
+    'New Contract',
+    'Reviews & Approvals',
+    'Privacy Reviews',
+    'Obligations',
+    'Templates & Playbooks',
+    'Workflow Designer',
+]
+
+STANDARD_NAV_LABELS_HTML = [
+    'Command Center',
+    'My Work',
+    'Contracts',
+    'New Contract',
+    'Reviews &amp; Approvals',
+    'Privacy Reviews',
+    'Obligations',
+    'Templates &amp; Playbooks',
+    'Workflow Designer',
+]
+
+STANDARD_SECTION_LABELS = [
+    'Workspace',
+    'Create',
+    'Governance',
+    'Configuration',
+]
+
+MEMBER_NAV_LABELS = [
+    'Command Center',
+    'My Work',
+    'Contracts',
+    'New Contract',
+    'Reviews & Approvals',
+    'Privacy Reviews',
+    'Obligations',
+]
+
+MEMBER_NAV_LABELS_HTML = [
+    'Command Center',
+    'My Work',
+    'Contracts',
+    'New Contract',
+    'Reviews &amp; Approvals',
+    'Privacy Reviews',
     'Obligations',
 ]
 
@@ -35,16 +77,18 @@ OLD_LAYOUT_NAV_LABELS = [
     'Signature Requests',
     'Tasks',
     'Repository',
-    'Approvals',
+    '>Approvals<',
     'Compliance',
-    'Privacy',
+    '>Privacy<',
     'Audit Trail',
     'Documents',
     'Clients',
     'Counterparties',
     'Matters',
-    'Playbooks',
+    '>Playbooks<',
     'Reports',
+    'Upload &amp; Review',
+    'DPA Reviews',
 ]
 
 
@@ -132,13 +176,20 @@ class StandardNavTests(TestCase):
         self.member_client.login(username='clm_member', password='testpass123!')
 
     def test_standard_primary_nav_items_present_in_order(self):
+        self.assertEqual(nav_item_labels(self.org, self.owner), STANDARD_NAV_LABELS)
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         positions = []
-        for label in STANDARD_NAV_LABELS:
+        for label in STANDARD_NAV_LABELS_HTML:
             self.assertIn(label, content, msg=f'Missing standard nav label: {label}')
             positions.append(content.index(label))
         self.assertEqual(positions, sorted(positions), 'standard nav items are out of order')
+
+    def test_section_labels_are_present(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        for section in STANDARD_SECTION_LABELS:
+            self.assertIn(f'>{section}<', content)
 
     def test_old_layout_pages_are_not_primary_nav_items(self):
         response = self.owner_client.get(reverse('dashboard'))
@@ -146,17 +197,37 @@ class StandardNavTests(TestCase):
         for label in OLD_LAYOUT_NAV_LABELS:
             self.assertNotIn(label, content, msg=f'{label} should not render as a primary nav item')
 
-    def test_no_section_headers_in_standard_nav(self):
+    def test_upload_and_review_removed_from_sidebar_but_reachable_from_new_contract(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
-        for section in ('EXECUTION', 'RISK &amp; COMPLIANCE', 'REFERENCE', 'PLANNING', 'ADMIN'):
-            self.assertNotIn(f'>{section}<', content)
+        self.assertNotIn('Upload &amp; Review', content)
+        self.assertNotIn(reverse('contracts:upload_signed_contract'), content)
 
-    def test_member_also_sees_the_standard_nav(self):
+        picker = self.owner_client.get(reverse('contracts:contract_template_picker'))
+        self.assertEqual(picker.status_code, 200)
+        self.assertContains(picker, reverse('contracts:upload_signed_contract'))
+        self.assertContains(picker, 'Upload &amp; review agreement')
+
+        upload = self.owner_client.get(reverse('contracts:upload_signed_contract'))
+        self.assertEqual(upload.status_code, 200)
+
+    def test_settings_stays_in_profile_menu_not_sidebar(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        body = response.content.decode()
+        content = sidebar_html(response)
+        self.assertNotIn('>Settings<', content)
+        self.assertNotIn(reverse('settings_hub'), content)
+        self.assertIn('role="menuitem">Settings</a>', body)
+        self.assertIn(reverse('settings_hub'), body)
+
+    def test_member_sees_workspace_and_governance_without_configuration(self):
+        self.assertEqual(nav_item_labels(self.org, self.member), MEMBER_NAV_LABELS)
         response = self.member_client.get(reverse('dashboard'))
         content = sidebar_html(response)
-        for label in STANDARD_NAV_LABELS:
+        for label in MEMBER_NAV_LABELS_HTML:
             self.assertIn(label, content)
+        self.assertNotIn('Templates &amp; Playbooks', content)
+        self.assertNotIn('Workflow Designer', content)
 
     def test_command_center_links_to_dashboard(self):
         response = self.owner_client.get(reverse('dashboard'))
@@ -175,43 +246,108 @@ class StandardNavTests(TestCase):
         self.assertIn('role="menuitem">Operations</a>', body)
         self.assertIn('role="menuitem">Notifications</a>', body)
         self.assertNotIn('nav-icon-svg--admin', sidebar_html(response))
+
     def test_sidebar_uses_distinct_nav_icons(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         for class_name in (
             'nav-icon-svg--dashboard',
+            'nav-icon-svg--my-work',
             'nav-icon-svg--new-contract',
-            'nav-icon-svg--upload-review',
             'nav-icon-svg--contracts',
-            'nav-icon-svg--workflows',
-            'nav-icon-svg--dpa-reviews',
+            'nav-icon-svg--reviews-approvals',
+            'nav-icon-svg--privacy-reviews',
             'nav-icon-svg--obligations',
+            'nav-icon-svg--templates-playbooks',
+            'nav-icon-svg--workflows',
         ):
             self.assertIn(class_name, content)
+        self.assertNotIn('nav-icon-svg--upload-review', content)
         self.assertNotIn('nav-icon-svg--admin', content)
         self.assertNotIn('nav-icon-svg--settings', content)
 
-    def test_workflow_operations_links_to_dashboard_hub(self):
+    def test_collapsed_tooltips_present_on_nav_items(self):
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        for label in STANDARD_NAV_LABELS_HTML:
+            self.assertIn(f'title="{label}"', content)
+            self.assertIn(f'aria-label="{label}"', content)
+
+    def test_workflow_designer_links_to_active_workflows_hub(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         href = reverse('contracts:workflow_dashboard')
         self.assertIn(f'href="{href}"', content)
-        self.assertIn('Workflow Operations', content)
+        self.assertIn('Workflow Designer', content)
+        self.assertNotIn('Workflow Operations', content)
 
     def test_workflow_designer_active_on_routing_rules(self):
         response = self.owner_client.get(reverse('contracts:approval_rule_list'))
         content = sidebar_html(response)
-        href = reverse('contracts:workflow_template_list')
+        href = reverse('contracts:workflow_dashboard')
         self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
         self.assertIn('Workflow Designer', content)
 
-    def test_workflow_operations_not_active_on_templates(self):
+    def test_workflow_designer_active_on_templates(self):
         response = self.owner_client.get(reverse('contracts:workflow_template_list'))
         content = sidebar_html(response)
-        ops_href = reverse('contracts:workflow_dashboard')
-        designer_href = reverse('contracts:workflow_template_list')
-        self.assertRegex(content, rf'<a href="{designer_href}" class="nav-link[^\"]*\bactive\b')
-        self.assertNotRegex(content, rf'<a href="{ops_href}" class="nav-link[^\"]*\bactive\b')
+        href = reverse('contracts:workflow_dashboard')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+        self.assertIn('Workflow Designer', content)
+
+    def test_reviews_approvals_active_on_approval_queue(self):
+        response = self.owner_client.get(reverse('contracts:approval_request_list'))
+        content = sidebar_html(response)
+        href = reverse('contracts:approval_request_list')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+        designer_href = reverse('contracts:workflow_dashboard')
+        self.assertNotRegex(content, rf'<a href="{designer_href}" class="nav-link[^\"]*\bactive\b')
+
+    def test_my_work_route_and_active_state(self):
+        response = self.owner_client.get(reverse('contracts:my_work'))
+        self.assertEqual(response.status_code, 200)
+        content = sidebar_html(response)
+        href = reverse('contracts:my_work')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+        self.assertContains(response, 'My Work')
+
+    def test_templates_playbooks_hub_owner_only(self):
+        owner_response = self.owner_client.get(reverse('contracts:templates_playbooks_hub'))
+        self.assertEqual(owner_response.status_code, 200)
+        self.assertContains(owner_response, 'Templates &amp; Playbooks')
+        self.assertContains(
+            owner_response,
+            'Manage the reusable content, workflow blueprints, and approval policies that govern contract creation and review.',
+        )
+        self.assertContains(owner_response, 'Clause Library')
+        self.assertContains(owner_response, 'Privacy Playbooks')
+        self.assertContains(owner_response, 'Workflow Templates')
+        self.assertContains(owner_response, 'Approval Policies')
+        self.assertNotContains(owner_response, 'DPA playbooks')
+        self.assertNotContains(owner_response, 'Approval thresholds')
+        self.assertContains(owner_response, reverse('contracts:clause_template_list'))
+        self.assertContains(owner_response, reverse('contracts:dpa_playbook_list'))
+        self.assertContains(owner_response, reverse('contracts:workflow_template_list'))
+        self.assertContains(owner_response, reverse('contracts:approval_rule_list'))
+        self.assertContains(owner_response, 'tph-grid')
+        self.assertContains(owner_response, 'tph-card__stat')
+        self.assertContains(owner_response, 'tph-card__icon')
+        self.assertContains(owner_response, 'clauses')
+        self.assertContains(owner_response, 'positions')
+        self.assertContains(owner_response, 'templates')
+        self.assertContains(owner_response, 'policies')
+        body = owner_response.content.decode()
+        self.assertIn('M14 2H6a2', body)  # file-text glyph
+        self.assertIn('M8 11V7a4', body)  # lock glyph
+        self.assertNotContains(owner_response, 'Coming soon')
+        self.assertNotContains(owner_response, 'N/A')
+        content = sidebar_html(owner_response)
+        href = reverse('contracts:templates_playbooks_hub')
+        self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+
+        member_response = self.member_client.get(reverse('contracts:templates_playbooks_hub'))
+        self.assertEqual(member_response.status_code, 403)
+
     def test_new_contract_links_to_contract_type_picker(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
@@ -227,17 +363,39 @@ class StandardNavTests(TestCase):
         self.assertRegex(content, rf'<a href="{new_contract_href}" class="nav-link[^\"]*\bactive\b')
         self.assertNotRegex(content, rf'<a href="{contracts_href}" class="nav-link[^\"]*\bactive\b')
 
+    def test_upload_keeps_new_contract_active(self):
+        response = self.owner_client.get(reverse('contracts:upload_signed_contract'))
+        content = sidebar_html(response)
+        new_contract_href = reverse('contracts:contract_template_picker')
+        self.assertRegex(content, rf'<a href="{new_contract_href}" class="nav-link[^\"]*\bactive\b')
+
     def test_contracts_links_to_the_canonical_repository(self):
         response = self.owner_client.get(reverse('dashboard'))
         content = sidebar_html(response)
         self.assertIn(f'href="{reverse("contracts:repository")}"', content)
         self.assertNotIn(f'href="{reverse("contracts:contract_list")}"', content)
 
-    def test_active_state_still_works_in_standard_nav(self):
+    def test_privacy_reviews_active_on_list(self):
         response = self.owner_client.get(reverse('contracts:dpa_review_pack_list'))
         content = sidebar_html(response)
         href = reverse('contracts:dpa_review_pack_list')
         self.assertRegex(content, rf'<a href="{href}" class="nav-link[^\"]*\bactive\b')
+        self.assertIn('Privacy Reviews', content)
+        self.assertNotIn('DPA Reviews', content)
+
+    @override_settings(CONTROLLED_PILOT_ENABLED=True)
+    def test_pilot_hides_governance_and_configuration(self):
+        labels = nav_item_labels(self.org, self.owner)
+        self.assertEqual(
+            labels,
+            ['Command Center', 'My Work', 'Contracts', 'New Contract', 'Reviews & Approvals'],
+        )
+        response = self.owner_client.get(reverse('dashboard'))
+        content = sidebar_html(response)
+        self.assertNotIn('Privacy Reviews', content)
+        self.assertNotIn('Obligations', content)
+        self.assertNotIn('Workflow Designer', content)
+        self.assertNotIn('Templates &amp; Playbooks', content)
 
 
 class SpecialistModuleDirectUrlAccessTests(TestCase):
@@ -324,6 +482,7 @@ class DPAAndApprovalBehaviorUnchangedTests(TestCase):
         response = self.client_.get(reverse('contracts:dpa_review_pack_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Acme DPA')
+        self.assertContains(response, 'Privacy Reviews')
 
     def test_dpa_review_pack_detail_renders_normally_in_in_house_clm(self):
         response = self.client_.get(reverse('contracts:dpa_review_pack_detail', kwargs={'pk': self.review_pack.pk}))
@@ -338,3 +497,4 @@ class DPAAndApprovalBehaviorUnchangedTests(TestCase):
     def test_approval_request_list_renders_normally_in_in_house_clm(self):
         response = self.client_.get(reverse('contracts:approval_request_list'))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Reviews &amp; Approvals')

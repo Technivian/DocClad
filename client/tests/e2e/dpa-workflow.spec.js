@@ -100,39 +100,36 @@ test('DPA four-step builder validates, generates, and opens the contract record'
   await page.getByRole('button', { name: 'Generate DPA' }).click();
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
-  await expect(page.getByText('Workflow Timeline')).toBeVisible();
+  await expect(page.getByText('Lifecycle')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
-  await expect(page.getByText('Generated DPA Draft').first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toHaveCount(0);
+  await expect(page.getByText('Guided drafting').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /Resolve \d+ exceptions?/ })).toBeVisible();
+  await expect(page.getByText('Send to Legal Review · blocked')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Generate DPA review memo' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Review next action' })).toHaveCount(0);
 
-  await page.getByRole('tab', { name: 'Activity' }).click();
-  await expect(page.locator('[data-workspace-rail-pane="activity"]')).toBeVisible();
-  await expect(page.locator('body')).toContainText(/Audit|generated|No audit|created|DPA/i);
+  await page.getByRole('button', { name: /Resolve \d+ exceptions?|open exception/i }).first().click();
+  const exceptionDrawer = page.getByRole('dialog', { name: 'Resolve exception' });
+  await expect(exceptionDrawer.getByRole('link', { name: 'Open clause' })).toBeVisible();
+  await exceptionDrawer.getByRole('button', { name: 'Close exception resolution' }).click();
 
-  await page.getByRole('tab', { name: 'Review' }).click();
-  const clauseLink = page.locator('[data-clause-link]').first();
-  if (await clauseLink.count()) {
-    await clauseLink.click();
-  }
-
-  await page.getByRole('link', { name: 'View contract record' }).click();
+  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await page.getByRole('menuitem', { name: 'View contract record' }).click();
   await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
   await page.reload();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
-  await expect(page.getByRole('link', { name: 'View contract record' })).toBeVisible();
+  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.dc-ds-workspace')).toBeVisible();
   await expectNoHorizontalPageOverflow(page);
 
   await page.setViewportSize({ width: 1440, height: 1000 });
-  const recordLink = page.getByRole('link', { name: 'View contract record' });
+  await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+  const recordLink = page.getByRole('menuitem', { name: 'View contract record' });
   await recordLink.focus();
   await expect(recordLink).toBeFocused();
   await recordLink.click();

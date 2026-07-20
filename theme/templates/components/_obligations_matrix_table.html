@@ -40,18 +40,18 @@
           <summary aria-label="More actions for {{ obligation.title|truncatechars:50 }}" class="wq-kebab-trigger">
             <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
           </summary>
-          <div class="wq-kebab-menu">
+          <div class="wq-kebab-menu" role="menu">
             {% if not obligation.is_completed %}
-            <form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}">
+            <form method="post" action="{% url 'contracts:deadline_complete' obligation.pk %}" role="none">
               {% csrf_token %}
-              <button type="submit" class="wq-kebab-action">Mark complete</button>
+              <button type="submit" class="wq-kebab-action" role="menuitem">Mark complete</button>
             </form>
             {% endif %}
-            <a href="{% url 'contracts:deadline_update' obligation.pk %}">Edit obligation</a>
+            <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-kebab-action" role="menuitem">Edit obligation</a>
             <div class="wq-kebab-divider" role="separator"></div>
-            <form method="post" action="{% url 'contracts:deadline_delete' obligation.pk %}">
+            <form method="post" action="{% url 'contracts:deadline_delete' obligation.pk %}" role="none">
               {% csrf_token %}
-              <button type="submit" class="wq-kebab-action wq-kebab-action-danger">Delete obligation</button>
+              <button type="submit" class="wq-kebab-action wq-kebab-action-danger" role="menuitem">Delete obligation</button>
             </form>
           </div>
         </details>

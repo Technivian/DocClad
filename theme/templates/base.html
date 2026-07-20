@@ -20,6 +20,7 @@
     <link href="{% static 'brand/clm-one-brand.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/clmone-tokens.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
     <link href="{% static 'css/dist/styles.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
+    {% include "components/_table_interaction_styles.html" %}
     {% block page_css %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,6 +35,7 @@
     <script src="{% static 'js/csp-handlers.js' %}" defer></script>
     <script src="{% static 'js/clmone-ui.js' %}" defer></script>
     <script src="{% static 'js/clmone-workspace-tabs.js' %}" defer></script>
+    <script src="{% static 'js/clmone-row-menus.js' %}" defer></script>
     <link href="{% static 'css/dist/global-shell.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}" rel="stylesheet">
 </head>
 <body class="c-primary-text" data-design-system="casefile">
@@ -134,22 +136,22 @@
             <div class="sidebar-padding">
                 {% for entry in SIDEBAR_NAV %}
                 {% if entry.kind == 'section' %}
-                <div class="nav-section">{{ entry.label }}</div>
+                <div class="nav-section" title="{{ entry.label }}" aria-hidden="true">{{ entry.label }}</div>
                 {% elif entry.kind == 'group' %}
                 <details class="nav-group" {% if entry.is_active %}open{% endif %}>
-                    <summary class="nav-link nav-group-trigger {% if entry.is_active %}active{% endif %}">
+                    <summary class="nav-link nav-group-trigger {% if entry.is_active %}active{% endif %}" title="{{ entry.label }}" aria-label="{{ entry.label }}">
                         {{ entry.icon }}
                         <span>{{ entry.label }}</span>
                         {% include "design_system/icon.html" with name="chevron-down" class_name="nav-group-chevron" %}
                     </summary>
                     <div class="nav-group-items">
                         {% for child in entry.children %}
-                        <a href="{% url child.url_name %}" class="nav-sub-link {% if child.is_active %}active{% endif %}">{{ child.label }}</a>
+                        <a href="{% url child.url_name %}" class="nav-sub-link {% if child.is_active %}active{% endif %}" title="{{ child.label }}">{{ child.label }}</a>
                         {% endfor %}
                     </div>
                 </details>
                 {% else %}
-                <a href="{% url entry.url_name %}" class="nav-link {% if entry.variant %}nav-link--{{ entry.variant }}{% endif %} {% if entry.is_active %}active{% endif %}">
+                <a href="{% url entry.url_name %}" class="nav-link {% if entry.variant %}nav-link--{{ entry.variant }}{% endif %} {% if entry.is_active %}active{% endif %}" title="{{ entry.label }}" aria-label="{{ entry.label }}">
                     {{ entry.icon }}
                     <span>{{ entry.label }}</span>
                 </a>
@@ -182,8 +184,8 @@
                 <div class="dc-ds-shell__page-context topbar-page-context" aria-label="Current page"{% block authenticated_page_context_attrs %}{% endblock %}>
                     <div class="topbar-page-title-row">
                         {% block authenticated_page_back %}
-                        {% if request.resolver_match.url_name != 'dashboard' %}
-                        <a href="{% url 'dashboard' %}" class="topbar-back-link" data-workspace-back aria-label="Back" title="Back">
+                        {% if PAGE_BACK_LINK %}
+                        <a href="{{ PAGE_BACK_LINK.href }}" class="topbar-back-link" data-workspace-back aria-label="{{ PAGE_BACK_LINK.aria_label }}" title="{{ PAGE_BACK_LINK.title }}">
                             {% include "design_system/icon.html" with name="arrow-left" %}
                         </a>
                         {% endif %}
@@ -418,10 +420,10 @@
         if (context.hasAttribute('data-suppress-title-promotion')) return;
 
         var sourceTitle = main.querySelector(
-            '.dc-ds-page-hero .dc-ds-title, .arch-header .arch-title, .page-header .page-title, .workspace-header .workspace-title, .workspace-main-head .workspace-title'
+            '.dc-ds-page-hero .dc-ds-title, .arch-header .arch-title, .dc-ds-workspace__title-row .arch-title, .page-header .page-title, .workspace-header .workspace-title, .workspace-main-head .workspace-title'
         );
         if (!sourceTitle) return;
-        var header = sourceTitle.closest('.dc-ds-page-hero, .arch-header, .page-header, .workspace-header, .workspace-main-head');
+        var header = sourceTitle.closest('.dc-ds-page-hero, .arch-header, .dc-ds-workspace__title-row, .page-header, .workspace-header, .workspace-main-head');
         if (!header) return;
 
         title.textContent = sourceTitle.textContent.trim();

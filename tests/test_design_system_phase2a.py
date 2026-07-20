@@ -82,16 +82,12 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
 
     def test_contract_status_adapter_covers_every_model_status_and_fails_safe(self):
         expected = {
-            'NEEDS_INPUT': 'attention', 'UPLOADED': 'progress', 'PROCESSING': 'progress',
-            'CLASSIFICATION_REQUIRED': 'attention', 'AI_REVIEW_IN_PROGRESS': 'progress',
-            'AI_REVIEW_READY': 'special', 'HUMAN_REVIEW_IN_PROGRESS': 'progress',
-            'INFORMATION_REQUIRED': 'attention', 'INTERNAL_APPROVAL_REQUIRED': 'attention',
-            'NEGOTIATION_IN_PROGRESS': 'progress', 'READY_FOR_SIGNATURE': 'attention',
-            'SIGNATURE_IN_PROGRESS': 'progress', 'EXECUTED': 'success',
-            'OBLIGATIONS_ACTIVE': 'success', 'DRAFT': 'neutral', 'PENDING': 'attention',
-            'IN_REVIEW': 'progress', 'APPROVED': 'progress', 'ACTIVE': 'success',
-            'EXPIRED': 'danger', 'TERMINATED': 'danger', 'COMPLETED': 'success',
+            'IN_PROGRESS': 'progress',
+            'ACTIVE': 'success',
+            'EXPIRED': 'danger',
+            'TERMINATED': 'danger',
             'CANCELLED': 'neutral',
+            'ARCHIVED': 'neutral',
         }
         self.assertEqual({value for value, _ in Contract.Status.choices}, set(expected))
         for status, tone in expected.items():
@@ -99,14 +95,16 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                 self.assertEqual(contract_status_badge_tone(status), tone)
         self.assertEqual(contract_status_badge_tone(None), 'neutral')
         self.assertEqual(contract_status_badge_tone('RETIRED_STATUS'), 'neutral')
+        # Legacy aliases may still map in templatetags for stale rows.
+        self.assertEqual(contract_status_badge_tone('DRAFT'), 'neutral')
+        self.assertEqual(contract_status_badge_tone('PENDING'), 'attention')
 
     def test_document_status_adapter_covers_every_model_status_and_fails_safe(self):
         expected = {
             'DRAFT': 'neutral',
-            'REVIEW': 'attention',
-            'APPROVED': 'progress',
             'FINAL': 'success',
-            'ARCHIVED': 'neutral',
+            'EXECUTED': 'success',
+            'SUPERSEDED': 'neutral',
         }
         self.assertEqual({value for value, _ in Document.Status.choices}, set(expected))
         for status, tone in expected.items():
@@ -114,9 +112,13 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
                 self.assertEqual(document_status_badge_tone(status), tone)
         self.assertEqual(document_status_badge_tone(None), 'neutral')
         self.assertEqual(document_status_badge_tone('RETIRED_STATUS'), 'neutral')
+        self.assertEqual(document_status_badge_tone('REVIEW'), 'attention')
+        self.assertEqual(document_status_badge_tone('APPROVED'), 'progress')
+        self.assertEqual(document_status_badge_tone('ARCHIVED'), 'neutral')
 
     def test_lifecycle_stage_adapter_covers_every_stage_and_fails_safe(self):
         expected = {
+            'INTAKE': 'neutral',
             'DRAFTING': 'neutral',
             'INTERNAL_REVIEW': 'progress',
             'NEGOTIATION': 'progress',
@@ -125,7 +127,6 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'EXECUTED': 'success',
             'OBLIGATION_TRACKING': 'success',
             'RENEWAL': 'attention',
-            'ARCHIVED': 'neutral',
         }
         choices = Contract._meta.get_field('lifecycle_stage').choices
         self.assertEqual({value for value, _ in choices}, set(expected))

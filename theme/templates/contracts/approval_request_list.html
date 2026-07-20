@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load clmone_components %}
-{% block title %}Approvals — CLM One{% endblock %}
-{% block authenticated_page_title %}Workflow Operations{% endblock %}
-{% block authenticated_page_subtitle %}Approval requests that need a decision from you or your team.{% endblock %}
+{% block title %}Reviews &amp; Approvals — CLM One{% endblock %}
+{% block authenticated_page_title %}Reviews &amp; Approvals{% endblock %}
+{% block authenticated_page_subtitle %}Portfolio of pending reviews, approvals, escalations, and completed decisions.{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
@@ -13,16 +13,71 @@
     margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
     white-space: nowrap; min-width: 0; line-height: 1.2;
   }
-  .approvals-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
-  .approvals-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
   .approvals-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
-  .approvals-page .approvals-queue-tabs {
+  .approvals-page .clm-list-filter-controls {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-12);
+    padding-top: var(--space-10);
+    border-top: 1px solid var(--line, var(--hairline));
+  }
+  .approvals-page .approvals-queue-filters {
+    display: flex;
     flex: 1 1 auto;
+    align-items: center;
+    gap: 6px;
     min-width: 0;
-    margin-bottom: 0;
+    overflow-x: auto;
+    padding: 1px;
+  }
+  .approvals-page .approvals-queue-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 30px;
+    margin: 0;
+    padding: 0 11px;
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 999px;
+    background: var(--card, #fff);
+    color: var(--ink-600, var(--text-secondary));
+    font: var(--text-meta);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  }
+  .approvals-page .approvals-queue-chip:hover {
+    border-color: color-mix(in srgb, var(--seal) 35%, var(--line, var(--hairline)));
+    color: var(--ink-900);
+    background: color-mix(in srgb, var(--seal) 5%, var(--card, #fff));
+  }
+  .approvals-page .approvals-queue-chip:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .approvals-page .approvals-queue-chip.is-active,
+  .approvals-page .approvals-queue-chip[aria-pressed="true"] {
+    border-color: var(--seal);
+    background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
+    color: var(--seal-dark, var(--seal));
+    font-weight: 700;
   }
   .approvals-page .approvals-queue-count {
-    font-variant-numeric: tabular-nums; opacity: 0.75; margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+  }
+  .approvals-page .approvals-queue-chip.is-active .approvals-queue-count,
+  .approvals-page .approvals-queue-chip[aria-pressed="true"] .approvals-queue-count {
+    opacity: 1;
+  }
+  .approvals-page .clm-list-actions-stack {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
   .approvals-page .approvals-table {
     min-width: 100%; width: 100%; table-layout: fixed;
@@ -35,14 +90,10 @@
   .approvals-page .approvals-table th[data-col="title"],
   .approvals-page .approvals-table td[data-col="title"] {
     position: sticky; left: 0; z-index: 2; min-width: 240px; width: 24%;
-    background: var(--card-bg, #fff);
+    background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
   .approvals-page .approvals-table thead th[data-col="title"] { z-index: 5; }
-  .approvals-page .approvals-table tbody tr:hover td { background: var(--color-surface-table-head, var(--well)); }
-  .approvals-page .approvals-table tbody tr:hover td[data-col="title"] {
-    background: var(--color-surface-table-head, var(--well));
-  }
   .approvals-page .approvals-table th[data-col="stage"],
   .approvals-page .approvals-table td[data-col="stage"] { min-width: 120px; width: 12%; }
   .approvals-page .approvals-table th[data-col="requester"],
@@ -99,34 +150,40 @@
   body[data-design-system=casefile]:has(.approvals-page) .app-footer { display: none; }
   @media (max-width: 560px) {
     .approvals-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+    .approvals-page .clm-list-filter-controls {
+      flex-wrap: wrap;
+    }
+    .approvals-page .clm-list-actions-stack {
+      flex-basis: 100%;
+      margin-left: 0;
+      justify-content: flex-end;
+    }
   }
 </style>
 
 <div id="approvals-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page approvals-page">
   <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
     <div class="clm-list-view-header">
-      {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+      {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
       <div class="clm-list-view-actions">
         <a href="{% url 'contracts:approval_request_create' %}" class="dc-ds-button dc-ds-button--primary">New approval request</a>
       </div>
     </div>
 
     <div class="clm-list-filter-controls">
-      {# Client-side queue panels: underline pattern; buttons keep live counts without routing. #}
-      <nav class="approvals-queue-tabs dc-ds-workspace-tabs dc-ds-workspace-tabs--section wq-tabs" role="tablist" aria-label="Approval queue views">
-        <div class="dc-ds-workspace-tabs__list">
-          {% for tab in queue_tabs %}
-          <button type="button"
-                  class="dc-ds-workspace-tabs__tab{% if forloop.first %} is-active wq-tab-active{% endif %}"
-                  data-queue-tab="{{ tab.key }}"
-                  data-queue-count="{{ tab.rows|length }}"
-                  role="tab"
-                  aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-            {{ tab.label }}<span class="approvals-queue-count">{{ tab.rows|length }}</span>
-          </button>
-          {% endfor %}
-        </div>
-      </nav>
+      {# Queue views are filters, not hub tabs — chip controls keep the hierarchy clear. #}
+      <div class="approvals-queue-filters" role="group" aria-label="Approval queue filters">
+        {% for tab in queue_tabs %}
+        <button type="button"
+                class="approvals-queue-chip{% if forloop.first %} is-active{% endif %}"
+                data-queue-tab="{{ tab.key }}"
+                data-queue-count="{{ tab.rows|length }}"
+                aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">
+          <span>{{ tab.label }}</span>
+          <span class="approvals-queue-count">{{ tab.rows|length }}</span>
+        </button>
+        {% endfor %}
+      </div>
       <div class="clm-list-actions-stack">
         <p id="approvals-result-count" class="clm-list-result-count" aria-live="polite">
           {% with first=queue_tabs.0 %}{{ first.rows|length }} request{{ first.rows|length|pluralize }}{% endwith %}
@@ -188,8 +245,7 @@
       tabs.forEach(function (t) {
         var active = t === tab;
         t.classList.toggle('is-active', active);
-        t.classList.toggle('wq-tab-active', active);
-        t.setAttribute('aria-selected', active ? 'true' : 'false');
+        t.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
       panels.forEach(function (panel) {
         panel.hidden = panel.getAttribute('data-queue-panel') !== key;

@@ -130,6 +130,7 @@ from .views_domains.organization_admin import (
     resend_organization_invite,
     retry_organization_invite,
     revoke_organization_invite,
+    update_invitation_role,
     update_membership_role,
 )
 from .views_domains.saml import (
@@ -163,13 +164,26 @@ from .views_domains.contracts import (
     upload_signed_contract,
     contract_review_workspace,
 )
-from .views_domains.dpa_workflow import DPAReviewAndGenerateView, DPAWorkflowBuilderView
+from .views_domains.dpa_workflow import (
+    DPAReviewAndGenerateView,
+    DPAWorkflowBuilderView,
+    dpa_confirm_section,
+    dpa_exception_action,
+    dpa_submit_for_review,
+)
 from .views_domains.msa_workflow import (
     MSAWorkflowBuilderView,
+    msa_confirm_section,
+    msa_exception_action,
     msa_export_document,
     msa_submit_for_review,
 )
-from .views_domains.nda_workflow import NDAWorkflowBuilderView
+from .views_domains.nda_workflow import (
+    NDAWorkflowBuilderView,
+    nda_confirm_section,
+    nda_exception_action,
+    nda_submit_for_review,
+)
 from .views_domains.dpa_review import (
     DPAPlaybookListView,
     DPAReviewMemoView,
@@ -222,6 +236,8 @@ from .views_domains.actions import (
     organization_session_audit,
     organization_session_audit_export,
     profile,
+    profile_sessions,
+    ProfilePasswordChangeView,
     settings_hub,
     toggle_dd_item,
     toggle_redesign,
@@ -250,6 +266,10 @@ from .views_domains.core import (
     operations_dashboard,
     SignUpView,
     switch_organization,
+)
+from .views_domains.workspace_nav import (
+    MyWorkView,
+    TemplatesPlaybooksHubView,
 )
 from .views_domains.activity import (
     AuditLogListView,
@@ -345,9 +365,12 @@ from .views_domains.workflow_management import (
     workflow_template_activity,
     workflow_template_list,
     workflow_template_preview,
+    workflow_template_scenario_save,
+    workflow_template_audit_export,
     workflow_template_publish_toggle,
     workflow_template_step_delete,
     workflow_template_step_reorder,
+    workflow_template_step_update,
     workflow_approval_route_list,
     workflow_designer_history,
 )

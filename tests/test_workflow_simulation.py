@@ -86,7 +86,7 @@ class WorkflowSimulationTests(TestCase):
             name='Auto Archive',
             description='Automatic closeout',
             order=5,
-            step_kind=WorkflowTemplateStep.StepKind.AUTOMATIC,
+            step_kind=WorkflowTemplateStep.StepKind.AUTOMATION,
         )
 
         self.high_value_data = {
@@ -97,7 +97,7 @@ class WorkflowSimulationTests(TestCase):
             'data_transfer_flag': False,
             'risk_level': Contract.RiskLevel.LOW,
             'counterparty_name': 'Acme',
-            'status': Contract.Status.DRAFT,
+            'status': Contract.Status.IN_PROGRESS,
         }
         self.low_value_data = {
             'contract_type': Contract.ContractType.NDA,
@@ -107,7 +107,7 @@ class WorkflowSimulationTests(TestCase):
             'data_transfer_flag': False,
             'risk_level': Contract.RiskLevel.LOW,
             'counterparty_name': 'Acme',
-            'status': Contract.Status.DRAFT,
+            'status': Contract.Status.IN_PROGRESS,
         }
 
     def test_simulate_workflow_template_returns_all_steps_and_does_not_create_records(self):
@@ -173,12 +173,20 @@ class WorkflowSimulationTests(TestCase):
                 'data_transfer_flag': '',
                 'risk_level': Contract.RiskLevel.LOW,
                 'counterparty_name': 'Acme',
-                'status': Contract.Status.DRAFT,
+                'status': Contract.Status.IN_PROGRESS,
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Preview Results')
-        self.assertContains(response, 'WOULD_START')
+        self.assertContains(response, 'Matched route')
+        self.assertContains(response, 'Triggered conditions')
+        self.assertIsNotNone(response.context['preview_result'])
+        self.assertGreater(response.context['preview_result'].active_step_count, 0)
+        self.assertIn(response.context['preview_result'].result_tone, {'pass', 'blocked', 'fail'})
+        body = response.content.decode()
+        self.assertIn('Simulation completed', body)
+        self.assertNotIn('Completed ·', body)
+        self.assertNotIn('steps would run', body)
+        self.assertNotIn('Assignments resolved</strong> — for each', body)
 
     def test_cross_tenant_preview_is_blocked(self):
         self.client.force_login(self.other_user)
@@ -202,9 +210,35 @@ class WorkflowSimulationTests(TestCase):
                 'data_transfer_flag': '',
                 'risk_level': Contract.RiskLevel.LOW,
                 'counterparty_name': 'Acme',
-                'status': Contract.Status.DRAFT,
+                'status': Contract.Status.IN_PROGRESS,
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context['preview_form'].errors)
         self.assertIsNone(response.context['preview_result'])
+
+    def test_finance_threshold_skip_is_humanised(self):
+        WorkflowTemplateStep.objects.create(
+            template=self.template,
+            name='Finance Review',
+            description='Finance gate',
+            order=6,
+            step_kind=WorkflowTemplateStep.StepKind.APPROVAL,
+            condition_expression='finance_threshold=true',
+            assignee_role=UserProfile.Role.ADMIN,
+        )
+        result = simulate_workflow_template(self.template, self.low_value_data, organization=self.org_a)
+        finance = next(step for step in result.preview_steps if step.name == 'Finance Review')
+        self.assertFalse(finance.would_apply)
+        self.assertIn('did not meet the finance approval threshold', finance.reason)
+        self.assertNotIn('finance_threshold=', finance.reason)
+
+    def test_unresolved_assignments_block_execution_but_simulation_completes(self):
+        result = simulate_workflow_template(self.template, self.high_value_data, organization=self.org_a)
+        self.assertTrue(result.simulation_completed)
+        self.assertGreater(result.unresolved_assignment_count, 0)
+        self.assertTrue(result.execution_blocked)
+        self.assertEqual(result.result_tone, 'blocked')
+        self.assertEqual(result.execution_outcome_label, 'Blocked before launch')
+        self.assertIn('unresolved assignments', result.final_outcome_label)
+        self.assertTrue(any('Assignment unresolved' in message for message in result.validation_messages))

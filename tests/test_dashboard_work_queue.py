@@ -97,7 +97,7 @@ class DashboardEmptyStateTests(TestCase):
             organization=organization,
             title='First Contract',
             content='Seed content',
-            status='DRAFT',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         response = self.client.get(reverse('dashboard'))
@@ -118,7 +118,7 @@ class DashboardQueueRowContentTests(TestCase):
             organization=self.organization,
             title='Raw Value Check Contract',
             content='Seed content',
-            status='IN_REVIEW',
+            status='IN_PROGRESS',
             lifecycle_stage='NEGOTIATION',
             created_by=self.user,
         )
@@ -169,7 +169,7 @@ class DashboardQueueRowContentTests(TestCase):
             organization=self.organization,
             title='Assigned To Me Contract',
             content='Seed content',
-            status='PENDING',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         ApprovalRequest.objects.create(
@@ -198,7 +198,7 @@ class StageDotsComponentTests(TestCase):
             organization=self.organization,
             title='Negotiation Contract',
             content='Seed content',
-            status='PENDING',
+            status='IN_PROGRESS',
             lifecycle_stage='NEGOTIATION',
             created_by=self.user,
         )

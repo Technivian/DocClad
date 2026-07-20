@@ -1,55 +1,96 @@
-<div class="dc-ds-table-wrap">
-  <table class="dc-ds-table">
+<div class="dc-ds-table-wrap org-team-table-wrap">
+  <table class="dc-ds-table org-team-table" aria-label="Active organization members">
     <thead>
       <tr>
         <th scope="col">User</th>
         <th scope="col">Email</th>
         <th scope="col">Role</th>
+        <th scope="col">Status</th>
+        <th scope="col">Last active</th>
         <th scope="col">Joined</th>
-        <th scope="col" class="text-right">Actions</th>
+        <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
     <tbody>
-      {% for membership in memberships %}
-      <tr>
-        <td>{{ membership.user.get_full_name|default:membership.user.username }}</td>
-        <td class="c-muted">{{ membership.user.email|default:"-" }}</td>
+      {% for row in member_rows %}
+      <tr{% if row.is_self %} class="is-current-user"{% endif %}>
         <td>
-          <form method="post" action="{% url 'contracts:update_membership_role' membership.id %}" class="inline-flex items-center gap-2">
-            {% csrf_token %}
-            <select name="role" class="select-base px-2 py-1 rounded text-sm border" {% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}>
-              <option value="OWNER" {% if membership.role == 'OWNER' %}selected{% endif %}>Owner</option>
-              <option value="ADMIN" {% if membership.role == 'ADMIN' %}selected{% endif %}>Admin</option>
-              <option value="MEMBER" {% if membership.role == 'MEMBER' %}selected{% endif %}>Member</option>
-            </select>
-            <button type="submit" class="dc-ds-button dc-ds-button--ghost" {% if membership.role == 'OWNER' and not is_owner %}disabled{% endif %}>Save</button>
-          </form>
-        </td>
-        <td class="c-muted">{{ membership.created_at|date:"M j, Y" }}</td>
-        <td class="text-right">
-          {% if membership.user_id != current_user_id %}
-          <div class="flex flex-col items-end gap-1">
-            <form method="post" action="{% url 'contracts:revoke_member_sessions' membership.id %}" class="inline"
-                  data-confirm="Revoke all active sessions for this member? They will be signed out immediately.">
-              {% csrf_token %}
-              <button type="submit" class="dc-ds-button dc-ds-button--ghost c-warning">Revoke Sessions</button>
-            </form>
-            <form method="post" action="{% url 'contracts:deactivate_organization_member' membership.id %}" class="inline"
-                  data-confirm="Deactivate this member? They will lose access to the organization.">
-              {% csrf_token %}
-              <button type="submit" class="dc-ds-button dc-ds-button--ghost c-danger">Deactivate</button>
-            </form>
+          <div class="org-team-user">
+            <span class="org-team-avatar" aria-hidden="true">{{ row.initial }}</span>
+            <span class="org-team-user__meta">
+              <span class="org-team-user__name">
+                {{ row.display_name }}
+                {% if row.is_self %}<span class="org-team-you">You</span>{% endif %}
+              </span>
+            </span>
           </div>
-          {% else %}
-          <span class="text-xs c-muted">You</span>
-          {% endif %}
+        </td>
+        <td class="c-muted">{{ row.email }}</td>
+        <td>
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.membership.get_role_display }}</span>
+        </td>
+        <td>
+          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status.tone }}">{{ row.status.label }}</span>
+        </td>
+        <td class="c-muted">
+          {% if row.last_active %}{{ row.last_active|timesince }} ago{% else %}Never{% endif %}
+        </td>
+        <td class="c-muted">{{ row.membership.created_at|date:"j M Y" }}</td>
+        <td class="text-right org-team-actions-cell">
+          <details class="wq-kebab org-team-kebab">
+            <summary class="wq-kebab-trigger" aria-label="Actions for {{ row.display_name }}">⋯</summary>
+            <div class="wq-kebab-menu" role="menu">
+              {% if row.can_edit_role %}
+              <button
+                type="button"
+                class="wq-kebab-action"
+                role="menuitem"
+                data-open-role-dialog
+                data-action-url="{% url 'contracts:update_membership_role' row.membership.id %}"
+                data-member-name="{{ row.display_name }}"
+                data-current-role="{{ row.membership.role }}"
+                data-assignable-roles='[{% for value, label in row.assignable_roles %}{"value":"{{ value }}","label":"{{ label }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'
+              >Change role</button>
+              {% elif row.role_locked_reason %}
+              <span class="wq-kebab-action is-disabled" role="menuitem" aria-disabled="true" title="{{ row.role_locked_reason }}">{{ row.role_locked_reason }}</span>
+              {% endif %}
+              {% if row.can_revoke_sessions %}
+              <form method="post" action="{% url 'contracts:revoke_member_sessions' row.membership.id %}" role="none"
+                    data-confirm="Revoke all active sessions for {{ row.display_name }}? They will be signed out immediately.">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Revoke sessions</button>
+              </form>
+              {% endif %}
+              {% if row.can_deactivate %}
+              <div class="wq-kebab-divider" role="separator"></div>
+              <form method="post" action="{% url 'contracts:deactivate_organization_member' row.membership.id %}" role="none"
+                    data-confirm="Deactivate {{ row.display_name }}? They will lose access to this organization.">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action wq-kebab-action-danger" role="menuitem">Deactivate</button>
+              </form>
+              {% elif row.is_self %}
+              <span class="wq-kebab-action is-disabled" role="menuitem" aria-disabled="true" title="You cannot deactivate your own account from here.">You cannot deactivate yourself</span>
+              {% elif row.is_last_owner %}
+              <span class="wq-kebab-action is-disabled" role="menuitem" aria-disabled="true" title="The last Owner cannot be removed.">Last Owner cannot be removed</span>
+              {% endif %}
+            </div>
+          </details>
         </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="5">{% include "design_system/empty_state.html" with icon="user-plus" title="No active members" reason="No invited teammate currently has access to this workspace." how="Members appear here after they accept an invitation and activate their account." action_url="#organization-team-invite" action_label="Invite a member" class_name="dc-ds-empty--compact" %}</td>
+        <td colspan="7">
+          {% include "design_system/empty_state.html" with icon="user-plus" title="No team members yet" reason="This organization has no active members to display." how="Invite teammates to collaborate with the right role and permissions." actions_template="contracts/organization_team_invite_empty_action.html" class_name="dc-ds-empty--compact" %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+{% if member_rows|length == 1 %}
+<div class="org-team-callout" role="status">
+  <p class="org-team-callout__title">No additional team members</p>
+  <p class="org-team-callout__copy">You are currently the only active member. Invite teammates when you are ready to share access.</p>
+  <button type="button" class="dc-ds-button dc-ds-button--quiet dc-ds-button--sm" data-open-invite-dialog>Invite member</button>
+</div>
+{% endif %}

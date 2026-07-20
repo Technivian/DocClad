@@ -10,6 +10,7 @@ from config.feature_flags import (
     is_mochadocs_mode_enabled,
     is_test_mode_enabled
 )
+from .back_navigation import resolve_shell_back
 from .models import Notification, OrganizationMembership
 from .nav_config import get_nav_for
 from .permissions import can_manage_organization
@@ -55,6 +56,7 @@ def _sidebar_nav_for_template(request, user, organization):
     request's already-resolved url_name) into a plain `is_active` boolean,
     since templates can't invoke a callable with an argument."""
     current_url_name = getattr(getattr(request, 'resolver_match', None), 'url_name', None)
+    contract_context = bool(getattr(request, 'sidebar_nav_contract_context', False))
     resolved = []
     for entry in get_nav_for(organization, user):
         if entry['kind'] == 'section':
@@ -74,13 +76,19 @@ def _sidebar_nav_for_template(request, user, organization):
                 'children': children,
             })
             continue
+        is_active = bool(current_url_name) and entry['active'](current_url_name)
+        if contract_context:
+            if entry['label'] == 'Contracts':
+                is_active = True
+            elif entry['label'] in ('Workflow Designer', 'New Contract', 'Reviews & Approvals'):
+                is_active = False
         resolved.append({
             'kind': 'item',
             'label': entry['label'],
             'url_name': entry['url_name'],
             'icon': entry['icon'],
             'variant': entry.get('variant', ''),
-            'is_active': bool(current_url_name) and entry['active'](current_url_name),
+            'is_active': is_active,
         })
     return resolved
 
@@ -90,10 +98,14 @@ def feature_flags(request):
     unread_notifications = 0
     can_manage_org = False
     sidebar_nav = []
+    organization = getattr(request, 'organization', None)
+    is_in_house_clm = bool(
+        organization and getattr(organization, 'workspace_mode', None) == 'in_house_clm'
+    )
     if getattr(request, 'user', None) and request.user.is_authenticated:
         unread_notifications = Notification.objects.filter(recipient=request.user, is_read=False).count()
-        can_manage_org = can_manage_organization(request.user, getattr(request, 'organization', None))
-        sidebar_nav = _sidebar_nav_for_template(request, request.user, getattr(request, 'organization', None))
+        can_manage_org = can_manage_organization(request.user, organization)
+        sidebar_nav = _sidebar_nav_for_template(request, request.user, organization)
     return {
         'FEATURE_REDESIGN': is_feature_redesign_enabled(),
         'CLMONE_MODE': is_clmone_mode_enabled(),
@@ -107,10 +119,15 @@ def feature_flags(request):
         'BUILD_SHA': getattr(settings, 'BUILD_SHA', 'unknown'),
         'BUILD_LABEL': getattr(settings, 'BUILD_LABEL', 'commit unknown'),
         'csp_nonce': getattr(request, 'csp_nonce', ''),
-        'CURRENT_ORGANIZATION': getattr(request, 'organization', None),
+        'CURRENT_ORGANIZATION': organization,
+        'is_in_house_clm': is_in_house_clm,
+        'risk_review_label': (
+            'Legal Intelligence Hub' if is_in_house_clm else 'Risk Register'
+        ),
         'UNREAD_NOTIFICATIONS': unread_notifications,
         'CAN_MANAGE_ORGANIZATION': can_manage_org,
         'SIDEBAR_NAV': sidebar_nav,
+        'PAGE_BACK_LINK': resolve_shell_back(request),
         'USER_ORGANIZATION_MEMBERSHIPS': (
             OrganizationMembership.objects.filter(user=request.user, is_active=True).select_related('organization')
             if getattr(request, 'user', None) and request.user.is_authenticated

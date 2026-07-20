@@ -5,38 +5,237 @@
 
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page">
-  <header class="clm-list-shell dc-ds-filterbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+<style nonce="{{ csp_nonce }}">
+  .designer-history-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  .designer-history-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .designer-history-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
+  .designer-history-page #designer-history-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .designer-history-page #designer-history-table th,
+  .designer-history-page #designer-history-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .designer-history-page #designer-history-table [data-col].is-hidden { display: none; }
+  .designer-history-page #designer-history-table th[data-col="event"],
+  .designer-history-page #designer-history-table td[data-col="event"] {
+    position: sticky; left: 0; z-index: 2; min-width: 260px; width: 42%;
+    background-color: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .designer-history-page #designer-history-table thead th[data-col="event"] { z-index: 5; }
+  .designer-history-page #designer-history-table th[data-col="actor"],
+  .designer-history-page #designer-history-table td[data-col="actor"] { min-width: 140px; width: 18%; }
+  .designer-history-page #designer-history-table th[data-col="when"],
+  .designer-history-page #designer-history-table td[data-col="when"] {
+    min-width: 140px; width: 18%; white-space: nowrap;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .designer-history-page #designer-history-table th[data-col="action"],
+  .designer-history-page #designer-history-table td[data-col="action"] { min-width: 110px; width: 14%; }
+  .designer-history-page .history-event-title {
+    display: block; min-width: 0; max-width: 100%;
+    color: var(--ink-900, var(--text-primary)); font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .designer-history-page .history-event-detail {
+    display: block; margin-top: 4px; color: var(--ink-500); font-size: 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .designer-history-page .history-cell {
+    display: block; min-width: 0; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .designer-history-page .designer-history-col-menu { position: relative; }
+  .designer-history-page .designer-history-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 160px; padding: 10px; border-radius: 10px;
+  }
+  .designer-history-page .designer-history-col-menu.is-open .designer-history-col-menu__panel { display: grid; gap: 6px; }
+  .designer-history-page .designer-history-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  body[data-design-system=casefile]:has(.designer-history-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.designer-history-page) .top-bar .global-search-input {
+    height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600);
+  }
+  body[data-design-system=casefile]:has(.designer-history-page) .top-bar .global-search-input:focus-visible {
+    border-color: var(--line) !important; background: var(--card) !important;
+  }
+  body[data-design-system=casefile]:has(.designer-history-page) .app-footer { display: none; }
+</style>
+
+<div id="designer-history-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page designer-history-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
     <div class="clm-list-view-header">
-      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
       <div class="clm-list-view-actions">
-        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Open templates</a>
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--primary">Open templates</a>
+      </div>
+    </div>
+
+    <div class="clm-list-filter-controls">
+      <div class="clm-list-search-field">
+        {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+        <input class="dc-ds-control" type="search" id="designer-history-search" placeholder="Search change history" aria-label="Search change history" autocomplete="off">
+      </div>
+      <div class="clm-list-actions-stack">
+        <p id="designer-history-result-count" class="clm-list-result-count" aria-live="polite">{{ event_count }} event{{ event_count|pluralize }}</p>
+        <div class="designer-history-col-menu" id="designer-history-col-menu">
+          <button id="designer-history-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="designer-history-col-panel">Columns</button>
+          <div id="designer-history-col-panel" class="designer-history-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+            <label><input type="checkbox" data-col-toggle="actor" checked> Actor</label>
+            <label><input type="checkbox" data-col-toggle="when" checked> When</label>
+            <label><input type="checkbox" data-col-toggle="action" checked> Action</label>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <section class="dc-ds-surface" aria-labelledby="designer-history-heading">
-    <div style="padding: var(--space-16); border-bottom: 1px solid var(--hairline, var(--line));">
-      <h2 id="designer-history-heading" style="margin:0; font: var(--text-heading);">Change history</h2>
+  <div class="dc-ds-summary clm-list-summary" aria-label="Change history summary">
+    <div class="dc-ds-summary__item {% if event_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Recorded events</span>
+      <strong class="dc-ds-summary__value">{{ event_count }}</strong>
     </div>
-    <div style="padding: var(--space-16); display:grid; gap: var(--space-12);">
-      {% for item in audit_feed %}
-      <article style="display:flex; justify-content:space-between; gap: var(--space-12); padding-bottom: var(--space-12); border-bottom: 1px solid var(--hairline, var(--line));">
-        <div>
-          <strong style="display:block; color: var(--ink-900); font: var(--text-subheading);">{{ item.summary }}</strong>
-          <span style="color: var(--ink-500); font: var(--text-meta);">{{ item.actor }} · {{ item.timestamp|date:"j M Y H:i" }}</span>
-          {% if item.changed_fields %}
-          <div style="margin-top:6px; color: var(--ink-500); font: var(--text-meta);">
-            {% for field in item.changed_fields %}<div>{{ field }}</div>{% endfor %}
-          </div>
-          {% endif %}
-        </div>
-        <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ item.action }}</span>
-      </article>
-      {% empty %}
-      <p class="contract-empty" style="margin:0; color: var(--ink-500);">No template changes recorded yet.</p>
-      {% endfor %}
-    </div>
-  </section>
+  </div>
+
+  <div class="dc-ds-table-wrap">
+    <table id="designer-history-table" class="dc-ds-table w-full text-sm" aria-label="Workflow template change history">
+      <thead>
+        <tr>
+          <th scope="col" data-col="event">Event</th>
+          <th scope="col" data-col="actor">Actor</th>
+          <th scope="col" data-col="when">When</th>
+          <th scope="col" data-col="action">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in audit_feed %}
+        <tr data-history-row data-search="{{ item.summary }} {{ item.actor }} {{ item.action }}{% for field in item.changed_fields %} {{ field }}{% endfor %}">
+          <td data-col="event">
+            <span class="history-event-title" title="{{ item.summary }}">{{ item.summary }}</span>
+            {% if item.changed_fields %}
+            <span class="history-event-detail" title="{% for field in item.changed_fields %}{{ field }}{% if not forloop.last %}; {% endif %}{% endfor %}">
+              {% for field in item.changed_fields %}{{ field }}{% if not forloop.last %}; {% endif %}{% endfor %}
+            </span>
+            {% endif %}
+          </td>
+          <td data-col="actor"><span class="history-cell" title="{{ item.actor }}">{{ item.actor }}</span></td>
+          <td data-col="when">{{ item.timestamp|date:"j M Y H:i" }}</td>
+          <td data-col="action"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ item.action }}</span></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            {% url 'contracts:workflow_template_list' as templates_url %}
+            {% include "design_system/empty_state.html" with icon="workflow" title="No template changes recorded yet" reason="Publishing, versioning, and configuration events for workflow templates will appear here." how="Open templates to edit stages or publish a draft." action_url=templates_url action_label="Open templates" %}
+          </td>
+        </tr>
+        {% endfor %}
+        <tr class="designer-history-filter-empty" hidden>
+          <td colspan="4" class="text-center c-muted" style="padding:48px 16px;">No events match this search.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('designer-history-root');
+  if (!root) return;
+
+  var table = document.getElementById('designer-history-table');
+  var search = document.getElementById('designer-history-search');
+  var resultCount = document.getElementById('designer-history-result-count');
+  var totalCount = {{ event_count|default:0 }};
+
+  function setResultCount(n) {
+    if (!resultCount) return;
+    var count = Number(n) || 0;
+    resultCount.textContent = count + ' event' + (count === 1 ? '' : 's');
+  }
+
+  function filterRows() {
+    if (!table || !search) return;
+    var q = (search.value || '').trim().toLowerCase();
+    var visible = 0;
+    table.querySelectorAll('tbody tr[data-history-row]').forEach(function (row) {
+      var hay = (row.getAttribute('data-search') || '').toLowerCase();
+      var show = !q || hay.indexOf(q) !== -1;
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    var empty = table.querySelector('tbody tr.designer-history-filter-empty');
+    if (empty) empty.hidden = visible > 0 || !q;
+    setResultCount(q ? visible : totalCount);
+  }
+
+  if (search) search.addEventListener('input', filterRows);
+
+  var STORAGE_KEY = 'clmone-designer-history-columns-v1';
+  var DEFAULT_COLS = { actor: true, when: true, action: true };
+  var colMenu = document.getElementById('designer-history-col-menu');
+  var colToggle = document.getElementById('designer-history-col-toggle');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
+    });
+  }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
+})();
+</script>
 {% endblock %}

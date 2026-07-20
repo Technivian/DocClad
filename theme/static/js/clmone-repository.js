@@ -396,6 +396,7 @@ class CLMOneRepository {
             const params = new URLSearchParams();
             if (this.filters.q) params.set('q', this.filters.q);
             this.filters.status.forEach(s => params.append('status', s));
+            this.filters.lifecycle_stage.forEach(s => params.append('lifecycle_stage', s));
             this.filters.contract_type.forEach(t => params.append('contract_type', t));
             ['owner', 'counterparty', 'risk_level', 'approval_state'].forEach((filterName) => {
                 this.filters[filterName].forEach((value) => params.append(filterName, value));
@@ -615,7 +616,9 @@ class CLMOneRepository {
                 });
             });
         });
-        
+        if (window.CLMOneRowMenus && typeof window.CLMOneRowMenus.init === 'function') {
+            window.CLMOneRowMenus.init(tbody);
+        }
         // Add checkbox handlers
         tbody.querySelectorAll('.contract-checkbox').forEach(cb => {
             cb.addEventListener('change', (e) => {

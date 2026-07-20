@@ -11,7 +11,17 @@ from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 from django.views import View
 
-from contracts.models import ApprovalRule, Contract, FieldDefinition, OrganizationMembership, Workflow, WorkflowStep
+from contracts.models import (
+    ApprovalRule,
+    Contract,
+    FieldDefinition,
+    FieldValue,
+    OrganizationMembership,
+    RiskSignal,
+    Workflow,
+    WorkflowStep,
+)
+from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action
 from contracts.services.finance_approval_policy import get_finance_approval_threshold
 from contracts.services.msa_workflow import (
@@ -22,8 +32,10 @@ from contracts.services.msa_workflow import (
     get_msa_approval_route,
     get_msa_contract_template,
     get_msa_workflow_template,
+    sync_command_center_work_item_for_workflow,
 )
 from contracts.tenancy import get_user_organization
+from django.utils import timezone
 
 
 def _coerce_field_value(field, raw):
@@ -125,59 +137,9 @@ def _msa_review_rule(organization, approval_step):
 @require_POST
 def msa_submit_for_review(request, pk, approval_step):
     """Submit the generated MSA to its configured Legal or Finance reviewer."""
-    organization = get_user_organization(request.user)
-    workflow = get_object_or_404(
-        Workflow.objects.select_related('contract', 'organization'),
-        pk=pk,
-        organization=organization,
-        contract__contract_type=Contract.ContractType.MSA,
-    )
-    if not can_access_contract_action(request.user, workflow.contract, ContractAction.EDIT):
-        return HttpResponseForbidden('You do not have permission to submit this MSA for review.')
+    from contracts.views_domains.drafting_workspace_actions import drafting_submit_for_review
 
-    normalized_step = approval_step.upper()
-    if normalized_step not in {'LEGAL', 'FINANCE'}:
-        return HttpResponseForbidden('Unsupported MSA review route.')
-    rule = _msa_review_rule(organization, normalized_step)
-    reviewer = rule.specific_approver if rule else None
-    if reviewer is None or reviewer.pk == (workflow.contract.owner_id or workflow.contract.created_by_id):
-        messages.error(
-            request,
-            f'Configure a separate {normalized_step.title()} approver for the MSA approval rule before submitting.',
-        )
-        return redirect('contracts:workflow_detail', pk=workflow.pk)
-    if not OrganizationMembership.objects.filter(
-        organization=organization,
-        user=reviewer,
-        is_active=True,
-    ).exists():
-        messages.error(request, f'The configured {normalized_step.title()} approver is not an active workspace member.')
-        return redirect('contracts:workflow_detail', pk=workflow.pk)
-
-    from contracts.services.approval_workflow import ApprovalAccessDenied, get_approval_workflow_service
-
-    try:
-        approval = get_approval_workflow_service().submit_for_review(
-            workflow.contract,
-            request.user,
-            reviewer,
-            approval_step=normalized_step,
-            rule=rule,
-            comment=(request.POST.get('comment') or '').strip(),
-            request=request,
-            enforce_review_readiness=False,
-        )
-    except (ApprovalAccessDenied, ValueError) as exc:
-        messages.error(request, str(exc))
-    else:
-        step_name = f'{normalized_step.title()} Review'
-        WorkflowStep.objects.filter(
-            workflow=workflow,
-            name=step_name,
-            status=WorkflowStep.Status.PENDING,
-        ).update(status=WorkflowStep.Status.IN_PROGRESS)
-        messages.success(request, f'MSA submitted to {approval.assigned_to_username or normalized_step.title()} for review.')
-    return redirect('contracts:workflow_detail', pk=workflow.pk)
+    return drafting_submit_for_review(request, pk, approval_step, kind='msa')
 
 
 @login_required
@@ -204,3 +166,34 @@ def msa_export_document(request, pk, artifact_type):
         messages.error(request, str(exc))
         return redirect('contracts:workflow_detail', pk=workflow.pk)
     return redirect('contracts:document_download', pk=document.pk)
+
+
+def _msa_workflow_for_actor(request, pk, action=ContractAction.EDIT):
+    organization = get_user_organization(request.user)
+    workflow = get_object_or_404(
+        Workflow.objects.select_related('contract', 'organization'),
+        pk=pk,
+        organization=organization,
+        contract__contract_type=Contract.ContractType.MSA,
+    )
+    if not can_access_contract_action(request.user, workflow.contract, action):
+        return None, HttpResponseForbidden('You do not have permission to update this MSA.')
+    return workflow, None
+
+
+@login_required
+@require_POST
+def msa_exception_action(request, pk, signal_id):
+    """Resolve, keep, or route an MSA drafting exception with audit."""
+    from contracts.views_domains.drafting_workspace_actions import drafting_exception_action
+
+    return drafting_exception_action(request, pk, signal_id, kind='msa')
+
+
+@login_required
+@require_POST
+def msa_confirm_section(request, pk, section_id):
+    """Record human confirmation for an AI-assisted drafting section."""
+    from contracts.views_domains.drafting_workspace_actions import drafting_confirm_section
+
+    return drafting_confirm_section(request, pk, section_id, kind='msa')

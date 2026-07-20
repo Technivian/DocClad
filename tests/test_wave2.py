@@ -174,7 +174,7 @@ class AIDataControlsTests(TestCase):
         policy.ai_features_enabled = False
         policy.save()
         contract = Contract.objects.create(
-            organization=self.org, title='Test', status=Contract.Status.DRAFT
+            organization=self.org, title='Test', status=Contract.Status.IN_PROGRESS
         )
         result = build_action_plan(contract, 'create a workflow')
         self.assertEqual(result, [])
@@ -190,11 +190,14 @@ class ContractActivationGuardTests(TestCase):
         self.org, self.user = _make_org_and_user()
         self.client.force_login(self.user)
 
-    def _make_contract(self, status=Contract.Status.PENDING):
+    def _make_contract(self, status=Contract.Status.IN_PROGRESS, lifecycle_stage=Contract.LifecycleStage.DRAFTING):
+        if status == Contract.Status.ACTIVE and lifecycle_stage == Contract.LifecycleStage.DRAFTING:
+            lifecycle_stage = Contract.LifecycleStage.OBLIGATION_TRACKING
         return Contract.objects.create(
             organization=self.org,
             title='Guard Test Contract',
             status=status,
+            lifecycle_stage=lifecycle_stage,
             created_by=self.user,
         )
 
@@ -224,7 +227,10 @@ class ContractActivationGuardTests(TestCase):
     def test_activation_allowed_with_approved_request(self):
         from contracts.services.contract_lifecycle import get_contract_lifecycle_service
 
-        contract = self._make_contract(status=Contract.Status.APPROVED)
+        contract = self._make_contract(
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage=Contract.LifecycleStage.SIGNATURE,
+        )
         ApprovalRequest.objects.create(
             organization=self.org,
             contract=contract,

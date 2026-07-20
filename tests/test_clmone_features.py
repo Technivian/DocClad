@@ -52,14 +52,15 @@ class CLMOneFeaturesTests(TestCase):
         self.assertIn('total_count', payload)
 
     def test_contracts_api_returns_human_readable_status_label(self):
-        self.contract.status = Contract.Status.IN_REVIEW
-        self.contract.save(update_fields=['status'])
+        self.contract.status = Contract.Status.IN_PROGRESS
+        self.contract.lifecycle_stage = Contract.LifecycleStage.INTERNAL_REVIEW
+        self.contract.save(update_fields=['status', 'lifecycle_stage'])
         response = self.client.get(reverse('contracts:contracts_api'))
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         row = next(c for c in payload['contracts'] if c['id'] == str(self.contract.pk))
-        self.assertEqual(row['status'], 'IN_REVIEW')
-        self.assertEqual(row['status_display'], 'In Review')
+        self.assertEqual(row['status'], 'IN_PROGRESS')
+        self.assertEqual(row['status_display'], 'In progress')
 
     def test_contract_detail_api_existing_contract(self):
         response = self.client.get(reverse('contracts:contract_detail_api', args=[str(self.contract.pk)]))
@@ -73,11 +74,11 @@ class CLMOneFeaturesTests(TestCase):
         self.assertIn(response.status_code, [404, 500])
 
     def test_bulk_update_api_contract_status(self):
-        # Bulk status changes now go through the lifecycle graph (Phase 4B): use a
-        # valid transition (ACTIVE -> COMPLETED). Illegal jumps return 400.
+        # Bulk status changes go through the lifecycle graph: use a valid
+        # transition (ACTIVE -> ARCHIVED). Illegal jumps return 400.
         body = {
             'contract_ids': [str(self.contract.pk)],
-            'updates': {'status': 'COMPLETED'},
+            'updates': {'status': 'ARCHIVED'},
         }
         response = self.client.post(
             reverse('contracts:contracts_bulk_update_api'),
@@ -88,9 +89,12 @@ class CLMOneFeaturesTests(TestCase):
         payload = response.json()
         self.assertTrue(payload.get('success'))
         self.contract.refresh_from_db()
-        self.assertEqual(self.contract.status, Contract.Status.COMPLETED)
+        self.assertEqual(self.contract.status, Contract.Status.ARCHIVED)
 
     def test_bulk_update_api_lifecycle_stage_and_audit_log(self):
+        self.contract.status = Contract.Status.IN_PROGRESS
+        self.contract.lifecycle_stage = Contract.LifecycleStage.DRAFTING
+        self.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
         body = {
             'contract_ids': [str(self.contract.pk)],
             'updates': {'lifecycle_stage': 'INTERNAL_REVIEW'},

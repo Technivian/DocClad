@@ -6,15 +6,24 @@
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
+  .workflow-templates-page {
+    --wtl-radius: 12px;
+    --wtl-shadow: 0 1px 2px rgba(11, 23, 40, 0.04), 0 4px 12px rgba(11, 23, 40, 0.04);
+    --wtl-shadow-hover: 0 3px 8px rgba(11, 23, 40, 0.06), 0 10px 20px rgba(11, 23, 40, 0.08);
+  }
   .workflow-templates-page .clm-list-result-count {
     font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
     margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
     white-space: nowrap; min-width: 0; line-height: 1.2;
   }
-  .workflow-templates-page.dc-ds-list-page > form > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
+
   .workflow-templates-page .template-card-grid {
-    display: grid; grid-template-columns: 1fr; gap: var(--space-12);
-    margin-top: var(--space-16);
+    display: grid;
+    gap: 12px;
+    margin-top: var(--space-12);
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    overflow: visible;
   }
   @media (min-width: 768px) {
     .workflow-templates-page .template-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -22,83 +31,385 @@
   @media (min-width: 1100px) {
     .workflow-templates-page .template-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
-  .workflow-templates-page .template-card {
-    position: relative; display: flex; flex-direction: column; gap: var(--space-10);
-    min-height: 100%; padding: var(--space-16);
-    border: 1px solid var(--line); border-radius: var(--radius-subpanel, 12px);
-    background: var(--card); text-decoration: none; color: inherit;
-    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+
+  .workflow-templates-page .template-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    height: 100%;
+    padding: 12px;
+    text-decoration: none;
+    color: inherit;
+    outline: none;
+    cursor: pointer;
+    border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+    border-radius: var(--wtl-radius);
+    background: #fff;
+    box-shadow: var(--wtl-shadow);
+    overflow: visible;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
-  .workflow-templates-page .template-card:hover,
-  .workflow-templates-page .template-card:focus-within {
-    border-color: color-mix(in srgb, var(--primary) 35%, var(--line));
-    box-shadow: var(--shadow-card, 0 8px 24px rgba(11,23,40,.06));
+  .workflow-templates-page .template-tile.dc-ds-surface,
+  .workflow-templates-page .template-tile.dc-ds-surface--interactive {
+    border-radius: var(--wtl-radius);
+    box-shadow: var(--wtl-shadow);
+    background: #fff;
+    transform: none;
   }
-  .workflow-templates-page .template-card:focus-visible {
-    outline: 3px solid var(--focus-ring); outline-offset: 2px;
+  .workflow-templates-page .template-tile.dc-ds-surface--interactive:hover,
+  .workflow-templates-page .template-tile.dc-ds-surface--interactive:focus-visible {
+    transform: none;
   }
-  .workflow-templates-page .template-card__head {
-    display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-8);
+  .workflow-templates-page .template-tile[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.84;
   }
-  .workflow-templates-page .template-card__title {
-    margin: 0; font: var(--text-section); color: var(--ink-900); letter-spacing: -0.01em;
+  .workflow-templates-page .template-tile.is-incomplete {
+    border-style: dashed;
   }
-  .workflow-templates-page .template-card__type {
-    margin: 4px 0 0; color: var(--ink-500); font: var(--text-small);
+  .workflow-templates-page .template-tile:hover:not([aria-disabled="true"]),
+  .workflow-templates-page .template-tile:focus-within:not([aria-disabled="true"]) {
+    border-color: color-mix(in srgb, var(--seal) 55%, var(--line));
+    background: color-mix(in srgb, var(--seal) 6%, #fff);
+    box-shadow: var(--wtl-shadow-hover);
+    /* Avoid transform — it makes position:fixed menus use the card as containing block. */
+    transform: none;
   }
-  .workflow-templates-page .template-card__badges {
-    display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;
+  .workflow-templates-page .template-tile.is-actions-open {
+    position: relative;
+    z-index: 40;
+    transform: none;
   }
-  .workflow-templates-page .template-card__path {
-    margin: 0; color: var(--ink-700); font: var(--text-small); line-height: 1.45;
+  .workflow-templates-page .template-tile:focus-visible {
+    border-color: var(--seal);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    transform: none;
   }
-  .workflow-templates-page .template-card__meta {
-    display: grid; gap: 4px; color: var(--ink-500); font: var(--text-meta);
+  .workflow-templates-page .template-tile.is-selected {
+    border-width: 2px;
+    border-color: var(--seal);
+    background: color-mix(in srgb, var(--seal) 8%, #fff);
+    padding: 11px;
+    transform: none;
   }
-  .workflow-templates-page .template-card__foot {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--space-8);
-    margin-top: auto; padding-top: var(--space-12); border-top: 1px solid var(--hairline, var(--line));
+
+  .workflow-templates-page .template-tile__top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
   }
-  .workflow-templates-page .template-card__cta {
-    color: var(--seal-dark, var(--primary)); font: var(--text-small); font-weight: 700;
+  .workflow-templates-page .template-tile__icon {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--seal) 12%, #fff);
+    color: var(--seal-dark, var(--seal));
+    border: 1px solid color-mix(in srgb, var(--seal) 14%, var(--line));
+    display: inline-grid;
+    place-items: center;
   }
-  .workflow-templates-page .template-card__menu { position: relative; z-index: 2; }
-  .workflow-templates-page .template-card__menu > summary {
-    list-style: none; cursor: pointer; min-width: 32px; min-height: 32px;
-    display: inline-grid; place-items: center; border: 1px solid var(--line);
-    border-radius: var(--radius-control, 8px); background: var(--card); color: var(--ink-700);
+  .workflow-templates-page .template-tile__icon .dc-ds-icon { width: 15px; height: 15px; }
+  .workflow-templates-page .template-tile__main { min-width: 0; flex: 1; }
+  .workflow-templates-page .template-tile__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
   }
-  .workflow-templates-page .template-card__menu > summary::-webkit-details-marker { display: none; }
-  .workflow-templates-page .template-card__menu > summary:focus-visible {
-    outline: 3px solid var(--focus-ring); outline-offset: 2px;
+  .workflow-templates-page .template-tile__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ink-900);
+    letter-spacing: -0.01em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
-  .workflow-templates-page .template-card__menu-panel {
-    position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
-    min-width: 200px; padding: 6px; display: grid; gap: 2px;
-    border: 1px solid var(--line); border-radius: 10px; background: var(--card);
-    box-shadow: var(--shadow-card, 0 8px 24px rgba(11,23,40,.08));
+  .workflow-templates-page .template-tile__badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+    flex: 0 0 auto;
   }
-  .workflow-templates-page .template-card__menu-item {
-    display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 8px;
-    background: transparent; color: var(--ink-900); font: inherit; font-size: 13px;
-    font-weight: 600; text-align: left; text-decoration: none; cursor: pointer;
+  .workflow-templates-page .template-tile__badges .dc-ds-badge--sm {
+    padding: 1px 6px;
+    font-size: 10.5px;
+    line-height: 1.3;
   }
-  .workflow-templates-page .template-card__menu-item:hover { background: var(--well); }
-  .workflow-templates-page .template-card__menu-item--danger { color: var(--status-danger-fg, #8a1f1f); }
-  .workflow-templates-page .template-card__menu form { margin: 0; }
-  .workflow-templates-page .template-card__flag {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--status-pending-fg, #8a5a00); font: var(--text-meta); font-weight: 650;
+  .workflow-templates-page .template-tile__type {
+    margin: 2px 0 0;
+    color: var(--ink-500);
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .workflow-templates-page .template-tile__path {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .workflow-templates-page .template-tile__stage {
+    display: inline-flex;
+    max-width: 6.75rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--well, #f4f6f8) 70%, #fff);
+    color: var(--ink-700);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .workflow-templates-page .template-tile__stage-join {
+    width: 6px; height: 1px; flex: 0 0 auto;
+    background: color-mix(in srgb, var(--ink-500) 35%, transparent);
+  }
+  .workflow-templates-page .template-tile__stage--more {
+    background: transparent;
+    border-style: dashed;
+    color: var(--ink-500);
+    max-width: none;
+  }
+
+  .workflow-templates-page .template-tile__meta {
+    margin: 0;
+    color: var(--ink-500);
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+  .workflow-templates-page .template-tile__meta-sep::before {
+    content: "·";
+    margin: 0 0.35em;
+    color: color-mix(in srgb, var(--ink-500) 65%, transparent);
+  }
+  .workflow-templates-page .template-tile__setup {
+    margin: 0;
+    color: var(--status-pending-fg, #8a5a00);
+    font-size: 11.5px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .workflow-templates-page .template-tile__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--hairline, var(--line));
+    min-height: 28px;
+  }
+  .workflow-templates-page .template-tile__cta {
+    color: var(--seal-dark, var(--seal));
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .workflow-templates-page .template-tile__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    /* Keep hit-testing even when visually faded so the duplicate control stays clickable. */
+    pointer-events: auto;
+    transition: opacity 140ms ease;
+    position: relative;
+    z-index: 2;
+  }
+  .workflow-templates-page .template-tile__actions form { margin: 0; display: inline-flex; }
+  .workflow-templates-page .template-tile:hover .template-tile__actions,
+  .workflow-templates-page .template-tile:focus-within .template-tile__actions,
+  .workflow-templates-page .template-tile.is-actions-open .template-tile__actions {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .workflow-templates-page .template-tile__actions { opacity: 1; }
+  }
+  .workflow-templates-page .template-tile__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-700);
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0;
+  }
+  .workflow-templates-page .template-tile__action:hover {
+    border-color: color-mix(in srgb, var(--seal) 40%, var(--line));
+    color: var(--seal-dark, var(--seal));
+  }
+  .workflow-templates-page .template-tile__action:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .workflow-templates-page .template-tile__action .dc-ds-icon { width: 13px; height: 13px; }
+
+  .workflow-templates-page .template-tile__select-mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: transparent;
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+  .workflow-templates-page .template-tile.is-selected .template-tile__select-mark {
+    border-color: var(--seal);
+    background: var(--seal);
+    color: #fff;
+  }
+  .workflow-templates-page .template-tile__select-mark .dc-ds-icon { width: 11px; height: 11px; }
+  .workflow-templates-page .template-tile__selected-label {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    display: none;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px 1px 3px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--seal) 35%, var(--line));
+    color: var(--seal-dark, var(--seal));
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+  .workflow-templates-page .template-tile.is-selected .template-tile__selected-label { display: inline-flex; }
+  .workflow-templates-page .template-tile__selected-label .dc-ds-icon { width: 11px; height: 11px; }
+
+  .workflow-templates-page .template-tile__menu { position: relative; z-index: 3; }
+  .workflow-templates-page .template-tile__menu > summary {
+    list-style: none;
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink-700);
+  }
+  .workflow-templates-page .template-tile__menu > summary::-webkit-details-marker { display: none; }
+  .workflow-templates-page .template-tile__menu > summary:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .workflow-templates-page .template-tile__menu-panel {
+    position: absolute;
+    z-index: 50;
+    min-width: 200px;
+    margin: 0;
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    padding: 6px;
+    display: grid;
+    gap: 2px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: var(--shadow-overlay, 0 8px 24px rgba(11, 23, 40, 0.14));
+  }
+  .workflow-templates-page .template-tile__menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-900);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .workflow-templates-page .template-tile__menu-item:hover { background: var(--well); }
+  .workflow-templates-page .template-tile__menu-item--danger { color: var(--status-danger-fg, #8a1f1f); }
+  .workflow-templates-page .template-tile__menu form { margin: 0; }
+
+  .workflow-templates-page .template-selection-bar {
+    position: sticky;
+    bottom: 12px;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--seal) 28%, var(--line));
+    border-radius: 14px;
+    background: color-mix(in srgb, #fff 92%, var(--seal-bg, #e8f5f4));
+    box-shadow: 0 10px 28px rgba(11, 23, 40, 0.1);
+  }
+  .workflow-templates-page .template-selection-bar.is-visible { display: flex; }
+  .workflow-templates-page .template-selection-bar__copy { min-width: 0; display: grid; gap: 2px; }
+  .workflow-templates-page .template-selection-bar__label {
+    margin: 0; color: var(--ink-500); font-size: 11px; font-weight: 650;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .workflow-templates-page .template-selection-bar__name {
+    margin: 0; color: var(--ink-900); font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .workflow-templates-page .template-selection-bar__actions {
+    display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  }
+  .workflow-templates-page .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .workflow-templates-page .template-tile { transition: none; }
+    .workflow-templates-page .template-tile:hover:not([aria-disabled="true"]) { transform: none; }
   }
 </style>
 
-<div id="workflow-templates-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-templates-page">
+<div
+  id="workflow-templates-root"
+  class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-templates-page {% if selection_mode %}is-select{% else %}is-browse{% endif %}"
+  data-mode="{% if selection_mode %}select{% else %}browse{% endif %}"
+  data-return-url="{{ selection_return_url|default:'' }}"
+  data-cancel-url="{{ selection_cancel_url|default:'' }}"
+>
   {% url 'contracts:workflow_template_list' as templates_url %}
 
   <form method="get" action="{{ templates_url }}" id="workflow-templates-filters-form">
+    {% if selection_mode %}
+    <input type="hidden" name="mode" value="select">
+    {% if selection_return_url %}<input type="hidden" name="next" value="{{ selection_return_url }}">{% endif %}
+    {% if selection_cancel_url %}<input type="hidden" name="cancel" value="{{ selection_cancel_url }}">{% endif %}
+    {% endif %}
     <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
       <div class="clm-list-view-header">
-        {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+        {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
         <div class="clm-list-view-actions">
           <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">Create template</a>
         </div>
@@ -137,7 +448,10 @@
     >
       <div class="clm-list-filter-drawer__header">
         <h2 class="clm-list-filter-drawer__title">Filters</h2>
-        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ templates_url }}">Clear filters</a>
+        <div class="clm-list-filter-drawer__actions">
+          <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{% if selection_mode %}{{ templates_url }}?mode=select{% if selection_return_url %}&amp;next={{ selection_return_url|urlencode }}{% endif %}{% if selection_cancel_url %}&amp;cancel={{ selection_cancel_url|urlencode }}{% endif %}{% else %}{{ templates_url }}{% endif %}">Clear filters</a>
+          <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+        </div>
       </div>
       <div class="clm-list-filter-drawer__body">
         <label for="workflow-templates-type">Contract type
@@ -172,62 +486,138 @@
             <option value="version" {% if filter_sort == 'version' %}selected{% endif %}>Version</option>
           </select>
         </label>
-        <div class="clm-list-filter-drawer__actions">
-          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
-        </div>
       </div>
     </section>
   </form>
 
-  <div class="template-card-grid">
+  <div class="template-card-grid" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
     {% for card in template_cards %}
-    <article class="dc-ds-surface template-card">
-      <a href="{{ card.designer_url }}" class="template-card__link-cover" aria-label="Open designer for {{ card.name }}" style="position:absolute; inset:0; z-index:1;"></a>
-      <div class="template-card__head">
-        <div>
-          <h3 class="template-card__title">{{ card.name }}</h3>
-          <p class="template-card__type">{{ card.contract_type_label }}</p>
-        </div>
-        <div class="template-card__badges">
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ card.status_tone }}">{{ card.status_label }}</span>
-          <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card.version_label }}</span>
+    <article
+      class="template-tile dc-ds-surface dc-ds-surface--interactive{% if card.is_incomplete %} is-incomplete{% endif %}"
+      data-template-id="{{ card.template.pk }}"
+      data-template-name="{{ card.name }}"
+      data-designer-url="{{ card.designer_url }}"
+      data-selectable="{% if card.selectable %}true{% else %}false{% endif %}"
+      {% if selection_mode %}
+      role="option"
+      tabindex="0"
+      aria-selected="false"
+      {% if not card.selectable %}aria-disabled="true"{% endif %}
+      aria-label="{% if card.selectable %}Select template {{ card.name }}{% else %}{{ card.name }}. {{ card.select_disabled_reason|default:card.incomplete_reason }}{% endif %}"
+      {% else %}
+      role="listitem"
+      tabindex="0"
+      aria-label="{% if card.is_incomplete %}Finish setup for {{ card.name }}{% else %}Open designer for {{ card.name }}{% endif %}"
+      {% endif %}
+    >
+      {% if selection_mode %}
+      <span class="template-tile__selected-label" aria-hidden="true">
+        {% include "design_system/icon.html" with name="check" %}
+        Selected
+      </span>
+      {% endif %}
+
+      <div class="template-tile__top">
+        <span class="template-tile__icon" aria-hidden="true">
+          {% include "design_system/icon.html" with name=card.icon_key class_name="dc-ds-icon" %}
+        </span>
+        <div class="template-tile__main">
+          <div class="template-tile__title-row">
+            <h3 class="template-tile__title">{{ card.name }}</h3>
+            <div class="template-tile__badges">
+              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ card.status_tone }}">{{ card.status_label }}</span>
+              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card.version_label }}</span>
+              {% if selection_mode and card.selectable %}
+              <span class="template-tile__select-mark" aria-hidden="true">{% include "design_system/icon.html" with name="check" %}</span>
+              {% endif %}
+            </div>
+          </div>
+          <p class="template-tile__type">{{ card.contract_type_label }}</p>
         </div>
       </div>
-      <p class="template-card__path">{{ card.stage_path }}</p>
-      <div class="template-card__meta">
-        <div>Owner: {{ card.owner_label }}</div>
-        <div>Updated {{ card.updated_at|date:"j M Y" }} · {{ card.editor_label }}</div>
-        <div>{{ card.active_workflow_count }} active workflow{{ card.active_workflow_count|pluralize }}</div>
-        {% if card.has_unpublished_changes %}
-        <div class="template-card__flag">Unpublished changes</div>
+
+      {% if not card.stages_empty %}
+      <div class="template-tile__path" aria-label="Workflow path">
+        {% for stage in card.stage_names %}
+          {% if not forloop.first %}<span class="template-tile__stage-join" aria-hidden="true"></span>{% endif %}
+          <span class="template-tile__stage">{{ stage }}</span>
+        {% endfor %}
+        {% if card.stage_more_count %}
+          <span class="template-tile__stage-join" aria-hidden="true"></span>
+          <span class="template-tile__stage template-tile__stage--more">+{{ card.stage_more_count }} more</span>
         {% endif %}
       </div>
-      <div class="template-card__foot">
-        <span class="template-card__cta">Open designer →</span>
-        <details class="template-card__menu">
-          <summary aria-label="More actions for {{ card.name }}">⋯</summary>
-          <div class="template-card__menu-panel" role="menu">
-            <a href="{{ card.designer_url }}" class="template-card__menu-item" role="menuitem">Open designer</a>
-            <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" role="none">{% csrf_token %}
-              <button type="submit" class="template-card__menu-item" role="menuitem">Duplicate</button>
-            </form>
-            <form method="post" action="{% url 'contracts:workflow_template_clone_version' card.template.pk %}" role="none">{% csrf_token %}
-              <button type="submit" class="template-card__menu-item" role="menuitem">New version</button>
-            </form>
-            <a href="{{ card.designer_url }}#version-history" class="template-card__menu-item" role="menuitem">View versions</a>
-            <a href="{% url 'contracts:workflow_template_preview' card.template.pk %}" class="template-card__menu-item" role="menuitem">Test</a>
-            {% if card.is_published %}
-            <form method="post" action="{% url 'contracts:workflow_template_archive' card.template.pk %}" role="none">{% csrf_token %}
-              <button type="submit" class="template-card__menu-item" role="menuitem">Archive</button>
-            </form>
-            {% endif %}
-            {% if card.can_delete %}
-            <form method="post" action="{% url 'contracts:workflow_template_delete' card.template.pk %}" role="none" onsubmit="return confirm('Delete this template? This cannot be undone.');">{% csrf_token %}
-              <button type="submit" class="template-card__menu-item template-card__menu-item--danger" role="menuitem">Delete</button>
-            </form>
-            {% endif %}
-          </div>
-        </details>
+      {% endif %}
+
+      {% if card.is_incomplete and card.incomplete_reason %}
+      <p class="template-tile__setup">{{ card.incomplete_reason }}</p>
+      {% elif selection_mode and not card.selectable and card.select_disabled_reason %}
+      <p class="template-tile__setup">{{ card.select_disabled_reason }}</p>
+      {% endif %}
+
+      <p class="template-tile__meta">
+        Updated {{ card.updated_at|date:"j M Y" }}
+        <span class="template-tile__meta-sep"></span>Used by {{ card.active_workflow_count }}
+        {% if card.show_owner %}
+        <span class="template-tile__meta-sep"></span>Owner {{ card.owner_label }}
+        {% endif %}
+        {% if card.has_unpublished_changes %}
+        <span class="template-tile__meta-sep"></span>Unpublished changes
+        {% endif %}
+      </p>
+
+      <div class="template-tile__foot">
+        {% if selection_mode %}
+          {% if card.selectable %}
+          <span class="template-tile__cta" aria-hidden="true">Select template →</span>
+          {% else %}
+          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Unavailable{% endif %}</span>
+          {% endif %}
+        {% else %}
+          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Open designer →{% endif %}</span>
+        {% endif %}
+
+        <div class="template-tile__actions">
+          <a
+            href="{{ card.designer_url }}"
+            class="template-tile__action js-tile-action"
+            data-stop-tile="true"
+            aria-label="Open designer for {{ card.name }}"
+            title="Open designer"
+          >
+            {% include "design_system/icon.html" with name="edit" %}
+          </a>
+          <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" class="js-tile-action" data-stop-tile="true">
+            {% csrf_token %}
+            <button type="submit" class="template-tile__action" aria-label="Duplicate {{ card.name }}" title="Duplicate">
+              {% include "design_system/icon.html" with name="copy" %}
+            </button>
+          </form>
+          <details class="template-tile__menu js-tile-action" data-stop-tile="true">
+            <summary aria-label="More actions for {{ card.name }}">⋯</summary>
+            <div class="template-tile__menu-panel" role="menu">
+              <a href="{{ card.designer_url }}" class="template-tile__menu-item" role="menuitem">Open designer</a>
+              <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" role="none">{% csrf_token %}
+                <button type="submit" class="template-tile__menu-item" role="menuitem">Duplicate</button>
+              </form>
+              <form method="post" action="{% url 'contracts:workflow_template_clone_version' card.template.pk %}" role="none">{% csrf_token %}
+                <button type="submit" class="template-tile__menu-item" role="menuitem">New version</button>
+              </form>
+              <a href="{{ card.designer_url }}#version-history" class="template-tile__menu-item" role="menuitem">View versions</a>
+              <a href="{% url 'contracts:workflow_template_preview' card.template.pk %}" class="template-tile__menu-item" role="menuitem">Test</a>
+              {% if card.is_published %}
+              <form method="post" action="{% url 'contracts:workflow_template_archive' card.template.pk %}" role="none">{% csrf_token %}
+                <button type="submit" class="template-tile__menu-item" role="menuitem">Archive</button>
+              </form>
+              {% endif %}
+              {% if card.can_delete %}
+              <form method="post" action="{% url 'contracts:workflow_template_delete' card.template.pk %}" role="none" onsubmit="return confirm('Delete this template? This cannot be undone.');">{% csrf_token %}
+                <button type="submit" class="template-tile__menu-item template-tile__menu-item--danger" role="menuitem">Delete</button>
+              </form>
+              {% endif %}
+            </div>
+          </details>
+        </div>
       </div>
     </article>
     {% empty %}
@@ -237,12 +627,28 @@
     </div>
     {% endfor %}
   </div>
+
+  {% if selection_mode %}
+  <div class="template-selection-bar" id="template-selection-bar" aria-live="polite" hidden>
+    <div class="template-selection-bar__copy">
+      <p class="template-selection-bar__label">Selected template</p>
+      <p class="template-selection-bar__name" id="template-selection-name">None</p>
+    </div>
+    <div class="template-selection-bar__actions">
+      <a href="{{ selection_cancel_url }}" class="dc-ds-button dc-ds-button--quiet" id="template-selection-cancel">Cancel</a>
+      <button type="button" class="dc-ds-button dc-ds-button--primary" id="template-selection-use" disabled>Use template</button>
+    </div>
+  </div>
+  <p class="sr-only" id="template-selection-announce" aria-live="polite"></p>
+  {% endif %}
 </div>
 <script nonce="{{ csp_nonce }}">
 (function () {
   var root = document.getElementById('workflow-templates-root');
   if (!root) return;
 
+  var mode = root.getAttribute('data-mode') || 'browse';
+  var returnUrl = root.getAttribute('data-return-url') || '';
   var filterToggle = document.getElementById('workflow-templates-filter-toggle');
   var filterDrawer = document.getElementById('workflow-templates-filters');
   if (filterToggle && filterDrawer) {
@@ -252,11 +658,157 @@
     });
   }
 
-  document.addEventListener('click', function (event) {
-    root.querySelectorAll('.template-card__menu[open]').forEach(function (menu) {
-      if (!menu.contains(event.target)) menu.removeAttribute('open');
+  function isActionTarget(target) {
+    return !!(target && target.closest && target.closest('[data-stop-tile="true"]'));
+  }
+
+  root.querySelectorAll('.template-tile__actions').forEach(function (actions) {
+    actions.addEventListener('click', function (event) {
+      event.stopPropagation();
     });
   });
+
+  root.querySelectorAll('.template-tile__menu').forEach(function (menu) {
+    menu.addEventListener('toggle', function () {
+      var tile = menu.closest('.template-tile');
+      if (menu.open) {
+        root.querySelectorAll('.template-tile__menu[open]').forEach(function (other) {
+          if (other !== menu) {
+            other.removeAttribute('open');
+            var otherTile = other.closest('.template-tile');
+            if (otherTile) otherTile.classList.remove('is-actions-open');
+          }
+        });
+        if (tile) tile.classList.add('is-actions-open');
+        return;
+      }
+      if (tile) tile.classList.remove('is-actions-open');
+    });
+  });
+
+  document.addEventListener('click', function (event) {
+    root.querySelectorAll('.template-tile__menu[open]').forEach(function (menu) {
+      if (!menu.contains(event.target)) {
+        menu.removeAttribute('open');
+        var tile = menu.closest('.template-tile');
+        if (tile) tile.classList.remove('is-actions-open');
+      }
+    });
+  });
+
+  if (mode === 'browse') {
+    root.querySelectorAll('.template-tile').forEach(function (tile) {
+      function openDesigner() {
+        var url = tile.getAttribute('data-designer-url');
+        if (url) window.location.href = url;
+      }
+      tile.addEventListener('click', function (event) {
+        if (isActionTarget(event.target)) return;
+        openDesigner();
+      });
+      tile.addEventListener('keydown', function (event) {
+        if (isActionTarget(event.target)) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDesigner();
+        }
+      });
+    });
+    return;
+  }
+
+  var selectedId = null;
+  var bar = document.getElementById('template-selection-bar');
+  var nameEl = document.getElementById('template-selection-name');
+  var useBtn = document.getElementById('template-selection-use');
+  var announce = document.getElementById('template-selection-announce');
+  var tiles = Array.prototype.slice.call(root.querySelectorAll('.template-tile'));
+
+  function appendTemplateParam(url, templateId) {
+    try {
+      var parsed = new URL(url, window.location.origin);
+      parsed.searchParams.set('workflow_template', String(templateId));
+      return parsed.pathname + parsed.search + parsed.hash;
+    } catch (err) {
+      var joiner = url.indexOf('?') >= 0 ? '&' : '?';
+      return url + joiner + 'workflow_template=' + encodeURIComponent(String(templateId));
+    }
+  }
+
+  function syncSelectionUI() {
+    tiles.forEach(function (tile) {
+      var id = tile.getAttribute('data-template-id');
+      var selected = selectedId && id === selectedId;
+      tile.classList.toggle('is-selected', !!selected);
+      tile.setAttribute('aria-selected', selected ? 'true' : 'false');
+    });
+    var selectedTile = selectedId
+      ? root.querySelector('.template-tile[data-template-id="' + selectedId + '"]')
+      : null;
+    var selectedName = selectedTile ? selectedTile.getAttribute('data-template-name') : '';
+    if (bar) {
+      if (selectedId) {
+        bar.hidden = false;
+        bar.classList.add('is-visible');
+      } else {
+        bar.hidden = true;
+        bar.classList.remove('is-visible');
+      }
+    }
+    if (nameEl) nameEl.textContent = selectedName || 'None';
+    if (useBtn) useBtn.disabled = !selectedId;
+    if (announce) {
+      announce.textContent = selectedName
+        ? ('Selected template: ' + selectedName)
+        : 'No template selected';
+    }
+  }
+
+  function selectTile(tile) {
+    if (!tile || tile.getAttribute('aria-disabled') === 'true') return;
+    if (tile.getAttribute('data-selectable') !== 'true') return;
+    selectedId = tile.getAttribute('data-template-id');
+    syncSelectionUI();
+  }
+
+  tiles.forEach(function (tile) {
+    tile.addEventListener('click', function (event) {
+      if (isActionTarget(event.target)) return;
+      if (tile.getAttribute('data-selectable') !== 'true') {
+        var url = tile.getAttribute('data-designer-url');
+        if (url) window.location.href = url;
+        return;
+      }
+      selectTile(tile);
+    });
+    tile.addEventListener('keydown', function (event) {
+      if (isActionTarget(event.target)) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (tile.getAttribute('data-selectable') !== 'true') {
+          var url = tile.getAttribute('data-designer-url');
+          if (url) window.location.href = url;
+          return;
+        }
+        selectTile(tile);
+      }
+    });
+  });
+
+  if (useBtn) {
+    useBtn.addEventListener('click', function () {
+      if (!selectedId) return;
+      if (returnUrl) {
+        window.location.href = appendTemplateParam(returnUrl, selectedId);
+        return;
+      }
+      var selectedTile = root.querySelector('.template-tile[data-template-id="' + selectedId + '"]');
+      var designerUrl = selectedTile && selectedTile.getAttribute('data-designer-url');
+      if (designerUrl) window.location.href = designerUrl;
+    });
+  }
+
+  syncSelectionUI();
 })();
 </script>
 {% endblock %}

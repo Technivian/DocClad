@@ -23,15 +23,15 @@ test('Command Center demo shows DPA, MSA, and NDA workflows with workspace links
   const scenarios = [
     {
       title: 'Northwind DPA Privacy Review Workflow',
-      workspaceMarker: 'Generated DPA Draft',
+      workspaceMarker: 'Guided drafting',
     },
     {
       title: 'Acme MSA Commercial Review Workflow',
-      workspaceMarker: 'Generated MSA Draft',
+      workspaceMarker: 'Guided drafting',
     },
     {
       title: 'Brightlane NDA Self-Serve Workflow',
-      workspaceMarker: 'Generated NDA Draft',
+      workspaceMarker: 'Guided drafting',
     },
   ];
 

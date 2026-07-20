@@ -1,11 +1,16 @@
-<a class="dc-ds-setup-action{% if class_name %} {{ class_name }}{% endif %}" href="{{ href }}">
-  <span class="dc-ds-setup-action__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon|default:"arrow-right" %}</span>
+<a
+  class="dc-ds-setup-action{% if class_name %} {{ class_name }}{% endif %}"
+  href="{{ href }}"
+  {% if role %}role="{{ role }}"{% endif %}
+  {% if aria_label %}aria-label="{{ aria_label }}"{% elif copy %}aria-label="{{ label }}. {{ copy }}"{% endif %}
+>
+  <span class="dc-ds-setup-action__icon" aria-hidden="true">{% include "design_system/icon.html" with name=icon|default:"arrow-right" only %}</span>
   <span class="dc-ds-setup-action__copy">
     <strong class="dc-ds-setup-action__title-row">
-      <span>{{ label }}</span>
-      {% if badge_label %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--phase">{{ badge_label }}</span>{% endif %}
+      <span class="dc-ds-setup-action__title">{{ label }}</span>
+      {% if badge_label %}<span class="dc-ds-badge dc-ds-badge--sm {% if badge_class %}{{ badge_class }}{% else %}dc-ds-badge--phase{% endif %}">{{ badge_label }}</span>{% endif %}
     </strong>
     {% if copy %}<small>{{ copy }}</small>{% endif %}
   </span>
-  <span class="dc-ds-setup-action__arrow" aria-hidden="true">{% include "design_system/icon.html" with name="arrow-right" %}</span>
+  <span class="dc-ds-setup-action__arrow" aria-hidden="true">{% include "design_system/icon.html" with name="arrow-right" only %}</span>
 </a>

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client as TestClient
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from contracts.models import (
     ApprovalRequest,
@@ -253,41 +254,48 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         for text in (
             'Guided drafting',
             'Live contract preview',
+            'Document overview',
             'Governance details',
             'Risk monitoring',
             'Approval route',
             'Audit details',
-            'Review Finance approval route',
+            'Resolve ',
+            'exception',
             'Actions',
-            'Send to Legal Review',
-            'Send to Finance',
+            'Review approval route',
+            'Send to Finance · blocked',
             'Download MSA summary',
             'Export Word',
             'Finance approval signal',
             'Liability cap deviation',
             'DPA / privacy review signal',
-            'Msa Template Applied',
-            'Payrollminds B.V.',
-            'nina.client@northwind.example',
+            'Triggered by:',
             'Commercial review',
             'Active stage owner',
             'Exception',
+            'Open clause',
         ):
             self.assertContains(workspace, text)
         self.assertContains(workspace, 'MSA ·')
+        self.assertNotContains(workspace, ' - Exception')
+        self.assertNotContains(workspace, 'MSA clause')
+        self.assertNotContains(workspace, 'Generated MSA draft')
         self.assertNotContains(workspace, 'Enterprise Services MSA · Netherlands · B2B</p>')
+        self.assertNotContains(workspace, '>Send to Legal Review</button>')
+        self.assertNotContains(workspace, '>Send to Finance</button>')
+        self.assertNotContains(workspace, 'Edit clause')
         msa = workspace.context['msa_workspace']
         self.assertEqual(msa['timeline'], [
             'Intake', 'Drafting', 'Commercial review', 'Legal review',
             'Finance approval', 'Signature', 'Active',
         ])
-        self.assertIn(msa['primary_cta'], (
-            'Review Finance approval route',
-            'Review privacy scope and linked DPA need',
-            'Review MSA risk signals',
-            'Review generated MSA draft',
-        ))
+        self.assertTrue(msa['open_exceptions'] >= 1)
+        self.assertTrue(msa['primary_cta'].startswith('Resolve '))
+        self.assertTrue(msa['risk_drivers'])
+        titles = [section['title'] for section in msa['document_sections']]
+        self.assertEqual(len(titles), len(set(titles)))
         self.assertTrue(any(section.get('state') for section in msa['document_sections']))
+        self.assertTrue(any(section['state'] == 'Needs review' for section in msa['document_sections'] if section.get('tone') == 'ai'))
 
     def test_invalid_client_contact_email_returns_clear_error(self):
         payload = self._valid_payload()
@@ -306,8 +314,11 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         self.assertTrue(RiskSignal.objects.filter(workflow=workflow, code='nonstandard_payment_terms').exists())
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertContains(workspace, 'Payment-term deviation')
-        self.assertContains(workspace, 'Send to Finance')
-        self.assertContains(workspace, 'Review Finance approval route')
+        self.assertContains(workspace, 'Send to Finance · blocked')
+        self.assertContains(workspace, 'Resolve ')
+        self.assertContains(workspace, 'Review approval route')
+        self.assertNotContains(workspace, 'Review Finance approval route')
+        self.assertNotContains(workspace, '>Send to Finance</button>')
 
     def test_command_center_row_links_back_to_generated_workspace(self):
         self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
@@ -316,7 +327,7 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         self.assertContains(response, workflow.title)
         self.assertContains(response, 'MSA')
         self.assertContains(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
-        self.assertContains(response, 'Review Finance approval route')
+        self.assertContains(response, 'Resolve ')
 
     def _configure_msa_reviewer(self, *, username, approval_step, profile_role):
         reviewer = User.objects.create_user(username=username, password='reviewpass123!')
@@ -341,6 +352,24 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         )
         return reviewer
 
+    def _resolve_open_exceptions(self, workflow):
+        RiskSignal.objects.filter(workflow=workflow, is_resolved=False).update(
+            is_resolved=True,
+            resolved_at=timezone.now(),
+        )
+
+    def _confirm_needs_review_sections(self, workflow, *, kind='msa'):
+        detail = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        workspace = detail.context[f'{kind}_workspace']
+        for section in workspace['document_sections']:
+            if section.get('state') == 'Needs review':
+                self.client_.post(
+                    reverse(
+                        f'contracts:{kind}_confirm_section',
+                        kwargs={'pk': workflow.pk, 'section_id': section['section_id']},
+                    ),
+                )
+
     def test_msa_submission_creates_real_approvals_and_requires_each_review(self):
         legal = self._configure_msa_reviewer(
             username='msa_legal_reviewer', approval_step='LEGAL', profile_role=UserProfile.Role.ASSOCIATE,
@@ -350,6 +379,8 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         )
         self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
         workflow = Workflow.objects.latest('id')
+        self._resolve_open_exceptions(workflow)
+        self._confirm_needs_review_sections(workflow)
 
         legal_submit = self.client_.post(
             reverse('contracts:msa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
@@ -361,7 +392,8 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         self.assertRedirects(finance_submit, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertEqual(ApprovalRequest.objects.filter(contract=workflow.contract, status=ApprovalRequest.Status.PENDING).count(), 2)
         workflow.contract.refresh_from_db()
-        self.assertEqual(workflow.contract.status, Contract.Status.PENDING)
+        self.assertEqual(workflow.contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(workflow.contract.lifecycle_stage, Contract.LifecycleStage.APPROVAL)
 
         legal_approval = ApprovalRequest.objects.get(contract=workflow.contract, approval_step='LEGAL')
         self.client_.login(username=legal.username, password='reviewpass123!')
@@ -372,7 +404,8 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
             {'comment': 'Legal review complete.'},
         )
         workflow.contract.refresh_from_db()
-        self.assertEqual(workflow.contract.status, Contract.Status.PENDING)
+        self.assertEqual(workflow.contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(workflow.contract.lifecycle_stage, Contract.LifecycleStage.APPROVAL)
 
         finance_approval = ApprovalRequest.objects.get(contract=workflow.contract, approval_step='FINANCE')
         self.client_.login(username=finance.username, password='reviewpass123!')
@@ -383,7 +416,8 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
             {'comment': 'Finance review complete.'},
         )
         workflow.contract.refresh_from_db()
-        self.assertEqual(workflow.contract.status, Contract.Status.APPROVED)
+        self.assertEqual(workflow.contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(workflow.contract.lifecycle_stage, Contract.LifecycleStage.SIGNATURE)
         self.assertTrue(AuditLog.objects.filter(organization=self.org, event_type='approval.submitted').exists())
 
     def test_msa_exports_persist_downloadable_docx_artifacts(self):
@@ -402,3 +436,138 @@ class MSAWorkflowBuilderIntegrationTests(TestCase):
         self.assertIn('Payrollminds_MSA_Northwind_Services_B_V', document.file.name)
         self.assertTrue(document.file.size > 0)
         self.assertTrue(AuditLog.objects.filter(organization=self.org, event_type='msa.word_exported').exists())
+
+    def test_exception_resolution_uses_approved_wording_and_updates_counts(self):
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        signal = RiskSignal.objects.filter(workflow=workflow, is_resolved=False).first()
+        self.assertIsNotNone(signal)
+        before = RiskSignal.objects.filter(workflow=workflow, is_resolved=False).count()
+        response = self.client_.post(
+            reverse('contracts:msa_exception_action', kwargs={'pk': workflow.pk, 'signal_id': signal.pk}),
+            {'action': 'use_approved_wording', 'comment': 'Aligned to playbook.'},
+        )
+        self.assertRedirects(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        signal.refresh_from_db()
+        self.assertTrue(signal.is_resolved)
+        after = RiskSignal.objects.filter(workflow=workflow, is_resolved=False).count()
+        self.assertEqual(after, before - 1)
+        workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertEqual(workspace.context['msa_workspace']['open_exceptions'], after)
+
+    def test_keep_exception_requires_reason_and_owner(self):
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        signal = RiskSignal.objects.filter(workflow=workflow, is_resolved=False).first()
+        response = self.client_.post(
+            reverse('contracts:msa_exception_action', kwargs={'pk': workflow.pk, 'signal_id': signal.pk}),
+            {'action': 'keep_exception'},
+        )
+        self.assertRedirects(response, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        signal.refresh_from_db()
+        self.assertFalse(signal.is_resolved)
+
+    def test_msa_workspace_highlights_contracts_nav(self):
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        nav = response.context['SIDEBAR_NAV']
+        contracts = next(item for item in nav if item.get('label') == 'Contracts')
+        designer = next(item for item in nav if item.get('label') == 'Workflow Designer')
+        self.assertTrue(contracts['is_active'])
+        self.assertFalse(designer['is_active'])
+        self.assertContains(response, 'Back to contract')
+
+    def test_submit_for_review_blocked_while_exceptions_open(self):
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        self.assertTrue(RiskSignal.objects.filter(workflow=workflow, is_resolved=False).exists())
+        response = self.client_.post(
+            reverse('contracts:msa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
+        )
+        detail_url = reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk})
+        self.assertRedirects(response, detail_url, fetch_redirect_response=False)
+        self.assertFalse(ApprovalRequest.objects.filter(contract=workflow.contract).exists())
+        follow = self.client_.get(detail_url)
+        self.assertContains(follow, 'before submitting this MSA for review')
+
+    def test_submit_for_review_blocked_until_sections_confirmed(self):
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        self._resolve_open_exceptions(workflow)
+        detail = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        msa = detail.context['msa_workspace']
+        self.assertGreater(msa['document_overview']['needs_review'], 0)
+        self.assertFalse(msa['can_submit_commercial'])
+        self.assertContains(detail, 'need review')
+        self.assertContains(detail, 'Send to Legal Review · blocked')
+
+        response = self.client_.post(
+            reverse('contracts:msa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
+        )
+        self.assertRedirects(
+            response,
+            reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}),
+            fetch_redirect_response=False,
+        )
+        follow = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertContains(follow, 'Confirm')
+        self.assertContains(follow, 'before submitting this MSA for review')
+        self.assertFalse(ApprovalRequest.objects.filter(contract=workflow.contract).exists())
+
+        before = msa['document_overview']['needs_review']
+        section = next(s for s in msa['document_sections'] if s['state'] == 'Needs review')
+        confirm = self.client_.post(
+            reverse('contracts:msa_confirm_section', kwargs={'pk': workflow.pk, 'section_id': section['section_id']}),
+            follow=True,
+        )
+        self.assertContains(confirm, 'Section confirmed')
+        after = confirm.context['msa_workspace']['document_overview']['needs_review']
+        self.assertEqual(after, before - 1)
+
+        self._confirm_needs_review_sections(workflow)
+        ready = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertTrue(ready.context['msa_workspace']['can_submit_commercial'])
+        self.assertContains(ready, '>Send to Legal Review</button>')
+
+    def test_pilot_path_resolve_confirm_legal_finance_export(self):
+        self._configure_msa_reviewer(
+            username='msa_pilot_legal', approval_step='LEGAL', profile_role=UserProfile.Role.ASSOCIATE,
+        )
+        self._configure_msa_reviewer(
+            username='msa_pilot_finance', approval_step='FINANCE', profile_role=UserProfile.Role.ADMIN,
+        )
+        self.client_.post(reverse('contracts:msa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        self.assertTrue(RiskSignal.objects.filter(workflow=workflow, is_resolved=False).exists())
+
+        for signal in RiskSignal.objects.filter(workflow=workflow, is_resolved=False):
+            self.client_.post(
+                reverse('contracts:msa_exception_action', kwargs={'pk': workflow.pk, 'signal_id': signal.pk}),
+                {'action': 'use_approved_wording', 'comment': 'Aligned to playbook.'},
+            )
+        self.assertFalse(RiskSignal.objects.filter(workflow=workflow, is_resolved=False).exists())
+        self._confirm_needs_review_sections(workflow)
+
+        legal = self.client_.post(
+            reverse('contracts:msa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
+        )
+        self.assertRedirects(legal, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        finance = self.client_.post(
+            reverse('contracts:msa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'finance'}),
+        )
+        self.assertRedirects(finance, reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertEqual(
+            ApprovalRequest.objects.filter(contract=workflow.contract, status=ApprovalRequest.Status.PENDING).count(),
+            2,
+        )
+
+        export = self.client_.post(
+            reverse('contracts:msa_export_document', kwargs={'pk': workflow.pk, 'artifact_type': 'word'}),
+        )
+        document = Document.objects.get(contract=workflow.contract, tags__contains='word')
+        self.assertRedirects(
+            export,
+            reverse('contracts:document_download', kwargs={'pk': document.pk}),
+            fetch_redirect_response=False,
+        )

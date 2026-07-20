@@ -159,7 +159,7 @@ def _doc(org, *, title='TestDoc', uploaded_by=None, matter=None, contract=None,
     return d
 
 
-def _contract(org, *, lifecycle_stage='DRAFTING', status='DRAFT'):
+def _contract(org, *, lifecycle_stage='DRAFTING', status='IN_PROGRESS'):
     return Contract.objects.create(
         organization=org, title='Test Contract',
         lifecycle_stage=lifecycle_stage, status=status,

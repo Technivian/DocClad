@@ -1,18 +1,87 @@
-{% with subtitle="Manage members and invite teammates to "|add:organization.name|add:"." %}
-  {% include "design_system/page_hero.html" with eyebrow="Organization settings" title="Organization Team" subtitle=subtitle %}
-{% endwith %}
+{% include "design_system/page_hero.html" with eyebrow="Organization settings" title="Organization Team" subtitle="Manage organization access, roles, invitations, and team activity." actions_template="contracts/organization_team_actions.html" %}
 
-<div class="space-y-6">
-  {% include "design_system/surface_card.html" with title="Active Members" labelledby="organization-team-members" meta_template="contracts/organization_team_actions.html" body_template="contracts/organization_team_members.html" %}
+<div class="org-team" data-organization-team {% if open_invite %}data-open-invite{% endif %}>
+  <section class="dc-ds-surface org-team__members" aria-labelledby="organization-team-members">
+    <div class="dc-ds-surface__head">
+      <h2 class="dc-ds-surface__title" id="organization-team-members">Active members</h2>
+    </div>
+    <div class="dc-ds-surface__body">
+      {% include "contracts/organization_team_members.html" %}
+    </div>
+  </section>
 
-  {% if inactive_memberships or invitations or invitation_history %}
-  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-    <div id="organization-team-invite">{% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite-title" body_template="contracts/organization_team_invite.html" %}</div>
-    {% if invitations %}{% include "design_system/surface_card.html" with title="Pending Invites" labelledby="organization-team-pending" body_template="contracts/organization_team_pending.html" %}{% endif %}
-    {% if inactive_memberships %}{% include "design_system/surface_card.html" with title="Inactive Members" labelledby="organization-team-inactive" body_template="contracts/organization_team_inactive.html" %}{% endif %}
-    {% if invitation_history %}{% include "design_system/surface_card.html" with title="Invitation History" labelledby="organization-team-history" body_template="contracts/organization_team_history.html" %}{% endif %}
-  </div>
-  {% else %}
-  <div id="organization-team-invite">{% include "design_system/surface_card.html" with title="Invite Member" labelledby="organization-team-invite-title" body_template="contracts/organization_team_invite.html" %}</div>
+  <section class="dc-ds-surface org-team__pending" aria-labelledby="organization-team-pending">
+    <div class="dc-ds-surface__head">
+      <h2 class="dc-ds-surface__title" id="organization-team-pending">Pending invitations</h2>
+    </div>
+    <div class="dc-ds-surface__body">
+      {% include "contracts/organization_team_pending.html" %}
+    </div>
+  </section>
+
+  {% if inactive_memberships %}
+  <section class="dc-ds-surface" aria-labelledby="organization-team-inactive">
+    <div class="dc-ds-surface__head">
+      <h2 class="dc-ds-surface__title" id="organization-team-inactive">Deactivated members</h2>
+    </div>
+    <div class="dc-ds-surface__body">
+      {% include "contracts/organization_team_inactive.html" %}
+    </div>
+  </section>
   {% endif %}
+
+  {% if invitation_history %}
+  <section class="dc-ds-surface" aria-labelledby="organization-team-history">
+    <div class="dc-ds-surface__head">
+      <h2 class="dc-ds-surface__title" id="organization-team-history">Invitation history</h2>
+    </div>
+    <div class="dc-ds-surface__body">
+      {% include "contracts/organization_team_history.html" %}
+    </div>
+  </section>
+  {% endif %}
+
+  <dialog class="org-team-dialog" id="org-team-invite-dialog" aria-labelledby="org-team-invite-title">
+    <div class="org-team-dialog__panel">
+      <div class="org-team-dialog__head">
+        <div>
+          <h2 class="org-team-dialog__title" id="org-team-invite-title">Invite member</h2>
+          <p class="org-team-dialog__copy">Send a secure invitation with a role and optional message.</p>
+        </div>
+        <button type="button" class="org-team-dialog__close" data-close-invite-dialog aria-label="Close invitation form">×</button>
+      </div>
+      {% include "contracts/organization_team_invite.html" %}
+    </div>
+  </dialog>
+
+  <dialog class="org-team-dialog" id="org-team-role-dialog" aria-labelledby="org-team-role-title">
+    <div class="org-team-dialog__panel">
+      <div class="org-team-dialog__head">
+        <div>
+          <h2 class="org-team-dialog__title" id="org-team-role-title">Change role</h2>
+          <p class="org-team-dialog__copy" data-role-dialog-copy>Update this member’s organization access.</p>
+        </div>
+        <button type="button" class="org-team-dialog__close" data-close-role-dialog aria-label="Close role form">×</button>
+      </div>
+      <form method="post" class="org-team-dialog__form" data-role-dialog-form>
+        {% csrf_token %}
+        <input type="hidden" name="role" value="" data-role-dialog-value>
+        <div class="wf-field">
+          <label class="form-label" for="org-team-role-select">Role</label>
+          <select id="org-team-role-select" class="form-control" data-role-dialog-select aria-describedby="org-team-role-warning">
+            {% for value, label in assignable_roles %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <p class="org-team-dialog__warning is-hidden" id="org-team-role-warning" data-role-dialog-warning role="status">
+          Elevated access grants management control over this organization. Confirm before continuing.
+        </p>
+        <div class="org-team-dialog__actions">
+          <button type="button" class="dc-ds-button dc-ds-button--quiet" data-close-role-dialog>Cancel</button>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary" data-role-dialog-submit>Save role</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 </div>

@@ -61,7 +61,7 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
     },
     {
       path: '/contracts/workflows/',
-      title: /Workflow Operations/,
+      title: /Workflow Designer/,
       summaryText: /Active workflows/,
       marker: '.workflow-ops-page',
       shell: '#workflow-ops-root',

@@ -16,20 +16,22 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-def build_invitation_message(invitation):
+def build_invitation_message(invitation, personal_message: str | None = None):
     from contracts.services.url_builder import build_invitation_url
     invite_url = build_invitation_url(invitation.token)
     subject = f"You're invited to join {invitation.organization.name}"
-    body = (
+    body_parts = [
         f"You have been invited to join {invitation.organization.name} as "
-        f"{invitation.get_role_display()}.\n\n"
-        f"Accept invitation: {invite_url}\n\n"
-        'This link expires in 7 days.'
-    )
-    return subject, body
+        f"{invitation.get_role_display()}.",
+    ]
+    note = (personal_message or '').strip()
+    if note:
+        body_parts.append(f'\nMessage from your inviter:\n{note}')
+    body_parts.append(f'\nAccept invitation: {invite_url}\n\nThis link expires in 7 days.')
+    return subject, '\n'.join(body_parts)
 
 
-def deliver_invitation(invitation, *, actor=None, request=None):
+def deliver_invitation(invitation, *, actor=None, request=None, personal_message: str | None = None):
     """Attempt delivery; record delivery state + chained audit. Returns bool sent.
 
     Does not raise on provider failure — the caller decides how to surface it.
@@ -37,7 +39,7 @@ def deliver_invitation(invitation, *, actor=None, request=None):
     from contracts.middleware import log_action
     from contracts.models import AuditLog, OrganizationInvitation
 
-    subject, body = build_invitation_message(invitation)
+    subject, body = build_invitation_message(invitation, personal_message=personal_message)
     invitation.last_delivery_attempt_at = timezone.now()
     try:
         send_mail(

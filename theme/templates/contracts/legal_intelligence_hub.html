@@ -3,145 +3,295 @@
 {% load clmone_format %}
 
 {% block title %}Legal Intelligence Hub – CLM One{% endblock %}
+{% block authenticated_page_title %}Legal Intelligence Hub{% endblock %}
+{% block authenticated_page_subtitle %}Contract risks, DPA findings, approvals, and deadlines across every matter — one view, most urgent first.{% endblock %}
 
 {% block content %}
-<div id="legal-intelligence-hub-root" class="page-wrap page-wrap-fluid">
-<div class="arch-header">
-    <div class="arch-header-left">
-        <div class="arch-title-row">
-            <h1 class="arch-title">Legal Intelligence Hub</h1>
+{% include "components/_list_page_shell_styles.html" %}
+<style nonce="{{ csp_nonce }}">
+  .legal-hub-page .clm-list-summary { --dc-ds-summary-columns: 4; }
+  .legal-hub-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .legal-hub-page .legal-hub-row { cursor: pointer; }
+  .legal-hub-page .legal-hub-row:hover td { background: var(--sidebar-hover); }
+  .legal-hub-page .legal-hub-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
+  .legal-hub-page .legal-hub-signal-title {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; line-height: 1.35; word-break: break-word;
+    color: var(--ink-900, var(--text-primary)); font-size: 13px; font-weight: 700;
+  }
+  .legal-hub-page .legal-hub-signal-summary {
+    display: block; margin-top: 2px; font-size: 12px; font-weight: 500;
+    color: var(--ink-600, var(--text-muted)); line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .legal-hub-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
+  .legal-hub-page #legal-hub-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .legal-hub-page #legal-hub-table th,
+  .legal-hub-page #legal-hub-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .legal-hub-page #legal-hub-table th[data-col="severity"],
+  .legal-hub-page #legal-hub-table td[data-col="severity"] { min-width: 96px; width: 10%; }
+  .legal-hub-page #legal-hub-table th[data-col="signal"],
+  .legal-hub-page #legal-hub-table td[data-col="signal"] { min-width: 220px; width: 26%; }
+  .legal-hub-page #legal-hub-table th[data-col="source"],
+  .legal-hub-page #legal-hub-table td[data-col="source"] { min-width: 110px; width: 11%; }
+  .legal-hub-page #legal-hub-table th[data-col="matter"],
+  .legal-hub-page #legal-hub-table td[data-col="matter"] { min-width: 140px; width: 14%; }
+  .legal-hub-page #legal-hub-table th[data-col="owner"],
+  .legal-hub-page #legal-hub-table td[data-col="owner"] { min-width: 130px; width: 13%; }
+  .legal-hub-page #legal-hub-table th[data-col="status"],
+  .legal-hub-page #legal-hub-table td[data-col="status"] { min-width: 100px; width: 10%; }
+  .legal-hub-page #legal-hub-table th[data-col="due"],
+  .legal-hub-page #legal-hub-table td[data-col="due"] {
+    min-width: 100px; width: 10%; white-space: nowrap;
+    color: var(--ink-700, var(--text-secondary));
+  }
+  .legal-hub-page #legal-hub-table th[data-col="actions"],
+  .legal-hub-page #legal-hub-table td[data-col="actions"] {
+    min-width: 48px; width: 48px; text-align: center; overflow: visible;
+  }
+  .legal-hub-page .legal-hub-actions-menu[open] .wq-kebab-trigger {
+    background: var(--sidebar-hover);
+    color: var(--text-primary);
+  }
+  .legal-hub-page #legal-hub-table tbody tr.is-row-active > td[data-col="actions"],
+  .legal-hub-page #legal-hub-table tbody tr:focus-within > td[data-col="actions"] {
+    background-color: transparent !important;
+  }
+  .legal-hub-page #legal-hub-table tbody tr:hover > td[data-col="actions"] {
+    background-color: var(--sidebar-hover) !important;
+  }
+  .legal-hub-page .wq-kebab-menu a.wq-kebab-action {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .legal-hub-page .wq-kebab-menu a.wq-kebab-action:hover {
+    background: var(--sidebar-hover);
+    color: var(--text-primary);
+  }
+  @media (max-width: 900px) {
+    .legal-hub-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  }
+  @media (max-width: 560px) {
+    .legal-hub-page .clm-list-summary { --dc-ds-summary-columns: 1; }
+  }
+</style>
+
+<div id="legal-intelligence-hub-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page legal-hub-page">
+  {% url 'contracts:risk_log_list' as hub_url %}
+
+  <form method="get" action="{{ hub_url }}" id="legal-hub-filters-form">
+    {% if selected_signal_type and selected_signal_type != 'all' %}
+    <input type="hidden" name="type" value="{{ selected_signal_type }}">
+    {% endif %}
+
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Legal Intelligence Hub controls">
+      <div class="clm-list-view-header">
+        {% include "components/_workspace_tabs.html" with tabs=view_tabs aria_label="Legal signal views" nav_class="clm-list-view-tabs" %}
+      </div>
+
+      <div class="clm-list-filter-controls">
+        <div class="clm-list-search-field">
+          {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+          <input class="dc-ds-control" type="search" id="legal-hub-search" name="q" value="{{ search_query }}" placeholder="Search legal signals">
         </div>
-        <p class="arch-subtitle">Contract risks, DPA findings, approvals, and deadlines across every matter — one view, most urgent first.</p>
-    </div>
-</div>
+        <div class="clm-list-actions-stack">
+          <p class="clm-list-result-count" aria-live="polite">{{ legal_signals|length }} signal{{ legal_signals|length|pluralize }}</p>
+          <button id="legal-hub-filter-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="{% if filters_active %}true{% else %}false{% endif %}" aria-controls="legal-hub-filters">Filters</button>
+        </div>
+      </div>
+    </header>
 
-<div class="dash-grid dash-grid-4 kpi-strip mb-6">
-    <div class="kpi-card">
-        <div class="kpi-label">Critical/High Signals</div>
-        <div class="kpi-value{% if legal_signal_counts.critical_high_count %} c-amber{% else %} c-primary{% endif %}">{{ legal_signal_counts.critical_high_count }}</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Cross-Document Conflicts</div>
-        <div class="kpi-value{% if legal_signal_counts.conflict_count %} c-amber{% else %} c-primary{% endif %}">{{ legal_signal_counts.conflict_count }}</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Pending Approvals/Blockers</div>
-        <div class="kpi-value c-accent">{{ legal_signal_counts.pending_approval_count }}</div>
-    </div>
-    <div class="kpi-card">
-        <div class="kpi-label">Upcoming Deadlines</div>
-        <div class="kpi-value c-primary-brand">{{ legal_signal_counts.upcoming_deadline_count }}</div>
-    </div>
-</div>
+    <section id="legal-hub-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if filters_active %} is-open{% endif %}" aria-label="Filters">
+      <div class="clm-list-filter-drawer__header">
+        <h2 class="clm-list-filter-drawer__title">Filters</h2>
+        <div class="clm-list-filter-drawer__actions">
+          <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ hub_clear_url }}">Clear filters</a>
+          <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+        </div>
+      </div>
+      <div class="clm-list-filter-drawer__body">
+        <label for="legal-hub-filter-severity">Severity
+          <select id="legal-hub-filter-severity" class="dc-ds-control" name="severity">
+            <option value="">All severities</option>
+            <option value="CRITICAL" {% if selected_severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
+            <option value="HIGH" {% if selected_severity == 'HIGH' %}selected{% endif %}>High</option>
+            <option value="MEDIUM" {% if selected_severity == 'MEDIUM' %}selected{% endif %}>Medium</option>
+            <option value="LOW" {% if selected_severity == 'LOW' %}selected{% endif %}>Low</option>
+          </select>
+        </label>
+      </div>
+    </section>
+  </form>
 
-<div class="flex items-center gap-3 mb-4 flex-wrap">
-    <div class="flex items-center rounded-lg p-1 border flex-shrink-0 tabs-shell">
-        {% for tab_label, tab_value, tab_count in signal_tabs %}
-        <a href="?{% if tab_value != 'all' %}type={{ tab_value }}{% endif %}"
-           class="px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap {% if selected_signal_type == tab_value %}tab-pill-active{% else %}tab-pill-idle{% endif %}">
-            {{ tab_label }} ({{ tab_count }})
-        </a>
+  <div class="dc-ds-summary clm-list-summary legal-hub-summary" aria-label="Legal signal summary">
+    <div class="dc-ds-summary__item {% if legal_signal_counts.critical_high_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Critical/High Signals</span>
+      <strong class="dc-ds-summary__value">{{ legal_signal_counts.critical_high_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if legal_signal_counts.conflict_count %}dc-ds-summary__item--danger{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Cross-Document Conflicts</span>
+      <strong class="dc-ds-summary__value">{{ legal_signal_counts.conflict_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if legal_signal_counts.pending_approval_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Pending Approvals/Blockers</span>
+      <strong class="dc-ds-summary__value">{{ legal_signal_counts.pending_approval_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if legal_signal_counts.upcoming_deadline_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Upcoming Deadlines</span>
+      <strong class="dc-ds-summary__value">{{ legal_signal_counts.upcoming_deadline_count }}</strong>
+    </div>
+  </div>
+
+  <div class="dc-ds-table-wrap">
+    <table id="legal-hub-table" class="dc-ds-table dc-ds-table--fixed" data-table-core="server">
+      <caption class="sr-only">Open legal signals across contracts, DPA reviews, approvals, and deadlines.</caption>
+      <thead>
+        <tr>
+          <th scope="col" data-col="severity">Severity</th>
+          <th scope="col" data-col="signal">Signal</th>
+          <th scope="col" data-col="source">Source</th>
+          <th scope="col" data-col="matter">Matter/Client</th>
+          <th scope="col" data-col="owner">Owner</th>
+          <th scope="col" data-col="status">Status</th>
+          <th scope="col" data-col="due">Due/Age</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for signal in legal_signals %}
+        <tr
+          class="legal-hub-row"
+          data-href="{{ signal.source_url }}"
+          tabindex="0"
+          role="link"
+          aria-label="Open {{ signal.title }}"
+        >
+          <td data-col="severity">
+            {% if signal.severity %}
+            <span class="dc-ds-badge dc-ds-badge--sm
+              {% if signal.severity == 'CRITICAL' %}dc-ds-badge--danger
+              {% elif signal.severity == 'HIGH' %}dc-ds-badge--attention
+              {% elif signal.severity == 'MEDIUM' %}dc-ds-badge--progress
+              {% else %}dc-ds-badge--success{% endif %}">
+              {{ signal.severity_display }}
+            </span>
+            {% else %}
+            <span class="c-dim">—</span>
+            {% endif %}
+          </td>
+          <td data-col="signal">
+            <div class="legal-hub-signal-title">
+              {{ signal.title }}
+              {% if signal.is_conflict %}
+              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--danger">Cross-doc conflict</span>
+              {% endif %}
+            </div>
+            {% if signal.summary %}<span class="legal-hub-signal-summary">{{ signal.summary|truncatechars:88 }}</span>{% endif %}
+          </td>
+          <td data-col="source">
+            {% if signal.source_type == 'contract_risk' %}Contract Risk
+            {% elif signal.source_type == 'dpa_risk' %}DPA Risk
+            {% elif signal.source_type == 'approval' %}Approval
+            {% elif signal.source_type == 'deadline' %}Deadline{% endif %}
+          </td>
+          <td data-col="matter">
+            {% if signal.matter %}
+            <a href="{% url 'contracts:matter_detail' signal.matter.pk %}" class="c-link">{{ signal.matter.title }}</a>
+            {% elif signal.counterparty %}
+            <span>{{ signal.counterparty }}</span>
+            {% else %}
+            <span class="c-dim">Unlinked</span>
+            {% endif %}
+          </td>
+          <td data-col="owner">
+            {% if signal.owner %}
+            {% assignee_chip signal.owner %}
+            {% elif signal.owners_csv %}
+            <span class="text-xs c-muted">{{ signal.owners_csv|dpa_owner_chips|join:", " }}</span>
+            {% else %}
+            <span class="c-dim">Unassigned</span>
+            {% endif %}
+          </td>
+          <td data-col="status">
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ signal.status_display }}</span>
+          </td>
+          <td data-col="due">
+            {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}
+          </td>
+          <td data-col="actions">
+            <details class="wq-kebab legal-hub-actions-menu">
+              <summary class="wq-kebab-trigger" aria-label="Actions for {{ signal.title }}">⋯</summary>
+              <div class="wq-kebab-menu" role="menu">
+                <a class="wq-kebab-action" role="menuitem" href="{{ signal.source_url }}">Open</a>
+              </div>
+            </details>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8">
+            {% if filters_active or selected_signal_type != 'all' %}
+              {% include "design_system/empty_state.html" with icon="search" title="No open legal signals" reason="Nothing matches this filter right now." how="Clear filters or switch to All to see every open signal." action_url=hub_clear_url action_label="Clear filters" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+            {% else %}
+              {% include "design_system/empty_state.html" with icon="shield" title="No open legal signals" reason="Contract risks, DPA findings, pending approvals, and upcoming deadlines will appear here as they're recorded." how="Signals appear after a review raises a finding, an approval is requested, or a deadline is tracked." class_name="dc-ds-empty--compact" %}
+            {% endif %}
+          </td>
+        </tr>
         {% endfor %}
-    </div>
-</div>
-
-<div class="panel overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
-            <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signal</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Source</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter/Client</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due/Age</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for signal in legal_signals %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
-                    {% if signal.severity %}
-                    <span class="
-                        {% if signal.severity == 'CRITICAL' %}dc-ds-badge--danger
-                        {% elif signal.severity == 'HIGH' %}dc-ds-badge--attention
-                        {% elif signal.severity == 'MEDIUM' %}dc-ds-badge--progress
-                        {% else %}dc-ds-badge--success{% endif %}">
-                        {{ signal.severity_display }}
-                    </span>
-                    {% else %}
-                    <span class="c-dim">—</span>
-                    {% endif %}
-                </td>
-                <td class="px-5 py-3.5">
-                    <div class="font-medium c-primary">
-                        {{ signal.title }}
-                        {% if signal.is_conflict %}<span class="dc-ds-badge--danger">Cross-doc conflict</span>{% endif %}
-                    </div>
-                    {% if signal.summary %}<p class="text-xs mt-0.5 c-muted">{{ signal.summary|truncatechars:88 }}</p>{% endif %}
-                </td>
-                <td class="px-5 py-3.5 tbl-td">
-                    {% if signal.source_type == 'contract_risk' %}Contract Risk
-                    {% elif signal.source_type == 'dpa_risk' %}DPA Risk
-                    {% elif signal.source_type == 'approval' %}Approval
-                    {% elif signal.source_type == 'deadline' %}Deadline{% endif %}
-                </td>
-                <td class="px-5 py-3.5 tbl-td">
-                    {% if signal.matter %}
-                    <a href="{% url 'contracts:matter_detail' signal.matter.pk %}" class="c-link">{{ signal.matter.title }}</a>
-                    {% elif signal.counterparty %}
-                    <span>{{ signal.counterparty }}</span>
-                    {% else %}
-                    <span class="c-dim">Unlinked</span>
-                    {% endif %}
-                </td>
-                <td class="px-5 py-3.5">
-                    {% if signal.owner %}
-                    {% assignee_chip signal.owner %}
-                    {% elif signal.owners_csv %}
-                    <span class="text-xs c-muted">{{ signal.owners_csv|dpa_owner_chips|join:", " }}</span>
-                    {% else %}
-                    <span class="c-dim">Unassigned</span>
-                    {% endif %}
-                </td>
-                <td class="px-5 py-3.5">
-                    <span class="dc-ds-badge--neutral">{{ signal.status_display }}</span>
-                </td>
-                <td class="px-5 py-3.5 tbl-td">
-                    {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}
-                </td>
-                <td class="px-5 py-3.5 text-right">
-                    <a href="{{ signal.source_url }}"
-                       class="dc-ds-button dc-ds-button--quiet text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80">View</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" class="px-5 py-20 text-center">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble">
-                            <svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="font-medium c-primary">No open legal signals</p>
-                            <p class="text-sm mt-1 c-muted">
-                                {% if selected_signal_type != 'all' %}
-                                Nothing matches this filter right now — try <a href="?" class="c-link">viewing all signals</a>.
-                                {% else %}
-                                Contract risks, DPA findings, pending approvals, and upcoming deadlines will appear here as they're recorded.
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      </tbody>
     </table>
+  </div>
 </div>
-</div>
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('legal-intelligence-hub-root');
+  if (!root) return;
+  var filterToggle = document.getElementById('legal-hub-filter-toggle');
+  var filterDrawer = document.getElementById('legal-hub-filters');
+  if (filterToggle && filterDrawer) {
+    filterToggle.addEventListener('click', function () {
+      var open = filterDrawer.classList.toggle('is-open');
+      filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  function openRow(row) {
+    var href = row && row.getAttribute('data-href');
+    if (href) window.location.href = href;
+  }
+  root.addEventListener('click', function (event) {
+    var row = event.target.closest('tr.legal-hub-row');
+    if (!row || event.target.closest('a, button, input, select, label, details, summary')) return;
+    openRow(row);
+  });
+  root.addEventListener('keydown', function (event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    var row = event.target.closest('tr.legal-hub-row');
+    if (!row || event.target !== row) return;
+    event.preventDefault();
+    openRow(row);
+  });
+})();
+</script>
 {% endblock %}

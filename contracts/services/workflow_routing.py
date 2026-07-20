@@ -94,15 +94,23 @@ def suggest_workflow_category_for_contract(contract):
 
 
 def suggest_workflow_template_for_contract(contract):
+    from contracts.services.workflow_designer import template_launch_block_reason
+
     category = suggest_workflow_category_for_contract(contract)
-    template = _template_queryset_for_contract(contract, category=category).first()
-
-    if template:
-        return template
-
+    candidates = list(_template_queryset_for_contract(contract, category=category)[:12])
     if category != WorkflowTemplate.Category.GENERAL:
-        return _template_queryset_for_contract(contract, category=WorkflowTemplate.Category.GENERAL).first()
+        candidates.extend(
+            list(_template_queryset_for_contract(contract, category=WorkflowTemplate.Category.GENERAL)[:6])
+        )
 
+    seen = set()
+    for template in candidates:
+        if template.pk in seen:
+            continue
+        seen.add(template.pk)
+        if template_launch_block_reason(template):
+            continue
+        return template
     return None
 
 

@@ -11,6 +11,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from contracts.models import (
+    ApprovalRequest,
     ApprovalRoute,
     AuditLog,
     CommandCenterWorkItem,
@@ -273,7 +274,7 @@ class CreateDpaWorkflowInstanceTests(TestCase):
     def test_creates_contract_with_mapped_fields(self):
         workflow = create_dpa_workflow_instance(organization=self.org, user=self.user, cleaned_values=self._cleaned_values())
         contract = workflow.contract
-        self.assertEqual(contract.status, Contract.Status.DRAFT)
+        self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
         self.assertEqual(contract.contract_type, Contract.ContractType.DPA)
         self.assertEqual(contract.counterparty, 'Acme Robotics Inc.')
         self.assertTrue(contract.data_transfer_flag)
@@ -556,10 +557,15 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
 
         workspace = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertEqual(workspace.status_code, 200)
-        self.assertContains(workspace, 'Generated DPA Draft')
-        self.assertContains(workspace, 'Workflow Timeline')
-        self.assertContains(workspace, 'GDPR Processor DPA · Netherlands · B2B')
-        self.assertContains(workspace, 'Review DPA risk signals')
+        self.assertContains(workspace, 'Guided drafting')
+        self.assertContains(workspace, 'Lifecycle')
+        self.assertContains(workspace, 'Document overview')
+        self.assertContains(workspace, 'DPA ·')
+        self.assertContains(workspace, 'Resolve ')
+        self.assertContains(workspace, 'Send to Legal Review · blocked')
+        dpa = workspace.context['dpa_workspace']
+        self.assertTrue(dpa['open_exceptions'] >= 1)
+        self.assertTrue(dpa['primary_cta'].startswith('Resolve '))
 
     def test_contract_workspace_displays_risk_signal_details(self):
         payload = self._valid_payload()
@@ -598,7 +604,7 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         workflow = Workflow.objects.latest('id')
 
         response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
-        self.assertContains(response, 'Approval Route')
+        self.assertContains(response, 'Approval route')
         self.assertContains(response, 'Contract owner')
         self.assertContains(response, 'Legal')
         self.assertContains(response, 'DPO')
@@ -620,7 +626,7 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
         )
 
         response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
-        self.assertContains(response, 'Audit history')
+        self.assertContains(response, 'Audit details')
         self.assertContains(response, 'Workflow Created')
         self.assertNotContains(response, 'Approved template applied')
 
@@ -633,17 +639,44 @@ class DPAWorkflowBuilderViewIntegrationTests(TestCase):
 
         response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
         self.assertContains(response, 'View contract record')
-        self.assertContains(response, 'Open related clause')
+        self.assertContains(response, 'Open clause')
         self.assertContains(response, 'id="processing-details"', html=False)
         self.assertContains(response, 'id="international-transfers"', html=False)
         self.assertContains(response, 'id="subprocessors"', html=False)
+        self.assertContains(response, 'Send to Legal Review · blocked')
+        self.assertContains(response, 'Send to Privacy / DPO · blocked')
         for hidden in (
-            'Send to Legal Review',
-            'Send to DPO',
             'Generate DPA review memo',
             'Export Word',
         ):
             self.assertNotContains(response, f'>{hidden}<')
+
+    def test_dpa_workspace_highlights_contracts_nav(self):
+        self.client_.post(reverse('contracts:dpa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        response = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        nav = response.context['SIDEBAR_NAV']
+        contracts = next(item for item in nav if item.get('label') == 'Contracts')
+        designer = next(item for item in nav if item.get('label') == 'Workflow Designer')
+        self.assertTrue(contracts['is_active'])
+        self.assertFalse(designer['is_active'])
+        self.assertContains(response, 'Back to contract')
+
+    def test_dpa_submit_for_review_blocked_while_exceptions_open(self):
+        self.client_.post(reverse('contracts:dpa_workflow_builder'), self._valid_payload())
+        workflow = Workflow.objects.latest('id')
+        self.assertTrue(RiskSignal.objects.filter(workflow=workflow, is_resolved=False).exists())
+        response = self.client_.post(
+            reverse('contracts:dpa_submit_for_review', kwargs={'pk': workflow.pk, 'approval_step': 'legal'}),
+        )
+        self.assertRedirects(
+            response,
+            reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}),
+            fetch_redirect_response=False,
+        )
+        follow = self.client_.get(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+        self.assertContains(follow, 'before submitting this DPA for review')
+        self.assertFalse(ApprovalRequest.objects.filter(contract=workflow.contract).exists())
 
 
 class StageOneRoutingTests(TestCase):

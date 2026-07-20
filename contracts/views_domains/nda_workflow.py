@@ -89,3 +89,21 @@ class NDAWorkflowBuilderView(LoginRequiredMixin, View):
         )
         messages.success(request, f'"{workflow.title}" generated — it now appears in the Command Center Priority Queue.')
         return redirect(reverse('contracts:workflow_detail', kwargs={'pk': workflow.pk}))
+
+
+def nda_submit_for_review(request, pk, approval_step):
+    from contracts.views_domains.drafting_workspace_actions import drafting_submit_for_review
+
+    return drafting_submit_for_review(request, pk, approval_step, kind='nda')
+
+
+def nda_exception_action(request, pk, signal_id):
+    from contracts.views_domains.drafting_workspace_actions import drafting_exception_action
+
+    return drafting_exception_action(request, pk, signal_id, kind='nda')
+
+
+def nda_confirm_section(request, pk, section_id):
+    from contracts.views_domains.drafting_workspace_actions import drafting_confirm_section
+
+    return drafting_confirm_section(request, pk, section_id, kind='nda')

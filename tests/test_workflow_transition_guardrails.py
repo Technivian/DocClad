@@ -64,7 +64,7 @@ class WorkflowTransitionGuardrailsTests(TestCase):
             organization=self.org,
             title='Transition Test Contract',
             content='Contract for transition hardening tests',
-            status=Contract.Status.PENDING,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.owner,
         )
 
