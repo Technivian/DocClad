@@ -111,7 +111,7 @@ here triggers DPA analysis or approval mutation.
         <div class="ad-head">
           <span class="ad-head-stack">
             <span class="ad-head-title">Risks</span>
-            <span class="ad-head-subtitle">Open Risk Register items and unresolved DPA findings, most severe first.</span>
+            <span class="ad-head-subtitle">{% if is_in_house_clm %}Open legal signals and unresolved DPA findings, most severe first.{% else %}Open Risk Register items and unresolved DPA findings, most severe first.{% endif %}</span>
           </span>
           <a href="{% url 'contracts:risk_log_list' %}" class="ad-head-link">View all &rarr;</a>
         </div>

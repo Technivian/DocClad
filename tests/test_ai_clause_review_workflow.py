@@ -65,7 +65,7 @@ class AIClauseReviewWorkflowTests(TestCase):
             organization=self.organization,
             title='Supplier agreement',
             contract_type=Contract.ContractType.VENDOR,
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.reviewer,
             owner=self.reviewer,
         )
@@ -296,8 +296,9 @@ class AIClauseReviewWorkflowTests(TestCase):
     def test_incomplete_review_is_truthful_and_surfaces_resolvable_blockers(self):
         self.contract.contract_type = Contract.ContractType.OTHER
         self.contract.counterparty = ''
-        self.contract.status = Contract.Status.AI_REVIEW_READY
-        self.contract.save(update_fields=['contract_type', 'counterparty', 'status', 'updated_at'])
+        self.contract.status = Contract.Status.IN_PROGRESS
+        self.contract.lifecycle_stage = Contract.LifecycleStage.INTERNAL_REVIEW
+        self.contract.save(update_fields=['contract_type', 'counterparty', 'status', 'lifecycle_stage', 'updated_at'])
         DocumentReviewRun.objects.create(
             organization=self.organization,
             contract=self.contract,
@@ -357,5 +358,6 @@ class AIClauseReviewWorkflowTests(TestCase):
         approval = ApprovalRequest.objects.get(contract=self.contract)
         self.assertEqual(approval.approval_step, 'Human confirmation: AI review outcome')
         self.contract.refresh_from_db()
-        self.assertEqual(self.contract.status, Contract.Status.INTERNAL_APPROVAL_REQUIRED)
+        self.assertEqual(self.contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(self.contract.lifecycle_stage, Contract.LifecycleStage.APPROVAL)
         self.assertTrue(AuditLog.objects.filter(event_type='ai.review_human_confirmation_requested').exists())

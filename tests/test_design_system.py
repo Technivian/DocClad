@@ -50,7 +50,7 @@ class DesignSystemTests(TestCase):
             organization=organization,
             title='DS Contract Needing Review',
             content='Seed so the Legal Pulse metric has a nonzero value.',
-            status='PENDING',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         self.client.login(username='testuser', password='testpass123')

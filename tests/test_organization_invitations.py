@@ -95,11 +95,15 @@ class OrganizationInvitationTests(TestCase):
 
         response = self.client.get(reverse('contracts:organization_team'))
 
-        self.assertContains(response, 'Active Members')
-        self.assertContains(response, 'Invite Member')
-        self.assertNotContains(response, 'Inactive Members')
-        self.assertNotContains(response, 'Pending Invites')
-        self.assertNotContains(response, 'Invitation History')
+        self.assertContains(response, 'Active members')
+        self.assertContains(response, 'Invite member')
+        self.assertContains(response, 'View team activity')
+        self.assertContains(response, 'Pending invitations')
+        self.assertContains(response, 'No pending invitations')
+        self.assertContains(response, 'Manage organization access, roles, invitations, and team activity.')
+        self.assertContains(response, 'org-team-invite-dialog')
+        self.assertNotContains(response, 'Deactivated members')
+        self.assertNotContains(response, 'Invitation history')
 
     def test_team_page_surfaces_pending_invites_when_present(self):
         OrganizationInvitation.objects.create(
@@ -112,8 +116,12 @@ class OrganizationInvitationTests(TestCase):
 
         response = self.client.get(reverse('contracts:organization_team'))
 
-        self.assertContains(response, 'Pending Invites')
+        self.assertContains(response, 'Pending invitations')
         self.assertContains(response, 'pending@example.com')
+        self.assertContains(response, 'Resend')
+        self.assertContains(response, 'Copy invitation link')
+        self.assertContains(response, 'Revoke')
+        self.assertNotContains(response, 'No pending invitations')
 
     def test_admin_can_create_invitation(self):
         self.client.login(username='admin', password='testpass123')
@@ -365,7 +373,10 @@ class OrganizationInvitationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'accepted@example.com')
-        self.assertEqual(response.content.decode().count('pending@example.com'), 1)
+        self.assertContains(response, 'pending@example.com')
+        history = response.content.decode().split('Invitation history', 1)[1]
+        self.assertIn('accepted@example.com', history)
+        self.assertNotIn('pending@example.com', history)
 
     def test_owner_can_reactivate_member(self):
         target = OrganizationMembership.objects.get(organization=self.organization, user=self.member)
@@ -498,3 +509,112 @@ class OrganizationInvitationTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'filter@example.com')
+
+    def test_team_page_member_table_and_you_label(self):
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.get(reverse('contracts:organization_team'))
+        body = response.content.decode()
+
+        self.assertContains(response, 'aria-label="Active organization members"')
+        self.assertContains(response, 'org-team-you')
+        self.assertContains(response, 'Last active')
+        self.assertContains(response, 'Joined')
+        self.assertContains(response, 'Change role')
+        self.assertNotIn('Save role</button></form>', body.split('Active members')[1].split('Pending invitations')[0])
+        # "You" appears beside the current user name, not as an Actions column value.
+        members_section = body.split('Active members')[1].split('Pending invitations')[0]
+        self.assertIn('org-team-you', members_section)
+        self.assertNotIn('>You</button>', members_section)
+        self.assertNotIn('>You</option>', members_section)
+
+    def test_last_owner_cannot_downgrade_self(self):
+        owner_membership = OrganizationMembership.objects.get(
+            organization=self.organization,
+            user=self.owner,
+        )
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:update_membership_role', kwargs={'membership_id': owner_membership.id}),
+            {'role': OrganizationMembership.Role.ADMIN},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        owner_membership.refresh_from_db()
+        self.assertEqual(owner_membership.role, OrganizationMembership.Role.OWNER)
+        self.assertContains(response, 'last Owner')
+
+    def test_last_owner_protection_shown_in_member_actions(self):
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.get(reverse('contracts:organization_team'))
+        self.assertContains(response, 'The last Owner cannot be downgraded.')
+        self.assertContains(response, 'You cannot deactivate yourself')
+
+    def test_admin_invite_form_excludes_owner_role(self):
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.get(reverse('contracts:organization_team'))
+        invite_section = response.content.decode().split('org-team-invite-dialog')[1]
+        self.assertIn('value="ADMIN"', invite_section)
+        self.assertIn('value="MEMBER"', invite_section)
+        self.assertNotIn('value="OWNER"', invite_section)
+
+    def test_owner_can_update_invitation_role(self):
+        invitation = OrganizationInvitation.objects.create(
+            organization=self.organization,
+            email='role-invite@example.com',
+            role=OrganizationMembership.Role.MEMBER,
+            invited_by=self.owner,
+        )
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:update_invitation_role', kwargs={'invite_id': invitation.id}),
+            {'role': OrganizationMembership.Role.ADMIN},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.role, OrganizationMembership.Role.ADMIN)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                user=self.owner,
+                action=AuditLog.Action.UPDATE,
+                model_name='OrganizationInvitation',
+                object_id=invitation.id,
+            ).exists()
+        )
+
+    def test_admin_cannot_update_invitation_role_to_owner(self):
+        invitation = OrganizationInvitation.objects.create(
+            organization=self.organization,
+            email='owner-invite@example.com',
+            role=OrganizationMembership.Role.MEMBER,
+            invited_by=self.owner,
+        )
+        self.client.login(username='admin', password='testpass123')
+        response = self.client.post(
+            reverse('contracts:update_invitation_role', kwargs={'invite_id': invitation.id}),
+            {'role': OrganizationMembership.Role.OWNER},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.role, OrganizationMembership.Role.MEMBER)
+
+    def test_invite_dialog_and_accessible_controls(self):
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.get(reverse('contracts:organization_team'))
+        self.assertContains(response, 'id="org-team-invite-dialog"')
+        self.assertContains(response, 'id="org-team-role-dialog"')
+        self.assertContains(response, 'data-open-invite-dialog')
+        self.assertContains(response, 'aria-label="Close invitation form"')
+        self.assertContains(response, 'Invitation message')
+        self.assertContains(response, 'Send invitation')
+        self.assertContains(response, 'clmone-organization-team.js')
+
+    def test_solo_member_callout_when_only_owner(self):
+        OrganizationMembership.objects.filter(
+            organization=self.organization,
+        ).exclude(user=self.owner).delete()
+        self.client.login(username='owner', password='testpass123')
+        response = self.client.get(reverse('contracts:organization_team'))
+        self.assertContains(response, 'No additional team members')
+        self.assertContains(response, 'org-team-you')

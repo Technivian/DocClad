@@ -22,10 +22,7 @@ test.describe('Phase 3B standard record-list scaffolds', () => {
     await page.goto('/contracts/repository/');
     await expect(page.locator('.topbar-page-title')).toHaveText('Contracts');
     await expect(page.locator('.topbar-page-subtitle')).toContainText('governed repository');
-    const back = page.locator('.topbar-back-link');
-    await back.focus();
-    await expect(back).toBeFocused();
-    await expect(back).toHaveAttribute('aria-label', 'Back');
+    await expect(page.locator('.topbar-back-link')).toHaveCount(0);
     const tabs = page.locator('.repo-view-tabs.dc-ds-list-tabs a');
     await tabs.first().focus();
     await expect(tabs.first()).toBeFocused();

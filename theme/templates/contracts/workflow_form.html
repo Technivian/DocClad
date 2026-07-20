@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}{% endblock %}
+{% block authenticated_page_title %}{% if object %}Edit Workflow{% else %}Start New Workflow{% endif %}{% endblock %}
+{% block authenticated_page_subtitle %}Configure a workflow to manage contract review, approval, and execution.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:workflow_dashboard' %}" class="topbar-back-link" data-workspace-back aria-label="Back to workflows" title="Back to workflows">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
@@ -11,9 +18,6 @@
                     <span class="workspace-kicker"><strong>{% if object %}Editing{% else %}Starting{% endif %}</strong> workflow setup</span>
                     <span class="workspace-kicker"><strong>Template-aware</strong> workflow creation</span>
                 </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_dashboard' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Dashboard</a>
             </div>
         </div>
         <div class="workspace-toolbar">

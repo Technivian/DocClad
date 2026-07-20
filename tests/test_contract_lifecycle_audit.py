@@ -36,7 +36,7 @@ class ContractLifecycleAuditTests(TestCase):
             title='Lifecycle Contract',
             contract_type=Contract.ContractType.MSA,
             content='Initial draft',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             lifecycle_stage='DRAFTING',
             counterparty='Acme Corp',
             governing_law='State of Delaware',
@@ -97,8 +97,8 @@ class ContractLifecycleAuditTests(TestCase):
             title='Archived Contract',
             contract_type=Contract.ContractType.MSA,
             content='Archived body',
-            status=Contract.Status.ACTIVE,
-            lifecycle_stage='ARCHIVED',
+            status=Contract.Status.ARCHIVED,
+            lifecycle_stage=Contract.LifecycleStage.OBLIGATION_TRACKING,
             counterparty='Acme Corp',
             governing_law='State of Delaware',
             jurisdiction='New York',
@@ -109,7 +109,7 @@ class ContractLifecycleAuditTests(TestCase):
         guidance = build_contract_lifecycle_guidance(contract)
 
         self.assertEqual(guidance['state'], 'Archived')
-        self.assertEqual(guidance['next_stage'], 'ARCHIVED')
+        self.assertEqual(guidance['next_stage'], Contract.LifecycleStage.OBLIGATION_TRACKING)
         self.assertIn('No operational action required', guidance['action'])
 
     def test_run_contract_lifecycle_jobs_promotes_renewal_window_contracts(self):

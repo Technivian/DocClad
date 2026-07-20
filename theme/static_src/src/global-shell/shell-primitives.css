@@ -4,7 +4,21 @@
 .dc-ds-shell { display: flex; height: 100vh; min-height: 100vh; overflow: hidden; }
 .dc-ds-shell__sidebar { width: 225px; height: 100vh; display: flex; flex-direction: column; flex-shrink: 0; overflow: visible; background: var(--color-shell-deep); box-shadow: var(--shadow-shell-edge); }
 .dc-ds-shell__main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--paper); }
-.dc-ds-shell__topbar { display: flex; align-items: center; justify-content: space-between; flex: 0 0 var(--shell-topbar-height); min-height: var(--shell-topbar-height); gap: var(--space-16); padding: 0 var(--space-24) 0 var(--space-32); background: var(--card); }
+.dc-ds-shell__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 var(--shell-topbar-height);
+  min-height: var(--shell-topbar-height);
+  gap: var(--space-16);
+  padding: 0 var(--space-24) 0 var(--space-32);
+  background: var(--card);
+  border-bottom: 1px solid var(--topbar-border, var(--line));
+  /* Main is the scroll container; keep chrome visible on hash deep-links. */
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
 .dc-ds-shell__content { flex: 1 0 auto; width: 100%; min-width: 0; background: var(--paper); }
 .dc-ds-shell__mobile-toggle,
 .dc-ds-shell__scrim { display: none; }

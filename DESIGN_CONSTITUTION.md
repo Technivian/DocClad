@@ -325,6 +325,9 @@ Rationale and source findings: `IRONCLAD_DESIGN_AUDIT.md`.
 
 - Detail pages show lifecycle as a stepper driven by `contract.lifecycle_stage`
   via the `{% lifecycle_steps contract %}` tag — never a hardcoded badge chain.
+- Compact headers show **record status · workflow stage** (e.g. `In progress · Drafting`).
+  Never label the record status “Draft”; drafting is a stage only. See
+  `docs/glossary-lifecycle-dimensions.md` and PDR 0002.
 - Classes: `lc-track` (container, `role="list"`), `lc-step` + state modifier
   (`lc-done`, `lc-current`, `lc-upcoming`), `lc-dot`, `lc-label`.
 - The current step carries `aria-current="step"`; the track carries an

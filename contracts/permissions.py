@@ -43,6 +43,30 @@ def is_organization_owner(user, organization):
     return bool(membership and membership.role == OrganizationMembership.Role.OWNER)
 
 
+_ROLE_RANK = {
+    OrganizationMembership.Role.MEMBER: 1,
+    OrganizationMembership.Role.ADMIN: 2,
+    OrganizationMembership.Role.OWNER: 3,
+}
+
+
+def organization_role_rank(role: str) -> int:
+    return _ROLE_RANK.get(role, 0)
+
+
+def can_assign_organization_role(actor_role: str, target_role: str) -> bool:
+    """Actors may only grant roles at or below their own authority."""
+    return organization_role_rank(actor_role) >= organization_role_rank(target_role) > 0
+
+
+def assignable_organization_roles(actor_role: str) -> list[tuple[str, str]]:
+    return [
+        choice
+        for choice in OrganizationMembership.Role.choices
+        if can_assign_organization_role(actor_role, choice[0])
+    ]
+
+
 def can_access_contract_action(user, contract, action=ContractAction.VIEW):
     if contract is None:
         return False

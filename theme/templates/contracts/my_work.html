@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My Work – CLM One{% endblock %}
+{% block authenticated_page_title %}My Work{% endblock %}
+{% block authenticated_page_subtitle %}Actions assigned to you — reviews, approvals, obligations, and returned work.{% endblock %}
+{% block content %}
+{% include "components/_list_page_shell_styles.html" %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page">
+  <section class="dc-ds-surface" style="padding: var(--space-24); max-width: 720px;">
+    <h2 class="dc-ds-workspace__surface-title" style="margin: 0 0 var(--space-8);">Your personal queue</h2>
+    <p class="profile-page__muted" style="margin: 0 0 var(--space-16); color: var(--ink-500); font: var(--text-small);">
+      My Work will consolidate contracts awaiting your review, approval requests, directed questions,
+      owned obligations, overdue actions, and returned or rejected items. Until that queue ships,
+      use these governed surfaces for work that already belongs to you.
+    </p>
+    <div style="display: grid; gap: var(--space-10);">
+      <a href="{{ approvals_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Reviews &amp; Approvals</a>
+      <a href="{{ privacy_reviews_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Privacy Reviews</a>
+      <a href="{{ obligations_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Obligations</a>
+      <a href="{{ repository_url }}" class="dc-ds-button dc-ds-button--quiet" style="justify-content: flex-start;">Contracts</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

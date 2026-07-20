@@ -61,7 +61,7 @@ class ContractExpirationTests(TestCase):
         self.assertEqual(c.status, Contract.Status.ACTIVE)
 
     def test_non_active_statuses_excluded(self):
-        c = _active_contract(self.org, end_offset_days=-5, status='APPROVED')
+        c = _active_contract(self.org, end_offset_days=-5, status='ACTIVE')
         call_command('run_contract_expiration')
         c.refresh_from_db()
         self.assertEqual(c.status, 'APPROVED')

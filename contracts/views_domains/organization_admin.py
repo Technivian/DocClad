@@ -33,7 +33,13 @@ from contracts.models import (
     TimeEntry,
     WebhookDelivery,
 )
-from contracts.permissions import can_manage_organization, is_organization_owner
+from contracts.permissions import (
+    assignable_organization_roles,
+    can_assign_organization_role,
+    can_manage_organization,
+    get_active_org_membership,
+    is_organization_owner,
+)
 from contracts.services.executive_analytics import (
     build_executive_bottlenecks,
     build_executive_cycle_time_snapshot,
@@ -67,6 +73,97 @@ def _send_invitation_email(invitation, invite_url):
     )
 
 
+def _membership_status(membership) -> dict:
+    user = membership.user
+    if not membership.is_active:
+        return {'key': 'deactivated', 'label': 'Deactivated', 'tone': 'neutral'}
+    if user and not user.is_active:
+        return {'key': 'suspended', 'label': 'Suspended', 'tone': 'attention'}
+    return {'key': 'active', 'label': 'Active', 'tone': 'success'}
+
+
+def _invitation_status(invitation) -> dict:
+    now = timezone.now()
+    if invitation.status == OrganizationInvitation.Status.PENDING:
+        if invitation.expires_at and invitation.expires_at <= now:
+            return {'key': 'expired', 'label': 'Expired', 'tone': 'attention'}
+        if invitation.delivery_status == OrganizationInvitation.DeliveryStatus.FAILED:
+            return {'key': 'pending', 'label': 'Pending · delivery failed', 'tone': 'attention'}
+        if invitation.delivery_status == OrganizationInvitation.DeliveryStatus.SENT:
+            return {'key': 'pending', 'label': 'Pending · sent', 'tone': 'progress'}
+        return {'key': 'pending', 'label': 'Pending', 'tone': 'progress'}
+    if invitation.status == OrganizationInvitation.Status.EXPIRED:
+        return {'key': 'expired', 'label': 'Expired', 'tone': 'attention'}
+    if invitation.status == OrganizationInvitation.Status.REVOKED:
+        return {'key': 'revoked', 'label': 'Revoked', 'tone': 'neutral'}
+    return {'key': 'accepted', 'label': 'Accepted', 'tone': 'success'}
+
+
+def _build_member_rows(*, memberships, request_user, actor_role, owner_count):
+    rows = []
+    for membership in memberships:
+        is_self = membership.user_id == request_user.id
+        is_last_owner = (
+            membership.role == OrganizationMembership.Role.OWNER and owner_count <= 1
+        )
+        can_manage_target = can_assign_organization_role(actor_role, membership.role)
+        can_edit_role = can_manage_target and not (is_self and is_last_owner)
+        assignable = [
+            choice for choice in assignable_organization_roles(actor_role)
+            if not (is_self and is_last_owner and choice[0] != OrganizationMembership.Role.OWNER)
+        ]
+        user = membership.user
+        display_name = (user.get_full_name() or '').strip() or user.username
+        initial = (display_name[:1] or '?').upper()
+        rows.append({
+            'membership': membership,
+            'display_name': display_name,
+            'initial': initial,
+            'email': user.email or '—',
+            'is_self': is_self,
+            'status': _membership_status(membership),
+            'last_active': user.last_login,
+            'can_edit_role': can_edit_role and bool(assignable),
+            'assignable_roles': assignable,
+            'is_last_owner': is_last_owner,
+            'can_deactivate': (not is_self) and not is_last_owner and can_manage_target,
+            'can_revoke_sessions': (not is_self) and can_manage_target,
+            'role_locked_reason': (
+                'The last Owner cannot be downgraded.'
+                if is_self and is_last_owner
+                else (
+                    'You cannot change a role above your authority.'
+                    if not can_manage_target
+                    else ''
+                )
+            ),
+        })
+    return rows
+
+
+def _build_invitation_rows(*, invitations, request):
+    rows = []
+    now = timezone.now()
+    for invitation in invitations:
+        status = _invitation_status(invitation)
+        is_expired = bool(
+            invitation.status == OrganizationInvitation.Status.PENDING
+            and invitation.expires_at
+            and invitation.expires_at <= now
+        )
+        rows.append({
+            'invitation': invitation,
+            'status': status,
+            'is_expired': is_expired,
+            'invite_url': _build_invite_url(request, invitation),
+            'invited_by': (
+                (invitation.invited_by.get_full_name() or invitation.invited_by.username)
+                if invitation.invited_by_id else '—'
+            ),
+        })
+    return rows
+
+
 @login_required
 def organization_team(request):
     organization = getattr(request, 'organization', None) or get_user_organization(request.user)
@@ -77,11 +174,20 @@ def organization_team(request):
     if not can_manage_organization(request.user, organization):
         return HttpResponseForbidden('Only organization owners/admins can manage team invites.')
 
+    actor_membership = get_active_org_membership(request.user, organization)
+    actor_role = actor_membership.role if actor_membership else OrganizationMembership.Role.MEMBER
+    allowed_roles = assignable_organization_roles(actor_role)
+
     if request.method == 'POST':
-        form = OrganizationInvitationForm(request.POST)
+        form = OrganizationInvitationForm(request.POST, allowed_roles=allowed_roles)
         if form.is_valid():
             email = form.cleaned_data['email']
             role = form.cleaned_data['role']
+            personal_message = form.cleaned_data.get('message') or ''
+
+            if not can_assign_organization_role(actor_role, role):
+                messages.error(request, 'You cannot invite someone to a role above your authority.')
+                return redirect('contracts:organization_team')
 
             existing_member = (
                 OrganizationMembership.objects
@@ -130,9 +236,14 @@ def organization_team(request):
                 request=request,
             )
             from contracts.services.invitations import deliver_invitation
-            sent = deliver_invitation(invitation, actor=request.user, request=request)
+            sent = deliver_invitation(
+                invitation,
+                actor=request.user,
+                request=request,
+                personal_message=personal_message,
+            )
             if sent:
-                messages.success(request, f'Invitation created and emailed to {email}.')
+                messages.success(request, f'Invitation sent to {email}.')
             else:
                 invite_url = _build_invite_url(request, invitation)
                 messages.warning(
@@ -142,42 +253,55 @@ def organization_team(request):
                 )
             return redirect('contracts:organization_team')
     else:
-        form = OrganizationInvitationForm()
+        form = OrganizationInvitationForm(allowed_roles=allowed_roles)
 
-    memberships = (
+    memberships = list(
         OrganizationMembership.objects
         .filter(organization=organization, is_active=True)
         .select_related('user')
         .order_by('role', 'user__username')
     )
-    inactive_memberships = (
+    inactive_memberships = list(
         OrganizationMembership.objects
         .filter(organization=organization, is_active=False)
         .select_related('user')
         .order_by('user__username')
     )
-    invitations = (
+    invitations = list(
         OrganizationInvitation.objects
         .filter(organization=organization, status=OrganizationInvitation.Status.PENDING)
+        .select_related('invited_by')
         .order_by('-created_at')
     )
-    invitation_history = (
+    invitation_history = list(
         OrganizationInvitation.objects
         .filter(organization=organization)
         .exclude(status=OrganizationInvitation.Status.PENDING)
         .select_related('invited_by', 'invited_user')
         .order_by('-created_at')[:20]
     )
+    owner_count = sum(1 for m in memberships if m.role == OrganizationMembership.Role.OWNER)
 
     return render(request, 'contracts/organization_team.html', {
         'organization': organization,
         'memberships': memberships,
+        'member_rows': _build_member_rows(
+            memberships=memberships,
+            request_user=request.user,
+            actor_role=actor_role,
+            owner_count=owner_count,
+        ),
         'inactive_memberships': inactive_memberships,
         'invitations': invitations,
+        'invitation_rows': _build_invitation_rows(invitations=invitations, request=request),
         'invitation_history': invitation_history,
         'invite_form': form,
         'is_owner': is_organization_owner(request.user, organization),
+        'actor_role': actor_role,
+        'assignable_roles': allowed_roles,
+        'owner_count': owner_count,
         'current_user_id': request.user.id,
+        'open_invite': request.GET.get('invite') == '1' or bool(getattr(form, 'errors', None)),
     })
 
 
@@ -300,9 +424,13 @@ def update_membership_role(request, membership_id):
         messages.error(request, 'Invalid role selection.')
         return redirect('contracts:organization_team')
 
-    actor_is_owner = is_organization_owner(request.user, organization)
-    if requested_role == OrganizationMembership.Role.OWNER and not actor_is_owner:
-        messages.error(request, 'Only organization owners can assign the Owner role.')
+    actor_membership = get_active_org_membership(request.user, organization)
+    actor_role = actor_membership.role if actor_membership else ''
+    if not can_assign_organization_role(actor_role, requested_role):
+        messages.error(request, 'You cannot grant a role above your authority.')
+        return redirect('contracts:organization_team')
+    if not can_assign_organization_role(actor_role, membership.role):
+        messages.error(request, 'You cannot change a member whose role is above your authority.')
         return redirect('contracts:organization_team')
 
     if membership.user_id == request.user.id and membership.role == OrganizationMembership.Role.OWNER and requested_role != OrganizationMembership.Role.OWNER:
@@ -312,9 +440,10 @@ def update_membership_role(request, membership_id):
             role=OrganizationMembership.Role.OWNER,
         ).count()
         if owner_count <= 1:
-            messages.error(request, 'At least one active owner must remain in the organization.')
+            messages.error(request, 'The last Owner cannot remove or downgrade themselves.')
             return redirect('contracts:organization_team')
 
+    previous_role = membership.role
     membership.role = requested_role
     membership.save(update_fields=['role'])
     log_action(
@@ -323,10 +452,66 @@ def update_membership_role(request, membership_id):
         'OrganizationMembership',
         object_id=membership.id,
         object_repr=str(membership),
-        changes={'organization_id': organization.id, 'event': 'role_updated', 'new_role': requested_role},
+        changes={
+            'organization_id': organization.id,
+            'event': 'role_updated',
+            'field_changes': [{'field': 'role', 'from': previous_role, 'to': requested_role}],
+            'new_role': requested_role,
+            'previous_role': previous_role,
+        },
         request=request,
     )
-    messages.success(request, f'Updated role for {membership.user.email or membership.user.username}.')
+    if requested_role in {OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN}:
+        messages.warning(
+            request,
+            f'Elevated access granted: {membership.user.email or membership.user.username} is now {membership.get_role_display()}.',
+        )
+    else:
+        messages.success(request, f'Updated role for {membership.user.email or membership.user.username}.')
+    return redirect('contracts:organization_team')
+
+
+@login_required
+@require_POST
+def update_invitation_role(request, invite_id):
+    organization = getattr(request, 'organization', None) or get_user_organization(request.user)
+    if not organization or not can_manage_organization(request.user, organization):
+        return HttpResponseForbidden('Insufficient permissions.')
+
+    invitation = get_object_or_404(OrganizationInvitation, id=invite_id, organization=organization)
+    if invitation.status != OrganizationInvitation.Status.PENDING:
+        messages.info(request, 'Only pending invitations can change role.')
+        return redirect('contracts:organization_team')
+
+    requested_role = request.POST.get('role')
+    allowed_roles = {choice[0] for choice in OrganizationMembership.Role.choices}
+    if requested_role not in allowed_roles:
+        messages.error(request, 'Invalid role selection.')
+        return redirect('contracts:organization_team')
+
+    actor_membership = get_active_org_membership(request.user, organization)
+    actor_role = actor_membership.role if actor_membership else ''
+    if not can_assign_organization_role(actor_role, requested_role):
+        messages.error(request, 'You cannot grant a role above your authority.')
+        return redirect('contracts:organization_team')
+
+    previous_role = invitation.role
+    invitation.role = requested_role
+    invitation.save(update_fields=['role'])
+    log_action(
+        request.user,
+        AuditLog.Action.UPDATE,
+        'OrganizationInvitation',
+        object_id=invitation.id,
+        object_repr=invitation.email,
+        changes={
+            'organization_id': organization.id,
+            'event': 'invite_role_updated',
+            'field_changes': [{'field': 'role', 'from': previous_role, 'to': requested_role}],
+        },
+        request=request,
+    )
+    messages.success(request, f'Updated invitation role for {invitation.email}.')
     return redirect('contracts:organization_team')
 
 
@@ -349,8 +534,14 @@ def deactivate_organization_member(request, membership_id):
             role=OrganizationMembership.Role.OWNER,
         ).count()
         if owner_count <= 1:
-            messages.error(request, 'At least one active owner must remain in the organization.')
+            messages.error(request, 'The last Owner cannot be removed from the organization.')
             return redirect('contracts:organization_team')
+
+    actor_membership = get_active_org_membership(request.user, organization)
+    actor_role = actor_membership.role if actor_membership else ''
+    if not can_assign_organization_role(actor_role, membership.role):
+        messages.error(request, 'You cannot deactivate a member whose role is above your authority.')
+        return redirect('contracts:organization_team')
 
     membership.is_active = False
     membership.save(update_fields=['is_active'])

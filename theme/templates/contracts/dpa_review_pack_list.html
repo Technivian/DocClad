@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% block title %}DPA Reviews – CLM One{% endblock %}
-{% block authenticated_page_title %}DPA Reviews{% endblock %}
-{% block authenticated_page_subtitle %}Work the open DPA review queue — unresolved roles, risks, and decisions.{% endblock %}
+{% block title %}Privacy Reviews – CLM One{% endblock %}
+{% block authenticated_page_title %}Privacy Reviews{% endblock %}
+{% block authenticated_page_subtitle %}DPA reviews, transfer assessments, subprocessor checks, and privacy deviations that need a decision.{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
@@ -9,16 +9,23 @@
   .dpa-review-page .dpa-review-contract-link:hover { color: var(--ds-color-action); }
   .dpa-review-page .dpa-review-contract-link:focus-visible { outline: none; box-shadow: var(--ds-focus-ring); border-radius: var(--ds-radius-sm); }
   .dpa-review-page .dpa-review-row { cursor: pointer; }
-  .dpa-review-page .dpa-review-row:hover td { background: var(--sidebar-hover); }
   .dpa-review-page .dpa-review-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
   .dpa-review-page .dpa-review-role {
     display: block; max-width: 100%; line-height: 1.35;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .dpa-review-page .dpa-review-next-action {
-    display: block; max-width: 100%;
-    color: var(--ds-color-text); font-weight: 650;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    max-width: 100%;
+    color: var(--ds-color-text);
+    font-weight: 650;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .dpa-review-page .dpa-review-agreement-title {
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
@@ -30,7 +37,7 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .dpa-review-page .dpa-review-stack {
-    display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 12rem;
+    display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%;
   }
   .dpa-review-page .clm-list-summary { --dc-ds-summary-columns: 3; }
   .dpa-review-page .dpa-col-menu { position: relative; }
@@ -43,38 +50,89 @@
     display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
     color: var(--text-primary); cursor: pointer;
   }
-  .dpa-review-page .dc-ds-table-wrap { overflow-x: auto; }
-  .dpa-review-page #dpa-reviews-table th,
-  .dpa-review-page #dpa-reviews-table td { overflow: hidden; }
+  .dpa-review-page .dc-ds-table-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
   .dpa-review-page #dpa-reviews-table {
-    min-width: 1200px; width: 100%; table-layout: fixed;
+    --dpa-row-bg: var(--card-bg, var(--ds-color-surface, #fff));
+    min-width: 1080px;
+    width: 100%;
+    table-layout: fixed;
+  }
+  .dpa-review-page #dpa-reviews-table th,
+  .dpa-review-page #dpa-reviews-table td {
+    vertical-align: top;
+    padding: 14px 12px;
+    overflow: hidden;
+    border-left: 0;
+    border-right: 0;
   }
   .dpa-review-page #dpa-reviews-table [data-col].is-hidden { display: none; }
   .dpa-review-page #dpa-reviews-table th[data-col="agreement"],
   .dpa-review-page #dpa-reviews-table td[data-col="agreement"] {
-    position: sticky; left: 0; z-index: 2; min-width: 280px; width: 26%;
-    background: var(--card-bg, var(--ds-color-surface, #fff));
-    box-shadow: 1px 0 0 var(--line, var(--card-border));
+    position: sticky; left: 0; z-index: 2;
+    width: 22%;
+    min-width: 220px;
+    padding-right: 16px;
+    background-color: var(--dpa-row-bg);
+    box-shadow: none;
   }
-  .dpa-review-page #dpa-reviews-table thead th[data-col="agreement"] { z-index: 5; }
+  .dpa-review-page #dpa-reviews-table thead th[data-col="agreement"] {
+    z-index: 5;
+    background-color: var(--color-surface-table-head, var(--dpa-row-bg));
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="role"],
-  .dpa-review-page #dpa-reviews-table td[data-col="role"] { min-width: 140px; width: 12%; }
+  .dpa-review-page #dpa-reviews-table td[data-col="role"] {
+    width: 14%;
+    min-width: 148px;
+    padding-right: 14px;
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="review"],
-  .dpa-review-page #dpa-reviews-table td[data-col="review"] { min-width: 150px; width: 14%; }
+  .dpa-review-page #dpa-reviews-table td[data-col="review"] {
+    width: 16%;
+    min-width: 168px;
+    padding-right: 14px;
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="owner"],
-  .dpa-review-page #dpa-reviews-table td[data-col="owner"] { min-width: 120px; width: 12%; }
+  .dpa-review-page #dpa-reviews-table td[data-col="owner"] {
+    width: 12%;
+    min-width: 120px;
+    padding-right: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="next_action"],
-  .dpa-review-page #dpa-reviews-table td[data-col="next_action"] { min-width: 260px; width: 28%; }
+  .dpa-review-page #dpa-reviews-table td[data-col="next_action"] {
+    width: 22%;
+    min-width: 180px;
+    padding-right: 14px;
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="updated"],
-  .dpa-review-page #dpa-reviews-table td[data-col="updated"] { min-width: 96px; width: 7%; white-space: nowrap; }
+  .dpa-review-page #dpa-reviews-table td[data-col="updated"] {
+    width: 9%;
+    min-width: 104px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-700, var(--text-secondary));
+  }
   .dpa-review-page #dpa-reviews-table th[data-col="actions"],
   .dpa-review-page #dpa-reviews-table td[data-col="actions"] {
-    min-width: 48px; width: 48px; text-align: right; position: sticky; right: 0; z-index: 2;
-    background: var(--card-bg, var(--ds-color-surface, #fff));
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    text-align: center;
+    padding-left: 4px;
+    padding-right: 8px;
+    vertical-align: middle;
+    background-color: var(--dpa-row-bg);
+    overflow: visible;
   }
-  .dpa-review-page #dpa-reviews-table thead th[data-col="actions"] { z-index: 5; }
-  .dpa-review-page .dpa-review-row:hover td[data-col="agreement"],
-  .dpa-review-page .dpa-review-row:hover td[data-col="actions"] { background: var(--sidebar-hover); }
+  .dpa-review-page .dpa-row-menu {
+    position: relative;
+    display: inline-block;
+  }
   @media (max-width: 900px) {
     .dpa-review-page .clm-list-summary { --dc-ds-summary-columns: 1; }
   }
@@ -85,9 +143,9 @@
   {% url 'contracts:dpa_review_pack_list' as dpa_list_url %}
 
   <form method="get" action="{{ dpa_list_url }}" id="dpa-review-filters-form">
-    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="DPA review workspace controls">
+    <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Privacy Reviews workspace controls">
       <div class="clm-list-view-header">
-        {% include "components/_workspace_tabs.html" with tabs=view_tabs aria_label="DPA review views" nav_class="clm-list-view-tabs" %}
+        {% include "components/_workspace_tabs.html" with tabs=view_tabs aria_label="Privacy Reviews views" nav_class="clm-list-view-tabs" %}
         <div class="clm-list-view-actions">
           {% if can_manage_playbook %}
           <a class="dc-ds-button dc-ds-button--ghost" href="{{ playbook_url }}">Manage playbook</a>
@@ -120,7 +178,10 @@
     <section id="dpa-review-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if search_query or selected_status or selected_role or selected_severity or selected_owner %} is-open{% endif %}" aria-label="Filters">
       <div class="clm-list-filter-drawer__header">
         <h2 class="clm-list-filter-drawer__title">Filters</h2>
-        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ dpa_list_url }}">Clear filters</a>
+        <div class="clm-list-filter-drawer__actions">
+          <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ dpa_list_url }}">Clear filters</a>
+          <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+        </div>
       </div>
       <div class="clm-list-filter-drawer__body">
         <label for="dpa-filter-status">Review status
@@ -156,14 +217,11 @@
             {% endfor %}
           </select>
         </label>
-        <div class="clm-list-filter-drawer__actions">
-          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
-        </div>
       </div>
     </section>
   </form>
 
-  <div class="dc-ds-summary clm-list-summary dpa-review-summary" aria-label="DPA review queue summary">
+  <div class="dc-ds-summary clm-list-summary dpa-review-summary" aria-label="Privacy Reviews queue summary">
     <div class="dc-ds-summary__item {% if needs_decision_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
       <span class="dc-ds-summary__label">Needs decision</span>
       <strong class="dc-ds-summary__value">{{ needs_decision_count }}</strong>
@@ -180,7 +238,7 @@
 
   <div class="dc-ds-table-wrap">
     <table id="dpa-reviews-table" class="dc-ds-table dc-ds-table--fixed" data-table-core="server">
-      <caption class="sr-only">Active DPA reviews with agreement, processing role, review state, owner, next action, and most recent update.</caption>
+      <caption class="sr-only">Active Privacy Reviews with agreement, processing role, review state, owner, next action, and most recent update.</caption>
       <thead>
         <tr>
           <th scope="col" data-col="agreement">Agreement</th>
@@ -216,12 +274,12 @@
           <td data-col="next_action"><span class="dpa-review-next-action">{{ row.next_action }}</span></td>
           <td data-col="updated" data-numeric>{{ row.pack.updated_at|date:"j M Y" }}</td>
           <td data-col="actions">
-            <details class="wq-kebab">
+            <details class="wq-kebab dpa-row-menu">
               <summary aria-label="More actions for {{ row.pack.contract.title }}" class="wq-kebab-trigger">&#8942;</summary>
-              <div class="wq-kebab-menu">
-                <a href="{{ row.detail_url }}">Open review</a>
-                <a href="{{ row.memo_url }}">View memo</a>
-                <a href="{{ row.contract_url }}">View contract record</a>
+              <div class="wq-kebab-menu" role="menu">
+                <a href="{{ row.detail_url }}" role="menuitem">Open review</a>
+                <a href="{{ row.memo_url }}" role="menuitem">View memo</a>
+                <a href="{{ row.contract_url }}" role="menuitem">View contract record</a>
               </div>
             </details>
           </td>
@@ -229,7 +287,7 @@
         {% empty %}
         <tr>
           <td colspan="7">
-            {% include "design_system/empty_state.html" with icon="shield" title="No active DPA reviews" reason="No governed contract in this workspace currently carries a Data Processing Agreement." how="Start a DPA review to open a review pack, or upload an existing DPA into the repository." action_url=start_dpa_url action_label="Start DPA review" class_name="dc-ds-empty--compact" %}
+            {% include "design_system/empty_state.html" with icon="shield" title="No active Privacy Reviews" reason="No governed privacy review packs are open in this workspace." how="Start a DPA review to open a review pack, or upload an existing DPA into the repository." action_url=start_dpa_url action_label="Start DPA review" class_name="dc-ds-empty--compact" %}
           </td>
         </tr>
         {% endfor %}

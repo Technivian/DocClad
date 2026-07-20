@@ -52,6 +52,25 @@ async function openWorkspaceActions(page) {
   await expect(menu).toHaveJSProperty('open', true);
 }
 
+async function clearDraftingBlockers(page) {
+  for (let i = 0; i < 20; i += 1) {
+    const resolveBtn = page.getByRole('button', { name: /Resolve \d+ exceptions?/ }).first();
+    if (!(await resolveBtn.count())) break;
+    await resolveBtn.click();
+    const drawer = page.getByRole('dialog', { name: 'Resolve exception' });
+    await expect(drawer).toBeVisible();
+    await drawer.getByRole('button', { name: 'Use approved wording' }).first().click();
+    await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
+  }
+  for (let i = 0; i < 30; i += 1) {
+    const confirmBtn = page.locator('[data-action-mode="confirm"]').first();
+    if (!(await confirmBtn.count())) break;
+    await confirmBtn.click();
+    await expect(page).toHaveURL(/\/contracts\/workflows\/\d+/);
+  }
+  await expect(page.getByText(/Send to Legal Review · blocked/)).toHaveCount(0);
+}
+
 /**
  * Minimal MSA generate for finance-threshold matrix (avoids unrelated finance triggers).
  */
@@ -162,6 +181,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 100000,
       confirmThreshold: false,
     });
+    await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
     await page.getByRole('menuitem', { name: 'Send to Finance' }).click();
@@ -169,7 +189,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     const exactUrl = page.url();
     await page.reload();
     await expect(page).toHaveURL(exactUrl);
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|open exception/i }).first().click();
+    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
     const exactDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(exactDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(exactDrawer).toContainText(/Finance|review|submitted|Audit|approval/i);
@@ -180,6 +200,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 100001,
       confirmThreshold: false,
     });
+    await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await expect(page.getByRole('menuitem', { name: 'Send to Finance' })).toBeVisible();
     await page.getByRole('menuitem', { name: 'Send to Finance' }).click();
@@ -195,6 +216,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
       value: 150000,
       confirmThreshold: true,
     });
+    await clearDraftingBlockers(page);
     await openWorkspaceActions(page);
     await page.getByRole('menuitem', { name: 'Send to Legal Review' }).click();
     await expect(page.getByText(/MSA submitted to .* for review/i).first()).toBeVisible();
@@ -202,7 +224,7 @@ test.describe('Verification: MSA finance threshold matrix', () => {
     await page.reload();
     await expect(page).toHaveURL(workflowUrl);
     // Governance drawer carries Audit details for MSA (no Activity rail tab).
-    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|open exception/i }).first().click();
+    await page.getByRole('button', { name: /Review Finance|Review MSA|Review privacy|Review generated|Review approval|Confirm drafting|open exception/i }).first().click();
     const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
     await expect(governanceDrawer.getByRole('heading', { name: 'Audit details' })).toBeVisible();
     await expect(governanceDrawer).toContainText(/Legal|review|submitted|Audit|approval/i);
@@ -233,8 +255,9 @@ test.describe('Verification: NDA supported actions', () => {
     await expect(page).toHaveURL(/\/contracts\/workflows\/\d+\/?$/);
     await expect(page.getByRole('button', { name: 'Send for signature' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Export Word' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Send to Legal Review' })).toHaveCount(0);
-    await page.getByRole('link', { name: 'View contract record' }).click();
+    await expect(page.getByText('Send to Legal Review · not required')).toBeVisible();
+    await page.locator('details.dc-ds-workspace__actions-menu summary').click();
+    await page.getByRole('menuitem', { name: 'View contract record' }).click();
     await expect(page).toHaveURL(/\/contracts\/\d+\/?$/);
     await page.reload();
     await expect(page.getByText(`Verify NDA ${suffix}`).first()).toBeVisible();

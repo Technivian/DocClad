@@ -62,7 +62,6 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await page.goto('/contracts/new/');
   await page.fill('input[name="title"]', title);
   await page.selectOption('select[name="contract_type"]', 'MSA');
-  await page.selectOption('select[name="status"]', 'DRAFT');
   await page.fill('input[name="counterparty"]', 'E2E Counterparty');
   await openPanel(page, 'legal-posture');
   await page.fill('input[name="value"]', '10000');
@@ -73,7 +72,6 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await openPanel(page, 'lifecycle-control');
   await page.fill('input[name="start_date"]', '2026-04-12');
   await page.fill('input[name="end_date"]', '2026-12-31');
-  await page.selectOption('select[name="lifecycle_stage"]', 'DRAFTING');
   await openPanel(page, 'draft-brief');
   await page.fill('textarea[name="content"]', 'Automated E2E contract body');
   await submitOwningForm(page, 'input[name="title"]');
@@ -88,14 +86,15 @@ test('critical contract create and edit flow works', async ({ page }) => {
   await expect(page.getByText('Contract details').first()).toBeVisible();
   await expect(page.getByText('Contract lifecycle').first()).toBeVisible();
   await expect(page.getByText('View full workflow')).toHaveCount(0);
+  // Compact header shows record status · workflow stage (never dual "Draft"/"Drafting").
+  await expect(page.getByText('In progress · Drafting').first()).toBeVisible();
   const detailUrl = page.url().replace(/\/$/, '');
   await page.goto(`${detailUrl}/edit/`);
   await expect(page).toHaveURL(/\/contracts\/\d+\/edit\/?$/);
 
-  // DRAFT can only transition to IN_REVIEW/PENDING/CANCELLED — not directly
-  // to ACTIVE (see CONTRACT_STATUS_TRANSITIONS in contract_lifecycle.py).
-  await page.selectOption('select[name="status"]', 'PENDING');
-  await submitOwningForm(page, 'select[name="status"]');
+  // Status and lifecycle_stage are governed (not free-edited on the form).
+  await page.fill('input[name="counterparty"]', 'E2E Counterparty Updated');
+  await submitOwningForm(page, 'input[name="counterparty"]');
   await expect(page).toHaveURL(/\/contracts\/repository\/?(\?.*)?$/);
 });
 
@@ -139,7 +138,6 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await page.goto('/contracts/new/');
   await page.fill('input[name="title"]', contractTitle);
   await page.selectOption('select[name="contract_type"]', 'MSA');
-  await page.selectOption('select[name="status"]', 'DRAFT');
   await page.fill('input[name="counterparty"]', 'Workflow Counterparty');
   await openPanel(page, 'legal-posture');
   await page.fill('input[name="value"]', '5000');
@@ -150,7 +148,6 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   await openPanel(page, 'lifecycle-control');
   await page.fill('input[name="start_date"]', '2026-04-12');
   await page.fill('input[name="end_date"]', '2026-12-31');
-  await page.selectOption('select[name="lifecycle_stage"]', 'DRAFTING');
   await openPanel(page, 'draft-brief');
   await page.fill('textarea[name="content"]', 'Workflow path contract body');
   await submitOwningForm(page, 'input[name="title"]');

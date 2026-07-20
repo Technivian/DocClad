@@ -13,8 +13,6 @@
     margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
     white-space: nowrap; min-width: 0; line-height: 1.2;
   }
-  .routing-rules-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
-  .routing-rules-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
   .routing-rules-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
   .routing-rules-page #routing-rules-table {
     min-width: 100%; width: 100%; table-layout: fixed;
@@ -27,16 +25,10 @@
   .routing-rules-page #routing-rules-table th[data-col="name"],
   .routing-rules-page #routing-rules-table td[data-col="name"] {
     position: sticky; left: 0; z-index: 2; min-width: 240px; width: 28%;
-    background: var(--card-bg, #fff);
+    background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
   .routing-rules-page #routing-rules-table thead th[data-col="name"] { z-index: 5; }
-  .routing-rules-page #routing-rules-table tbody tr:hover td {
-    background: var(--color-surface-table-head, var(--well));
-  }
-  .routing-rules-page #routing-rules-table tbody tr:hover td[data-col="name"] {
-    background: var(--color-surface-table-head, var(--well));
-  }
   .routing-rules-page #routing-rules-table th[data-col="trigger"],
   .routing-rules-page #routing-rules-table td[data-col="trigger"] { min-width: 140px; width: 14%; }
   .routing-rules-page #routing-rules-table th[data-col="value"],
@@ -89,7 +81,7 @@
 <div id="routing-rules-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page routing-rules-page">
   <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
     <div class="clm-list-view-header">
-      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
       <div class="clm-list-view-actions">
         {% include "contracts/approval_rule_list_actions.html" %}
       </div>

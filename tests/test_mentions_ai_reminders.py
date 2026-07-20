@@ -106,7 +106,7 @@ class MentionsAiAndReminderTests(TestCase):
             organization=self.organization,
             title='Member Owned NDA',
             contract_type=Contract.ContractType.NDA,
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.member_creator,
         )
         self.deadline = Deadline.objects.create(

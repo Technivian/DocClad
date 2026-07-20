@@ -1,0 +1,21 @@
+{% comment %}
+  Canonical lifecycle / stage progress track (Contract overview style).
+
+  Params:
+    steps       – iterable of {label, state} where state is done|current|upcoming|blocked
+                  OR pass step_label / step_state via loop variables when using alternate shapes
+    aria_label  – accessible name (required)
+    class_name  – optional extra classes on the <ol>
+{% endcomment %}
+<ol class="contract-progress-track contract-progress-track--lifecycle{% if class_name %} {{ class_name }}{% endif %}" aria-label="{{ aria_label }}">
+  {% for step in steps %}
+  <li
+    class="contract-progress-track__step contract-progress-track__step--{{ step.state|default:'upcoming' }}"
+    {% if step.state == 'current' %}aria-current="step"{% endif %}
+  >
+    <span class="contract-progress-track__dot" aria-hidden="true"></span>
+    <span class="contract-progress-track__label">{% if step.state == 'current' %}<strong>{{ step.label }}</strong>{% else %}{{ step.label }}{% endif %}</span>
+    {% if step.note %}<span class="contract-progress-track__note">{{ step.note }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ol>

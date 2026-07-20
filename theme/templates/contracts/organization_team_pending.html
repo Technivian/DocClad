@@ -1,25 +1,72 @@
-{% if invitations %}
-<div class="dc-ds-dense-list">
-  {% for invitation in invitations %}
-  <div class="dc-ds-dense-row">
-    <div class="dc-ds-dense-row__main">
-      <div class="dc-ds-dense-row__title">{{ invitation.email }}</div>
-      <div class="dc-ds-dense-row__meta">{{ invitation.get_role_display }} · Expires {{ invitation.expires_at|date:"M j, Y g:i A" }}</div>
-    </div>
-    <div class="dc-ds-dense-row__actions">
-      <form method="post" action="{% url 'contracts:resend_organization_invite' invitation.id %}">
-        {% csrf_token %}
-        <button type="submit" class="dc-ds-button dc-ds-button--ghost">Resend</button>
-      </form>
-      <form method="post" action="{% url 'contracts:revoke_organization_invite' invitation.id %}"
-            data-confirm="Revoke this invitation? The recipient will no longer be able to join.">
-        {% csrf_token %}
-        <button type="submit" class="dc-ds-button dc-ds-button--ghost c-danger">Revoke</button>
-      </form>
-    </div>
-  </div>
-  {% endfor %}
+{% if invitation_rows %}
+<div class="dc-ds-table-wrap org-team-table-wrap">
+  <table class="dc-ds-table org-team-table" aria-label="Pending organization invitations">
+    <thead>
+      <tr>
+        <th scope="col">Email</th>
+        <th scope="col">Assigned role</th>
+        <th scope="col">Invited by</th>
+        <th scope="col">Sent date</th>
+        <th scope="col">Expiry date</th>
+        <th scope="col">Status</th>
+        <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in invitation_rows %}
+      <tr>
+        <td>{{ row.invitation.email }}</td>
+        <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.invitation.get_role_display }}</span></td>
+        <td class="c-muted">{{ row.invited_by }}</td>
+        <td class="c-muted">{{ row.invitation.created_at|date:"j M Y" }}</td>
+        <td class="c-muted">{% if row.invitation.expires_at %}{{ row.invitation.expires_at|date:"j M Y" }}{% else %}—{% endif %}</td>
+        <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status.tone }}">{{ row.status.label }}</span></td>
+        <td class="text-right org-team-actions-cell">
+          <details class="wq-kebab org-team-kebab">
+            <summary class="wq-kebab-trigger" aria-label="Actions for invitation {{ row.invitation.email }}">⋯</summary>
+            <div class="wq-kebab-menu" role="menu">
+              {% if not row.is_expired %}
+              <form method="post" action="{% url 'contracts:resend_organization_invite' row.invitation.id %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Resend</button>
+              </form>
+              <button
+                type="button"
+                class="wq-kebab-action"
+                role="menuitem"
+                data-copy-invite-link
+                data-invite-url="{{ row.invite_url }}"
+              >Copy invitation link</button>
+              <button
+                type="button"
+                class="wq-kebab-action"
+                role="menuitem"
+                data-open-role-dialog
+                data-action-url="{% url 'contracts:update_invitation_role' row.invitation.id %}"
+                data-member-name="{{ row.invitation.email }}"
+                data-current-role="{{ row.invitation.role }}"
+                data-assignable-roles='[{% for value, label in assignable_roles %}{"value":"{{ value }}","label":"{{ label }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'
+              >Change role</button>
+              {% else %}
+              <form method="post" action="{% url 'contracts:resend_organization_invite' row.invitation.id %}" role="none">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action" role="menuitem">Resend as new invitation</button>
+              </form>
+              {% endif %}
+              <div class="wq-kebab-divider" role="separator"></div>
+              <form method="post" action="{% url 'contracts:revoke_organization_invite' row.invitation.id %}" role="none"
+                    data-confirm="Revoke the invitation for {{ row.invitation.email }}?">
+                {% csrf_token %}
+                <button type="submit" class="wq-kebab-action wq-kebab-action-danger" role="menuitem">Revoke</button>
+              </form>
+            </div>
+          </details>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with icon="user-plus" title="No pending invitations" reason="Every issued invitation has been accepted, revoked, or expired." how="New invitations remain here until the recipient joins the workspace." action_url="#organization-team-invite" action_label="Invite a member" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+  {% include "design_system/empty_state.html" with icon="user-plus" title="No pending invitations" reason="There are no outstanding invitations for this organization." how="Use Invite member to send a secure join link with a role assignment." class_name="dc-ds-empty--compact" %}
 {% endif %}

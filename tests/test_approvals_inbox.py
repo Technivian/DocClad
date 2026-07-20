@@ -87,7 +87,7 @@ class ApprovalsQueueTabFilteringTests(TestCase):
             OrganizationMembership.objects.create(organization=self.organization, user=u, role=OrganizationMembership.Role.MEMBER, is_active=True)
 
         self.contract = Contract.objects.create(
-            organization=self.organization, title='Tab Contract', content='Seed', status='PENDING',
+            organization=self.organization, title='Tab Contract', content='Seed', status='IN_PROGRESS',
             created_by=self.requester,
         )
 
@@ -181,7 +181,7 @@ class ApprovalsRowComponentTests(TestCase):
     def test_row_renders_stage_dots_assignee_chip_and_activity_line(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Component Row Contract', content='Seed',
-            status='PENDING', lifecycle_stage='NEGOTIATION', created_by=self.user,
+            status='IN_PROGRESS', lifecycle_stage='NEGOTIATION', created_by=self.user,
         )
         ar = ApprovalRequest.objects.create(
             organization=self.organization, contract=contract, approval_step='LEGAL',
@@ -213,7 +213,7 @@ class ApprovalsActionEligibilityTests(TestCase):
             OrganizationMembership.objects.create(organization=self.organization, user=u, role=OrganizationMembership.Role.MEMBER, is_active=True)
 
         self.contract = Contract.objects.create(
-            organization=self.organization, title='Action Contract', content='Seed', status='PENDING',
+            organization=self.organization, title='Action Contract', content='Seed', status='IN_PROGRESS',
             created_by=self.creator,
         )
         self.ar = ApprovalRequest.objects.create(
@@ -371,7 +371,7 @@ class ApprovalsCrossTenantIsolationTests(TestCase):
         OrganizationMembership.objects.create(organization=self.org_b, user=self.user_b, role=OrganizationMembership.Role.MEMBER, is_active=True)
 
         self.contract_a = Contract.objects.create(
-            organization=self.org_a, title='Org A Contract', content='Seed', status='PENDING', created_by=self.user_a,
+            organization=self.org_a, title='Org A Contract', content='Seed', status='IN_PROGRESS', created_by=self.user_a,
         )
         self.ar_a = ApprovalRequest.objects.create(
             organization=self.org_a, contract=self.contract_a, approval_step='LEGAL', status='PENDING', assigned_to=self.user_a,
@@ -408,7 +408,7 @@ class ApprovalsCopyQualityTests(TestCase):
     def test_no_raw_internals_leak_into_the_page(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Copy Quality Contract', content='Seed',
-            status='PENDING', created_by=self.user,
+            status='IN_PROGRESS', created_by=self.user,
         )
         ApprovalRequest.objects.create(
             organization=self.organization, contract=contract, approval_step='COMPLIANCE',
@@ -468,4 +468,8 @@ class ApprovalsShellConvergenceTests(TestCase):
         html = response.content.decode()
         self.assertIn('clm-list-shell', html)
         self.assertIn('dc-ds-list-toolbar', html)
-        self.assertIn('topbar-page-title">Workflow Operations', html)
+        self.assertIn('topbar-page-title">Reviews &amp; Approvals', html)
+        self.assertIn('clm-list-view-tabs', html)
+        self.assertIn('approvals-queue-chip', html)
+        self.assertIn('aria-label="Approval queue filters"', html)
+        self.assertNotIn('approvals-queue-tabs', html)

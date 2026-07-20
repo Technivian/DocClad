@@ -21,7 +21,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
-from django.views.generic import TemplateView # Import TemplateView
+from django.views.generic import RedirectView, TemplateView # Import TemplateView
 from contracts import views as contract_views
 from contracts.api import views as contract_api_views
 from django.contrib.auth import views as auth_views
@@ -48,7 +48,10 @@ urlpatterns = [
     path('saml/<slug:organization_slug>/logout/', contract_views.saml_logout, name='saml_logout'),
     path('saml/<slug:organization_slug>/metadata/', contract_views.saml_metadata, name='saml_metadata'),
     path('contracts/', include('contracts.urls')),
-    path('profile/', contract_views.profile, name='profile'),
+    path('settings/profile/', contract_views.profile, name='profile'),
+    path('settings/profile/sessions/', contract_views.profile_sessions, name='profile_sessions'),
+    path('settings/profile/password/', contract_views.ProfilePasswordChangeView.as_view(), name='profile_password_change'),
+    path('profile/', RedirectView.as_view(pattern_name='profile', permanent=False)),
     path('settings/', contract_views.settings_hub, name='settings_hub'),
     path('settings/organization-security/', contract_views.organization_security_settings, name='organization_security_settings'),
     path('settings/organization-security/export/', contract_views.organization_security_export, name='organization_security_export'),

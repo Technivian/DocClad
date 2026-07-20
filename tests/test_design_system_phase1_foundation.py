@@ -209,12 +209,8 @@ class DesignSystemPhaseOneFoundationTests(SimpleTestCase):
         ):
             content = (self.theme / 'templates' / template_name).read_text()
             with self.subTest(template=template_name):
-                # DPA pilot workspace intentionally omits primary CTAs that would be inert
-                # (Governance Charter honesty). NDA/MSA may still include a real primary.
-                if template_name.endswith('dpa_contract_workspace.html'):
-                    self.assertNotIn('dc-ds-button--primary', content)
-                else:
-                    self.assertIn('dc-ds-button--primary', content)
+                # All three drafting workspaces now expose real primary CTAs.
+                self.assertIn('dc-ds-button--primary', content)
                 self.assertIn('dc-ds-badge--sm', content)
                 self.assertIn('View contract record', content)
                 self.assertNotIn('dc-ds-workspace__cta', content)

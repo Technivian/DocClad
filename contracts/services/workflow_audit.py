@@ -297,6 +297,27 @@ def log_workflow_template_step_added(template_step: WorkflowTemplateStep, user, 
     )
 
 
+def log_workflow_template_step_updated(template_step: WorkflowTemplateStep, user, changes=None, request=None):
+    _log(
+        user,
+        AuditLog.Action.UPDATE,
+        'WorkflowTemplateStep',
+        template_step.pk,
+        template_step.name,
+        changes=_build_payload(
+            'workflow_template_step_updated',
+            organization_id=template_step.template.organization_id,
+            template_id=template_step.template_id,
+            template_name=template_step.template.name,
+            step_name=template_step.name,
+            step_kind=template_step.step_kind,
+            order=template_step.order,
+            changes=changes or {},
+        ),
+        request=request,
+    )
+
+
 def log_workflow_template_step_deleted(template_step_data: dict[str, Any], template: WorkflowTemplate, user, request=None):
     _log(
         user,
@@ -443,6 +464,12 @@ def _summarize_changes(log: AuditLog) -> str:
         return 'Published template' if changes.get('new_status') else 'Unpublished template'
     if event == 'workflow_preview_run':
         return 'Template preview run'
+    if event == 'workflow_template_step_updated':
+        return f"Template step updated: {changes.get('step_name') or log.object_repr}"
+    if event == 'workflow_template_scenario_saved':
+        return f"Saved scenario: {changes.get('scenario_name') or log.object_repr}"
+    if event == 'workflow_template_audit_exported':
+        return 'Audit log exported'
     return log.object_repr or log.model_name
 
 
@@ -486,3 +513,165 @@ def get_workflow_template_audit_feed(template: WorkflowTemplate, limit: Optional
     if limit is not None:
         queryset = queryset[:limit]
     return build_audit_feed(queryset)
+
+
+def template_version_provenance(template: WorkflowTemplate) -> dict[str, Any]:
+    """Best-effort created-by / published-at from the template audit trail."""
+    created_by = None
+    published_by = None
+    published_at = None
+    logs = list(
+        _workflow_template_audit_queryset(template)
+        .select_related('user')
+        .order_by('timestamp', 'pk')[:80]
+    )
+    for log in logs:
+        changes = log.changes or {}
+        event = changes.get('event')
+        if created_by is None and log.user_id and event in {
+            'workflow_template_created',
+            'workflow_template_cloned',
+            'workflow_template_restored',
+        }:
+            created_by = _display_user(log.user)
+        if event == 'workflow_template_publish_toggled' and changes.get('new_status'):
+            published_at = log.timestamp
+            if log.user_id:
+                published_by = _display_user(log.user)
+    if created_by is None:
+        for log in logs:
+            if log.user_id:
+                created_by = _display_user(log.user)
+                break
+    return {
+        'created_by': created_by,
+        'published_by': published_by,
+        'published_at': published_at,
+    }
+
+
+def build_workflow_template_audit_rows(
+    template: WorkflowTemplate,
+    *,
+    actor: str = '',
+    event_type: str = '',
+    version: str = '',
+    date_from=None,
+    date_to=None,
+    limit: Optional[int] = 200,
+) -> list[dict[str, Any]]:
+    """Audit-trail workspace rows with previous/new values and filters."""
+    queryset = _workflow_template_audit_queryset(template).select_related('user').order_by('-timestamp', '-pk')
+    if actor:
+        queryset = queryset.filter(
+            Q(user__username__icontains=actor)
+            | Q(user__first_name__icontains=actor)
+            | Q(user__last_name__icontains=actor)
+            | Q(user__email__icontains=actor)
+        )
+    if event_type:
+        event_needles = [part.strip() for part in str(event_type).split(',') if part.strip()]
+        event_q = Q()
+        for needle in event_needles:
+            event_q |= (
+                Q(event_type__icontains=needle)
+                | Q(action__iexact=needle)
+                | Q(changes__event__icontains=needle)
+            )
+        queryset = queryset.filter(event_q)
+    if date_from:
+        queryset = queryset.filter(timestamp__date__gte=date_from)
+    if date_to:
+        queryset = queryset.filter(timestamp__date__lte=date_to)
+    if limit is not None:
+        queryset = queryset[:limit]
+
+    rows = []
+    version_needle = (version or '').strip().lstrip('vV')
+    for log in queryset:
+        changes = log.changes or {}
+        field_changes = changes.get('field_changes') or changes.get('changes') or []
+        if isinstance(field_changes, dict):
+            # Nested "changes" payload from step updates.
+            nested = field_changes.get('field_changes') if isinstance(field_changes, dict) else None
+            field_changes = nested or [
+                {'field': key, 'from': value.get('from') if isinstance(value, dict) else None, 'to': value.get('to') if isinstance(value, dict) else value}
+                for key, value in (field_changes.items() if isinstance(field_changes, dict) else [])
+            ]
+        previous_parts = []
+        new_parts = []
+        for item in field_changes if isinstance(field_changes, list) else []:
+            field = item.get('field') or item.get('name') or ''
+            before = item.get('from', item.get('before', '—'))
+            after = item.get('to', item.get('after', '—'))
+            if field:
+                previous_parts.append(f'{field}: {before}')
+                new_parts.append(f'{field}: {after}')
+        if not previous_parts and changes.get('old_status') is not None:
+            previous_parts.append(f"published: {changes.get('old_status')}")
+            new_parts.append(f"published: {changes.get('new_status')}")
+        version_label = (
+            changes.get('new_template_version')
+            or changes.get('restored_template_version')
+            or changes.get('source_template_version')
+            or template.version
+        )
+        if version_needle and str(version_label) != version_needle:
+            continue
+        rows.append({
+            'timestamp': log.timestamp,
+            'actor': _display_user(log.user),
+            'action': log.get_action_display(),
+            'event': changes.get('event') or log.event_type or log.action,
+            'summary': _summarize_changes(log),
+            'affected': (
+                changes.get('step_name')
+                or changes.get('field')
+                or log.object_repr
+                or log.model_name
+            ),
+            'previous_value': '; '.join(previous_parts) if previous_parts else '—',
+            'new_value': '; '.join(new_parts) if new_parts else (_summarize_changes(log) or '—'),
+            'version': f'v{version_label}' if version_label is not None else '—',
+            'source': changes.get('source') or log.actor_type or 'app',
+            'event_id': str(log.pk),
+            'details': changes,
+            'log': log,
+        })
+    return rows
+
+
+def log_workflow_template_scenario_saved(template: WorkflowTemplate, scenario_name: str, user, request=None):
+    _log(
+        user,
+        AuditLog.Action.CREATE,
+        'WorkflowTemplateScenario',
+        template.pk,
+        scenario_name,
+        changes=_build_payload(
+            'workflow_template_scenario_saved',
+            organization_id=template.organization_id,
+            template_id=template.pk,
+            template_name=template.name,
+            scenario_name=scenario_name,
+        ),
+        request=request,
+    )
+
+
+def log_workflow_template_audit_exported(template: WorkflowTemplate, user, request=None, row_count: int = 0):
+    _log(
+        user,
+        AuditLog.Action.EXPORT,
+        'WorkflowTemplate',
+        template.pk,
+        template.name,
+        changes=_build_payload(
+            'workflow_template_audit_exported',
+            organization_id=template.organization_id,
+            template_id=template.pk,
+            template_name=template.name,
+            row_count=row_count,
+        ),
+        request=request,
+    )

@@ -53,7 +53,7 @@ class RedesignComponentsTestCase(TestCase):
             organization=self.organization,
             title='Component Label Contract Needing Review',
             content='Seed so the Legal Pulse metric has a nonzero value.',
-            status='PENDING',
+            status='IN_PROGRESS',
             created_by=self.user,
         )
         self._enable_clm_dashboard()
@@ -70,7 +70,7 @@ class RedesignComponentsTestCase(TestCase):
             organization=self.organization,
             title='Test Contract',
             content='Test content',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user,
         )
 
@@ -89,10 +89,14 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'Command Center')
         self.assertContains(response, 'New Contract')
         self.assertContains(response, 'Contracts')
-        self.assertContains(response, 'DPA Reviews')
+        self.assertContains(response, 'Privacy Reviews')
         self.assertContains(response, 'Obligations')
+        self.assertContains(response, 'My Work')
+        self.assertContains(response, 'Reviews &amp; Approvals')
         self.assertContains(response, 'role="menuitem">Settings</a>')
         self.assertNotContains(response, 'RISK &amp; COMPLIANCE')
+        self.assertNotContains(response, 'Upload &amp; Review')
+        self.assertNotContains(response, 'DPA Reviews')
 
     def test_accessibility_and_responsive_markers(self):
         response = self.client.get(reverse('dashboard'))

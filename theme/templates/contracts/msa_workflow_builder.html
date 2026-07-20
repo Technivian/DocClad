@@ -27,14 +27,7 @@
 .msa-command-metric { min-width: 0; padding: 9px 11px; border: 1px solid var(--card-border); border-radius: 8px; background: var(--well); }
 .msa-command-label { display: block; color: var(--text-muted); font-size: 9.5px; line-height: 1.2; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
 .msa-command-value { display: block; margin-top: 3px; color: var(--text-primary); font-size: 12px; line-height: 1.25; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.msa-stage-track { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); align-items:start; gap:0; }
-.msa-stage-step { position:relative; min-width:0; padding-top:4px; text-align:center; }
-.msa-stage-step:not(:last-child)::after { content:''; position:absolute; top:13px; left:calc(50% + 14px); right:calc(-50% + 14px); height:1px; background:var(--border); }
-.msa-stage-dot { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; width:20px; height:20px; margin:0 auto 6px; border-radius:50%; border:0; background:var(--ink-200); color:transparent; font-size:10px; font-weight:800; }
-.msa-stage-step.is-active .msa-stage-dot { border:4px solid var(--seal); background:var(--card); color:transparent; }
-.msa-stage-step.is-ready .msa-stage-dot { background:var(--seal); color:#fff; }
-.msa-stage-name { display:block; color:var(--ink-500); font-size:10px; line-height:1.2; font-weight:700; }
-.msa-stage-step.is-active .msa-stage-name { color:var(--ink-900); font-weight:750; }
+.msa-summary-card > .contract-progress-track { grid-column: 1 / -1; padding-top: var(--space-8); border-top: 1px solid var(--line); }
 .msa-guide-panel { padding: 13px 15px; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card-bg); }
 .msa-guide-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .msa-guide-title { margin: 0; color: var(--text-primary); font-size: 12px; font-weight: 800; }
@@ -131,7 +124,6 @@
 }
 @media (max-width: 640px) {
   .msa-command-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .msa-stage-name { white-space: normal; overflow-wrap: anywhere; }
 }
 
 /* Command Center-aligned drafting composition. Shared dc-ds surface, button,
@@ -147,9 +139,6 @@
 .msa-summary-fact { min-width: 0; }
 .msa-summary-fact span { display: block; color: var(--ink-500); font: var(--text-eyebrow); }
 .msa-summary-fact strong { display: block; margin-top: var(--space-4); overflow-wrap: anywhere; color: var(--ink-900); font: var(--text-small); font-weight: 700; }
-.msa-stage-track { grid-column: 1 / -1; padding-top: var(--space-8); border-top: 1px solid var(--line); }
-.msa-stage-name { font-size: var(--font-size-meta); }
-.msa-stage-step.is-active .msa-stage-name { color: var(--seal-dark); font-weight: 800; }
 .msa-workspace-grid { display: grid; grid-template-columns: minmax(300px, .82fr) minmax(440px, 1.35fr) minmax(280px, .78fr); gap: var(--space-24); align-items: start; margin-top: var(--space-24); }
 .msa-workspace-grid > * { min-width: 0; }
 .msa-workspace-grid > :is(.arch-workspace-main, .arch-workspace-draft, .arch-workspace-sidebar) { grid-column: auto; }
@@ -226,13 +215,28 @@
         <div class="msa-summary-fact"><span>Next action</span><strong id="msa-command-action">Complete inputs</strong></div>
         <div class="msa-summary-fact"><span>Approval route</span><strong id="msa-command-route">Owner → Signature</strong></div>
       </div>
-      <div class="msa-stage-track" aria-label="MSA workflow stages">
-        <div class="msa-stage-step is-active"><span class="msa-stage-dot">1</span><span class="msa-stage-name">Intake</span></div>
-        <div class="msa-stage-step"><span class="msa-stage-dot">2</span><span class="msa-stage-name">Draft generation</span></div>
-        <div class="msa-stage-step"><span class="msa-stage-dot">3</span><span class="msa-stage-name">Commercial review</span></div>
-        <div class="msa-stage-step"><span class="msa-stage-dot">4</span><span class="msa-stage-name">Legal approval</span></div>
-        <div class="msa-stage-step"><span class="msa-stage-dot">5</span><span class="msa-stage-name">Signature</span></div>
-      </div>
+      <ol class="contract-progress-track contract-progress-track--lifecycle" aria-label="MSA workflow stages">
+        <li class="contract-progress-track__step contract-progress-track__step--current" aria-current="step">
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label"><strong>Intake</strong></span>
+        </li>
+        <li class="contract-progress-track__step">
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label">Draft generation</span>
+        </li>
+        <li class="contract-progress-track__step">
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label">Commercial review</span>
+        </li>
+        <li class="contract-progress-track__step">
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label">Legal approval</span>
+        </li>
+        <li class="contract-progress-track__step">
+          <span class="contract-progress-track__dot" aria-hidden="true"></span>
+          <span class="contract-progress-track__label">Signature</span>
+        </li>
+      </ol>
     </section>
 
     <div class="msa-workspace-grid">

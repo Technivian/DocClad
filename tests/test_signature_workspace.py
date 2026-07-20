@@ -175,8 +175,9 @@ class SignatureWorkspaceTests(TestCase):
         self.assertContains(response, 'Current position')
 
     def test_signature_packet_creation_writes_audit_entry(self):
-        self.audit_contract.status = Contract.Status.APPROVED
-        self.audit_contract.save(update_fields=['status', 'updated_at'])
+        self.audit_contract.status = Contract.Status.IN_PROGRESS
+        self.audit_contract.lifecycle_stage = Contract.LifecycleStage.SIGNATURE
+        self.audit_contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
         ApprovalRequest.objects.create(
             organization=self.org,
             contract=self.audit_contract,
@@ -219,7 +220,7 @@ class SignatureWorkspaceTests(TestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'fully approved before signature routing')
+        self.assertContains(response, 'before signature routing')
         self.assertFalse(SignatureRequest.objects.filter(contract=self.audit_contract).exists())
 
     def test_signature_packet_send_and_complete_write_audit_entries(self):

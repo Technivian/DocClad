@@ -19,7 +19,10 @@ from contracts.models import (
     Organization,
     OrganizationMembership,
 )
-from contracts.services.contract_lifecycle import InvalidContractTransition, get_contract_lifecycle_service
+from contracts.services.contract_lifecycle import (
+    ContractTransitionError,
+    get_contract_lifecycle_service,
+)
 
 
 User = get_user_model()
@@ -53,7 +56,7 @@ class MVPVerticalSliceTests(TestCase):
             'title': 'Acme Mutual NDA',
             'contract_type': Contract.ContractType.NDA,
             'content': self.template.body,
-            'status': Contract.Status.DRAFT,
+            'status': Contract.Status.IN_PROGRESS,
             'counterparty': 'Acme B.V.',
             'owner': self.owner.pk,
             'value': '125000.00',
@@ -108,12 +111,12 @@ class MVPVerticalSliceTests(TestCase):
         contract = Contract.objects.get(title='Acme Mutual NDA')
         self.assertEqual(contract.organization, self.org)
         self.assertEqual(contract.owner, self.owner)
-        self.assertEqual(contract.status, Contract.Status.DRAFT)
+        self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
         self.assertEqual(contract.content, self.template.body)
 
         repository = self.client.get(
             reverse('contracts:contracts_api'),
-            {'q': 'Acme Mutual', 'status': Contract.Status.DRAFT, 'sort': 'title'},
+            {'q': 'Acme Mutual', 'status': Contract.Status.IN_PROGRESS, 'sort': 'title'},
         )
         self.assertEqual(repository.status_code, 200)
         self.assertEqual(repository.json()['total_count'], 1)
@@ -128,7 +131,8 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(submitted.status_code, 302)
         first_approval = ApprovalRequest.objects.get(contract=contract)
         contract.refresh_from_db()
-        self.assertEqual(contract.status, Contract.Status.PENDING)
+        self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(contract.lifecycle_stage, Contract.LifecycleStage.APPROVAL)
         self.assertEqual(first_approval.assigned_to, self.reviewer)
 
         forbidden = self.client.post(
@@ -149,7 +153,8 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(changes.status_code, 302)
         contract.refresh_from_db()
         first_approval.refresh_from_db()
-        self.assertEqual(contract.status, Contract.Status.DRAFT)
+        self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(contract.lifecycle_stage, Contract.LifecycleStage.DRAFTING)
         self.assertEqual(first_approval.status, ApprovalRequest.Status.CHANGES_REQUESTED)
 
         self.login(self.owner)
@@ -172,7 +177,8 @@ class MVPVerticalSliceTests(TestCase):
         self.assertEqual(approved.status_code, 302)
         contract.refresh_from_db()
         second_approval.refresh_from_db()
-        self.assertEqual(contract.status, Contract.Status.APPROVED)
+        self.assertEqual(contract.status, Contract.Status.IN_PROGRESS)
+        self.assertEqual(contract.lifecycle_stage, Contract.LifecycleStage.SIGNATURE)
         self.assertEqual(contract.approved_by, self.reviewer)
         self.assertEqual(second_approval.status, ApprovalRequest.Status.APPROVED)
 
@@ -356,7 +362,7 @@ class MVPVerticalSliceTests(TestCase):
             404,
         )
 
-        with self.assertRaises(InvalidContractTransition):
+        with self.assertRaises(ContractTransitionError):
             get_contract_lifecycle_service().transition(contract, Contract.Status.ACTIVE, self.owner)
 
         csrf_client = Client(enforce_csrf_checks=True)

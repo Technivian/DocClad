@@ -47,6 +47,10 @@ class ContractSearchAPIService:
         if status:
             qs = qs.filter(status=status)
 
+        lifecycle_stage = filters.get('lifecycle_stage')
+        if lifecycle_stage:
+            qs = qs.filter(lifecycle_stage=lifecycle_stage)
+
         contract_type = filters.get('contract_type')
         if contract_type:
             qs = qs.filter(contract_type=contract_type)
@@ -72,6 +76,7 @@ class ContractSearchAPIService:
                 'id': c.id,
                 'title': c.title,
                 'status': c.status,
+                'lifecycle_stage': c.lifecycle_stage,
                 'contract_type': c.contract_type,
                 'counterparty': c.counterparty,
                 'created_at': c.created_at.isoformat() if c.created_at else None,
@@ -94,6 +99,9 @@ class ContractSearchAPIService:
         statuses = list(
             base_qs.values('status').annotate(count=Count('status')).order_by('-count')
         )
+        stages = list(
+            base_qs.values('lifecycle_stage').annotate(count=Count('lifecycle_stage')).order_by('-count')
+        )
         contract_types = list(
             base_qs.values('contract_type').annotate(count=Count('contract_type')).order_by('-count')
         )
@@ -103,6 +111,7 @@ class ContractSearchAPIService:
 
         return {
             'statuses': [{'value': r['status'], 'count': r['count']} for r in statuses],
+            'lifecycle_stages': [{'value': r['lifecycle_stage'], 'count': r['count']} for r in stages],
             'contract_types': [{'value': r['contract_type'], 'count': r['count']} for r in contract_types],
             'jurisdictions': [{'value': r['jurisdiction'], 'count': r['count']} for r in jurisdictions],
         }

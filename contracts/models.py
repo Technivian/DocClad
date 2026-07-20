@@ -209,6 +209,8 @@ class UserProfile(models.Model):
     date_format = models.CharField(max_length=16, choices=DateFormat.choices, default=DateFormat.DMY_LONG)
     notify_contract_updates = models.BooleanField(default=True)
     notify_workflow_events = models.BooleanField(default=True)
+    notify_review_approval_requests = models.BooleanField(default=True)
+    notify_obligation_reminders = models.BooleanField(default=True)
     notify_security_alerts = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -2316,6 +2318,30 @@ class WorkflowTemplate(models.Model):
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_workflow_templates',
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='published_workflow_templates',
+    )
+    fallback_signer = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='workflow_template_fallback_signers',
+        help_text='Optional governed fallback when a Signature step has no signer configuration. '
+                  'When set, new launches may route to this signer instead of being blocked.',
+    )
 
     class Meta:
         ordering = ['name', '-version', '-created_at']
@@ -2324,10 +2350,48 @@ class WorkflowTemplate(models.Model):
         return self.name
 
 
+class WorkflowTemplateScenario(models.Model):
+    """Named Test-tab scenario payloads for a workflow template lineage."""
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='workflow_template_scenarios',
+    )
+    template = models.ForeignKey(
+        WorkflowTemplate,
+        on_delete=models.CASCADE,
+        related_name='test_scenarios',
+    )
+    name = models.CharField(max_length=120)
+    payload = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['template', 'name'],
+                name='wf_template_scenario_name_uniq',
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class WorkflowTemplateStep(models.Model):
     class StepKind(models.TextChoices):
         TASK = 'TASK', 'Task'
+        REVIEW = 'REVIEW', 'Review'
         APPROVAL = 'APPROVAL', 'Approval'
+        SIGNATURE = 'SIGNATURE', 'Signature'
+        AUTOMATION = 'AUTOMATION', 'Automation'
+        NOTIFICATION = 'NOTIFICATION', 'Notification'
+        CONDITION = 'CONDITION', 'Condition'
+        # Legacy aliases retained for migration/read compatibility until remapped.
         AUTOMATIC = 'AUTOMATIC', 'Automatic'
         BRANCH = 'BRANCH', 'Branch'
 
@@ -2337,7 +2401,12 @@ class WorkflowTemplateStep(models.Model):
     order = models.PositiveIntegerField(default=0)
     estimated_duration = models.DurationField(null=True, blank=True)
     step_kind = models.CharField(max_length=20, choices=StepKind.choices, default=StepKind.TASK)
-    condition_expression = models.CharField(max_length=255, blank=True, help_text='Example: value>=250000 or data_transfer=true')
+    condition_expression = models.CharField(
+        max_length=512,
+        blank=True,
+        help_text='Compiled condition expression (legacy-compatible). Prefer condition_rules.',
+    )
+    condition_rules = models.JSONField(null=True, blank=True, default=None)
     assignee_role = models.CharField(max_length=20, choices=UserProfile.Role.choices, blank=True)
     specific_assignee = models.ForeignKey(
         User,
@@ -2356,11 +2425,13 @@ class WorkflowTemplateStep(models.Model):
         return f"{self.template.name} - {self.name}"
 
     def applies_to_contract(self, contract):
-        if not self.condition_expression.strip():
+        rules = getattr(self, 'condition_rules', None)
+        expression = (self.condition_expression or '').strip()
+        if not rules and not expression:
             return True
         try:
-            from contracts.services.workflow_execution import evaluate_condition_expression
-            return evaluate_condition_expression(contract, self.condition_expression)
+            from contracts.services.workflow_execution import evaluate_step_condition
+            return evaluate_step_condition(contract, self)
         except Exception:
             return False
 

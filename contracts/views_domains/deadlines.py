@@ -288,7 +288,7 @@ class DeadlineCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
-    success_url = reverse_lazy('contracts:deadline_list')
+    success_url = reverse_lazy('contracts:obligations_workspace')
     scoped_form_fields = {
         'matter': Matter,
         'contract': Contract,
@@ -327,7 +327,7 @@ class DeadlineUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
     model = Deadline
     form_class = DeadlineForm
     template_name = 'contracts/deadline_form.html'
-    success_url = reverse_lazy('contracts:deadline_list')
+    success_url = reverse_lazy('contracts:obligations_workspace')
     scoped_form_fields = {
         'matter': Matter,
         'contract': Contract,

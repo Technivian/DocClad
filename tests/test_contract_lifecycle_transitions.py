@@ -36,8 +36,18 @@ def _member(org, username, role=OrganizationMembership.Role.OWNER):
     return u
 
 
-def _contract(org, creator, status='DRAFT'):
-    return Contract.objects.create(organization=org, title='C', created_by=creator, status=status)
+def _contract(org, creator, status='IN_PROGRESS', lifecycle_stage=None):
+    kwargs = {
+        'organization': org,
+        'title': 'C',
+        'created_by': creator,
+        'status': status,
+    }
+    if lifecycle_stage is not None:
+        kwargs['lifecycle_stage'] = lifecycle_stage
+    elif status == Contract.Status.ACTIVE:
+        kwargs['lifecycle_stage'] = Contract.LifecycleStage.OBLIGATION_TRACKING
+    return Contract.objects.create(**kwargs)
 
 
 def _approve(contract):
@@ -54,17 +64,17 @@ class TransitionGraphTests(TestCase):
         self.svc = get_contract_lifecycle_service()
 
     def test_allowed_simple_transition(self):
-        c = _contract(self.org, self.user, status='DRAFT')
-        self.svc.transition(c, 'IN_REVIEW', self.user)
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
+        self.svc.transition(c, 'CANCELLED', self.user)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'IN_REVIEW')
+        self.assertEqual(c.status, 'CANCELLED')
 
     def test_forbidden_direct_jump_rejected(self):
-        c = _contract(self.org, self.user, status='DRAFT')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         with self.assertRaises(InvalidContractTransition):
-            self.svc.transition(c, 'COMPLETED', self.user)
+            self.svc.transition(c, 'EXPIRED', self.user)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'DRAFT')
+        self.assertEqual(c.status, 'IN_PROGRESS')
 
     def test_terminal_state_cannot_reverse(self):
         c = _contract(self.org, self.user, status='EXPIRED')
@@ -72,25 +82,25 @@ class TransitionGraphTests(TestCase):
             self.svc.transition(c, 'ACTIVE', self.user)
 
     def test_idempotent_same_status_is_noop(self):
-        c = _contract(self.org, self.user, status='DRAFT')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         before = AuditLog.objects.count()
-        self.svc.transition(c, 'DRAFT', self.user)
+        self.svc.transition(c, 'IN_PROGRESS', self.user)
         self.assertEqual(AuditLog.objects.count(), before)  # no audit, no error
 
     def test_active_requires_approval(self):
-        c = _contract(self.org, self.user, status='APPROVED')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         with self.assertRaises(ContractTransitionPreconditionFailed):
             self.svc.transition(c, 'ACTIVE', self.user)
 
     def test_active_with_approval_succeeds(self):
-        c = _contract(self.org, self.user, status='APPROVED')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         _approve(c)
         self.svc.transition(c, 'ACTIVE', self.user)
         c.refresh_from_db()
         self.assertEqual(c.status, 'ACTIVE')
 
     def test_active_blocked_by_unsigned_signature_request(self):
-        c = _contract(self.org, self.user, status='APPROVED')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         _approve(c)
         SignatureRequest.objects.create(
             organization=self.org, contract=c, signer_email='s@x.com',
@@ -100,7 +110,7 @@ class TransitionGraphTests(TestCase):
             self.svc.transition(c, 'ACTIVE', self.user)
 
     def test_active_allowed_when_all_signed(self):
-        c = _contract(self.org, self.user, status='APPROVED')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         _approve(c)
         SignatureRequest.objects.create(
             organization=self.org, contract=c, signer_email='s@x.com',
@@ -111,13 +121,13 @@ class TransitionGraphTests(TestCase):
         self.assertEqual(c.status, 'ACTIVE')
 
     def test_chained_audit_event_written(self):
-        c = _contract(self.org, self.user, status='DRAFT')
-        self.svc.transition(c, 'IN_REVIEW', self.user, reason='submitting')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
+        self.svc.transition(c, 'CANCELLED', self.user, reason='withdrawn')
         row = AuditLog.objects.filter(event_type='contract.status_changed', object_id=c.pk).first()
         self.assertIsNotNone(row)
         self.assertEqual(row.organization_id, self.org.id)
-        self.assertEqual(row.changes['from'], 'DRAFT')
-        self.assertEqual(row.changes['to'], 'IN_REVIEW')
+        self.assertEqual(row.changes['from'], 'IN_PROGRESS')
+        self.assertEqual(row.changes['to'], 'CANCELLED')
         self.assertIsNotNone(row.seq)  # part of the tamper-evident chain
 
 
@@ -130,11 +140,11 @@ class TransitionAuthorizationTests(TestCase):
         self.svc = get_contract_lifecycle_service()
 
     def test_cross_tenant_actor_forbidden(self):
-        c = _contract(self.org_a, self.owner_a, status='DRAFT')
+        c = _contract(self.org_a, self.owner_a, status='IN_PROGRESS')
         with self.assertRaises(ContractTransitionForbidden):
-            self.svc.transition(c, 'IN_REVIEW', self.member_b)
+            self.svc.transition(c, 'CANCELLED', self.member_b)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'DRAFT')
+        self.assertEqual(c.status, 'IN_PROGRESS')
 
     def test_system_transition_bypasses_user_permission(self):
         c = _contract(self.org_a, self.owner_a, status='ACTIVE')
@@ -168,18 +178,18 @@ class TransitionHTMLPathTests(TestCase):
         )
 
     def test_html_illegal_transition_rejected(self):
-        c = _contract(self.org, self.user, status='DRAFT')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         resp = self._post_status(c, 'ACTIVE')  # status POSTs are ignored on edit form
         self.assertIn(resp.status_code, (200, 302))
         c.refresh_from_db()
-        self.assertEqual(c.status, 'DRAFT')
+        self.assertEqual(c.status, 'IN_PROGRESS')
 
     def test_html_active_without_approval_rejected(self):
-        c = _contract(self.org, self.user, status='APPROVED')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         resp = self._post_status(c, 'ACTIVE')
         self.assertIn(resp.status_code, (200, 302))
         c.refresh_from_db()
-        self.assertEqual(c.status, 'APPROVED')
+        self.assertEqual(c.status, 'IN_PROGRESS')
 
     def test_create_forces_draft(self):
         resp = self.client.post(reverse('contracts:contract_create'), data={
@@ -189,7 +199,7 @@ class TransitionHTMLPathTests(TestCase):
         self.assertIn(resp.status_code, (302, 200))
         c = Contract.objects.filter(organization=self.org, title='New').first()
         if c:  # created
-            self.assertEqual(c.status, 'DRAFT')
+            self.assertEqual(c.status, 'IN_PROGRESS')
 
 
 class TransitionBulkAPITests(TestCase):
@@ -200,37 +210,37 @@ class TransitionBulkAPITests(TestCase):
         self.client.force_login(self.user)
 
     def test_bulk_illegal_status_rejected(self):
-        c = _contract(self.org, self.user, status='DRAFT')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         resp = self.client.post(
             reverse('contracts:contracts_bulk_update_api'),
-            data=json.dumps({'contract_ids': [c.pk], 'updates': {'status': 'ACTIVE'}}),
+            data=json.dumps({'contract_ids': [c.pk], 'updates': {'status': 'EXPIRED'}}),
             content_type='application/json',
         )
         self.assertEqual(resp.status_code, 400)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'DRAFT')
+        self.assertEqual(c.status, 'IN_PROGRESS')
 
     def test_bulk_legal_status_succeeds(self):
-        c = _contract(self.org, self.user, status='DRAFT')
+        c = _contract(self.org, self.user, status='IN_PROGRESS')
         resp = self.client.post(
             reverse('contracts:contracts_bulk_update_api'),
-            data=json.dumps({'contract_ids': [c.pk], 'updates': {'status': 'IN_REVIEW'}}),
+            data=json.dumps({'contract_ids': [c.pk], 'updates': {'status': 'CANCELLED'}}),
             content_type='application/json',
         )
         self.assertEqual(resp.status_code, 200)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'IN_REVIEW')
+        self.assertEqual(c.status, 'CANCELLED')
 
 
 class TransitionRollbackTests(TestCase):
     def test_failed_precondition_leaves_no_status_change_or_audit(self):
         org = _org('Rb Org', 'rb-org')
         user = _member(org, 'rbuser')
-        c = _contract(org, user, status='APPROVED')
+        c = _contract(org, user, status='IN_PROGRESS')
         before = AuditLog.objects.filter(event_type='contract.status_changed').count()
         with self.assertRaises(ContractTransitionPreconditionFailed):
             get_contract_lifecycle_service().transition(c, 'ACTIVE', user)
         c.refresh_from_db()
-        self.assertEqual(c.status, 'APPROVED')
+        self.assertEqual(c.status, 'IN_PROGRESS')
         after = AuditLog.objects.filter(event_type='contract.status_changed').count()
         self.assertEqual(before, after)  # no false success audit

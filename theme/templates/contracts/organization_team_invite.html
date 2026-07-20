@@ -1,6 +1,10 @@
-<form method="post" class="space-y-4">
+<form method="post" action="{% url 'contracts:organization_team' %}" class="org-team-invite-form">
   {% csrf_token %}
   {% include "design_system/form_field.html" with field=invite_form.email %}
   {% include "design_system/form_field.html" with field=invite_form.role %}
-  <button type="submit" class="dc-ds-button dc-ds-button--primary w-full justify-center">Create Invitation</button>
+  {% include "design_system/form_field.html" with field=invite_form.message %}
+  <div class="org-team-dialog__actions">
+    <button type="button" class="dc-ds-button dc-ds-button--quiet" data-close-invite-dialog>Cancel</button>
+    <button type="submit" class="dc-ds-button dc-ds-button--primary">Send invitation</button>
+  </div>
 </form>

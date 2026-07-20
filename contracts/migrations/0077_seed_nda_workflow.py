@@ -9,13 +9,14 @@ WORKFLOW_STEPS = [
         'description': 'Complete the required NDA fields and self-serve routing questions.',
     },
     {
-        'order': 2, 'name': 'Legal Review', 'step_kind': 'APPROVAL',
+        'order': 2, 'name': 'Legal Review', 'step_kind': 'REVIEW',
         'description': 'Legal reviews non-standard confidentiality, privacy, residual knowledge, and governing law positions.',
         'condition_expression': 'risk=HIGH',
+        'assignee_role': 'ASSOCIATE',
         'sla_hours': 24, 'escalation_after_hours': 48,
     },
     {
-        'order': 3, 'name': 'Signature', 'step_kind': 'APPROVAL',
+        'order': 3, 'name': 'Signature', 'step_kind': 'SIGNATURE',
         'description': 'Send the approved NDA for signature.',
         'sla_hours': 24,
     },

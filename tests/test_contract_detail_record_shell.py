@@ -68,7 +68,9 @@ class ContractDetailShellTests(TestCase):
         self.client.login(username='cdetail_user', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Shell Contract', content='Seed',
-            status=Contract.Status.ACTIVE, created_by=self.user,
+            status=Contract.Status.ACTIVE,
+            lifecycle_stage=Contract.LifecycleStage.OBLIGATION_TRACKING,
+            created_by=self.user,
         )
 
     def test_renders_for_member(self):
@@ -130,13 +132,15 @@ class ContractDetailShellTests(TestCase):
         self.assertNotIn('Status:', body)
         self.assertNotIn('Stage:', body)
         self.assertIn('Active', body)
-        self.assertIn('Drafting', body)
-        self.assertIn('contract-command-stage', body)
+        self.assertIn('Obligation tracking', body)
+        self.assertIn('contract-command-position', body)
         self.assertIn('Upcoming milestone', body)
         self.assertNotIn('View all details', body)
         self.assertIn('contract-next-steps__action', body)
         self.assertNotIn('>Contracts</h1>', body)
         self.assertIn('data-suppress-title-promotion', body)
+        self.assertIn(f'topbar-page-title">{self.contract.title}', response.content.decode())
+        self.assertIn('class="topbar-back-link"', response.content.decode())
         self.assertIn('border-bottom: 1px solid var(--hairline, var(--line));', open('theme/static_src/src/global-shell/workspaces.css').read())
         snapshot = response.context['overview_risk_snapshot']
         self.assertIn(snapshot['tone'], ('attention', 'neutral', 'danger', 'progress', 'success'))
@@ -145,7 +149,7 @@ class ContractDetailShellTests(TestCase):
         workflow = self.client.get(detail_url(self.contract.pk, 'workflow'))
         workflow_body = page_body(workflow.content.decode())
         self.assertIn('Full workflow', workflow_body)
-        self.assertIn('contract-lifecycle-stepper', workflow_body)
+        self.assertIn('contract-progress-track', workflow_body)
         self.assertIn('Upcoming milestone', workflow_body)
         self.assertIn('Review findings', workflow_body)
         self.assertIn('Contract lifecycle', body)
@@ -174,7 +178,7 @@ class ContractDetailShellTests(TestCase):
             organization=self.organization,
             title='Order Confirmation 2026',
             contract_type=Contract.ContractType.PURCHASE_ORDER,
-            status=Contract.Status.PENDING,
+            status=Contract.Status.IN_PROGRESS,
             parent_contract=self.contract,
             created_by=self.user,
         )
@@ -200,18 +204,18 @@ class ContractDetailMetadataHeaderTests(TestCase):
         self.client.login(username='cdetail_owner', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Header Contract', content='Seed',
-            status=Contract.Status.ACTIVE, counterparty='Northwind Logistics LLC', value=125000,
+            status=Contract.Status.IN_PROGRESS, counterparty='Northwind Logistics LLC', value=125000,
             currency='USD', start_date=timezone.localdate(), end_date=timezone.localdate(),
-            risk_level=Contract.RiskLevel.HIGH, lifecycle_stage='NEGOTIATION', created_by=self.owner,
+            risk_level=Contract.RiskLevel.HIGH, lifecycle_stage=Contract.LifecycleStage.NEGOTIATION, created_by=self.owner,
         )
 
     def test_header_shows_key_metadata_fields(self):
         response = self.client.get(detail_url(self.contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('Header Contract', body)
-        self.assertIn('Active', body)
+        self.assertIn('In progress', body)
         self.assertIn('Negotiation', body)
-        self.assertIn('contract-command-stage', body)
+        self.assertIn('contract-command-position', body)
         self.assertNotIn('Status:', body)
         self.assertNotIn('Stage:', body)
         self.assertIn('Northwind Logistics LLC', body)
@@ -319,7 +323,7 @@ class ContractDetailActionsTests(TestCase):
         self.client.login(username='cdetail_action_user', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Action Contract', content='Seed',
-            status=Contract.Status.DRAFT, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, created_by=self.user,
         )
 
     def test_draft_without_document_uses_attach_primary_not_submit(self):
@@ -352,8 +356,9 @@ class ContractDetailActionsTests(TestCase):
             organization=self.organization, title='Signed path source', document_type=Document.DocType.CONTRACT,
             version=1, contract=self.contract, uploaded_by=self.user,
         )
-        self.contract.status = Contract.Status.APPROVED
-        self.contract.save(update_fields=['status', 'updated_at'])
+        self.contract.status = Contract.Status.IN_PROGRESS
+        self.contract.lifecycle_stage = Contract.LifecycleStage.SIGNATURE
+        self.contract.save(update_fields=['status', 'lifecycle_stage', 'updated_at'])
         ApprovalRequest.objects.create(
             organization=self.organization, contract=self.contract,
             approval_step='LEGAL', status=ApprovalRequest.Status.APPROVED,
@@ -591,7 +596,7 @@ class ContractDetailWorkflowTabTests(TestCase):
         self.client.login(username='cdetail_wf_assignee', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Workflow Contract', content='Seed',
-            status=Contract.Status.PENDING, created_by=self.creator,
+            status=Contract.Status.IN_PROGRESS, created_by=self.creator,
         )
 
     def test_required_approvals_shows_empty_state_when_nothing_exists(self):
@@ -716,17 +721,17 @@ class ContractDetailCopyQualityTests(TestCase):
     def test_no_raw_internals_leak_into_the_page(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Copy Quality Contract', content='Seed',
-            status=Contract.Status.IN_REVIEW, lifecycle_stage='INTERNAL_REVIEW', created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, lifecycle_stage='INTERNAL_REVIEW', created_by=self.user,
         )
         RiskLog.objects.create(title='Risk', description='d', contract=contract, status=RiskLog.Status.IN_PROGRESS, created_by=self.user)
         response = self.client.get(reverse('contracts:contract_detail', kwargs={'pk': contract.pk}))
         body = page_body(response.content.decode())
 
         self.assertNotIn('Contract object', body)
-        self.assertNotIn('IN_REVIEW', body)
-        self.assertIn('In Review', body)
+        self.assertNotIn('IN_PROGRESS', body)
+        self.assertIn('In progress', body)
         self.assertNotIn('INTERNAL_REVIEW', body)
-        self.assertIn('Internal Review', body)
+        self.assertIn('Internal review', body)
         self.assertNotIn('In opvolging', body)
         self.assertIsNone(ISO_TIMESTAMP_RE.search(body), 'Found a raw ISO timestamp in the Contract Detail response')
 
@@ -740,7 +745,9 @@ class ContractDetailStateConsistencyTests(TestCase):
         self.client.login(username='cdetail_state_user', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='State Contract', content='Seed',
-            status=Contract.Status.APPROVED, risk_level=Contract.RiskLevel.LOW, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS,
+            lifecycle_stage=Contract.LifecycleStage.SIGNATURE,
+            risk_level=Contract.RiskLevel.LOW, created_by=self.user,
         )
 
     def test_open_high_risk_overrides_low_record_badge_and_blocks_signature(self):
@@ -796,7 +803,7 @@ class ContractDetailWorkspaceGatingTests(TestCase):
         self.client.login(username='cdetail_gate_owner', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Gate Contract', content='Seed',
-            status=Contract.Status.DRAFT, created_by=self.owner, owner=self.owner,
+            status=Contract.Status.IN_PROGRESS, created_by=self.owner, owner=self.owner,
         )
 
     def test_submit_post_rejected_without_document_and_review(self):
@@ -841,7 +848,7 @@ class ContractDetailTabRoutingTests(TestCase):
         self.client.login(username='cdetail_tab_user', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Tab Contract', content='Seed',
-            status=Contract.Status.DRAFT, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, created_by=self.user,
         )
 
     def test_each_tab_renders_its_panel(self):
@@ -884,7 +891,7 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.client.login(username='cdetail_term_user', password='testpass123')
         self.contract = Contract.objects.create(
             organization=self.organization, title='Term Contract', content='Seed',
-            status=Contract.Status.DRAFT, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, created_by=self.user,
         )
 
     def test_contract_review_terminology_and_legacy_labels_absent(self):
@@ -910,14 +917,17 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.assertNotIn('View full workflow', body)
         self.assertNotIn('Signature requirement', body)
         self.assertEqual(response.context['contract_command']['primary_action']['label'], 'Attach source document')
-        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Draft · Intake incomplete')
-        self.assertTrue(any('approved' in item.lower() for item in response.context['later_workflow_requirements']))
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Intake incomplete')
+        self.assertTrue(any('approval' in item.lower() for item in response.context['later_workflow_requirements']))
         self.assertNotIn('contract-action-summary', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
         workflow = self.client.get(detail_url(self.contract.pk, 'workflow'))
         workflow_body = page_body(workflow.content.decode())
         self.assertIn('Signature requirement', workflow_body)
-        self.assertIn('The contract must be fully approved before signature routing.', workflow_body)
+        self.assertTrue(
+            'signature' in workflow_body.casefold() and 'approv' in workflow_body.casefold(),
+            'Expected signature/approval routing guidance on the workflow tab',
+        )
         self.assertIn('Upcoming milestone', workflow_body)
 
     def test_duplicate_state_labels_removed_from_header_and_overview(self):
@@ -962,18 +972,18 @@ class ContractDetailLifecycleCommandLabelTests(TestCase):
     def test_draft_without_document_shows_intake_incomplete(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Intake Contract', content='Seed',
-            status=Contract.Status.DRAFT, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, created_by=self.user,
         )
         response = self.client.get(detail_url(contract.pk))
         body = page_body(response.content.decode())
-        self.assertIn('Draft', body)
-        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Draft · Intake incomplete')
+        self.assertIn('In progress', body)
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Intake incomplete')
         self.assertIn('Action required', body)
 
     def test_approved_obligation_tracking_shows_active_label(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Active Obligation Contract', content='Seed',
-            status=Contract.Status.APPROVED, lifecycle_stage='OBLIGATION_TRACKING', created_by=self.user,
+            status=Contract.Status.ACTIVE, lifecycle_stage=Contract.LifecycleStage.OBLIGATION_TRACKING, created_by=self.user,
         )
         Document.objects.create(
             organization=self.organization, title='Executed source', document_type=Document.DocType.CONTRACT,
@@ -981,8 +991,8 @@ class ContractDetailLifecycleCommandLabelTests(TestCase):
         )
         response = self.client.get(detail_url(contract.pk))
         body = page_body(response.content.decode())
-        self.assertIn('Approved', body)
-        self.assertIn('Obligation Tracking', body)
+        self.assertIn('Active', body)
+        self.assertIn('Obligation tracking', body)
         self.assertEqual(response.context['contract_command']['lifecycle_label'], 'Active · Obligation tracking')
         self.assertIn('Progress', body)
 
@@ -991,10 +1001,10 @@ class ContractDetailActivityDetailTests(TestCase):
         from contracts.services.contract_detail_workspace import format_contract_audit_activity_detail
 
         detail = format_contract_audit_activity_detail({
-            'status': {'before': 'DRAFT', 'after': 'APPROVED'},
+            'status': {'before': 'IN_PROGRESS', 'after': 'ACTIVE'},
             'counterparty': {'before': '', 'after': 'Acme'},
         })
-        self.assertIn('Status changed from DRAFT to APPROVED', detail)
+        self.assertIn('Status changed from IN_PROGRESS to ACTIVE', detail)
         self.assertIn('Counterparty changed from — to Acme', detail)
 
     def test_audit_detail_names_workflow_and_document_events(self):

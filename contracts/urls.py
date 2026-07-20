@@ -194,6 +194,7 @@ urlpatterns = [
     path('organizations/invitations/<int:invite_id>/revoke/', views.revoke_organization_invite, name='revoke_organization_invite'),
     path('organizations/invitations/<int:invite_id>/resend/', views.resend_organization_invite, name='resend_organization_invite'),
     path('organizations/invitations/<int:invite_id>/retry/', views.retry_organization_invite, name='retry_organization_invite'),
+    path('organizations/invitations/<int:invite_id>/role/', views.update_invitation_role, name='update_invitation_role'),
     path('organizations/members/<int:membership_id>/role/', views.update_membership_role, name='update_membership_role'),
     path('organizations/members/<int:membership_id>/deactivate/', views.deactivate_organization_member, name='deactivate_organization_member'),
     path('organizations/members/<int:membership_id>/reactivate/', views.reactivate_organization_member, name='reactivate_organization_member'),
@@ -276,8 +277,11 @@ urlpatterns = [
     path('workflows/templates/<int:pk>/', views.workflow_template_detail, name='workflow_template_detail'),
     path('workflows/templates/<int:pk>/edit/', views.WorkflowTemplateUpdateView.as_view(), name='workflow_template_update'),
     path('workflows/templates/<int:pk>/preview/', views.workflow_template_preview, name='workflow_template_preview'),
+    path('workflows/templates/<int:pk>/scenarios/save/', views.workflow_template_scenario_save, name='workflow_template_scenario_save'),
+    path('workflows/templates/<int:pk>/audit/export/', views.workflow_template_audit_export, name='workflow_template_audit_export'),
     path('workflows/templates/<int:pk>/activity/', views.workflow_template_activity, name='workflow_template_activity'),
     path('workflows/templates/<int:pk>/steps/add/', views.AddWorkflowTemplateStepView.as_view(), name='workflow_template_step_add'),
+    path('workflows/templates/<int:pk>/steps/<int:step_pk>/update/', views.workflow_template_step_update, name='workflow_template_step_update'),
     path('workflows/templates/<int:pk>/steps/<int:step_pk>/delete/', views.workflow_template_step_delete, name='workflow_template_step_delete'),
     path('workflows/templates/<int:pk>/steps/reorder/', views.workflow_template_step_reorder, name='workflow_template_step_reorder'),
     path('workflows/templates/<int:pk>/publish-toggle/', views.workflow_template_publish_toggle, name='workflow_template_publish_toggle'),
@@ -292,6 +296,14 @@ urlpatterns = [
     path('workflows/<int:pk>/', views.workflow_detail, name='workflow_detail'),
     path('workflows/<int:pk>/msa/submit/<slug:approval_step>/', views.msa_submit_for_review, name='msa_submit_for_review'),
     path('workflows/<int:pk>/msa/export/<slug:artifact_type>/', views.msa_export_document, name='msa_export_document'),
+    path('workflows/<int:pk>/msa/exceptions/<int:signal_id>/', views.msa_exception_action, name='msa_exception_action'),
+    path('workflows/<int:pk>/msa/sections/<slug:section_id>/confirm/', views.msa_confirm_section, name='msa_confirm_section'),
+    path('workflows/<int:pk>/dpa/submit/<slug:approval_step>/', views.dpa_submit_for_review, name='dpa_submit_for_review'),
+    path('workflows/<int:pk>/dpa/exceptions/<int:signal_id>/', views.dpa_exception_action, name='dpa_exception_action'),
+    path('workflows/<int:pk>/dpa/sections/<slug:section_id>/confirm/', views.dpa_confirm_section, name='dpa_confirm_section'),
+    path('workflows/<int:pk>/nda/submit/<slug:approval_step>/', views.nda_submit_for_review, name='nda_submit_for_review'),
+    path('workflows/<int:pk>/nda/exceptions/<int:signal_id>/', views.nda_exception_action, name='nda_exception_action'),
+    path('workflows/<int:pk>/nda/sections/<slug:section_id>/confirm/', views.nda_confirm_section, name='nda_confirm_section'),
     path('workflows/<int:pk>/activity/', views.workflow_activity, name='workflow_activity'),
     path('workflows/<int:pk>/steps/add/', views.AddWorkflowStepView.as_view(), name='workflow_step_add'),
     path('workflows/step/<int:pk>/complete/', views.WorkflowStepCompleteView.as_view(), name='workflow_step_complete'),
@@ -303,6 +315,8 @@ urlpatterns = [
 
     # Repository
     path('repository/', views.RepositoryView.as_view(), name='repository'),
+    path('my-work/', views.MyWorkView.as_view(), name='my_work'),
+    path('templates-playbooks/', views.TemplatesPlaybooksHubView.as_view(), name='templates_playbooks_hub'),
 
     # Counterparties
     path('counterparties/', views.CounterpartyListView.as_view(), name='counterparty_list'),

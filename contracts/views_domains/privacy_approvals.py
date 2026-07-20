@@ -662,12 +662,12 @@ class ApprovalRuleListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVi
     context_object_name = 'rules'
 
     def get_context_data(self, **kwargs):
-        from contracts.services.workflow_designer import workflow_designer_tabs
+        from contracts.services.workflow_designer import workflow_hub_tabs
 
         context = super().get_context_data(**kwargs)
         rules = list(context.get('rules') or [])
         active_count = sum(1 for rule in rules if rule.is_active)
-        context['designer_tabs'] = workflow_designer_tabs(active='routing')
+        context['hub_tabs'] = workflow_hub_tabs(active='routing')
         context['hide_app_footer'] = True
         context['rules'] = rules
         context['rule_count'] = len(rules)
@@ -716,11 +716,11 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         keep reading the plain org-scoped/optionally status-filtered
         queryset exactly as before. `queue_tabs` is additive.
         """
-        from contracts.services.workflow_operations import workflow_operations_tabs
+        from contracts.services.workflow_designer import workflow_hub_tabs
 
         context = super().get_context_data(**kwargs)
         context['queue_tabs'] = self._build_queue_tabs()
-        context['ops_tabs'] = workflow_operations_tabs(active='approvals')
+        context['hub_tabs'] = workflow_hub_tabs(active='approvals')
         context['hide_app_footer'] = True
         return context
 

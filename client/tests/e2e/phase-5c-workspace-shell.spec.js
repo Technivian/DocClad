@@ -45,16 +45,17 @@ test.describe('Phase 5C workspace scaffold', () => {
     await expectNoHorizontalPageOverflow(page);
   });
 
-  test('keeps the DPA rail keyboard-operable at 390px', async ({ page }) => {
+  test('keeps the DPA drafting tabs keyboard-operable at 390px', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/contracts/workflows/1/');
     const workspace = page.locator('.dc-ds-workspace');
-    const railTabs = workspace.locator('.dc-ds-workspace__rail-tab');
-    await expect(railTabs).toHaveCount(3);
-    await railTabs.nth(1).focus();
-    await expect(railTabs.nth(1)).toBeFocused();
-    await railTabs.nth(1).press('Enter');
-    await expect(railTabs.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await expect(workspace.locator('[data-workspace-drafting]')).toBeVisible();
+    const tabs = workspace.locator('.dc-ds-workspace-tabs__tab');
+    await expect(tabs.first()).toBeVisible();
+    await tabs.nth(1).focus();
+    await expect(tabs.nth(1)).toBeFocused();
+    await tabs.nth(1).press('Enter');
+    await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
     await expectNoHorizontalPageOverflow(page);
   });
 });

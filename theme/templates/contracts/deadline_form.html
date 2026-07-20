@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Deadline – CLM One{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit{% else %}New{% endif %} Obligation – CLM One{% endblock %}
+{% block authenticated_page_title %}{% if form.instance.pk %}Edit Obligation{% else %}New Obligation{% endif %}{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:obligations_workspace' %}" class="topbar-back-link" data-workspace-back aria-label="Back to obligations" title="Back to obligations">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
 <div class="page-wrap">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{% if form.instance.pk %}Edit Deadline{% else %}New Deadline{% endif %}</h1>
-        </div>
-    </div>
     <div class="panel dc-ds-surface">
         <div class="panel-inner">
             <form method="post">
@@ -21,9 +22,9 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div class="flex justify-end gap-3 pt-4">
-                    <a href="{% url 'contracts:deadline_list' %}" class="dc-ds-button--quiet">Cancel</a>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white">{% if form.instance.pk %}Update{% else %}Create{% endif %}</button>
+                <div class="flex items-center justify-end gap-3 pt-4">
+                    <a href="{% url 'contracts:obligations_workspace' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
+                    <button type="submit" class="dc-ds-button dc-ds-button--primary">{% if form.instance.pk %}Update{% else %}Create{% endif %}</button>
                 </div>
             </form>
         </div>

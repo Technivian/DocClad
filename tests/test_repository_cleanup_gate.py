@@ -27,14 +27,15 @@ class RepositoryFilterMarkupTests(TestCase):
         self.assertNotIn('data-rail-view=', html)
         self.assertNotIn('Quick views', html)
         self.assertNotIn('dc-ds-scaffold--with-rail', html)
-        self.assertIn('Risk Register', html)
-        self.assertIn('dc-ds-button--ghost">Risk Register</a>', html)
+        self.assertIn('Legal Intelligence Hub', html)
+        self.assertIn('dc-ds-button--ghost">Legal Intelligence Hub</a>', html)
         self.assertIn('Start new contract', html)
         self.assertNotIn('repo-split-btn', html)
         self.assertNotIn('More new contract options', html)
         self.assertNotIn('Upload existing agreement', html)
         self.assertNotIn('>Add contract<', html)
         self.assertNotIn('>Risks</a>', html)
+        self.assertNotIn('>Risk Register</a>', html)
 
     def test_no_placeholder_assignment_control_is_rendered(self):
         response = self.client.get(reverse('contracts:repository'))
@@ -121,7 +122,7 @@ class RepositoryExpiringFilterTests(TestCase):
         )
         Contract.objects.create(
             organization=self.organization, title='Expiring Soon But Draft', content='seed',
-            status='DRAFT', end_date=today + timedelta(days=10), created_by=self.user,
+            status='IN_PROGRESS', end_date=today + timedelta(days=10), created_by=self.user,
         )
 
         response = self.client.get(reverse('contracts:contracts_api'), {'expiring_within_days': '30'})
@@ -151,7 +152,7 @@ class RepositoryExpiringFilterTests(TestCase):
     def test_no_expiring_filter_returns_all_statuses(self):
         Contract.objects.create(
             organization=self.organization, title='Plain Draft', content='seed',
-            status='DRAFT', created_by=self.user,
+            status='IN_PROGRESS', created_by=self.user,
         )
         response = self.client.get(reverse('contracts:contracts_api'))
         payload = json.loads(response.content)
@@ -167,12 +168,12 @@ class RepositoryExpiringFilterTests(TestCase):
         matching = Contract.objects.create(
             organization=self.organization, title='Atlas approval contract', content='seed',
             counterparty='Atlas Workforce B.V.', owner=self.user, risk_level=Contract.RiskLevel.HIGH,
-            status=Contract.Status.PENDING, created_by=self.user,
+            status=Contract.Status.IN_PROGRESS, created_by=self.user,
         )
         Contract.objects.create(
             organization=self.organization, title='Other contract', content='seed',
             counterparty='Other Co', owner=other_user, risk_level=Contract.RiskLevel.LOW,
-            status=Contract.Status.DRAFT, created_by=other_user,
+            status=Contract.Status.IN_PROGRESS, created_by=other_user,
         )
         ApprovalRequest.objects.create(
             organization=self.organization, contract=matching, approval_step='LEGAL',

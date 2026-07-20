@@ -414,14 +414,14 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
             'paper_source': Contract.PaperSource.OUR_PAPER,
             'data_transfer_flag': 'on',
             # A forged POST must not bypass the intake state model.
-            'status': Contract.Status.APPROVED,
+            'status': Contract.Status.ACTIVE,
             'lifecycle_stage': 'EXECUTED',
             'risk_level': Contract.RiskLevel.CRITICAL,
         })
 
         self.assertEqual(response.status_code, 302)
         created = Contract.objects.get(title='Derived risk contract')
-        self.assertEqual(created.status, Contract.Status.DRAFT)
+        self.assertEqual(created.status, Contract.Status.IN_PROGRESS)
         self.assertEqual(created.lifecycle_stage, 'DRAFTING')
         self.assertEqual(created.risk_level, Contract.RiskLevel.MEDIUM)
 
@@ -578,7 +578,7 @@ class NewContractRequestPageTests(_LaunchSetupFixtureMixin, TestCase):
             'title': 'Launch Setup Regression Contract',
             'contract_type': Contract.ContractType.NDA,
             'content': 'Body',
-            'status': Contract.Status.DRAFT,
+            'status': Contract.Status.IN_PROGRESS,
             'counterparty': 'Acme Corp',
             'owner': self.user.pk,
             'currency': Contract.Currency.USD,

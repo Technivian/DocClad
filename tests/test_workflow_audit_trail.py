@@ -25,7 +25,7 @@ class WorkflowAuditTrailTests(TestCase):
             organization=self.org,
             title='Audit Contract',
             contract_type=Contract.ContractType.MSA,
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user,
         )
         self.template = WorkflowTemplate.objects.create(
@@ -127,13 +127,15 @@ class WorkflowAuditTrailTests(TestCase):
 
     def test_template_step_added_writes_audit_log(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         response = self.client.post(
             reverse('contracts:workflow_template_step_add', args=[self.template.pk]),
             data={
                 'name': 'Added Step',
                 'description': 'Added through UI',
-                'order': '3',
                 'step_kind': WorkflowTemplateStep.StepKind.TASK,
+                'assignment_mode': 'role',
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -142,6 +144,8 @@ class WorkflowAuditTrailTests(TestCase):
 
     def test_template_step_deleted_writes_audit_log(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         response = self.client.post(reverse('contracts:workflow_template_step_delete', args=[self.template.pk, self.template_step.pk]))
         self.assertEqual(response.status_code, 302)
         log = AuditLog.objects.get(model_name='WorkflowTemplateStep', action=AuditLog.Action.DELETE, changes__event='workflow_template_step_deleted')
@@ -149,6 +153,8 @@ class WorkflowAuditTrailTests(TestCase):
 
     def test_template_reordered_writes_audit_log(self):
         self.client.force_login(self.user)
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         step_ids = list(self.template.steps.order_by('order').values_list('pk', flat=True))
         response = self.client.post(
             reverse('contracts:workflow_template_step_reorder', args=[self.template.pk]),
@@ -194,7 +200,11 @@ class WorkflowAuditTrailTests(TestCase):
     def test_template_detail_renders_audit_panel(self):
         self.client.force_login(self.user)
         log_workflow_template_step_added(self.template_step, self.user, request=None)
-        response = self.client.get(reverse('contracts:workflow_template_detail', args=[self.template.pk]))
+        response = self.client.get(
+            reverse('contracts:workflow_template_detail', args=[self.template.pk]) + '?tab=activity'
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Activity History')
-        self.assertContains(response, 'Template step added')
+        self.assertEqual(response.context['active_tab'], 'activity')
+        self.assertContains(response, 'Activity')
+        self.assertContains(response, 'Create')
+        self.assertNotContains(response, 'View all activity')

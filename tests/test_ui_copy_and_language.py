@@ -86,7 +86,7 @@ class NamedCopyDefectTests(TestCase):
             organization=self.org,
             title='Underscore Regression Contract',
             content='Test content',
-            status=Contract.Status.IN_REVIEW,
+            status=Contract.Status.IN_PROGRESS,
             lifecycle_stage='INTERNAL_REVIEW',
             created_by=self.user,
         )
@@ -94,4 +94,4 @@ class NamedCopyDefectTests(TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
         self.assertNotIn('Internal_Review', content)
-        self.assertIn('Internal Review', content)
+        self.assertIn('Internal review', content)

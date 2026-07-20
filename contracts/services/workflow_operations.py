@@ -79,20 +79,10 @@ class WorkflowOperationsFilters:
 
 
 def workflow_operations_tabs(*, active: str) -> list[dict]:
-    """Shared tab strip across the Workflow Operations instance queue."""
-    items = (
-        ('active', 'Active workflows', 'contracts:workflow_dashboard'),
-        ('approvals', 'Approval requests', 'contracts:approval_request_list'),
-    )
-    return [
-        {
-            'key': key,
-            'label': label,
-            'url': reverse(url_name),
-            'active': key == active,
-        }
-        for key, label, url_name in items
-    ]
+    """Backward-compatible alias for the unified Workflow Designer hub tabs."""
+    from contracts.services.workflow_designer import workflow_hub_tabs
+
+    return workflow_hub_tabs(active=active)
 
 
 def split_exception_from_title(title: str) -> tuple[str, bool]:

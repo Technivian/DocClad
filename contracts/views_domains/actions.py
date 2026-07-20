@@ -1,13 +1,16 @@
 import csv
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import PasswordChangeView
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
+from django.utils import dateformat, timezone
 from django.views import View
 from django.views.generic import CreateView
 from django.core.mail import send_mail
@@ -16,7 +19,12 @@ from contracts.forms import BudgetExpenseForm, ChecklistItemForm, DueDiligenceRi
 from contracts.models import AuditLog, BudgetExpense, ChecklistItem, Contract, DueDiligenceRisk, DueDiligenceTask, NegotiationThread, Notification, Organization, OrganizationMembership, UserProfile
 from contracts.middleware import log_action
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
-from contracts.session_security import get_organization_session_audit, revoke_organization_sessions, revoke_session_by_key
+from contracts.session_security import (
+    get_organization_session_audit,
+    get_user_sessions,
+    revoke_organization_sessions,
+    revoke_session_by_key,
+)
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
     TenantAssignCreateMixin,
@@ -132,33 +140,137 @@ def toggle_dd_item(request, pk):
     return redirect('contracts:due_diligence_detail', pk=task.process.pk)
 
 
+def _profile_email_managed(organization):
+    if not organization:
+        return False
+    if organization.scim_enabled:
+        return True
+    if organization.identity_provider == Organization.IdentityProvider.SAML:
+        if organization.saml_sso_url or organization.saml_entity_id:
+            return True
+    return False
+
+
+def _profile_permission_set_label(membership):
+    if membership and membership.role in {
+        OrganizationMembership.Role.OWNER,
+        OrganizationMembership.Role.ADMIN,
+    }:
+        return 'Workspace administrator'
+    return 'Standard member'
+
+
+def _profile_sign_in_method(organization):
+    if (
+        organization
+        and organization.identity_provider == Organization.IdentityProvider.SAML
+        and (organization.saml_sso_url or organization.saml_entity_id)
+    ):
+        return 'Single sign-on (SAML)'
+    return 'Email and password'
+
+
+_PROFILE_SESSION_ELEVATED_THRESHOLD = 4
+
+
+def _profile_can_change_password(user, organization):
+    """Password change is offered for local accounts with a usable password."""
+    if not user or not user.is_authenticated:
+        return False
+    if not user.has_usable_password():
+        return False
+    if _profile_email_managed(organization):
+        return False
+    return True
+
+
+def _profile_regional_previews(profile_obj):
+    """Build live date/time examples for each date-format choice."""
+    now = timezone.now()
+    tz_name = (getattr(profile_obj, 'timezone', None) or 'UTC').strip() or 'UTC'
+    try:
+        now = timezone.localtime(now, ZoneInfo(tz_name))
+    except Exception:
+        now = timezone.localtime(now)
+    formats = {}
+    for value, _label in UserProfile.DateFormat.choices:
+        formats[value] = f'{dateformat.format(now, value)} {dateformat.format(now, "H:i")}'
+    current_key = getattr(profile_obj, 'date_format', None) or UserProfile.DateFormat.DMY_LONG
+    preview = formats.get(current_key) or formats[UserProfile.DateFormat.DMY_LONG]
+    if tz_name:
+        preview = f'{preview} · {tz_name}'
+    return preview, formats
+
+
+def _profile_security_summary(request, profile_obj, organization):
+    personal_sessions = get_user_sessions(
+        request.user,
+        current_session_key=request.session.session_key,
+    )
+    recovery_count = profile_obj.mfa_recovery_code_count if profile_obj else 0
+    session_count = len(personal_sessions)
+    return {
+        'mfa_status_label': 'MFA active' if profile_obj and profile_obj.mfa_enabled else 'MFA not enrolled',
+        'enrolled_mfa_method': 'Email verification' if profile_obj and profile_obj.mfa_enabled else 'None',
+        'sign_in_method': _profile_sign_in_method(organization),
+        'last_sign_in': request.user.last_login,
+        'recovery_method_status': (
+            f'{recovery_count} recovery codes' if recovery_count else 'Not configured'
+        ),
+        'personal_session_count': session_count,
+        'sessions_elevated': session_count >= _PROFILE_SESSION_ELEVATED_THRESHOLD,
+    }
+
+
+def _profile_forms(profile_obj, *, email_managed=False):
+    return {
+        'identity_form': UserProfileForm(
+            instance=profile_obj,
+            email_managed=email_managed,
+            section='identity',
+        ),
+        'regional_form': UserProfileForm(instance=profile_obj, section='regional'),
+        'notifications_form': UserProfileForm(instance=profile_obj, section='notifications'),
+    }
+
+
 def profile(request):
     profile_obj = None
-    form = None
     organization = None
-    mfa_required = False
-    mfa_admin_user = False
     membership = None
+    identity_form = regional_form = notifications_form = None
+    email_managed = False
+    workspace_role_label = 'Member'
+    permission_set_label = 'Standard member'
+    membership_admin = False
+    member_since = None
+    mfa_required = False
     security_error = ''
     recovery_codes_preview = request.session.pop('mfa_recovery_codes_preview', None)
     show_mfa_setup = False
+    security_summary = {}
+
     if request.user.is_authenticated:
         profile_obj, _ = UserProfile.objects.get_or_create(user=request.user)
         organization = get_user_organization(request.user)
+        email_managed = _profile_email_managed(organization)
         mfa_required = bool(getattr(organization, 'require_mfa', False)) if organization else False
         membership = OrganizationMembership.objects.filter(
             organization=organization,
             user=request.user,
             is_active=True,
         ).first() if organization else None
-        mfa_admin_user = bool(membership and membership.role in [
-            OrganizationMembership.Role.OWNER, OrganizationMembership.Role.ADMIN,
-        ])
+        membership_admin = bool(organization and can_manage_organization(request.user, organization))
+        member_since = membership.created_at if membership else request.user.date_joined
+        workspace_role_label = membership.get_role_display() if membership else 'Member'
+        permission_set_label = _profile_permission_set_label(membership)
+        security_summary = _profile_security_summary(request, profile_obj, organization)
         show_mfa_setup = (
             request.GET.get('mfa') == 'setup'
             or request.session.get('mfa_setup_started')
             or bool(profile_obj.mfa_enrollment_code_hash)
         )
+
         if request.method == 'POST':
             action = request.POST.get('action', 'save')
             if action == 'start_mfa_setup':
@@ -177,7 +289,10 @@ def profile(request):
                 if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
                     security_error = 'Enter the 6-digit verification code sent to your email.'
                     show_mfa_setup = True
-                    form = UserProfileForm(instance=profile_obj)
+                    forms = _profile_forms(profile_obj, email_managed=email_managed)
+                    identity_form = forms['identity_form']
+                    regional_form = forms['regional_form']
+                    notifications_form = forms['notifications_form']
                 else:
                     request.session.pop('mfa_setup_started', None)
                     request.session['mfa_verified'] = True
@@ -218,106 +333,154 @@ def profile(request):
                     logging.getLogger(__name__).exception('recovery_codes_regenerated_notification failed user=%s', request.user.pk)
                 messages.success(request, 'Recovery codes generated. Save them now; they will only be shown once.')
                 return redirect('profile')
-            elif action == 'save' or action not in {
+            elif action in {'save_identity', 'save_regional', 'save_notifications', 'save'} or action not in {
                 'start_mfa_setup', 'send_mfa_code', 'verify_mfa', 'generate_mfa_recovery_codes',
             }:
-                # Identity and preferences live in separate cards. When the identity
-                # card posts without preference fields, seed them from the instance
-                # so ModelForm validation does not clear or reject them.
-                post_data = request.POST.copy()
-                if 'language' not in post_data:
-                    post_data['language'] = profile_obj.language
-                    post_data['timezone'] = profile_obj.timezone
-                    post_data['date_format'] = profile_obj.date_format
-                    if profile_obj.notify_contract_updates:
-                        post_data['notify_contract_updates'] = 'on'
-                    if profile_obj.notify_workflow_events:
-                        post_data['notify_workflow_events'] = 'on'
-                    if profile_obj.notify_security_alerts:
-                        post_data['notify_security_alerts'] = 'on'
-                form = UserProfileForm(post_data, instance=profile_obj)
+                section_messages = {
+                    'save_identity': ('identity', 'Personal details saved.', 'identity'),
+                    'save_regional': ('regional', 'Regional preferences saved.', 'regional'),
+                    'save_notifications': ('notifications', 'Notification preferences saved.', 'notifications'),
+                    'save': ('all', 'Account updated successfully.', None),
+                }
+                section, success_message, saved_flag = section_messages.get(
+                    action,
+                    ('all', 'Account updated successfully.', None),
+                )
+                form = UserProfileForm(
+                    request.POST,
+                    instance=profile_obj,
+                    email_managed=email_managed,
+                    section=section,
+                )
                 if form.is_valid():
-                    profile_obj = form.save(commit=False)
-                    request.user.first_name = form.cleaned_data.get('first_name', '')
-                    request.user.last_name = form.cleaned_data.get('last_name', '')
-                    request.user.email = form.cleaned_data.get('email', '')
-                    # Preserve legacy API compatibility for integrations posting bio.
+                    profile_obj = form.save()
                     if 'bio' in request.POST:
                         profile_obj.bio = request.POST.get('bio', '')
-                    profile_obj.save()
-                    request.user.save()
+                        profile_obj.save(update_fields=['bio', 'updated_at'])
+                    messages.success(request, success_message)
+                    if saved_flag:
+                        return redirect(f"{reverse('profile')}?saved={saved_flag}")
+                    return redirect('profile')
 
-                    # Legacy security posts (mfa_enabled / recovery code) remain supported
-                    # for tests and integrations; the UI uses dedicated MFA actions.
-                    security_action = action == 'verify_mfa' or 'mfa_enabled' in request.POST
-                    if security_action:
-                        enrollment_code = (request.POST.get('mfa_enrollment_code') or '').strip()
-                        recovery_code = (request.POST.get('mfa_recovery_code') or '').strip()
-                        already_enrolled = bool(profile_obj.mfa_enabled and profile_obj.mfa_verified_at)
-                        if recovery_code:
-                            from contracts.services.recovery_codes import consume_recovery_code
-                            if consume_recovery_code(
-                                profile_obj, recovery_code, request=request, organization=organization,
-                            ):
-                                profile_obj.mfa_enabled = True
-                                profile_obj.mfa_verified_at = timezone.now()
-                                profile_obj.save()
-                                messages.success(request, 'Recovery code accepted and MFA enrollment refreshed.')
-                                return redirect('profile')
-                            security_error = (
-                                'The recovery code could not be verified. '
-                                'Try another code or request new recovery codes.'
-                            )
-                        if already_enrolled and not enrollment_code:
-                            messages.success(request, 'Account updated successfully.')
-                            return redirect('profile')
-                        if not profile_obj.verify_mfa_enrollment_code(enrollment_code):
-                            security_error = security_error or (
-                                'Enter the 6-digit verification code sent to your email.'
-                            )
-                            show_mfa_setup = True
-                        else:
-                            request.session['mfa_verified'] = True
-                            request.session.pop('mfa_setup_started', None)
-                            log_action(
-                                request.user,
-                                AuditLog.Action.UPDATE,
-                                'UserProfile',
-                                object_id=profile_obj.id,
-                                object_repr=str(profile_obj),
-                                changes={
-                                    'event': 'mfa_enrolled',
-                                    'organization_id': getattr(organization, 'id', None),
-                                },
-                                request=request,
-                            )
-                            try:
-                                from contracts.services.notifications import send_mfa_enrolled_notification
-                                send_mfa_enrolled_notification(request.user)
-                            except Exception:
-                                import logging
-                                logging.getLogger(__name__).exception(
-                                    'mfa_enrolled_notification failed user=%s', request.user.pk
-                                )
-                            messages.success(request, 'Multi-factor authentication enrolled successfully.')
-                            return redirect('profile')
-                    else:
-                        messages.success(request, 'Account updated successfully.')
-                        return redirect('profile')
+                if section == 'identity':
+                    identity_form = form
+                    other_forms = _profile_forms(profile_obj, email_managed=email_managed)
+                    regional_form = other_forms['regional_form']
+                    notifications_form = other_forms['notifications_form']
+                elif section == 'regional':
+                    regional_form = form
+                    other_forms = _profile_forms(profile_obj, email_managed=email_managed)
+                    identity_form = other_forms['identity_form']
+                    notifications_form = other_forms['notifications_form']
+                elif section == 'notifications':
+                    notifications_form = form
+                    other_forms = _profile_forms(profile_obj, email_managed=email_managed)
+                    identity_form = other_forms['identity_form']
+                    regional_form = other_forms['regional_form']
+                else:
+                    forms = _profile_forms(profile_obj, email_managed=email_managed)
+                    identity_form = forms['identity_form']
+                    regional_form = forms['regional_form']
+                    notifications_form = forms['notifications_form']
         else:
-            form = UserProfileForm(instance=profile_obj)
-        if form is None:
-            form = UserProfileForm(instance=profile_obj)
+            forms = _profile_forms(profile_obj, email_managed=email_managed)
+            identity_form = forms['identity_form']
+            regional_form = forms['regional_form']
+            notifications_form = forms['notifications_form']
+
+    regional_preview = ''
+    regional_preview_formats = {}
+    can_change_password = False
+    if request.user.is_authenticated and profile_obj:
+        regional_preview, regional_preview_formats = _profile_regional_previews(profile_obj)
+        can_change_password = _profile_can_change_password(request.user, organization)
+
     return render(request, 'profile.html', {
-        'form': form,
+        'identity_form': identity_form,
+        'regional_form': regional_form,
+        'notifications_form': notifications_form,
         'profile': profile_obj,
         'organization': organization if request.user.is_authenticated else None,
         'membership': membership,
+        'email_managed': email_managed,
+        'workspace_role_label': workspace_role_label,
+        'permission_set_label': permission_set_label,
+        'membership_admin': membership_admin,
+        'member_since': member_since,
+        'profile_sessions_url': reverse('profile_sessions'),
         'mfa_required': mfa_required,
-        'mfa_admin_user': mfa_admin_user,
         'security_error': security_error,
         'recovery_codes_preview': recovery_codes_preview,
         'show_mfa_setup': show_mfa_setup and not (profile_obj and profile_obj.mfa_enabled),
+        'regional_preview': regional_preview,
+        'regional_preview_formats': regional_preview_formats,
+        'can_change_password': can_change_password,
+        'hide_app_footer': True,
+        **security_summary,
+    })
+
+
+class ProfilePasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    """Change password from Account settings when local passwords are supported."""
+
+    template_name = 'profile_password_change.html'
+    success_url = reverse_lazy('profile')
+    form_class = PasswordChangeForm
+
+    def dispatch(self, request, *args, **kwargs):
+        organization = get_user_organization(request.user)
+        if not _profile_can_change_password(request.user, organization):
+            messages.error(request, 'Password change is not available for this account.')
+            return redirect('profile')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Password updated.')
+        return super().form_valid(form)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        for field in form.fields.values():
+            css = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f'{css} dc-ds-control'.strip()
+        return form
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hide_app_footer'] = True
+        return context
+
+
+@login_required
+def profile_sessions(request):
+    current_session_key = request.session.session_key
+    if request.method == 'POST':
+        action = request.POST.get('action', 'revoke_session')
+        if action == 'revoke_session':
+            session_key = (request.POST.get('session_key') or '').strip()
+            sessions = get_user_sessions(request.user, current_session_key=current_session_key)
+            target = next((item for item in sessions if item['session_key'] == session_key), None)
+            if target and target['is_current']:
+                messages.error(request, 'You cannot revoke your current session.')
+            elif target and revoke_session_by_key(session_key):
+                log_action(
+                    request.user,
+                    AuditLog.Action.UPDATE,
+                    'Session',
+                    object_repr=session_key,
+                    changes={
+                        'event': 'personal_session_revoked',
+                        'session_key': session_key,
+                    },
+                    request=request,
+                )
+                messages.success(request, 'Session revoked.')
+            else:
+                messages.error(request, 'Unable to revoke that session.')
+        return redirect('profile_sessions')
+
+    return render(request, 'profile_sessions.html', {
+        'sessions': get_user_sessions(request.user, current_session_key=current_session_key),
         'hide_app_footer': True,
     })
 
@@ -392,90 +555,102 @@ def settings_hub(request):
     """Compact configuration landing hub for personal, workspace, and governance settings."""
     organization = get_user_organization(request.user)
     can_manage = bool(organization and can_manage_organization(request.user, organization))
+    profile_url = reverse('profile')
 
-    def card(*, label, copy, url_name, icon, admin_only=False):
+    def card(*, label, copy, href, icon, admin_only=False):
         return {
             'label': label,
             'copy': copy,
-            'href': reverse(url_name),
+            'href': href,
             'icon': icon,
             'admin_only': admin_only,
             'badge_label': 'Admin only' if admin_only else '',
+            'aria_label': f'{label}. {copy}',
         }
 
     personal = [
         card(
-            label='Profile',
-            copy='Update your name, contact details, and account preferences.',
-            url_name='profile',
+            label='Account settings',
+            copy='Manage your personal details and account preferences.',
+            href=profile_url,
             icon='users',
         ),
         card(
             label='Notifications',
-            copy='Review alerts and manage how you stay informed.',
-            url_name='contracts:notification_list',
+            copy='Choose which alerts you receive and how they are delivered.',
+            href=f'{profile_url}#notification-settings',
             icon='bell',
+        ),
+        card(
+            label='Appearance and language',
+            copy='Manage language, timezone, date formats, and display preferences.',
+            href=f'{profile_url}#regional-preferences',
+            icon='settings',
         ),
     ]
     workspace = [
         card(
-            label='Team and roles',
-            copy='Invite members and manage workspace roles.',
-            url_name='contracts:organization_team',
+            label='Members and roles',
+            copy='Invite members and manage workspace roles and permissions.',
+            href=reverse('contracts:organization_team'),
             icon='user-plus',
             admin_only=True,
         ),
         card(
-            label='Contract types',
-            copy='Configure governed contract types and launch workflows.',
-            url_name='contracts:workflow_template_list',
+            label='Contract types and intake',
+            copy='Configure governed contract types, intake fields, and launch workflows.',
+            href=reverse('contracts:templates_playbooks_hub'),
             icon='briefcase',
+            admin_only=True,
         ),
         card(
-            label='Templates',
-            copy='Maintain reusable clause and agreement templates.',
-            url_name='contracts:clause_template_list',
-            icon='file-text',
+            label='Workflow templates',
+            copy='Manage reusable lifecycle blueprints for contract processes.',
+            href=reverse('contracts:workflow_template_list'),
+            icon='workflow',
+            admin_only=True,
         ),
         card(
-            label='Playbooks',
-            copy='Define preferred positions and negotiation guidance.',
-            url_name='contracts:dpa_playbook_list',
+            label='Negotiation playbooks',
+            copy='Define approved positions, fallback guidance, and escalation rules.',
+            href=reverse('contracts:dpa_playbook_list'),
             icon='list',
+            admin_only=True,
         ),
         card(
             label='Approval policies',
-            copy='Set routing rules for review and approval decisions.',
-            url_name='contracts:approval_rule_list',
-            icon='workflow',
+            copy='Configure value, risk, and exception-based approval routing.',
+            href=reverse('contracts:approval_rule_list'),
+            icon='circle-check',
+            admin_only=True,
         ),
         card(
             label='Integrations',
-            copy='Connect identity providers, SCIM, and outbound webhooks.',
-            url_name='organization_identity_settings',
+            copy='Connect identity providers, SCIM, webhooks, and external services.',
+            href=reverse('organization_identity_settings'),
             icon='cloud',
             admin_only=True,
         ),
     ]
     security = [
         card(
-            label='Authentication',
-            copy='Control MFA policy and workspace authentication requirements.',
-            url_name='organization_security_settings',
-            icon='shield',
+            label='Authentication and access',
+            copy='Configure MFA, sign-in methods, and workspace access requirements.',
+            href=reverse('organization_security_settings'),
+            icon='lock',
             admin_only=True,
         ),
         card(
-            label='Active sessions',
-            copy='Review and revoke signed-in devices and browser sessions.',
-            url_name='organization_session_audit',
+            label='Workspace sessions',
+            copy='Review and revoke active user sessions across the workspace.',
+            href=reverse('organization_session_audit'),
             icon='clock',
             admin_only=True,
         ),
         card(
-            label='Audit activity',
-            copy='Inspect organization-level activity and governance events.',
-            url_name='contracts:organization_activity',
+            label='Audit log',
+            copy='Inspect workspace activity, security events, and governance changes.',
+            href=reverse('contracts:organization_activity'),
             icon='archive',
             admin_only=True,
         ),
@@ -495,7 +670,6 @@ def settings_hub(request):
         'can_manage_settings': can_manage,
         'settings_groups': settings_groups,
     })
-
 
 @login_required
 def organization_security_settings(request):

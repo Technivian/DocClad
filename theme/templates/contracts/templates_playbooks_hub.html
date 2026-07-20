@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Templates & Playbooks – CLM One{% endblock %}
+{% block authenticated_page_title %}Templates &amp; Playbooks{% endblock %}
+{% block authenticated_page_subtitle %}Manage the reusable content, workflow blueprints, and approval policies that govern contract creation and review.{% endblock %}
+{% block content %}
+<style nonce="{{ csp_nonce }}">
+  .tph-page { max-width: 1080px; }
+  .tph-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-12);
+    align-items: stretch;
+  }
+  .tph-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 16px;
+    gap: var(--space-12);
+    align-items: stretch;
+    height: 100%;
+    min-height: 148px;
+    padding: 14px 16px;
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 12px;
+    background: var(--card, #fff);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    color: inherit;
+    text-decoration: none;
+    outline: none;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease,
+      background-color 150ms ease;
+  }
+  .tph-card:hover {
+    border-color: color-mix(in srgb, var(--seal) 42%, var(--line, var(--hairline)));
+    background: color-mix(in srgb, var(--seal) 5%, var(--card, #fff));
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+    transform: translateY(-1px);
+  }
+  .tph-card:focus-visible,
+  .tph-card.is-selected:focus-visible {
+    border-color: var(--seal);
+    background: color-mix(in srgb, var(--seal) 6%, var(--card, #fff));
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    transform: none;
+  }
+  .tph-card:active,
+  .tph-card.is-selected {
+    border-color: color-mix(in srgb, var(--seal) 58%, var(--line, var(--hairline)));
+    background: color-mix(in srgb, var(--seal) 8%, var(--card, #fff));
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .tph-card__icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--seal) 18%, var(--line, var(--hairline)));
+    background: color-mix(in srgb, var(--seal) 10%, #fff);
+    color: var(--seal-dark, var(--seal, #0f766e));
+    flex: 0 0 auto;
+  }
+  .tph-card__icon .dc-ds-icon {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+  .tph-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    min-height: 100%;
+  }
+  .tph-card__title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-10);
+    min-height: 20px;
+  }
+  .tph-card__title {
+    margin: 0;
+    min-width: 0;
+    color: var(--ink-900);
+    font: var(--text-heading);
+    font-size: 15px;
+    line-height: 1.25;
+    font-weight: 700;
+  }
+  .tph-card__stat {
+    flex: 0 0 5.75rem;
+    min-width: 5.75rem;
+    color: var(--ink-900);
+    font-size: 15px;
+    font-weight: 750;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .tph-card__stat span {
+    margin-left: 4px;
+    color: var(--ink-500);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tph-card__copy {
+    margin: 0;
+    min-height: 2.8em;
+    color: var(--ink-500);
+    font: var(--text-small);
+    font-size: 12.5px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .tph-card__meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 6px;
+    margin: auto 0 0;
+    padding: 8px 0 0;
+    border-top: 1px solid var(--hairline, var(--line));
+    list-style: none;
+  }
+  .tph-card__meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 24px;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline, var(--line));
+    background: var(--well, #f8fafc);
+    color: var(--ink-700, var(--ink-900));
+    font: var(--text-meta);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tph-card__meta-chip strong {
+    color: var(--ink-500);
+    font-weight: 600;
+  }
+  .tph-card__arrow {
+    display: grid;
+    place-items: center;
+    align-self: center;
+    width: 16px;
+    height: 16px;
+    color: var(--seal-dark, var(--seal, #0f766e));
+    opacity: 0.75;
+    transition: transform 150ms ease, opacity 150ms ease;
+  }
+  .tph-card__arrow .dc-ds-icon { width: 16px; height: 16px; }
+  .tph-card:hover .tph-card__arrow,
+  .tph-card:focus-visible .tph-card__arrow,
+  .tph-card.is-selected .tph-card__arrow {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+  .tph-empty {
+    padding: var(--space-24);
+    border: 1px dashed var(--line, var(--hairline));
+    border-radius: 12px;
+    background: var(--well, transparent);
+    color: var(--ink-500);
+    text-align: center;
+  }
+  .tph-empty__title {
+    margin: 0 0 var(--space-8);
+    color: var(--ink-900);
+    font: var(--text-heading);
+  }
+  .tph-empty__copy { margin: 0; font: var(--text-small); line-height: 1.45; }
+  .tph-error {
+    padding: var(--space-16) var(--space-20);
+    border: 1px solid color-mix(in srgb, var(--status-critical-fg, #913a35) 28%, var(--line));
+    border-radius: 12px;
+    background: var(--status-critical-bg, #fbecea);
+    color: var(--status-critical-fg, #913a35);
+  }
+  .tph-error__title { margin: 0 0 var(--space-4); font: var(--text-heading); font-size: 15px; }
+  .tph-error__copy { margin: 0; font: var(--text-small); line-height: 1.45; }
+  @media (max-width: 900px) {
+    .tph-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .tph-card {
+      grid-template-columns: 36px minmax(0, 1fr) 14px;
+      gap: 10px;
+      min-height: 136px;
+      padding: 12px 14px;
+    }
+    .tph-card__icon { width: 36px; height: 36px; border-radius: 9px; }
+    .tph-card__icon .dc-ds-icon { width: 16px; height: 16px; }
+    .tph-card__title-row { flex-wrap: wrap; }
+    .tph-card__stat { flex-basis: auto; min-width: 0; }
+    .tph-card__meta { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow tph-page">
+  {% if hub_unavailable %}
+  <div class="tph-error" role="alert">
+    <p class="tph-error__title">Workspace unavailable</p>
+    <p class="tph-error__copy">Your organization context could not be resolved, so Templates &amp; Playbooks cannot load. Refresh the page or contact an administrator if this continues.</p>
+  </div>
+  {% elif hub_cards %}
+  <div class="tph-grid" role="list" aria-label="Templates and playbooks configuration areas">
+    {% for card in hub_cards %}
+    <a
+      class="tph-card"
+      href="{{ card.href }}"
+      role="listitem"
+      aria-label="{{ card.cta }}. {{ card.copy }}{% if card.stat_text %} {{ card.stat_text }}.{% endif %}"
+      data-hub-card="{{ card.id }}"
+    >
+      <span class="tph-card__icon" aria-hidden="true">
+        {% with icon_name=card.icon %}
+        {% include "design_system/icon.html" with name=icon_name only %}
+        {% endwith %}
+      </span>
+      <span class="tph-card__body">
+        <span class="tph-card__title-row">
+          <span class="tph-card__title">{{ card.title }}</span>
+          {% if card.stat_value is not None %}
+          <span class="tph-card__stat">{{ card.stat_value }}<span>{{ card.stat_label }}</span></span>
+          {% endif %}
+        </span>
+        <p class="tph-card__copy">{{ card.copy }}</p>
+        <ul class="tph-card__meta" aria-label="{{ card.title }} status">
+          {% for row in card.meta %}
+          <li class="tph-card__meta-chip"><strong>{{ row.label }}</strong> {{ row.value }}</li>
+          {% endfor %}
+        </ul>
+      </span>
+      <span class="tph-card__arrow" aria-hidden="true">
+        {% include "design_system/icon.html" with name="arrow-right" only %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="tph-empty" role="status">
+    <p class="tph-empty__title">No configuration areas available</p>
+    <p class="tph-empty__copy">Templates &amp; Playbooks has nothing to show for this workspace. Check that your role can manage organization configuration.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -48,7 +48,9 @@ body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-action
   overflow: visible;
 }
 
-body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-title:empty) {
+/* Hide the page-context slot only when it has nothing useful to show.
+   An empty title alone must not hide an explicit back control. */
+body[data-design-system="casefile"] .topbar-page-context:has(.topbar-page-title:empty):not(:has(.topbar-back-link)) {
   display: none;
 }
 

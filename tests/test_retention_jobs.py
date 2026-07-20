@@ -35,7 +35,7 @@ class RetentionJobsCommandTests(TestCase):
         payload = json.loads(out.getvalue())
 
         contract.refresh_from_db()
-        self.assertEqual(contract.lifecycle_stage, 'ARCHIVED')
+        self.assertEqual(contract.status, Contract.Status.ARCHIVED)
         self.assertEqual(payload['contracts_archived'], 1)
         self.assertEqual(
             AuditLog.objects.filter(model_name='RetentionExecution', object_id=contract.id).count(),

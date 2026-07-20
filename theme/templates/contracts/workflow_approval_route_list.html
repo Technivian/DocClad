@@ -6,48 +6,244 @@
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  .workflow-approval-routes-page .clm-list-result-count {
-    font-size: 13px; font-weight: 600; color: var(--ink-700); margin: 0 0 var(--space-12);
-    padding: 0; border: 0; background: transparent;
+  .approval-routes-page .clm-list-summary { --dc-ds-summary-columns: 2; }
+  .approval-routes-page .clm-list-result-count {
+    font-size: 13px; font-weight: 600; color: var(--ink-700, var(--text-secondary));
+    margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    white-space: nowrap; min-width: 0; line-height: 1.2;
+  }
+  .approval-routes-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
+  .approval-routes-page #approval-routes-table {
+    min-width: 100%; width: 100%; table-layout: fixed;
+  }
+  .approval-routes-page #approval-routes-table th,
+  .approval-routes-page #approval-routes-table td {
+    vertical-align: top; padding: 16px 12px; overflow: hidden;
+  }
+  .approval-routes-page #approval-routes-table [data-col].is-hidden { display: none; }
+  .approval-routes-page #approval-routes-table th[data-col="template"],
+  .approval-routes-page #approval-routes-table td[data-col="template"] {
+    position: sticky; left: 0; z-index: 2; min-width: 240px; width: 28%;
+    background-color: var(--card-bg, #fff);
+    box-shadow: 1px 0 0 var(--line, var(--card-border));
+  }
+  .approval-routes-page #approval-routes-table thead th[data-col="template"] { z-index: 5; }
+  .approval-routes-page #approval-routes-table th[data-col="step"],
+  .approval-routes-page #approval-routes-table td[data-col="step"] { min-width: 140px; width: 16%; }
+  .approval-routes-page #approval-routes-table th[data-col="role"],
+  .approval-routes-page #approval-routes-table td[data-col="role"] { min-width: 180px; width: 28%; }
+  .approval-routes-page #approval-routes-table th[data-col="order"],
+  .approval-routes-page #approval-routes-table td[data-col="order"] {
+    min-width: 72px; width: 8%; white-space: nowrap;
+    font-variant-numeric: tabular-nums; color: var(--ink-700, var(--text-secondary));
+  }
+  .approval-routes-page #approval-routes-table th[data-col="condition"],
+  .approval-routes-page #approval-routes-table td[data-col="condition"] { min-width: 140px; width: 20%; }
+  .approval-routes-page .approval-route-name {
+    display: block; min-width: 0; max-width: 100%;
+    color: var(--seal-dark, var(--primary)); font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none;
+  }
+  .approval-routes-page .approval-route-name:hover { text-decoration: underline; }
+  .approval-routes-page .approval-route-cell {
+    display: block; min-width: 0; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .approval-routes-page .approval-routes-col-menu { position: relative; }
+  .approval-routes-page .approval-routes-col-menu__panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 20;
+    min-width: 180px; padding: 10px; border-radius: 10px;
+  }
+  .approval-routes-page .approval-routes-col-menu.is-open .approval-routes-col-menu__panel { display: grid; gap: 6px; }
+  .approval-routes-page .approval-routes-col-menu__panel label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); cursor: pointer;
+  }
+  body[data-design-system=casefile]:has(.approval-routes-page) .top-bar .global-search-form { max-width: 248px; flex-basis: 248px; }
+  body[data-design-system=casefile]:has(.approval-routes-page) .top-bar .global-search-input {
+    height: 36px; border: 1px solid transparent !important; background: transparent !important; color: var(--ink-600);
+  }
+  body[data-design-system=casefile]:has(.approval-routes-page) .top-bar .global-search-input:focus-visible {
+    border-color: var(--line) !important; background: var(--card) !important;
+  }
+  body[data-design-system=casefile]:has(.approval-routes-page) .app-footer { display: none; }
+  @media (max-width: 560px) {
+    .approval-routes-page .clm-list-summary { --dc-ds-summary-columns: 1; }
   }
 </style>
-<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page workflow-approval-routes-page">
-  <header class="clm-list-shell dc-ds-filterbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
+
+<div id="approval-routes-root" class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page approval-routes-page">
+  <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow Designer controls">
     <div class="clm-list-view-header">
-      {% include "components/_workflow_designer_tabs.html" with tabs=designer_tabs %}
+      {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
       <div class="clm-list-view-actions">
-        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Open templates</a>
+        <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--primary">Open templates</a>
+      </div>
+    </div>
+
+    <div class="clm-list-filter-controls">
+      <div class="clm-list-search-field">
+        {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
+        <input class="dc-ds-control" type="search" id="approval-routes-search" placeholder="Search approval rules" aria-label="Search approval rules" autocomplete="off">
+      </div>
+      <div class="clm-list-actions-stack">
+        <p id="approval-routes-result-count" class="clm-list-result-count" aria-live="polite">{{ result_count }} approval rule{{ result_count|pluralize }}</p>
+        <div class="approval-routes-col-menu" id="approval-routes-col-menu">
+          <button id="approval-routes-col-toggle" type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" aria-expanded="false" aria-controls="approval-routes-col-panel">Columns</button>
+          <div id="approval-routes-col-panel" class="approval-routes-col-menu__panel dc-ds-surface" role="group" aria-label="Visible columns">
+            <label><input type="checkbox" data-col-toggle="step" checked> Step</label>
+            <label><input type="checkbox" data-col-toggle="role" checked> Role</label>
+            <label><input type="checkbox" data-col-toggle="order" checked> Order</label>
+            <label><input type="checkbox" data-col-toggle="condition" checked> Condition</label>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <p class="clm-list-result-count" aria-live="polite">{{ result_count }} approval rule{{ result_count|pluralize }}</p>
+  <div class="dc-ds-summary clm-list-summary" aria-label="Approval rules summary">
+    <div class="dc-ds-summary__item {% if result_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Approval rules</span>
+      <strong class="dc-ds-summary__value">{{ result_count }}</strong>
+    </div>
+    <div class="dc-ds-summary__item {% if conditional_count %}dc-ds-summary__item--info{% else %}dc-ds-summary__item--clear{% endif %}">
+      <span class="dc-ds-summary__label">Conditional</span>
+      <strong class="dc-ds-summary__value">{{ conditional_count }}</strong>
+    </div>
+  </div>
 
-  <div class="dc-ds-surface" style="overflow:hidden;">
-    <table class="dc-ds-table w-full text-sm">
+  <div class="dc-ds-table-wrap">
+    <table id="approval-routes-table" class="dc-ds-table w-full text-sm" aria-label="Template approval rules">
       <thead>
         <tr>
-          <th scope="col">Template</th>
-          <th scope="col">Step</th>
-          <th scope="col">Role</th>
-          <th scope="col">Order</th>
-          <th scope="col">Condition</th>
+          <th scope="col" data-col="template">Template</th>
+          <th scope="col" data-col="step">Step</th>
+          <th scope="col" data-col="role">Role</th>
+          <th scope="col" data-col="order">Order</th>
+          <th scope="col" data-col="condition">Condition</th>
         </tr>
       </thead>
       <tbody>
         {% for route in approval_routes %}
-        <tr>
-          <td><a href="{% url 'contracts:workflow_template_detail' route.workflow_template_id %}" class="c-link">{{ route.workflow_template.name }}</a></td>
-          <td>{{ route.name }}</td>
-          <td>{{ route.role_label|default:"—" }}</td>
-          <td>{{ route.order }}</td>
-          <td>{% if route.is_conditional %}{{ route.condition_note|default:"Conditional" }}{% else %}Always{% endif %}</td>
+        <tr data-route-row data-search="{{ route.workflow_template.name }} {{ route.name }} {{ route.role_label }} {% if route.is_conditional %}{{ route.condition_note|default:'Conditional' }}{% else %}Always{% endif %}">
+          <td data-col="template">
+            <a href="{% url 'contracts:workflow_template_detail' route.workflow_template_id %}" class="approval-route-name" title="{{ route.workflow_template.name }}">{{ route.workflow_template.name }}</a>
+          </td>
+          <td data-col="step"><span class="approval-route-cell" title="{{ route.name }}">{{ route.name }}</span></td>
+          <td data-col="role"><span class="approval-route-cell" title="{{ route.role_label|default:'—' }}">{{ route.role_label|default:"—" }}</span></td>
+          <td data-col="order">{{ route.order }}</td>
+          <td data-col="condition">
+            <span class="approval-route-cell" title="{% if route.is_conditional %}{{ route.condition_note|default:'Conditional' }}{% else %}Always{% endif %}">
+              {% if route.is_conditional %}{{ route.condition_note|default:"Conditional" }}{% else %}Always{% endif %}
+            </span>
+          </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="text-center c-muted" style="padding:48px 16px;">No template approval routes yet. Define them on a workflow template in Designer.</td></tr>
+        <tr>
+          <td colspan="5">
+            {% url 'contracts:workflow_template_list' as templates_url %}
+            {% include "design_system/empty_state.html" with icon="workflow" title="No approval rules yet" reason="Template approval chains appear here after stages are defined on a workflow template." how="Open a template in Designer and configure its approval route." action_url=templates_url action_label="Open templates" %}
+          </td>
+        </tr>
         {% endfor %}
+        <tr class="approval-routes-filter-empty" hidden>
+          <td colspan="5" class="text-center c-muted" style="padding:48px 16px;">No approval rules match this search.</td>
+        </tr>
       </tbody>
     </table>
   </div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var root = document.getElementById('approval-routes-root');
+  if (!root) return;
+
+  var table = document.getElementById('approval-routes-table');
+  var search = document.getElementById('approval-routes-search');
+  var resultCount = document.getElementById('approval-routes-result-count');
+  var totalCount = {{ result_count|default:0 }};
+
+  function setResultCount(n) {
+    if (!resultCount) return;
+    var count = Number(n) || 0;
+    resultCount.textContent = count + ' approval rule' + (count === 1 ? '' : 's');
+  }
+
+  function filterRows() {
+    if (!table || !search) return;
+    var q = (search.value || '').trim().toLowerCase();
+    var visible = 0;
+    table.querySelectorAll('tbody tr[data-route-row]').forEach(function (row) {
+      var hay = (row.getAttribute('data-search') || '').toLowerCase();
+      var show = !q || hay.indexOf(q) !== -1;
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    var empty = table.querySelector('tbody tr.approval-routes-filter-empty');
+    if (empty) empty.hidden = visible > 0 || !q;
+    setResultCount(q ? visible : totalCount);
+  }
+
+  if (search) search.addEventListener('input', filterRows);
+
+  var STORAGE_KEY = 'clmone-approval-routes-columns-v1';
+  var DEFAULT_COLS = { step: true, role: true, order: true, condition: true };
+  var colMenu = document.getElementById('approval-routes-col-menu');
+  var colToggle = document.getElementById('approval-routes-col-toggle');
+  var columnVisibility = Object.assign({}, DEFAULT_COLS);
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      if (typeof saved[key] === 'boolean') columnVisibility[key] = saved[key];
+    });
+  } catch (err) { /* ignore */ }
+
+  function applyColumnVisibility() {
+    if (!table) return;
+    Object.keys(DEFAULT_COLS).forEach(function (key) {
+      var visible = columnVisibility[key] !== false;
+      table.querySelectorAll('[data-col="' + key + '"]').forEach(function (el) {
+        el.classList.toggle('is-hidden', !visible);
+      });
+      var input = root.querySelector('[data-col-toggle="' + key + '"]');
+      if (input) input.checked = visible;
+    });
+  }
+
+  function persistColumns() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(columnVisibility)); } catch (err) { /* ignore */ }
+  }
+
+  if (colToggle && colMenu) {
+    colToggle.addEventListener('click', function () {
+      var open = colMenu.classList.toggle('is-open');
+      colToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (event) {
+      if (!colMenu.contains(event.target)) {
+        colMenu.classList.remove('is-open');
+        colToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape') return;
+      colMenu.classList.remove('is-open');
+      colToggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  root.querySelectorAll('[data-col-toggle]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      var key = input.getAttribute('data-col-toggle');
+      if (!Object.prototype.hasOwnProperty.call(DEFAULT_COLS, key)) return;
+      columnVisibility[key] = !!input.checked;
+      applyColumnVisibility();
+      persistColumns();
+    });
+  });
+  applyColumnVisibility();
+})();
+</script>
 {% endblock %}

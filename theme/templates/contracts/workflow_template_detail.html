@@ -1,402 +1,1018 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ workflow_template.name }} – Workflow Designer{% endblock %}
 {% block authenticated_page_title %}Workflow Designer{% endblock %}
-{% block authenticated_page_subtitle %}Configure reusable workflow definitions, conditions, stages, versioning, testing, and publishing.{% endblock %}
+{% block authenticated_page_subtitle %}{% endblock %}
+{% block authenticated_page_context_attrs %} data-suppress-title-promotion{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:workflow_template_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to templates" title="Back to templates">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-.version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
-.version-row:hover { background: var(--sidebar-hover); }
-.step-row { padding: 16px 20px; border-bottom: 1px solid var(--card-border); }
-.activity-card { border-radius: 8px; border: 1px solid var(--card-border); padding: 12px; }
-.preview-tbl-wrap { overflow-x: auto; border: 1px solid var(--card-border); border-radius: 12px; }
-.preview-tbl-wrap table { min-width: 100%; border-collapse: collapse; }
-.preview-tbl-wrap tbody { }
-.preview-tbl { border-color: var(--card-border); }
-.preview-tr-start { background: var(--primary-subtle); }
-.preview-tr-complete { background: rgba(34,197,94,0.08); }
-.preview-tr-skip { background: rgba(107,114,128,0.08); opacity: 0.7; }
-</style>
-<div class="page-wrap reveal-stagger">
-    <div class="workspace-main hero-shell mb-6">
-        <div class="workspace-main-head">
-            <div>
-                <p class="dc-ds-eyebrow" style="margin:0 0 var(--space-6); color: var(--ink-500); font: var(--text-meta); font-weight: 700; letter-spacing: .04em; text-transform: uppercase;">Workflow Designer</p>
-                <h1 class="workspace-title">
-                    {{ workflow_template.name }}
-                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">v{{ workflow_template.version }}</span>
-                    {% if is_incomplete_template %}
-                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--attention">Draft · Incomplete</span>
-                    {% elif workflow_template.is_active %}
-                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--success">Published</span>
-                    {% else %}
-                    <span class="dc-ds-badge dc-ds-badge--sm align-middle ml-2 dc-ds-badge--neutral">Draft</span>
-                    {% endif %}
-                </h1>
-                <p class="workspace-subtitle c-muted">{{ workflow_template.description }}</p>
-                <div class="workspace-kicker-row">
-                    <span class="workspace-kicker"><strong>{{ steps|length }}</strong> defined steps</span>
-                    <span class="workspace-kicker"><strong>{{ template_versions|length }}</strong> tracked versions</span>
-                </div>
-            </div>
-            <div class="workspace-tools">
-                <a href="{% url 'contracts:workflow_template_update' workflow_template.pk %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Edit Template</a>
-                <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-3 py-2 text-sm rounded-lg border">Back to Templates</a>
-                <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white px-4 py-2 rounded-lg">Create New Version</button>
-                </form>
-                <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}">
-                    {% csrf_token %}
-                    {% if not workflow_template.is_active and not can_publish %}
-                    <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border opacity-50 cursor-not-allowed" disabled title="{{ publish_validation.message|default:'Resolve configuration errors before publishing.' }}">
-                        Publish
-                    </button>
-                    {% else %}
-                    <button type="submit" class="dc-ds-button dc-ds-button--quiet inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border">
-                        {% if workflow_template.is_active %}Unpublish{% else %}Publish{% endif %}
-                    </button>
-                    {% endif %}
-                </form>
-            </div>
-        </div>
-        {% if not workflow_template.is_active and publish_validation and not publish_validation.ok %}
-        <div class="msg-error rounded-lg p-3 mt-3 text-sm" role="status">{{ publish_validation.message }}</div>
+<main
+  class="dc-ds-workspace dc-ds-workspace--workflow-designer{% if is_published %} is-published{% endif %}{% if not can_edit_template %} is-readonly{% endif %}"
+  id="workflow-designer"
+  data-workflow-designer
+  data-template-id="{{ workflow_template.pk }}"
+  data-can-edit="{% if can_edit_template %}true{% else %}false{% endif %}"
+  data-is-published="{% if is_published %}true{% else %}false{% endif %}"
+  data-active-tab="{{ active_tab }}"
+  data-selected-step="{% if selected_step_id %}{{ selected_step_id }}{% endif %}"
+  data-add-url="{% url 'contracts:workflow_template_step_add' workflow_template.pk %}"
+  data-reorder-url="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}"
+  data-update-url-template="{% url 'contracts:workflow_template_step_update' workflow_template.pk 0 %}"
+  data-delete-url-template="{% url 'contracts:workflow_template_step_delete' workflow_template.pk 0 %}"
+  data-validation-count="{{ validation_issue_count|default:0 }}"
+  aria-label="Workflow designer"
+>
+  <header class="wf-designer-header">
+    <div class="wf-designer-header__identity">
+      <h1 class="wf-designer-header__title">{{ workflow_template.name }}</h1>
+      <div class="wf-designer-header__meta" aria-label="Workflow identity">
+        <span class="wf-identity-chip wf-identity-chip--version">v{{ workflow_template.version }}</span>
+        <span class="wf-identity-chip {% if is_published %}wf-identity-chip--published{% else %}wf-identity-chip--draft{% endif %}">{{ lifecycle_label }}</span>
+        {% if published_has_blocking_issues %}
+        <span class="wf-identity-chip wf-identity-chip--issue">Configuration issue</span>
+        {% elif validation_status_label and validation_status_label != 'Valid' %}
+        <span class="wf-identity-chip wf-identity-chip--issue">{{ validation_status_label }}</span>
+        {% elif not is_published and validation_status_label == 'Valid' %}
+        <span class="wf-identity-chip wf-identity-chip--valid">Valid</span>
+        {% elif is_published and validation_status_label == 'Valid' %}
+        <span class="wf-identity-chip wf-identity-chip--valid">Valid</span>
         {% endif %}
-        <div class="workspace-toolbar">
-            <div class="summary-grid w-full">
-                <div class="summary-card">
-                    <div class="summary-label">Current version</div>
-                    <div class="summary-value">v{{ workflow_template.version }}</div>
-                    <div class="summary-meta">Active template revision</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Steps</div>
-                    <div class="summary-value">{{ steps|length }}</div>
-                    <div class="summary-meta">Reusable workflow steps</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-label">Version history</div>
-                    <div class="summary-value">{{ template_versions|length }}</div>
-                    <div class="summary-meta">Revision lineage available</div>
-                </div>
-            </div>
-        </div>
+        <span class="wf-identity-chip {% if can_edit_template %}wf-identity-chip--editable{% else %}wf-identity-chip--readonly{% endif %}">{{ edit_state_label }}</span>
+        {% if can_edit_template %}
+        <span class="wf-designer-save-status" data-save-status aria-live="polite">All changes saved</span>
+        {% endif %}
+      </div>
     </div>
-
-    <div class="panel overflow-hidden">
-        <div class="panel-head">
-            <span id="version-history" class="panel-title">Version History</span>
-        </div>
-        <div>
-            {% for version in template_versions %}
-            <div class="version-row">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <a href="{% url 'contracts:workflow_template_detail' version.pk %}" class="font-medium c-primary hover:underline">Version {{ version.version }}</a>
-                        {% if version.pk == workflow_template.pk %}
-                        <span class="dc-ds-badge--progress">Current</span>
-                        {% endif %}
-                        {% if version.parent_template_id %}
-                        <span class="dc-ds-badge--neutral">Derived</span>
-                        {% endif %}
-                    </div>
-                    <p class="text-sm c-muted mt-1">{{ version.description }}</p>
-                </div>
-                <div class="flex items-center gap-4 flex-shrink-0">
-                    {% if version.pk != workflow_template.pk %}
-                    <a href="{% url 'contracts:workflow_template_compare' workflow_template.pk version.pk %}" class="text-xs font-medium c-link">Compare</a>
-                    {% endif %}
-                    <span class="text-xs c-muted">Created {{ version.created_at|date:"M d, Y" }}</span>
-                    {% if version.pk != workflow_template.pk %}
-                    <form method="post" action="{% url 'contracts:workflow_template_restore_version' version.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="text-xs font-medium c-link">Restore</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <div class="empty-state">No version history available.</div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="panel">
-        <div class="panel-head">
-            <span class="panel-title">Add a step</span>
-        </div>
-        <div class="panel-inner">
-        <form method="post" action="{% url 'contracts:workflow_template_step_add' workflow_template.pk %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {% csrf_token %}
-            <div class="md:col-span-1">
-                <label class="form-label" for="{{ step_form.name.id_for_label }}">Step name</label>
-                {{ step_form.name }}
-                {% if step_form.name.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.name.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="md:col-span-2">
-                <label class="form-label" for="{{ step_form.description.id_for_label }}">Description</label>
-                {{ step_form.description }}
-                {% if step_form.description.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.description.errors.0 }}</p>{% endif %}
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="form-label" for="{{ step_form.step_kind.id_for_label }}">Kind</label>
-                    {{ step_form.step_kind }}
-                    {% if step_form.step_kind.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.step_kind.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ step_form.condition_expression.id_for_label }}">Condition</label>
-                    {{ step_form.condition_expression }}
-                    {% if step_form.condition_expression.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.condition_expression.errors.0 }}</p>{% endif %}
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="form-label" for="{{ step_form.assignee_role.id_for_label }}">Role</label>
-                    {{ step_form.assignee_role }}
-                    {% if step_form.assignee_role.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.assignee_role.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ step_form.specific_assignee.id_for_label }}">Specific assignee</label>
-                    {{ step_form.specific_assignee }}
-                    {% if step_form.specific_assignee.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.specific_assignee.errors.0 }}</p>{% endif %}
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="form-label" for="{{ step_form.sla_hours.id_for_label }}">SLA hours</label>
-                    {{ step_form.sla_hours }}
-                    {% if step_form.sla_hours.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.sla_hours.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ step_form.escalation_after_hours.id_for_label }}">Escalate after</label>
-                    {{ step_form.escalation_after_hours }}
-                    {% if step_form.escalation_after_hours.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.escalation_after_hours.errors.0 }}</p>{% endif %}
-                </div>
-                <div class="flex items-end gap-3">
-                    <div class="flex-1">
-                        <label class="form-label" for="{{ step_form.order.id_for_label }}">Order</label>
-                        {{ step_form.order }}
-                        {% if step_form.order.errors %}<p class="mt-1 text-xs c-danger">{{ step_form.order.errors.0 }}</p>{% endif %}
-                    </div>
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white h-10 px-4">Add</button>
-                </div>
-            </div>
+    <div class="wf-designer-header__actions" data-tab-actions>
+      {% if active_tab == 'design' %}
+        {% if can_edit_template %}
+        <button type="button" class="dc-ds-button dc-ds-button--quiet" data-save-changes hidden disabled title="Save changes (⌘/Ctrl+S)">Save changes</button>
+        <a href="?tab=test" class="dc-ds-button dc-ds-button--quiet" title="Open the Test tab">Test workflow</a>
+        {% if can_publish %}
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-publish-confirm title="Publish v{{ workflow_template.version }}">Publish</button>
+        <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}" data-publish-form hidden>
+          {% csrf_token %}
         </form>
-        </div>
-    </div>
-
-    <div class="panel mb-6">
-        <div class="panel-head">
-            <span class="panel-title">Preview Template</span>
-            <span class="panel-link">Dry-run only</span>
-        </div>
-        <div class="panel-inner">
-            <form method="post" action="{% url 'contracts:workflow_template_preview' workflow_template.pk %}" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {% csrf_token %}
-                <div>
-                    <label class="form-label" for="{{ preview_form.contract_type.id_for_label }}">Contract type</label>
-                    {{ preview_form.contract_type }}
-                    {% if preview_form.contract_type.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.contract_type.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.value.id_for_label }}">Value</label>
-                    {{ preview_form.value }}
-                    {% if preview_form.value.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.value.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.jurisdiction.id_for_label }}">Jurisdiction</label>
-                    {{ preview_form.jurisdiction }}
-                    {% if preview_form.jurisdiction.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.jurisdiction.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.governing_law.id_for_label }}">Governing law</label>
-                    {{ preview_form.governing_law }}
-                    {% if preview_form.governing_law.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.governing_law.errors.0 }}</p>{% endif %}
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-2 mt-6">
-                        {{ preview_form.data_transfer_flag }}
-                        <label class="form-label" for="{{ preview_form.data_transfer_flag.id_for_label }}">Data transfer</label>
-                    </div>
-                    {% if preview_form.data_transfer_flag.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.data_transfer_flag.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.risk_level.id_for_label }}">Risk level</label>
-                    {{ preview_form.risk_level }}
-                    {% if preview_form.risk_level.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.risk_level.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.counterparty_name.id_for_label }}">Counterparty</label>
-                    {{ preview_form.counterparty_name }}
-                    {% if preview_form.counterparty_name.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.counterparty_name.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    <label class="form-label" for="{{ preview_form.status.id_for_label }}">Status</label>
-                    {{ preview_form.status }}
-                    {% if preview_form.status.errors %}<p class="mt-1 text-xs c-danger">{{ preview_form.status.errors.0 }}</p>{% endif %}
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="dc-ds-button dc-ds-button--primary text-white w-full">Preview template</button>
-                </div>
-            </form>
-
-            {% if preview_form.non_field_errors %}
-            <div class="mt-4 text-sm c-danger">
-                {{ preview_form.non_field_errors.0 }}
-            </div>
+        {% else %}
+        <button
+          type="button"
+          class="dc-ds-button dc-ds-button--primary"
+          data-open-validation
+          aria-controls="wf-validation-summary"
+          title="{{ publish_validation.message|default:'Resolve configuration issues before publishing.' }}"
+        >
+          Publish{% if blocking_count %} · {{ blocking_count }} blocking{% endif %}
+        </button>
+        {% endif %}
+        {% elif is_published %}
+        {% if show_header_create_version %}
+        <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ create_version_label }}</button>
+        </form>
+        {% endif %}
+        <a href="?tab=test" class="dc-ds-button dc-ds-button--quiet">Test workflow</a>
+        {% if can_manage_template %}
+        <details class="wf-designer-overflow">
+          <summary class="dc-ds-button dc-ds-button--quiet" aria-haspopup="menu">More <span aria-hidden="true">▾</span></summary>
+          <div class="wf-designer-overflow__panel" role="menu">
+            {% if published_has_blocking_issues %}
+            <button type="button" class="wf-designer-overflow__item" role="menuitem" data-toggle-remediation-details>View details</button>
             {% endif %}
-
-            {% if preview_result %}
-            <div class="mt-6">
-                <div class="flex items-center justify-between gap-3 mb-3">
-                    <div>
-                        <h3 class="text-sm font-semibold c-primary">Preview Results</h3>
-                        <p class="text-xs c-muted">{{ preview_result.active_step_count }} active · {{ preview_result.skipped_step_count }} skipped</p>
-                    </div>
-                </div>
-                <div class="preview-tbl-wrap">
-                    <table class="min-w-full divide-y preview-tbl">
-                        <thead class="tbl-head">
-                            <tr>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Order</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Step</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Kind</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Condition</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Status</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Reason</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">Assignee</th>
-                                <th class="tbl-th px-4 py-3 text-left text-xs uppercase tracking-wider">SLA</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for step in preview_result.preview_steps %}
-                            <tr class="{% if step.preview_status == 'WOULD_START' %}preview-tr-start{% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}preview-tr-complete{% elif step.preview_status == 'WOULD_SKIP' %}preview-tr-skip{% endif %}">
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.order }}</td>
-                                <td class="px-4 py-3 text-sm c-primary font-medium">{{ step.name }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.step_kind }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.condition_expression|default:'—' }}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="
-                                        {% if step.preview_status == 'WOULD_START' %}dc-ds-badge--progress
-                                        {% elif step.preview_status == 'WOULD_COMPLETE_AUTOMATICALLY' %}dc-ds-badge--success
-                                        {% elif step.preview_status == 'WOULD_SKIP' %}dc-ds-badge--neutral
-                                        {% else %}dc-ds-badge--attention{% endif %}">
-                                        {{ step.preview_status }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 text-sm c-muted">{{ step.reason }}</td>
-                                <td class="px-4 py-3 text-sm c-muted">
-                                    {% if step.resolved_assignee %}{{ step.resolved_assignee }}{% else %}—{% endif %}
-                                </td>
-                                <td class="px-4 py-3 text-sm c-muted">
-                                    {% if step.sla_hours %}{{ step.sla_hours }}h{% else %}—{% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-        </div>
+            <a href="{% url 'contracts:workflow_template_update' workflow_template.pk %}" class="wf-designer-overflow__item" role="menuitem">View template details</a>
+            <button type="button" class="wf-designer-overflow__item" role="menuitem" data-confirm-unpublish>
+              Unpublish{% if active_workflow_usage_count %} ({{ active_workflow_usage_count }} active){% endif %}
+            </button>
+            <button type="button" class="wf-designer-overflow__item" role="menuitem" data-confirm-archive>Archive</button>
+          </div>
+        </details>
+        <form method="post" action="{% url 'contracts:workflow_template_publish_toggle' workflow_template.pk %}" data-unpublish-form hidden>{% csrf_token %}</form>
+        <form method="post" action="{% url 'contracts:workflow_template_archive' workflow_template.pk %}" data-archive-form hidden>{% csrf_token %}</form>
+        {% endif %}
+        {% endif %}
+      {% elif active_tab == 'versions' %}
+        {% if show_create_version %}
+        <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ create_version_label }}</button>
+        </form>
+        {% endif %}
+      {% elif active_tab == 'activity' %}
+        <a
+          class="dc-ds-button dc-ds-button--primary"
+          href="{% url 'contracts:workflow_template_audit_export' workflow_template.pk %}?actor={{ audit_filters.actor|urlencode }}{% for et in audit_filters.event_types %}&amp;event_type={{ et|urlencode }}{% endfor %}&amp;version={{ audit_filters.version|urlencode }}&amp;date_from={{ audit_filters.date_from|urlencode }}&amp;date_to={{ audit_filters.date_to|urlencode }}"
+        >Export activity</a>
+      {% endif %}
     </div>
+  </header>
 
-    <div class="panel">
-        <div class="panel-head flex items-center justify-between gap-3">
-            <span class="panel-title">Activity History</span>
-            <a href="{{ workflow_template_activity_url }}" class="text-xs font-medium c-link">View all activity</a>
-        </div>
-        <div class="panel-inner space-y-3 text-sm">
-            {% for entry in workflow_template_audit_feed %}
-            <div class="activity-card">
-                <div class="flex items-center justify-between gap-3">
-                    <span class="{{ entry.action_class }}">{{ entry.action }}</span>
-                    <span class="text-xs c-muted">{{ entry.timestamp|date:"M d, H:i" }}</span>
-                </div>
-                <div class="mt-2 font-medium c-primary">{{ entry.summary }}</div>
-                <div class="mt-1 text-xs c-muted">{{ entry.actor }}</div>
-                {% if entry.changed_fields %}
-                <div class="mt-2 flex flex-wrap gap-2">
-                    {% for field in entry.changed_fields %}
-                    <span class="dc-ds-badge--neutral">{{ field }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
+  {% if active_tab == 'design' and published_has_blocking_issues %}
+  <section class="wf-remediation-card" role="alert" aria-labelledby="wf-remediation-title" data-remediation-card>
+    <div class="wf-remediation-card__main">
+      <div class="wf-remediation-card__copy">
+        <strong id="wf-remediation-title">Published configuration issue</strong>
+        <p>This immutable published version contains configuration that no longer passes validation.</p>
+        {% if unresolved_assignment_count %}
+        <p class="wf-remediation-card__meta">
+          It contains {{ unresolved_assignment_count }} unresolved assignment{{ unresolved_assignment_count|pluralize }}.
+          {{ active_workflow_usage_count }} active workflow{{ active_workflow_usage_count|pluralize }} currently use this version.
+        </p>
+        {% else %}
+        <p class="wf-remediation-card__meta">
+          {{ active_workflow_usage_count }} active workflow{{ active_workflow_usage_count|pluralize }} currently use this version.
+        </p>
+        {% endif %}
+        <p class="wf-remediation-card__recommend">Recommended action: Create a corrected draft version.</p>
+        {% if new_launches_blocked %}
+        <p class="wf-remediation-card__launch">New launches are blocked until required assignments are restored in a corrected version.</p>
+        {% endif %}
+      </div>
+      <div class="wf-remediation-card__actions">
+        {% if can_manage_template %}
+        <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">Create corrected version</button>
+        </form>
+        {% endif %}
+        <button type="button" class="dc-ds-button dc-ds-button--quiet" data-toggle-remediation-issues aria-expanded="false" aria-controls="wf-remediation-issues">
+          View {{ blocking_count }} issue{{ blocking_count|pluralize }}
+        </button>
+        <button type="button" class="dc-ds-button dc-ds-button--quiet" data-toggle-remediation-details aria-expanded="false" aria-controls="wf-remediation-details">
+          View details
+        </button>
+      </div>
+    </div>
+    <ul class="wf-remediation-card__issues" id="wf-remediation-issues" data-remediation-issues hidden>
+      {% for issue in publish_validation.step_issues %}
+      <li>
+        <a
+          href="?tab=design&amp;step={{ issue.step_id }}"
+          data-validation-issue
+          data-step-id="{{ issue.step_id }}"
+          data-focus-field="{{ issue.field|default:'' }}"
+        >{{ issue.step_name }}: {{ issue.message }}</a>
+      </li>
+      {% empty %}
+      {% for message in publish_validation.errors %}
+      <li><span>{{ message }}</span></li>
+      {% endfor %}
+      {% endfor %}
+    </ul>
+    <div class="wf-remediation-card__details" id="wf-remediation-details" data-remediation-details hidden>
+      <dl class="wf-action-required">
+        <div>
+          <dt>Cause</dt>
+          <dd>
+            {% for issue in publish_validation.step_issues %}
+              {{ issue.step_name }}: {{ issue.message }}{% if not forloop.last %}; {% endif %}
             {% empty %}
-            <div class="empty-state">No activity recorded yet.</div>
+              {% for message in publish_validation.errors %}{{ message }}{% if not forloop.last %}; {% endif %}{% endfor %}
             {% endfor %}
-        </div>
-    </div>
-
-    <div class="panel overflow-hidden">
-        <div class="panel-head">
-            <span class="panel-title">Workflow Steps</span>
+          </dd>
         </div>
         <div>
-            {% for control in step_controls %}
-            {% with step=control.step %}
-            <div class="step-row">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center surface-bubble">
-                        <span class="text-sm font-medium c-link">{{ step.order }}</span>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-sm font-semibold c-primary">{{ step.name }}</h3>
-                            <span class="dc-ds-badge--progress">{{ step.get_step_kind_display }}</span>
-                        </div>
-                        {% if step.condition_expression %}
-                        <p class="text-xs c-muted mt-1">Condition: {{ step.condition_expression }}</p>
-                        {% endif %}
-                        {% if step.assignee_role or step.specific_assignee %}
-                        <p class="text-xs c-muted mt-1">
-                            {% if step.specific_assignee %}
-                                Assigned to {{ step.specific_assignee.get_full_name|default:step.specific_assignee.username }}
-                            {% elif step.assignee_role %}
-                                Assigned role {{ step.get_assignee_role_display }}
-                            {% endif %}
-                        </p>
-                        {% endif %}
-                        {% if step.sla_hours %}
-                        <p class="text-xs c-muted mt-1">SLA: {{ step.sla_hours }}h{% if step.escalation_after_hours %} · Escalate after {{ step.escalation_after_hours }}h{% endif %}</p>
-                        {% endif %}
-                        {% if step.description %}
-                        <p class="text-sm c-muted mt-1">{{ step.description }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="flex-shrink-0 flex items-center gap-2">
-                        {% if control.move_up_ids %}
-                        <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}">
-                            {% csrf_token %}
-                            {% for step_id in control.move_up_ids %}
-                            <input type="hidden" name="step_ids" value="{{ step_id }}">
-                            {% endfor %}
-                            <button type="submit" class="text-xs font-medium c-link">Move up</button>
-                        </form>
-                        {% endif %}
-                        {% if control.move_down_ids %}
-                        <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}">
-                            {% csrf_token %}
-                            {% for step_id in control.move_down_ids %}
-                            <input type="hidden" name="step_ids" value="{{ step_id }}">
-                            {% endfor %}
-                            <button type="submit" class="text-xs font-medium c-link">Move down</button>
-                        </form>
-                        {% endif %}
-                        <form method="post" action="{% url 'contracts:workflow_template_step_delete' workflow_template.pk step.pk %}" data-confirm="Delete this workflow step?">
-                            {% csrf_token %}
-                            <button type="submit" class="text-xs font-medium c-danger">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endwith %}
-            {% empty %}
-            <div class="empty-state">No steps defined for this template.</div>
-            {% endfor %}
+          <dt>Detected</dt>
+          <dd>{% now "j M Y H:i" %} (on open)</dd>
         </div>
+        <div>
+          <dt>Affected usage</dt>
+          <dd>{{ active_workflow_usage_count }} active workflow{{ active_workflow_usage_count|pluralize }} on this version continue; remediating does not mutate them.</dd>
+        </div>
+        <div>
+          <dt>New launches</dt>
+          <dd>{% if new_launches_blocked %}Blocked — required steps lack assignees{% else %}Allowed{% endif %}</dd>
+        </div>
+        <div>
+          <dt>Recommended remediation</dt>
+          <dd>Create a corrected draft version, resolve configuration issues, then publish the corrected version.</dd>
+        </div>
+      </dl>
     </div>
-</div>
+  </section>
+  {% endif %}
+
+  {% if active_tab == 'design' and publish_validation and not publish_validation.ok and not is_published %}
+  <section class="wf-designer-validation-summary" id="wf-validation-summary" data-validation-panel aria-label="Configuration issues" {% if not blocking_count %}hidden{% endif %}>
+    <button type="button" class="wf-designer-validation-summary__toggle" data-toggle-validation aria-expanded="true">
+      <span class="wf-designer-validation-summary__count">{{ blocking_count }} blocking issue{{ blocking_count|pluralize }}{% if warning_count %} · {{ warning_count }} warning{{ warning_count|pluralize }}{% endif %}</span>
+      <span aria-hidden="true">▾</span>
+    </button>
+    <ul class="wf-designer-validation-summary__list" data-validation-list>
+      {% for issue in publish_validation.step_issues %}
+      <li>
+        <a
+          href="?tab=design&amp;step={{ issue.step_id }}"
+          data-validation-issue
+          data-step-id="{{ issue.step_id }}"
+          data-focus-field="{{ issue.field|default:'' }}"
+        ><span class="wf-severity wf-severity--blocking">Blocking issue</span> {{ issue.step_name }}: {{ issue.message }}</a>
+      </li>
+      {% empty %}
+      {% for message in publish_validation.errors %}
+      <li><span class="wf-severity wf-severity--blocking">Blocking issue</span> Workflow: {{ message }}</li>
+      {% endfor %}
+      {% endfor %}
+      {% for issue in publish_validation.warnings %}
+      <li>
+        {% if issue.step_id %}
+        <a href="?tab=design&amp;step={{ issue.step_id }}" data-validation-issue data-step-id="{{ issue.step_id }}" data-focus-field="{{ issue.field|default:'' }}">
+          <span class="wf-severity wf-severity--warning">Warning</span> {{ issue.step_name }}: {{ issue.message }}
+        </a>
+        {% else %}
+        <span class="wf-severity wf-severity--warning">Warning</span> {{ issue.message }}
+        {% endif %}
+      </li>
+      {% endfor %}
+      {% for issue in publish_validation.infos %}
+      <li><span class="wf-severity wf-severity--info">Information</span> {{ issue.message }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% include "components/_workspace_tabs.html" with tabs=canvas_tabs aria_label="Workflow designer tabs" role_tablist=True nav_class="dc-ds-workspace__tabs wf-designer-tabs" %}
+
+  {% if active_tab == 'design' %}
+  <div class="wf-designer-layout" data-designer-layout>
+    <section class="wf-designer-canvas" aria-label="Workflow path" data-canvas>
+      <div class="wf-designer-canvas__viewport" data-canvas-viewport>
+        <div class="wf-designer-path" data-workflow-path role="list" data-canvas-stage>
+          <div class="wf-designer-boundary wf-designer-boundary--start" role="listitem" aria-label="Start">
+            <span class="wf-designer-boundary__dot" aria-hidden="true"></span>
+            <span class="wf-designer-boundary__label">Start</span>
+          </div>
+          <span class="wf-designer-connector" aria-hidden="true"></span>
+
+          {% if can_edit_template %}
+          <button type="button" class="wf-designer-insert" data-insert-at="1" title="Add step" aria-label="Add step">+</button>
+          <span class="wf-designer-connector" aria-hidden="true"></span>
+          {% endif %}
+
+          {% for control in step_controls %}
+          {% with step=control.step %}
+          {% if control.is_conditional %}
+          <div class="wf-designer-branch" role="presentation">
+            <div class="wf-designer-branch__join" aria-hidden="true"></div>
+            <div class="wf-designer-branch__lanes">
+              <div class="wf-designer-branch__lane wf-designer-branch__lane--match">
+                <span class="wf-designer-branch__label">When matched</span>
+          {% endif %}
+          <article
+            class="wf-designer-step{% if selected_step_id == step.pk %} is-selected{% endif %}{% if control.is_conditional %} is-conditional{% endif %}{% if control.is_blocking_error %} has-error{% elif control.is_warning %} has-warning{% endif %}"
+            role="listitem"
+            tabindex="0"
+            data-step-id="{{ step.pk }}"
+            data-step-order="{{ step.order }}"
+            data-validation-field="{{ control.validation_field }}"
+            aria-selected="{% if selected_step_id == step.pk %}true{% else %}false{% endif %}"
+            aria-label="{{ step.name }}, {{ step.get_step_kind_display }}{% if control.is_blocking_error %}, blocking issue{% elif control.is_warning %}, warning{% endif %}"
+          >
+            {% if can_edit_template %}
+            <button type="button" class="wf-designer-step__handle" draggable="true" data-drag-handle aria-label="Drag to reorder {{ step.name }}">⋮⋮</button>
+            {% endif %}
+            <div class="wf-designer-step__body">
+              <span class="wf-designer-step__kind">{{ step.get_step_kind_display }}</span>
+              <strong class="wf-designer-step__name">{{ step.name }}</strong>
+              <span class="wf-designer-step__meta{% if control.assignment_incomplete %} is-incomplete{% endif %}">
+                {{ control.assignment_label }}{% if control.sla_label %} · {{ control.sla_label }}{% endif %}
+              </span>
+              {% if control.condition_summary %}
+              <span class="wf-designer-step__condition" title="{{ control.condition_summary }}">{{ control.condition_summary }}</span>
+              {% elif control.condition_count %}
+              <span class="wf-designer-step__condition">{{ control.condition_count }} condition{{ control.condition_count|pluralize }}</span>
+              {% endif %}
+              {% if control.primary_issue_label %}
+              <span class="wf-designer-step__issue{% if control.is_blocking_error %} is-error{% endif %}" title="{% for issue in control.validation_issues %}{{ issue }}{% if not forloop.last %}; {% endif %}{% empty %}{% for issue in control.validation_warnings %}{{ issue }}{% if not forloop.last %}; {% endif %}{% empty %}{{ control.primary_issue_label }}{% endfor %}{% endfor %}">{{ control.primary_issue_label }}</span>
+              {% endif %}
+            </div>
+            {% if can_edit_template %}
+            <details class="wf-designer-step__menu">
+              <summary aria-label="Actions for {{ step.name }}">⋯</summary>
+              <div class="wf-designer-step__menu-panel" role="menu">
+                {% if control.move_left_ids %}
+                <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}" role="none">
+                  {% csrf_token %}
+                  {% for sid in control.move_left_ids %}<input type="hidden" name="step_ids" value="{{ sid }}">{% endfor %}
+                  <button type="submit" class="wf-designer-step__menu-item" role="menuitem">Move left</button>
+                </form>
+                {% endif %}
+                {% if control.move_right_ids %}
+                <form method="post" action="{% url 'contracts:workflow_template_step_reorder' workflow_template.pk %}" role="none">
+                  {% csrf_token %}
+                  {% for sid in control.move_right_ids %}<input type="hidden" name="step_ids" value="{{ sid }}">{% endfor %}
+                  <button type="submit" class="wf-designer-step__menu-item" role="menuitem">Move right</button>
+                </form>
+                {% endif %}
+                <a class="wf-designer-step__menu-item" role="menuitem" href="?tab=design&amp;step={{ step.pk }}">Configure</a>
+              </div>
+            </details>
+            {% endif %}
+          </article>
+          {% if control.is_conditional %}
+              </div>
+              <div class="wf-designer-branch__lane wf-designer-branch__lane--skip">
+                <span class="wf-designer-branch__label">Otherwise</span>
+                <div class="wf-designer-branch__skip">Skip to next</div>
+              </div>
+            </div>
+            <div class="wf-designer-branch__merge" aria-hidden="true"></div>
+          </div>
+          {% endif %}
+          <span class="wf-designer-connector" aria-hidden="true"></span>
+          {% if can_edit_template %}
+          <button type="button" class="wf-designer-insert" data-insert-at="{{ forloop.counter|add:1 }}" title="Add step" aria-label="Add step">+</button>
+          <span class="wf-designer-connector" aria-hidden="true"></span>
+          {% endif %}
+          {% endwith %}
+          {% empty %}
+          {% if can_edit_template %}
+          <div class="wf-designer-empty">
+            <p>Add the first workflow step between Start and Completed.</p>
+            <button type="button" class="dc-ds-button dc-ds-button--primary" data-open-add-step data-insert-at="1">Add step</button>
+          </div>
+          <span class="wf-designer-connector" aria-hidden="true"></span>
+          {% endif %}
+          {% endfor %}
+
+          <div class="wf-designer-boundary wf-designer-boundary--end" role="listitem" aria-label="Completed">
+            <span class="wf-designer-boundary__dot" aria-hidden="true"></span>
+            <span class="wf-designer-boundary__label">Completed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="wf-designer-zoom" role="toolbar" aria-label="Canvas controls">
+        <button type="button" class="wf-designer-zoom__btn" data-zoom-out title="Zoom out (−)" aria-label="Zoom out">−</button>
+        <span class="wf-designer-zoom__value" data-zoom-label aria-live="polite">100%</span>
+        <button type="button" class="wf-designer-zoom__btn" data-zoom-in title="Zoom in (+)" aria-label="Zoom in">+</button>
+        <button type="button" class="wf-designer-zoom__btn" data-zoom-fit title="Fit to screen" aria-label="Fit to screen">Fit</button>
+        <button type="button" class="wf-designer-zoom__btn" data-zoom-reset title="Reset view (0)" aria-label="Reset view">Reset</button>
+      </div>
+      <button type="button" class="wf-designer-inspector-toggle dc-ds-button dc-ds-button--quiet" data-toggle-inspector aria-controls="workflow-step-inspector" aria-expanded="true">Hide inspector</button>
+    </section>
+
+    <aside class="wf-designer-inspector is-open" data-inspector id="workflow-step-inspector" aria-labelledby="workflow-inspector-title">
+      <div class="wf-designer-inspector__head">
+        <h2 id="workflow-inspector-title" class="wf-designer-inspector__title">
+          {% if selected_step %}{% if can_edit_template %}Configure step{% else %}Step details{% endif %}{% elif step_form.errors %}Add step{% else %}Inspector{% endif %}
+        </h2>
+        <button type="button" class="wf-designer-inspector__collapse dc-ds-button dc-ds-button--quiet" data-toggle-inspector aria-controls="workflow-step-inspector" title="Collapse inspector">Collapse</button>
+      </div>
+      <div class="wf-designer-inspector__empty{% if selected_step or step_form.errors %} is-hidden{% endif %}" data-inspector-empty>
+        <div class="wf-designer-inspector__empty-icon" aria-hidden="true">
+          {% include "design_system/icon.html" with name="workflow" %}
+        </div>
+        <p class="wf-designer-inspector__empty-title">Select a workflow step</p>
+        <p class="wf-designer-inspector__empty-copy">Configure assignment, instructions, conditions, deadlines, escalation rules, and completion criteria.</p>
+        <p class="wf-designer-inspector__empty-hint">Tip: press Enter or Space on a step to select it.</p>
+      </div>
+
+      {% if selected_step and not can_edit_template %}
+      <div class="wf-designer-inspector__readonly" data-inspector-readonly aria-live="polite">
+        <p class="wf-designer-inspector__readonly-banner">Read-only published version</p>
+        {% if selected_step_issues or selected_step_warnings %}
+        <details class="wf-inspector-section" open data-section="validation">
+          <summary class="wf-inspector-section__summary">Validation state</summary>
+          <div class="wf-inspector-section__body">
+            <ul class="wf-validation-list">
+              {% for issue in selected_step_issues %}
+              <li><span class="wf-severity wf-severity--blocking">Blocking issue</span> {{ issue.message }}</li>
+              {% endfor %}
+              {% for issue in selected_step_warnings %}
+              <li><span class="wf-severity wf-severity--warning">Warning</span> {{ issue.message }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </details>
+        {% endif %}
+        <section class="wf-inspector-section is-static">
+          <h3 class="wf-inspector-section__heading">Basics</h3>
+          <dl class="wf-readonly-list">
+            <div><dt>Step name</dt><dd>{{ selected_step.name }}</dd></div>
+            <div><dt>Step type</dt><dd>{{ selected_step.get_step_kind_display }}</dd></div>
+            <div><dt>Description</dt><dd>{% if selected_step.description %}{{ selected_step.description }}{% else %}Not configured{% endif %}</dd></div>
+          </dl>
+        </section>
+        <section class="wf-inspector-section is-static">
+          <h3 class="wf-inspector-section__heading">Assignment</h3>
+          <dl class="wf-readonly-list">
+            <div><dt>Status</dt><dd>{% if selected_step.specific_assignee %}{{ selected_step.specific_assignee.get_full_name|default:selected_step.specific_assignee.username }}{% elif selected_step.assignee_role %}{{ selected_step.get_assignee_role_display }}{% else %}Assignment required{% endif %}</dd></div>
+          </dl>
+        </section>
+        <section class="wf-inspector-section is-static">
+          <h3 class="wf-inspector-section__heading">Entry conditions</h3>
+          <dl class="wf-readonly-list">
+            <div><dt>Rules</dt><dd>{% if selected_step.condition_expression %}{{ selected_step.condition_expression }}{% else %}None{% endif %}</dd></div>
+          </dl>
+        </section>
+        <section class="wf-inspector-section is-static">
+          <h3 class="wf-inspector-section__heading">Timing</h3>
+          <dl class="wf-readonly-list">
+            <div><dt>SLA</dt><dd>{% if selected_step.sla_hours %}{{ selected_step.sla_hours }} hours{% else %}Not configured{% endif %}</dd></div>
+            <div><dt>Escalation</dt><dd>{% if selected_step.escalation_after_hours %}{{ selected_step.escalation_after_hours }} hours{% else %}Not configured{% endif %}</dd></div>
+          </dl>
+        </section>
+        {% if show_header_create_version and not published_has_blocking_issues %}
+        <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}" class="wf-designer-inspector__actions">
+          {% csrf_token %}
+          <button type="submit" class="dc-ds-button dc-ds-button--primary">Create corrected version</button>
+        </form>
+        {% elif published_has_blocking_issues %}
+        <p class="wf-designer-inspector__hint">Use <strong>Create corrected version</strong> in the header to remediate this immutable published version.</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <form
+        method="post"
+        class="wf-designer-inspector__form{% if not selected_step and not step_form.errors %} is-hidden{% endif %}"
+        data-inspector-form
+        action="{% if selected_step %}{% url 'contracts:workflow_template_step_update' workflow_template.pk selected_step.pk %}{% else %}{% url 'contracts:workflow_template_step_add' workflow_template.pk %}{% endif %}"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="insert_at" value="" data-insert-at-field>
+        {{ step_form.condition_rules_json }}
+
+        {% if selected_step_issues or selected_step_warnings %}
+        <details class="wf-inspector-section" open data-section="validation">
+          <summary class="wf-inspector-section__summary">Validation state</summary>
+          <div class="wf-inspector-section__body">
+            <ul class="wf-validation-list">
+              {% for issue in selected_step_issues %}
+              <li><span class="wf-severity wf-severity--blocking">Blocking issue</span> {{ issue.message }}</li>
+              {% endfor %}
+              {% for issue in selected_step_warnings %}
+              <li><span class="wf-severity wf-severity--warning">Warning</span> {{ issue.message }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </details>
+        {% endif %}
+
+        <details class="wf-inspector-section" open data-section="basics">
+          <summary class="wf-inspector-section__summary">Basics</summary>
+          <div class="wf-inspector-section__body">
+            <div class="wf-field">
+              <label class="form-label" for="{{ step_form.name.id_for_label }}">Step name</label>
+              {{ step_form.name }}
+              {% if step_form.name.errors %}<p class="text-xs c-danger" id="{{ step_form.name.id_for_label }}-error">{{ step_form.name.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="wf-field">
+              <label class="form-label" for="{{ step_form.step_kind.id_for_label }}">Step type</label>
+              {{ step_form.step_kind }}
+            </div>
+            <div class="wf-field">
+              <label class="form-label" for="{{ step_form.description.id_for_label }}">Description</label>
+              {{ step_form.description }}
+            </div>
+          </div>
+        </details>
+
+        <details class="wf-inspector-section" open data-section="assignment">
+          <summary class="wf-inspector-section__summary">Assignment</summary>
+          <div class="wf-inspector-section__body">
+            <fieldset class="wf-field wf-assignment">
+              <legend class="form-label">Assignment method</legend>
+              <div class="wf-assignment__modes">
+                {% for radio in step_form.assignment_mode %}
+                <label class="wf-assignment__mode">{{ radio.tag }} {{ radio.choice_label }}</label>
+                {% endfor %}
+              </div>
+              <div class="wf-assignment__role" data-assignment-role>
+                <label class="form-label" for="{{ step_form.assignee_role.id_for_label }}">Assigned role</label>
+                {{ step_form.assignee_role }}
+              </div>
+              <div class="wf-assignment__user" data-assignment-user hidden>
+                <label class="form-label" for="{{ step_form.specific_assignee.id_for_label }}">Assigned user</label>
+                {{ step_form.specific_assignee }}
+              </div>
+            </fieldset>
+          </div>
+        </details>
+
+        <details class="wf-inspector-section" open data-section="timing">
+          <summary class="wf-inspector-section__summary">Timing</summary>
+          <div class="wf-inspector-section__body">
+            <div class="wf-field-grid">
+              <div class="wf-field">
+                <label class="form-label" for="{{ step_form.sla_hours.id_for_label }}">SLA (hours)</label>
+                {{ step_form.sla_hours }}
+              </div>
+              <div class="wf-field">
+                <label class="form-label" for="{{ step_form.escalation_after_hours.id_for_label }}">Escalation (hours)</label>
+                {{ step_form.escalation_after_hours }}
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="wf-inspector-section" data-section="conditions">
+          <summary class="wf-inspector-section__summary">Conditions</summary>
+          <div class="wf-inspector-section__body">
+            <fieldset class="wf-field wf-rules" data-rule-builder>
+              <legend class="form-label">Entry conditions</legend>
+              <div class="wf-rules__logic">
+                <label><input type="radio" name="condition_logic" value="AND" checked> Match all (AND)</label>
+                <label><input type="radio" name="condition_logic" value="OR"> Match any (OR)</label>
+              </div>
+              <div class="wf-rules__clauses" data-rule-clauses></div>
+              <button type="button" class="dc-ds-button dc-ds-button--quiet" data-add-clause>Add rule</button>
+              <template data-rule-clause-template>
+                <div class="wf-rules__clause" data-rule-clause>
+                  <select data-rule-field aria-label="Field">{% for value, label in condition_field_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+                  <select data-rule-op aria-label="Operator">{% for value, label in condition_op_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+                  <input type="text" data-rule-value aria-label="Value" placeholder="Value">
+                  <button type="button" data-remove-clause aria-label="Remove rule">×</button>
+                </div>
+              </template>
+            </fieldset>
+          </div>
+        </details>
+
+        <div class="wf-designer-inspector__actions">
+          <button type="submit" class="dc-ds-button dc-ds-button--primary" data-inspector-submit>{% if selected_step %}Save step{% else %}Add step{% endif %}</button>
+          {% if selected_step %}
+          <button type="submit" class="dc-ds-button dc-ds-button--quiet c-danger" formaction="{% url 'contracts:workflow_template_step_delete' workflow_template.pk selected_step.pk %}" formnovalidate data-delete-step>Delete</button>
+          {% endif %}
+        </div>
+      </form>
+      {% endif %}
+      {{ selected_step_rules|json_script:"initial-condition-rules" }}
+    </aside>
+  </div>
+
+  <dialog class="wf-designer-publish-dialog" data-publish-dialog aria-labelledby="wf-publish-dialog-title">
+    <form method="dialog" class="wf-designer-publish-dialog__inner">
+      <h2 id="wf-publish-dialog-title">Publish workflow?</h2>
+      <p>Publishing <strong>v{{ workflow_template.version }}</strong> makes this draft available for use. Live contracts continue on their current published version until switched.</p>
+      <div class="wf-designer-publish-dialog__actions">
+        <button type="submit" value="cancel" class="dc-ds-button dc-ds-button--quiet">Cancel</button>
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-publish-submit>Publish v{{ workflow_template.version }}</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="wf-designer-publish-dialog" data-confirm-dialog data-confirm-kind="unpublish" aria-labelledby="wf-unpublish-title">
+    <form method="dialog" class="wf-designer-publish-dialog__inner">
+      <h2 id="wf-unpublish-title">Unpublish workflow?</h2>
+      <p>This removes the published version from new contract use. Active workflows keep their current template until completed.</p>
+      <div class="wf-designer-publish-dialog__actions">
+        <button type="submit" value="cancel" class="dc-ds-button dc-ds-button--quiet">Cancel</button>
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-confirm-submit="unpublish">Unpublish</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="wf-designer-publish-dialog" data-confirm-dialog data-confirm-kind="archive" aria-labelledby="wf-archive-title">
+    <form method="dialog" class="wf-designer-publish-dialog__inner">
+      <h2 id="wf-archive-title">Archive workflow?</h2>
+      <p>Archiving unpublishes this template and returns you to the template list.</p>
+      <div class="wf-designer-publish-dialog__actions">
+        <button type="submit" value="cancel" class="dc-ds-button dc-ds-button--quiet">Cancel</button>
+        <button type="button" class="dc-ds-button dc-ds-button--primary" data-confirm-submit="archive">Archive</button>
+      </div>
+    </form>
+  </dialog>
+
+  {% elif active_tab == 'test' %}
+  <section class="wf-test-workspace" aria-labelledby="wf-test-heading">
+    <div class="wf-designer-panel__head wf-designer-panel__head--compact">
+      <h2 id="wf-test-heading">Test</h2>
+      {% if template_versions|length > 1 %}
+      <label class="wf-test-version-select">
+        <span class="form-label">Switch version</span>
+        <select class="form-control" data-test-version-switch aria-label="Select version to test">
+          {% for version in template_versions %}
+          <option value="{% url 'contracts:workflow_template_detail' version.pk %}?tab=test" {% if version.pk == workflow_template.pk %}selected{% endif %}>
+            v{{ version.version }} · {% if version.is_active %}Published{% else %}Draft{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endif %}
+    </div>
+    <div class="wf-test-presets" role="group" aria-label="Scenario presets">
+      {% for scenario in default_test_scenarios %}
+      <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-key="{{ scenario.key }}" data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
+      {% endfor %}
+      {% for scenario in saved_scenarios %}
+      <button type="button" class="dc-ds-button dc-ds-button--quiet" data-load-scenario data-scenario-name="{{ scenario.name }}" aria-pressed="false">{{ scenario.name }}</button>
+      {% endfor %}
+    </div>
+    <div class="wf-test-layout">
+      <div class="wf-test-pane wf-test-pane--inputs">
+        <form
+          id="wf-test-scenario-form"
+          method="post"
+          action="{% url 'contracts:workflow_template_preview' workflow_template.pk %}"
+          class="wf-test-form"
+          data-test-form
+        >
+          {% csrf_token %}
+          <input type="hidden" name="scenario_ran" value="{% if preview_result %}1{% else %}0{% endif %}" data-scenario-ran>
+          <fieldset class="wf-test-group">
+            <legend>Contract context</legend>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.contract_type.id_for_label }}">{{ preview_form.contract_type.label }}</label>
+              {{ preview_form.contract_type }}
+            </div>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.counterparty_name.id_for_label }}">{{ preview_form.counterparty_name.label }}</label>
+              {{ preview_form.counterparty_name }}
+            </div>
+            <div class="wf-field wf-field--currency">
+              <label class="form-label" for="{{ preview_form.value.id_for_label }}">{{ preview_form.value.label }}</label>
+              <div class="wf-currency">
+                <span class="wf-currency__prefix" aria-hidden="true">€</span>
+                {{ preview_form.value }}
+              </div>
+            </div>
+            {% if show_status_field and preview_form.status %}
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.status.id_for_label }}">{{ preview_form.status.label }}</label>
+              {{ preview_form.status }}
+            </div>
+            {% endif %}
+          </fieldset>
+          <fieldset class="wf-test-group">
+            <legend>Risk context</legend>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.risk_level.id_for_label }}">{{ preview_form.risk_level.label }}</label>
+              {{ preview_form.risk_level }}
+            </div>
+          </fieldset>
+          <fieldset class="wf-test-group">
+            <legend>Processing context</legend>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.jurisdiction.id_for_label }}">{{ preview_form.jurisdiction.label }}</label>
+              {{ preview_form.jurisdiction }}
+            </div>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.governing_law.id_for_label }}">{{ preview_form.governing_law.label }}</label>
+              {{ preview_form.governing_law }}
+            </div>
+            <div class="wf-field">
+              <label class="wf-switch" for="{{ preview_form.data_transfer_flag.id_for_label }}">
+                {{ preview_form.data_transfer_flag }}
+                <span class="wf-switch__track" aria-hidden="true"></span>
+                <span class="wf-switch__label">{{ preview_form.data_transfer_flag.label }}</span>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset class="wf-test-group">
+            <legend>Scenario identity</legend>
+            <div class="wf-field">
+              <label class="form-label" for="{{ preview_form.scenario_name.id_for_label }}">{{ preview_form.scenario_name.label }}</label>
+              {{ preview_form.scenario_name }}
+            </div>
+          </fieldset>
+          <div class="wf-test-form__actions is-sticky">
+            <button type="submit" class="dc-ds-button dc-ds-button--primary" name="intent" value="run">Run scenario</button>
+            <button type="submit" class="dc-ds-button dc-ds-button--quiet" formaction="{% url 'contracts:workflow_template_scenario_save' workflow_template.pk %}" name="intent" value="save" data-save-scenario {% if not preview_result %}disabled{% endif %} title="{% if not preview_result %}Run the scenario and provide a scenario name to enable saving{% else %}Save this simulation for reuse{% endif %}">Save scenario</button>
+            <p class="wf-test-save-hint" data-save-hint>{% if not preview_result %}Save is available after you run a scenario with a scenario name.{% else %}Provide a scenario name to save this run.{% endif %}</p>
+          </div>
+        </form>
+      </div>
+      <div class="wf-test-pane wf-test-pane--results" aria-live="polite" data-test-results-pane>
+        {% if preview_result %}
+        <div
+          class="wf-test-result-banner {% if preview_result.result_tone == 'pass' %}is-pass{% elif preview_result.result_tone == 'fail' %}is-fail{% else %}is-blocked{% endif %}"
+          role="status"
+        >
+          <p class="wf-test-result-banner__title">
+            {% if preview_result.result_tone == 'pass' %}
+              Simulation completed — executable
+            {% elif preview_result.result_tone == 'fail' %}
+              Simulation failed
+            {% else %}
+              Simulation completed with blocking issues
+            {% endif %}
+          </p>
+          <ul class="wf-test-result-banner__stats">
+            <li>Route evaluated</li>
+            <li>{{ preview_result.active_step_count }} step{{ preview_result.active_step_count|pluralize }} triggered</li>
+            <li>{{ preview_result.skipped_step_count }} step{{ preview_result.skipped_step_count|pluralize }} skipped</li>
+            {% if preview_result.unresolved_assignment_count %}
+            <li>{{ preview_result.unresolved_assignment_count }} assignment{{ preview_result.unresolved_assignment_count|pluralize }} unresolved</li>
+            {% else %}
+            <li>Assignments resolved</li>
+            {% endif %}
+            <li>Execution outcome: {{ preview_result.execution_outcome_label }}</li>
+          </ul>
+        </div>
+        <div class="wf-test-result-actions">
+          {% if preview_result.execution_blocked %}
+          <a href="#wf-test-blocking-issues" class="dc-ds-button dc-ds-button--quiet" data-view-blocking-issues>View blocking issues</a>
+          {% endif %}
+          {% if show_create_version %}
+          <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}" class="wf-test-result-actions__form">
+            {% csrf_token %}
+            <button type="submit" class="dc-ds-button {% if preview_result.execution_blocked %}dc-ds-button--primary{% else %}dc-ds-button--quiet{% endif %}">{% if preview_result.execution_blocked %}Create corrected version{% else %}{{ create_version_label }}{% endif %}</button>
+          </form>
+          {% elif can_edit_template and preview_result.execution_blocked %}
+          <a href="?tab=design" class="dc-ds-button dc-ds-button--primary">Open Design to correct</a>
+          {% endif %}
+        </div>
+        <ol class="wf-test-trace" aria-label="Execution trace">
+          <li><strong>Input evaluated</strong> — scenario fields applied to routing rules</li>
+          <li><strong>Conditions checked</strong> — {% if preview_result.matched_conditions %}{{ preview_result.matched_conditions|length }} matched{% else %}none matched{% endif %}</li>
+          <li><strong>Matching branch selected</strong> — {% if preview_result.resulting_route %}{{ preview_result.resulting_route|join:" → " }}{% else %}no actionable path{% endif %}</li>
+          <li><strong>Steps triggered</strong> — {{ preview_result.active_step_count }}</li>
+          <li><strong>Steps skipped</strong> — {{ preview_result.skipped_step_count }}</li>
+          <li><strong>Assignments evaluated</strong> — {% if preview_result.unresolved_assignment_count %}{{ preview_result.unresolved_assignment_count }} unresolved{% else %}all resolved{% endif %}</li>
+          <li><strong>SLA and escalation outcome</strong> — projected from step configuration</li>
+          <li><strong>Final outcome</strong> — {{ preview_result.final_outcome_label }}</li>
+        </ol>
+        <div class="wf-test-path" aria-label="Simulated workflow path">
+          <span class="wf-test-path__node is-start">Start</span>
+          {% for step in preview_result.preview_steps %}
+          <span class="wf-test-path__edge" aria-hidden="true"></span>
+          <span class="wf-test-path__node {% if step.would_apply %}is-triggered{% else %}is-skipped{% endif %}">
+            {{ step.name }}
+            <small>{% if step.would_apply %}Triggered{% else %}Skipped{% endif %}</small>
+          </span>
+          {% endfor %}
+          <span class="wf-test-path__edge" aria-hidden="true"></span>
+          <span class="wf-test-path__node is-end {% if preview_result.execution_blocked %}is-blocking{% else %}is-triggered{% endif %}">
+            {% if preview_result.execution_blocked %}Blocked{% else %}Complete{% endif %}
+          </span>
+        </div>
+        <div class="wf-test-results">
+          <article class="wf-test-card">
+            <h3>Matched route</h3>
+            {% if preview_result.resulting_route %}
+            <ol class="wf-test-route">
+              <li>Start</li>
+              {% for name in preview_result.resulting_route %}<li>{{ name }}</li>{% endfor %}
+              <li>{% if preview_result.execution_blocked %}Blocked{% else %}Complete{% endif %}</li>
+            </ol>
+            {% else %}<p class="c-muted">No steps would run.</p>{% endif %}
+          </article>
+          <article class="wf-test-card">
+            <h3>Triggered conditions</h3>
+            {% if preview_result.matched_conditions %}
+            <ul>{% for item in preview_result.matched_conditions %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}<p class="c-muted">No conditional steps matched.</p>{% endif %}
+          </article>
+          <article class="wf-test-card">
+            <h3>Skipped steps</h3>
+            <ul>
+              {% for step in preview_result.preview_steps %}
+                {% if not step.would_apply %}<li>{{ step.reason }}</li>{% endif %}
+              {% empty %}
+              <li class="c-muted">None</li>
+              {% endfor %}
+            </ul>
+          </article>
+          <article class="wf-test-card">
+            <h3>Assignments</h3>
+            <ul>
+              {% for step in preview_result.preview_steps %}
+                {% if step.would_apply and step.step_kind != 'AUTOMATION' and step.step_kind != 'AUTOMATIC' %}
+                <li>{{ step.name }} — {% if step.assignment_resolved %}{{ step.resolved_assignee }}{% else %}<span class="wf-test-unresolved">{{ step.resolved_assignee|default:"Unresolved" }}</span>{% endif %}</li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </article>
+          <article class="wf-test-card">
+            <h3>SLA and escalation</h3>
+            <ul>
+              {% for step in preview_result.preview_steps %}
+                {% if step.would_apply %}
+                <li>{{ step.name }} — SLA {{ step.sla_hours|default:"—" }}h / Escalation {{ step.escalation_after_hours|default:"—" }}h</li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </article>
+          <article class="wf-test-card" id="wf-test-blocking-issues" tabindex="-1">
+            <h3>Blocking issues</h3>
+            {% if preview_result.validation_messages %}
+            <ul>{% for item in preview_result.validation_messages %}<li>{{ item }}</li>{% endfor %}</ul>
+            {% else %}
+            <p class="c-muted">No blocking issues for this scenario.</p>
+            {% endif %}
+          </article>
+        </div>
+        <p class="wf-test-version-label">Testing workflow version v{{ workflow_template.version }} · {% if is_published %}Published{% else %}Draft{% endif %}</p>
+        {% else %}
+        <div class="wf-test-empty" role="status">
+          <p class="wf-test-empty__title">No simulation yet</p>
+          <p>Enter scenario data and run the simulation to inspect routing, assignments, conditions, SLA outcomes, and blocking issues.</p>
+          <p class="wf-test-empty__note">Simulations never create or alter live contracts.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {{ default_test_scenarios|json_script:"default-test-scenarios" }}
+    {{ saved_scenario_payloads|json_script:"saved-test-scenarios" }}
+  </section>
+
+  {% elif active_tab == 'versions' %}
+  <section class="wf-versions-workspace" aria-labelledby="wf-versions-heading">
+    <div class="wf-designer-panel__head wf-designer-panel__head--compact">
+      <h2 id="wf-versions-heading">Versions</h2>
+    </div>
+    {% if version_rows %}
+    <div class="wf-table-wrap{% if version_rows|length == 1 %} is-compact{% endif %}">
+      <table class="wf-table">
+        <thead>
+          <tr>
+            <th scope="col">Version</th>
+            <th scope="col">Status</th>
+            <th scope="col">Created by</th>
+            <th scope="col">Created</th>
+            <th scope="col">Published by</th>
+            <th scope="col">Published</th>
+            <th scope="col">Source</th>
+            <th scope="col">Change summary</th>
+            <th scope="col">Validation</th>
+            <th scope="col">Usage</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in version_rows %}
+          <tr class="{% if row.is_current %}is-current{% endif %}{% if row.is_published %} is-live{% endif %}">
+            <td class="wf-version-cell">
+              <a class="wf-version-cell__link" href="{{ row.view_url }}">v{{ row.version_number }}</a>
+              {% if row.is_current %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">Current</span>{% endif %}
+            </td>
+            <td class="wf-status-cell">
+              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_tone }}">{{ row.status_label }}</span>
+            </td>
+            <td>{{ row.created_by }}</td>
+            <td class="wf-datetime-cell">{% if row.created_at %}<time datetime="{{ row.created_at|date:'c' }}">{{ row.created_at|date:"j M Y H:i" }}</time>{% else %}—{% endif %}</td>
+            <td>{{ row.published_by }}</td>
+            <td class="wf-datetime-cell">{% if row.published_at %}<time datetime="{{ row.published_at|date:'c' }}">{{ row.published_at|date:"j M Y H:i" }}</time>{% else %}—{% endif %}</td>
+            <td>{% if row.source_version %}v{{ row.source_version }}{% else %}—{% endif %}</td>
+            <td class="wf-change-summary-cell">{{ row.change_summary }}</td>
+            <td>
+              {% if row.is_published %}
+                {% if row.validation_ok %}Valid at publication{% else %}{{ row.blocking_count }} blocking{% endif %}
+                {% if row.warning_count %} · {{ row.warning_count }} warning{{ row.warning_count|pluralize }}{% endif %}
+              {% else %}
+                {{ row.blocking_count }} blocking · {{ row.warning_count }} warning{{ row.warning_count|pluralize }}
+              {% endif %}
+            </td>
+            <td>{{ row.active_workflow_count }} active / {{ row.total_workflow_count }} total</td>
+            <td class="wf-table__actions" data-col="actions">
+              <details class="wq-kebab wf-version-row-menu">
+                <summary class="wq-kebab-trigger" aria-haspopup="menu" aria-label="Actions for version {{ row.version_number }}">⋯</summary>
+                <div class="wq-kebab-menu" role="menu">
+                  <a href="{{ row.view_url }}" class="wq-kebab-action" role="menuitem">View version</a>
+                  {% if row.compare_url %}<a href="{{ row.compare_url }}" class="wq-kebab-action" role="menuitem">Compare versions</a>{% endif %}
+                  <a href="{{ row.validation_url }}" class="wq-kebab-action" role="menuitem">View validation report</a>
+                  {% if can_manage_template %}
+                  <form method="post" action="{{ row.restore_url }}" role="none" data-confirm-restore>
+                    {% csrf_token %}
+                    <button type="submit" class="wq-kebab-action" role="menuitem">Restore as new draft</button>
+                  </form>
+                  {% endif %}
+                  <button type="button" class="wq-kebab-action" role="menuitem" data-export-version-meta data-version="{{ row.version_number }}" data-status="{{ row.status_label }}" data-created-by="{{ row.created_by }}" data-published-by="{{ row.published_by }}">Export version metadata</button>
+                </div>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="wf-empty-state" role="status">
+      <p class="wf-empty-state__title">No versions</p>
+      <p>Version history appears after the first workflow template is saved.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  {% else %}
+  <section class="wf-audit-workspace" aria-labelledby="wf-audit-heading">
+    <div class="wf-designer-panel__head wf-designer-panel__head--compact">
+      <h2 id="wf-audit-heading">Activity</h2>
+    </div>
+    <form method="get" class="wf-audit-filters" aria-label="Activity filters" data-activity-filters>
+      <input type="hidden" name="tab" value="activity">
+      <div class="wf-field">
+        <label class="form-label" for="audit-actor">Actor</label>
+        <input class="form-control" id="audit-actor" name="actor" list="audit-actor-options" value="{{ audit_filters.actor }}" autocomplete="off" placeholder="Search actors">
+        <datalist id="audit-actor-options">
+          {% for actor in audit_actor_choices %}<option value="{{ actor }}"></option>{% endfor %}
+        </datalist>
+      </div>
+      <div class="wf-field wf-field--multiselect" data-multiselect>
+        <span class="form-label" id="audit-event-label">Event type</span>
+        <button type="button" class="form-control wf-multiselect__toggle" data-multiselect-toggle aria-haspopup="listbox" aria-expanded="false" aria-labelledby="audit-event-label">
+          <span data-multiselect-summary>{% if audit_filters.event_types %}{{ audit_filters.event_types|length }} selected{% else %}All event types{% endif %}</span>
+        </button>
+        <div class="wf-multiselect__panel" data-multiselect-panel hidden>
+          <input type="search" class="form-control" data-multiselect-search placeholder="Search event types" aria-label="Search event types">
+          <div class="wf-multiselect__actions">
+            <button type="button" class="dc-ds-button dc-ds-button--quiet" data-multiselect-all>Select all</button>
+            <button type="button" class="dc-ds-button dc-ds-button--quiet" data-multiselect-clear>Clear selection</button>
+          </div>
+          <div class="wf-multiselect__chips" data-multiselect-chips aria-live="polite"></div>
+          <ul class="wf-multiselect__options" role="listbox" aria-multiselectable="true" aria-labelledby="audit-event-label">
+            {% for value, label in audit_event_choices %}
+            <li>
+              <label class="wf-multiselect__option">
+                <input type="checkbox" name="event_type" value="{{ value }}" {% if value in audit_filters.event_types %}checked{% endif %} data-multiselect-option data-label="{{ label }}">
+                <span>{{ label }}</span>
+              </label>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="wf-field wf-field--version">
+        <label class="form-label" for="audit-version">Version</label>
+        <select class="form-control" id="audit-version" name="version">
+          <option value="">All versions</option>
+          {% for version in audit_version_choices %}
+          <option value="{{ version }}" {% if audit_filters.version == version|stringformat:'s' %}selected{% endif %}>v{{ version }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="wf-field wf-field--date">
+        <label class="form-label" for="audit-from">From date</label>
+        <input class="form-control" id="audit-from" type="date" name="date_from" value="{{ audit_filters.date_from }}">
+      </div>
+      <div class="wf-field wf-field--date">
+        <label class="form-label" for="audit-to">To date</label>
+        <input class="form-control" id="audit-to" type="date" name="date_to" value="{{ audit_filters.date_to }}">
+      </div>
+      <div class="wf-audit-filters__actions">
+        <button type="submit" class="dc-ds-button dc-ds-button--quiet">Apply filters</button>
+        <a class="dc-ds-button dc-ds-button--quiet" href="?tab=activity">Clear filters</a>
+      </div>
+    </form>
+    <div class="wf-table-wrap">
+      <table class="wf-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="visually-hidden">Expand</span></th>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Actor</th>
+            <th scope="col">Action</th>
+            <th scope="col">Affected object</th>
+            <th scope="col">Previous value</th>
+            <th scope="col">New value</th>
+            <th scope="col">Version</th>
+            <th scope="col">Source</th>
+            <th scope="col">Event ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in audit_rows %}
+          <tr class="wf-activity-row" data-activity-row>
+            <td>
+              <button type="button" class="wf-activity-expand" data-activity-expand aria-expanded="false" aria-controls="activity-detail-{{ row.event_id }}" aria-label="Show event details">▸</button>
+            </td>
+            <td><time datetime="{{ row.timestamp|date:'c' }}">{{ row.timestamp|date:"j M Y H:i T" }}</time></td>
+            <td>{{ row.actor }}</td>
+            <td>{{ row.action }}</td>
+            <td>{{ row.affected }}</td>
+            <td>{{ row.previous_value }}</td>
+            <td>{{ row.new_value }}</td>
+            <td>{{ row.version }}</td>
+            <td>{{ row.source }}</td>
+            <td><code>{{ row.event_id }}</code></td>
+          </tr>
+          <tr class="wf-activity-detail" id="activity-detail-{{ row.event_id }}" hidden>
+            <td colspan="10">
+              <dl class="wf-activity-detail__list">
+                <div><dt>Event</dt><dd>{{ row.event }}</dd></div>
+                <div><dt>Summary</dt><dd>{{ row.summary }}</dd></div>
+                <div><dt>Event ID</dt><dd><code>{{ row.event_id }}</code></dd></div>
+                <div><dt>Source</dt><dd>{{ row.source }}</dd></div>
+              </dl>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10">
+              <div class="wf-empty-state" role="status">
+                {% if audit_filters_active %}
+                <p class="wf-empty-state__title">No matching activity</p>
+                <p>No events match the selected filters. Clear filters to see the full trail.</p>
+                {% elif not audit_has_any_activity %}
+                <p class="wf-empty-state__title">No activity recorded</p>
+                <p>Creation, publication, edits, and tests appear here automatically.</p>
+                {% else %}
+                <p class="wf-empty-state__title">No matching activity</p>
+                <p>No events match the selected filters.</p>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+</main>
+<script src="{% static 'js/clmone-workflow-designer.js' %}" defer></script>
 {% endblock %}

@@ -1,27 +1,116 @@
 {% extends 'base.html' %}
 {% block title %}Settings – CLM One{% endblock %}
 {% block authenticated_page_title %}Settings{% endblock %}
-{% block authenticated_page_subtitle %}Manage personal preferences, workspace configuration, security and governance.{% endblock %}
+{% block authenticated_page_subtitle %}Configure personal preferences, workspace defaults, and security controls.{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">
-  /* Settings hub owns only group rhythm and card badge composition. */
+  .settings-hub-page {
+    --settings-hub-gap: var(--space-16);
+    --settings-hub-section-gap: var(--space-28);
+  }
   .settings-hub-page .settings-hub-group + .settings-hub-group {
-    margin-top: var(--space-24);
+    margin-top: var(--settings-hub-section-gap);
   }
   .settings-hub-page .settings-hub-group__title {
-    margin: 0 0 var(--space-12);
+    margin: 0 0 var(--space-14);
     color: var(--ink-900);
     font: var(--text-heading);
   }
-  .settings-hub-page .dc-ds-setup-action__title-row {
+  .settings-hub-page .dc-ds-card-grid--3 {
+    gap: var(--settings-hub-gap);
+    align-items: stretch;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub {
+    min-height: 112px;
+    height: 100%;
+    grid-template-columns: 40px minmax(0, 1fr) 18px;
+    gap: var(--space-14);
+    align-items: start;
+    padding: var(--space-16);
+    border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+    border-radius: var(--radius-panel, 12px);
+    background: var(--card, #fff);
+    box-shadow: 0 1px 2px rgba(11, 23, 40, 0.03);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+    transform: none;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub:hover {
+    border-color: color-mix(in srgb, var(--seal) 45%, var(--line));
+    background: color-mix(in srgb, var(--seal) 4%, var(--card, #fff));
+    box-shadow: 0 4px 14px rgba(11, 23, 40, 0.06);
+    transform: none;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    background: var(--seal-bg, var(--color-feature-icon-soft));
+    color: var(--seal-dark, var(--color-feature-action));
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__icon .dc-ds-icon {
+    width: 18px;
+    height: 18px;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__copy {
+    min-width: 0;
+    padding-top: 1px;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__title-row {
     display: inline-flex;
     align-items: center;
     gap: var(--space-8);
     flex-wrap: wrap;
   }
-  .settings-hub-page .dc-ds-setup-action__title-row .dc-ds-badge {
-    flex: 0 0 auto;
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__title {
+    color: var(--ink-900);
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__copy small {
+    margin-top: 6px;
+    color: var(--ink-500);
+    font-size: 13px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-setup-action__arrow {
+    align-self: center;
+    width: 18px;
+    height: 18px;
+    color: var(--seal-dark, var(--color-feature-action));
+    opacity: 0.72;
+    transition: transform 150ms ease, opacity 150ms ease;
+  }
+  .settings-hub-page .dc-ds-setup-action--hub:hover .dc-ds-setup-action__arrow,
+  .settings-hub-page .dc-ds-setup-action--hub:focus-visible .dc-ds-setup-action__arrow {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+  .settings-hub-page .dc-ds-setup-action--hub .dc-ds-badge--admin {
+    min-height: 0;
+    padding: 1px 7px;
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 999px;
+    background: var(--well, #f8fafc);
+    color: var(--ink-500);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
   }
 </style>
 
@@ -29,9 +118,9 @@
   {% for group in settings_groups %}
   <section class="settings-hub-group" aria-labelledby="settings-group-{{ group.id }}">
     <h2 class="settings-hub-group__title" id="settings-group-{{ group.id }}">{{ group.title }}</h2>
-    <div class="dc-ds-card-grid dc-ds-card-grid--3">
+    <div class="dc-ds-card-grid dc-ds-card-grid--3" role="list">
       {% for item in group.cards %}
-      {% include "design_system/setup_action.html" with href=item.href icon=item.icon label=item.label copy=item.copy badge_label=item.badge_label %}
+      {% include "design_system/setup_action.html" with href=item.href icon=item.icon label=item.label copy=item.copy badge_label=item.badge_label badge_class="dc-ds-badge--admin" aria_label=item.aria_label class_name="dc-ds-setup-action--hub" role="listitem" %}
       {% endfor %}
     </div>
   </section>

@@ -46,7 +46,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             title='API Contract',
             counterparty='Acme',
             content='Agreement body',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
         )
         api_token_record, raw_token = OrganizationAPIToken.create_token(
             organization=self.organization,
@@ -317,7 +317,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             title='Delegation Contract',
             counterparty='Acme',
             content='Body',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
         )
         approval = ApprovalRequest.objects.create(
             organization=self.organization,
@@ -353,14 +353,14 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
             title='Alpha Contract',
             counterparty='Exact',
             content='Body',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
         )
         partial = Contract.objects.create(
             organization=self.organization,
             title='Contract Alpha',
             counterparty='Partial',
             content='Body',
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
         )
 
         response = self.client.get(reverse('contracts:global_search'), {'q': 'Alpha', 'type': 'contract'})

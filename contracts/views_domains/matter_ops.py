@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.db.models import Q, Sum, Count
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -413,18 +413,61 @@ class RiskLogListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         ctx['is_in_house_clm'] = self.is_in_house_clm
         if self.is_in_house_clm:
             signal_type = (self.request.GET.get('type') or 'all').strip()
-            filters = {'type': signal_type} if signal_type != 'all' else None
+            search_query = (self.request.GET.get('q') or '').strip()
+            selected_severity = (self.request.GET.get('severity') or '').strip()
+            filters = {}
+            if signal_type and signal_type != 'all':
+                filters['type'] = signal_type
+            if search_query:
+                filters['q'] = search_query
+            if selected_severity:
+                filters['severity'] = selected_severity
             counts = get_legal_signal_counts_for_org(self.organization)
-            ctx['legal_signals'] = get_legal_signals_for_org(self.organization, user=self.request.user, filters=filters)
+            signals = get_legal_signals_for_org(
+                self.organization,
+                user=self.request.user,
+                filters=filters or None,
+            )
+            hub_url = reverse('contracts:risk_log_list')
+            tab_defs = [
+                ('all', 'All', counts['total_count']),
+                ('conflicts', 'Conflicts', counts['conflict_count']),
+                ('dpa_risk', 'DPA Risks', counts['by_type']['dpa_risk']),
+                ('contract_risk', 'Contract Risks', counts['by_type']['contract_risk']),
+                ('approval', 'Approvals', counts['by_type']['approval']),
+                ('deadline', 'Deadlines', counts['by_type']['deadline']),
+            ]
+            view_tabs = []
+            for key, label, tab_count in tab_defs:
+                params = QueryDict(mutable=True)
+                if key != 'all':
+                    params['type'] = key
+                if search_query:
+                    params['q'] = search_query
+                if selected_severity:
+                    params['severity'] = selected_severity
+                query = params.urlencode()
+                view_tabs.append({
+                    'key': key,
+                    'label': f'{label} ({tab_count})',
+                    'url': f'{hub_url}?{query}' if query else hub_url,
+                    'active': signal_type == key,
+                })
+            clear_params = QueryDict(mutable=True)
+            if signal_type and signal_type != 'all':
+                clear_params['type'] = signal_type
+            clear_query = clear_params.urlencode()
+            ctx['legal_signals'] = signals
             ctx['legal_signal_counts'] = counts
             ctx['selected_signal_type'] = signal_type
+            ctx['search_query'] = search_query
+            ctx['selected_severity'] = selected_severity
+            ctx['filters_active'] = bool(search_query or selected_severity)
+            ctx['hub_clear_url'] = f'{hub_url}?{clear_query}' if clear_query else hub_url
+            ctx['view_tabs'] = view_tabs
+            # Legacy tuple form kept for older assertions that scan tab names.
             ctx['signal_tabs'] = [
-                ('All', 'all', counts['total_count']),
-                ('Conflicts', 'conflicts', counts['conflict_count']),
-                ('DPA Risks', 'dpa_risk', counts['by_type']['dpa_risk']),
-                ('Contract Risks', 'contract_risk', counts['by_type']['contract_risk']),
-                ('Approvals', 'approval', counts['by_type']['approval']),
-                ('Deadlines', 'deadline', counts['by_type']['deadline']),
+                (label, key, tab_count) for key, label, tab_count in tab_defs
             ]
             return ctx
 

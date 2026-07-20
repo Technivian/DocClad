@@ -1,55 +1,124 @@
-# PDR 0002: Contract Stage and Status
+# PDR 0002: Contract Stage, Status, and Document State
 
-Status: **Approved**
+Status: **Approved** (supersedes earlier two-field wording)
 
 Approved on: 2026-07-20  
+Revised on: 2026-07-20  
 Owner: Product / Contract Lifecycle
 
-## Definitions
+## Three canonical dimensions
 
-| Field | Purpose | Authoritative storage |
+| Dimension | Field | Purpose |
 |---|---|---|
-| **Stage** (`lifecycle_stage`) | Lifecycle position in the governed workflow graph (Drafting → Internal review → … → Archive) | `Contract.lifecycle_stage` |
-| **Status** (`status`) | Operational/business condition (Draft, In review, Approved, Active, …) | `Contract.status` |
+| **Record status** | `Contract.status` | Business condition of the contract **record** |
+| **Workflow stage** | `Contract.lifecycle_stage` | Position in the operating pipeline |
+| **Document state** | `Document.status` | Maturity of a document artifact |
 
-Stage answers **where the contract is in the lifecycle journey**. Status answers
-**what operational state the record is in right now**. They are related but not
-interchangeable.
+These are related but never interchangeable. Never use “Draft” as a record status
+label — drafting is a **workflow stage**. Document “Draft” is artifact state only.
 
-## Allowed combinations (pilot matrix)
+## Record status values
 
-- Drafting stages (`DRAFTING`, `INTERNAL_REVIEW`, `NEGOTIATION`) commonly pair
-  with `DRAFT`, `PENDING`, `IN_REVIEW`, or AI-review statuses.
-- Approval stage (`APPROVAL`) pairs with `PENDING`, `IN_REVIEW`, or `APPROVED`.
-- Signature stage (`SIGNATURE`) pairs with `APPROVED` until activation.
-- Executed / obligation / renewal stages pair with `ACTIVE` or terminal statuses.
-- Invalid pairings (for example `ARCHIVED` stage with `ACTIVE` status) must be
-  prevented by transition services, not by UI labels alone.
+| Value | Label |
+|---|---|
+| `IN_PROGRESS` | In progress |
+| `ACTIVE` | Active |
+| `EXPIRED` | Expired |
+| `TERMINATED` | Terminated |
+| `CANCELLED` | Cancelled |
+| `ARCHIVED` | Archived |
+
+Default: `IN_PROGRESS`. AI/upload/review nuance lives in workflow stage and
+review-run models — not as extra record statuses.
+
+## Workflow stage values
+
+| Value | Label |
+|---|---|
+| `INTAKE` | Intake |
+| `DRAFTING` | Drafting |
+| `INTERNAL_REVIEW` | Internal review |
+| `NEGOTIATION` | Negotiation |
+| `APPROVAL` | Approval |
+| `SIGNATURE` | Signature |
+| `EXECUTED` | Executed |
+| `OBLIGATION_TRACKING` | Obligation tracking |
+| `RENEWAL` | Renewal |
+
+`ARCHIVED` is **not** a workflow stage; archive is record status `ARCHIVED`.
+
+Default: `DRAFTING` (create flows that are pre-field-capture may use `INTAKE`).
+
+## Document state values
+
+| Value | Label |
+|---|---|
+| `DRAFT` | Draft |
+| `FINAL` | Final |
+| `EXECUTED` | Executed |
+| `SUPERSEDED` | Superseded |
+
+## Allowed combinations (enforced)
+
+Record ↔ stage:
+
+- `IN_PROGRESS` ↔ `INTAKE` … `EXECUTED` (not `OBLIGATION_TRACKING` / `RENEWAL`)
+- `ACTIVE` ↔ `EXECUTED` | `OBLIGATION_TRACKING` | `RENEWAL`
+- Terminal statuses (`EXPIRED`, `TERMINATED`, `CANCELLED`, `ARCHIVED`) freeze stage;
+  no further stage advances except `system=True` repair
+
+Document ↔ contract:
+
+- Document `EXECUTED` only when contract stage ∈ `{EXECUTED, OBLIGATION_TRACKING, RENEWAL}`
+  or status ∈ `{ACTIVE, EXPIRED, TERMINATED, ARCHIVED}`
+- New versions mark prior `FINAL` / `EXECUTED` as `SUPERSEDED` when replacing
+
+## Happy-path activation
+
+Signature (or equivalent) completion uses a single activation triad:
+
+```text
+status = ACTIVE
+lifecycle_stage = OBLIGATION_TRACKING
+primary_document.status = EXECUTED
+```
+
+Workflow stage `EXECUTED` remains a valid resting stage (signed, obligations not yet opened).
 
 ## Transition ownership
 
 | Change | Authority |
 |---|---|
-| `status` | `ContractLifecycleService.transition()` only |
-| `lifecycle_stage` | `ContractLifecycleService.transition_lifecycle_stage()` only |
-| Combined operational updates (AI review, bulk edit) | `apply_contract_operational_position()` helper |
+| `status` | `ContractLifecycleService.transition()` |
+| `lifecycle_stage` | `ContractLifecycleService.transition_lifecycle_stage()` |
+| Combined updates | `apply_contract_operational_position()` |
+| Activation triad | `activate_contract()` |
 
-Direct model writes from views, AI endpoints, or jobs bypassing these services
+Direct model writes from views, AI endpoints, or jobs that bypass these services
 are defects.
 
 ## Audit requirements
 
-Every stage or status change writes a chained `AuditLog` event with before/after
-values and a reason string.
+- `contract.status_changed`
+- `contract.lifecycle_stage_changed`
+- `contract.operational_position_changed` / `contract.activated`
+- `document.status_changed` when document state transitions
+
+Historical audit payloads keep original strings; migration does not rewrite logs.
 
 ## UI display rules
 
-- Repository **Stage** column sorts/filters on `lifecycle_stage`, never `status`.
-- Repository status filters operate on `status` only.
-- Contract record pages show stage stepper + status badge as separate controls.
-- Do not merge stage and status into one unstructured label.
+| Surface | Display |
+|---|---|
+| Compact header | `In progress · Drafting` (status · stage) |
+| Right rail | Record status, workflow stage, **document state** for primary document |
+| Repository | Status filter = six record statuses; Stage filter = `lifecycle_stage` |
+| Badges | Separate helpers for record / stage / document |
+
+Do not pair a “Draft” record badge with a “Drafting” stage — that ambiguity is retired.
 
 ## Tests
 
-Lifecycle matrix tests must cover valid transitions, blocked invalid pairings,
-repository sort keys, and AI/document review paths that mutate operational state.
+Matrix unit tests, migration mapping tests, repository/API filters, contract header
+label guards, and lifecycle rehearsal / pilot-gate coverage must assert the
+three-dimension vocabulary.

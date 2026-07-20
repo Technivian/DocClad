@@ -126,14 +126,10 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await expect(page.getByText('Lifecycle')).toBeVisible();
   await expect(page.getByText(counterparty).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: new RegExp(`MSA · ${counterparty}`) }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /Review Finance approval route|Review MSA risk|Review privacy|Review generated MSA/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Resolve \d+ exceptions?/ })).toBeVisible();
   await openWorkspaceActions(page);
-  await page.getByRole('menuitem', { name: 'Send to Legal Review' }).click();
-  await expect(page.getByText(/MSA submitted to .* for review/i).first()).toBeVisible();
-
-  await openWorkspaceActions(page);
-  await page.getByRole('menuitem', { name: 'Send to Finance' }).click();
-  await expect(page.getByText(/MSA submitted to .* for review/i).first()).toBeVisible();
+  await expect(page.getByText('Send to Legal Review · blocked')).toBeVisible();
+  await expect(page.getByText('Send to Finance · blocked')).toBeVisible();
 
   await openWorkspaceActions(page);
   const downloadPromise = page.waitForEvent('download');
@@ -143,7 +139,14 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
 
   await openWorkspaceActions(page);
   await expect(page.getByRole('menuitem', { name: 'View contract record' })).toBeVisible();
-  await page.getByRole('button', { name: /open exception|Review Finance approval route|Review MSA risk|Review privacy|Review generated MSA/i }).first().click();
+  await page.getByRole('button', { name: /Resolve \d+ exceptions?|open exception/i }).first().click();
+  const exceptionDrawer = page.getByRole('dialog', { name: 'Resolve exception' });
+  await expect(exceptionDrawer.getByRole('heading', { name: /exception|Finance|Liability|Payment|DPA|privacy/i }).first()).toBeVisible();
+  await expect(exceptionDrawer.getByRole('link', { name: 'Open clause' })).toBeVisible();
+  await exceptionDrawer.getByRole('button', { name: 'Close exception resolution' }).click();
+
+  await openWorkspaceActions(page);
+  await page.getByRole('menuitem', { name: 'Review approval route' }).click();
   const governanceDrawer = page.getByRole('dialog', { name: 'Governance details' });
   await expect(governanceDrawer.getByRole('heading', { name: 'Risk monitoring' })).toBeVisible();
   await expect(governanceDrawer.getByRole('heading', { name: 'Approval route' })).toBeVisible();
@@ -151,9 +154,8 @@ test('MSA governed drafting cockpit generates a workflow workspace and dashboard
   await governanceDrawer.getByRole('button', { name: 'Close governance details' }).click();
 
   const dataProtectionStep = page.locator('.dc-ds-workspace__drafting-step').filter({ hasText: 'Data Protection' });
-  await dataProtectionStep.locator('summary').click();
-  await expect(dataProtectionStep.locator('.dc-ds-badge')).toBeVisible();
-  await dataProtectionStep.locator('[data-clause-link="data-protection"]').click();
+  await dataProtectionStep.click();
+  await expect(dataProtectionStep).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#data-protection')).toHaveClass(/is-linked/);
 
   await openWorkspaceActions(page);

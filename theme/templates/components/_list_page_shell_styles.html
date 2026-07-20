@@ -1,16 +1,31 @@
 <style nonce="{{ csp_nonce }}">
-  /* Shared Contracts-style list shell for DPA Reviews and Obligations. */
+  /* Shared Contracts-style list shell for DPA Reviews, Obligations, Workflows. */
+  .clm-list-page.dc-ds-page-flow {
+    gap: var(--space-12);
+  }
   .clm-list-page .clm-list-shell {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "tabs actions" "tools tools";
     gap: var(--space-10) var(--space-16);
     width: 100%;
-    padding: 0 0 var(--space-12);
+    padding: 0;
     border: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 0;
     border-radius: 0;
     background: transparent;
+    margin-bottom: 0;
+  }
+  .clm-list-page .dc-ds-filterbar.clm-list-shell {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .clm-list-page.dc-ds-page-flow > form:has(.clm-list-shell) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    min-width: 0;
   }
   .clm-list-page .clm-list-view-header { display: contents; }
   .clm-list-page .clm-list-view-tabs {
@@ -83,7 +98,7 @@
     display: none;
     width: 100%;
     max-width: none;
-    margin-bottom: var(--space-12);
+    margin: var(--space-8) 0 0;
   }
   .clm-list-page .clm-list-filter-drawer.is-open { display: block; }
   .clm-list-page .clm-list-filter-drawer__body {
@@ -108,12 +123,10 @@
   }
   .clm-list-page .clm-list-filter-drawer__title { font-size: 14px; font-weight: 600; }
   .clm-list-page .clm-list-filter-drawer__actions {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-    margin-top: 4px;
+    flex: 0 0 auto;
   }
   .clm-list-page .clm-list-summary {
     margin: 0 0 var(--space-12);

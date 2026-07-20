@@ -48,6 +48,49 @@
   .obligations-page #obligations-table td[data-col="actions"] {
     min-width: 48px; width: 48px; text-align: center; overflow: visible;
   }
+  /* Keep open-menu focus local to the trigger — avoid a teal actions-column blot. */
+  .obligations-page .obligation-actions-menu[open] .wq-kebab-trigger {
+    background: var(--sidebar-hover);
+    color: var(--text-primary);
+  }
+  .obligations-page #obligations-table tbody tr.is-row-active > td[data-col="actions"] {
+    background-color: transparent !important;
+  }
+  .obligations-page #obligations-table tbody tr:focus-within > td[data-col="actions"] {
+    background-color: transparent !important;
+  }
+  .obligations-page #obligations-table tbody tr:hover > td[data-col="actions"] {
+    background-color: var(--sidebar-hover) !important;
+  }
+  .obligations-page .wq-kebab-menu a.wq-kebab-action,
+  .obligations-page .wq-kebab-menu button.wq-kebab-action {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .obligations-page .wq-kebab-menu a.wq-kebab-action:hover,
+  .obligations-page .wq-kebab-menu button.wq-kebab-action:hover {
+    background: var(--sidebar-hover);
+    color: var(--text-primary);
+  }
+  .obligations-page .wq-kebab-menu .wq-kebab-action-danger { color: var(--status-danger-fg, var(--msg-error-text)); }
+  .obligations-page .wq-kebab-menu .wq-kebab-action-danger:hover {
+    background: var(--status-danger-bg, var(--sidebar-hover));
+    color: var(--status-danger-fg, var(--msg-error-text));
+  }
   @media (max-width: 900px) {
     .obligations-page .clm-list-summary { --dc-ds-summary-columns: 2; }
   }
@@ -88,7 +131,10 @@
     <section id="obligations-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if filters_active %} is-open{% endif %}" aria-label="Filters">
       <div class="clm-list-filter-drawer__header">
         <h2 class="clm-list-filter-drawer__title">Filters</h2>
-        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{% if selected_view and selected_view != 'all' %}{{ obligations_url }}?view={{ selected_view }}{% else %}{{ obligations_url }}{% endif %}">Clear filters</a>
+        <div class="clm-list-filter-drawer__actions">
+          <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{% if selected_view and selected_view != 'all' %}{{ obligations_url }}?view={{ selected_view }}{% else %}{{ obligations_url }}{% endif %}">Clear filters</a>
+          <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+        </div>
       </div>
       <div class="clm-list-filter-drawer__body">
         <label for="obligations-filter-status">Status
@@ -132,9 +178,6 @@
             {% endfor %}
           </select>
         </label>
-        <div class="clm-list-filter-drawer__actions">
-          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
-        </div>
       </div>
     </section>
   </form>

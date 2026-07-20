@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block title %}Template Comparison{% endblock %}
+{% block authenticated_page_title %}Template Comparison{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'contracts:workflow_template_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to templates" title="Back to templates">
+  {% include "design_system/icon.html" with name="arrow-left" %}
+</a>
+{% endblock %}
 
 {% block content %}
 <style nonce="{{ csp_nonce }}">

@@ -11,7 +11,6 @@ from .services.contract_policies import get_required_fields_for_contract_type
 from .services.contract_lifecycle import can_transition_lifecycle_stage, get_signature_routing_blockers
 from .services.intake_risk import assess_intake_risk
 from .services.intake_routing import derive_intake_route
-from .services.workflow_execution import _CONDITION_PATTERN, _FIELD_ALIASES
 from .tenancy import scope_queryset_for_organization
 from .models import (
     Contract, NegotiationThread, TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist, ChecklistItem,
@@ -50,14 +49,13 @@ TAILWIND_FILE = FORM_FILE
 
 
 class UserProfileForm(forms.ModelForm):
-    """Self-service identity, contact, and account preference details.
+    """Self-service identity, contact, regional, and notification preferences.
 
     Workspace roles and legacy professional/billing fields remain in the data
-    model for compatibility, but are intentionally not editable from the
-    product account experience.
+    model for compatibility, but are intentionally not editable from Account settings.
     """
     TIMEZONE_CHOICES = [
-        ('UTC', 'UTC'),
+        ('UTC', 'UTC (Coordinated Universal Time)'),
         ('Europe/Amsterdam', 'Europe/Amsterdam'),
         ('Europe/London', 'Europe/London'),
         ('Europe/Berlin', 'Europe/Berlin'),
@@ -68,6 +66,10 @@ class UserProfileForm(forms.ModelForm):
         ('Asia/Singapore', 'Asia/Singapore'),
         ('Asia/Tokyo', 'Asia/Tokyo'),
     ]
+    SWITCH_ATTRS = {
+        'class': 'profile-switch__input',
+        'role': 'switch',
+    }
 
     first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
     last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': FORM_CONTROL}))
@@ -83,6 +85,8 @@ class UserProfileForm(forms.ModelForm):
             'date_format',
             'notify_contract_updates',
             'notify_workflow_events',
+            'notify_review_approval_requests',
+            'notify_obligation_reminders',
             'notify_security_alerts',
         ]
         widgets = {
@@ -91,19 +95,29 @@ class UserProfileForm(forms.ModelForm):
             'language': forms.Select(attrs={'class': FORM_CONTROL}),
             'timezone': forms.Select(attrs={'class': FORM_CONTROL}),
             'date_format': forms.Select(attrs={'class': FORM_CONTROL}),
-            'notify_contract_updates': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
-            'notify_workflow_events': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
-            'notify_security_alerts': forms.CheckboxInput(attrs={'class': 'dc-ds-check'}),
+            'notify_contract_updates': forms.CheckboxInput(attrs={'class': 'profile-switch__input', 'role': 'switch'}),
+            'notify_workflow_events': forms.CheckboxInput(attrs={'class': 'profile-switch__input', 'role': 'switch'}),
+            'notify_review_approval_requests': forms.CheckboxInput(attrs={'class': 'profile-switch__input', 'role': 'switch'}),
+            'notify_obligation_reminders': forms.CheckboxInput(attrs={'class': 'profile-switch__input', 'role': 'switch'}),
+            'notify_security_alerts': forms.CheckboxInput(attrs={
+                'class': 'profile-switch__input',
+                'role': 'switch',
+                'disabled': True,
+            }),
         }
         labels = {
             'timezone': 'Time zone',
             'date_format': 'Date format',
             'notify_contract_updates': 'Contract updates',
             'notify_workflow_events': 'Workflow events',
+            'notify_review_approval_requests': 'Review and approval requests',
+            'notify_obligation_reminders': 'Obligation reminders',
             'notify_security_alerts': 'Security alerts',
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, email_managed=False, section='all', **kwargs):
+        self.email_managed = bool(email_managed)
+        self.section = section or 'all'
         super().__init__(*args, **kwargs)
         self.fields['timezone'].widget.choices = self.TIMEZONE_CHOICES
         self.fields['timezone'].choices = self.TIMEZONE_CHOICES
@@ -113,6 +127,59 @@ class UserProfileForm(forms.ModelForm):
                 'last_name': self.instance.user.last_name,
                 'email': self.instance.user.email,
             })
+            if not (self.instance.timezone or '').strip():
+                self.initial['timezone'] = 'Europe/Amsterdam'
+        if self.email_managed and 'email' in self.fields:
+            self.fields['email'].disabled = True
+            self.fields['email'].help_text = 'Managed by your organization.'
+        elif 'email' in self.fields:
+            self.fields['email'].help_text = 'Editable for this account.'
+        if 'notify_security_alerts' in self.fields:
+            self.fields['notify_security_alerts'].disabled = True
+            self.fields['notify_security_alerts'].initial = True
+            if self.instance and self.instance.pk:
+                self.initial['notify_security_alerts'] = True
+
+        identity_fields = {'first_name', 'last_name', 'email', 'phone', 'department'}
+        regional_fields = {'language', 'timezone', 'date_format'}
+        notification_fields = {
+            'notify_contract_updates',
+            'notify_workflow_events',
+            'notify_review_approval_requests',
+            'notify_obligation_reminders',
+            'notify_security_alerts',
+        }
+        if self.section == 'identity':
+            keep = identity_fields
+        elif self.section == 'regional':
+            keep = regional_fields
+        elif self.section == 'notifications':
+            keep = notification_fields
+        else:
+            keep = None
+        if keep is not None:
+            for name in list(self.fields):
+                if name not in keep:
+                    self.fields.pop(name)
+
+    def clean_notify_security_alerts(self):
+        return True
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        user = profile.user
+        if 'first_name' in self.cleaned_data:
+            user.first_name = self.cleaned_data.get('first_name', '')
+        if 'last_name' in self.cleaned_data:
+            user.last_name = self.cleaned_data.get('last_name', '')
+        if 'email' in self.cleaned_data and not self.email_managed:
+            user.email = self.cleaned_data.get('email', '')
+        if hasattr(profile, 'notify_security_alerts'):
+            profile.notify_security_alerts = True
+        if commit:
+            profile.save()
+            user.save()
+        return profile
 
 
 class OrganizationIdentitySettingsForm(forms.ModelForm):
@@ -842,6 +909,17 @@ class RegistrationForm(forms.Form):
 
 
 class OrganizationInvitationForm(forms.ModelForm):
+    message = forms.CharField(
+        required=False,
+        label='Invitation message',
+        max_length=500,
+        widget=forms.Textarea(attrs={
+            'class': TAILWIND_TEXTAREA,
+            'rows': 3,
+            'placeholder': 'Optional note for the invitee',
+        }),
+    )
+
     class Meta:
         model = OrganizationInvitation
         fields = ['email', 'role']
@@ -849,6 +927,11 @@ class OrganizationInvitationForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'name@company.com'}),
             'role': forms.Select(attrs={'class': TAILWIND_SELECT}),
         }
+
+    def __init__(self, *args, allowed_roles=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if allowed_roles is not None:
+            self.fields['role'].choices = list(allowed_roles)
 
     def clean_email(self):
         return self.cleaned_data['email'].strip().lower()
@@ -1009,59 +1092,113 @@ class WorkflowTemplateForm(forms.ModelForm):
 
 
 class WorkflowTemplatePreviewForm(forms.Form):
+    JURISDICTION_SUGGESTIONS = (
+        'Netherlands',
+        'Belgium',
+        'Luxembourg',
+        'Germany',
+        'France',
+        'England and Wales',
+        'Scotland',
+        'Ireland',
+        'United States',
+        'New York',
+        'Delaware',
+        'Singapore',
+    )
+
     contract_type = forms.ChoiceField(
         required=False,
-        choices=[('', 'Any')] + list(Contract.ContractType.choices),
-        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
-    )
-    value = forms.DecimalField(
-        required=False,
-        min_value=0,
-        widget=forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'step': '0.01', 'min': '0'}),
-    )
-    jurisdiction = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
-    )
-    governing_law = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
-    )
-    data_transfer_flag = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': TAILWIND_CHECKBOX}),
-    )
-    risk_level = forms.ChoiceField(
-        required=False,
-        choices=[('', 'Any')] + list(Contract.RiskLevel.choices),
+        label='Contract type',
+        choices=[('', 'Any type')] + list(Contract.ContractType.choices),
         widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
     )
     counterparty_name = forms.CharField(
         required=False,
-        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT}),
+        label='Counterparty',
+        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'Counterparty name'}),
+    )
+    value = forms.DecimalField(
+        required=False,
+        label='Contract value',
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': TAILWIND_INPUT,
+            'step': '0.01',
+            'min': '0',
+            'inputmode': 'decimal',
+            'placeholder': '0.00',
+        }),
+    )
+    risk_level = forms.ChoiceField(
+        required=False,
+        label='Risk level',
+        choices=[('', 'Any')] + list(Contract.RiskLevel.choices),
+        widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
+    )
+    jurisdiction = forms.CharField(
+        required=False,
+        label='Jurisdiction',
+        widget=forms.TextInput(attrs={
+            'class': TAILWIND_INPUT,
+            'list': 'wf-jurisdiction-suggestions',
+            'placeholder': 'Search or type jurisdiction',
+            'autocomplete': 'off',
+        }),
+    )
+    governing_law = forms.CharField(
+        required=False,
+        label='Governing law',
+        widget=forms.TextInput(attrs={
+            'class': TAILWIND_INPUT,
+            'list': 'wf-governing-law-suggestions',
+            'placeholder': 'Search or type governing law',
+            'autocomplete': 'off',
+        }),
+    )
+    data_transfer_flag = forms.BooleanField(
+        required=False,
+        label='Cross-border data transfer',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'wf-switch__input',
+            'role': 'switch',
+        }),
     )
     status = forms.ChoiceField(
         required=False,
+        label='Record status',
         choices=[('', 'Any')] + list(Contract.Status.choices),
         widget=forms.Select(attrs={'class': TAILWIND_SELECT}),
     )
+    scenario_name = forms.CharField(
+        required=False,
+        label='Scenario name',
+        max_length=120,
+        widget=forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'e.g. Standard NDA'}),
+    )
+
+    def __init__(self, *args, show_status: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not show_status:
+            self.fields.pop('status', None)
 
 
 class WorkflowTemplateStepForm(forms.ModelForm):
-    order = forms.IntegerField(
+    insert_at = forms.IntegerField(required=False, min_value=1, widget=forms.HiddenInput())
+    assignment_mode = forms.ChoiceField(
         required=False,
-        min_value=1,
-        widget=forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'min': '1'}),
+        choices=(('role', 'Role'), ('user', 'Specific person')),
+        widget=forms.RadioSelect,
+        initial='role',
     )
+    condition_rules_json = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = WorkflowTemplateStep
         fields = [
             'name',
             'description',
-            'order',
             'step_kind',
-            'condition_expression',
             'assignee_role',
             'specific_assignee',
             'sla_hours',
@@ -1071,7 +1208,6 @@ class WorkflowTemplateStepForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': TAILWIND_INPUT}),
             'description': forms.Textarea(attrs={'class': TAILWIND_TEXTAREA, 'rows': 3}),
             'step_kind': forms.Select(attrs={'class': TAILWIND_SELECT}),
-            'condition_expression': forms.TextInput(attrs={'class': TAILWIND_INPUT, 'placeholder': 'value>=250000'}),
             'assignee_role': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'specific_assignee': forms.Select(attrs={'class': TAILWIND_SELECT}),
             'sla_hours': forms.NumberInput(attrs={'class': TAILWIND_INPUT, 'min': '1'}),
@@ -1080,39 +1216,62 @@ class WorkflowTemplateStepForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # BRANCH is reserved until branching execution is implemented; keep existing DB values renderable.
+        from contracts.services.workflow_execution import CANONICAL_STEP_KINDS
+
         step_kind_field = self.fields.get('step_kind')
         if step_kind_field:
-            allowed_choices = [
-                choice for choice in step_kind_field.choices
-                if choice[0] != WorkflowTemplateStep.StepKind.BRANCH
+            step_kind_field.choices = [
+                choice for choice in WorkflowTemplateStep.StepKind.choices
+                if choice[0] in CANONICAL_STEP_KINDS
             ]
-            if self.instance and self.instance.pk and self.instance.step_kind == WorkflowTemplateStep.StepKind.BRANCH:
-                allowed_choices.append((WorkflowTemplateStep.StepKind.BRANCH, WorkflowTemplateStep.StepKind.BRANCH.label))
-            step_kind_field.choices = allowed_choices
+        if self.instance and self.instance.pk:
+            if self.instance.specific_assignee_id:
+                self.fields['assignment_mode'].initial = 'user'
+            else:
+                self.fields['assignment_mode'].initial = 'role'
+            if self.instance.condition_rules:
+                import json
+                self.fields['condition_rules_json'].initial = json.dumps(self.instance.condition_rules)
 
-    def clean_condition_expression(self):
-        expression = (self.cleaned_data.get('condition_expression') or '').strip()
-        if not expression:
-            return ''
+    def clean(self):
+        cleaned = super().clean()
+        mode = cleaned.get('assignment_mode') or 'role'
+        role = (cleaned.get('assignee_role') or '').strip()
+        assignee = cleaned.get('specific_assignee')
+        if mode == 'user':
+            cleaned['assignee_role'] = ''
+            if not assignee:
+                self.add_error('specific_assignee', 'Select a person for this assignment.')
+        else:
+            cleaned['specific_assignee'] = None
+            # Role optional for kinds that do not require assignment.
+        raw_rules = cleaned.get('condition_rules_json') or ''
+        from contracts.services.workflow_execution import (
+            compile_condition_rules,
+            normalize_condition_rules,
+            validate_condition_rules,
+        )
+        import json
+        rules = None
+        if raw_rules.strip():
+            try:
+                rules = json.loads(raw_rules)
+            except (TypeError, ValueError):
+                self.add_error('condition_rules_json', 'Condition rules must be valid JSON.')
+                return cleaned
+        for err in validate_condition_rules(rules):
+            self.add_error('condition_rules_json', err)
+        cleaned['condition_rules'] = normalize_condition_rules(rules)
+        cleaned['condition_expression'] = compile_condition_rules(cleaned['condition_rules'])
+        return cleaned
 
-        match = _CONDITION_PATTERN.match(expression)
-        if not match:
-            raise ValidationError(
-                'Invalid condition expression. Use a supported field alias, operator, and value such as value>=250000.',
-            )
-
-        field_name = match.group('field').strip().lower()
-        if field_name not in _FIELD_ALIASES:
-            raise ValidationError(f"Unknown condition field '{field_name}'.")
-
-        value = match.group('value').strip()
-        if not value:
-            raise ValidationError('Condition value cannot be empty.')
-        if value[0] in {'>', '<', '=', '!', '~'}:
-            raise ValidationError('Malformed condition expression.')
-
-        return expression
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.condition_rules = self.cleaned_data.get('condition_rules')
+        instance.condition_expression = self.cleaned_data.get('condition_expression') or ''
+        if commit:
+            instance.save()
+        return instance
 
 
 class WorkflowStepForm(forms.ModelForm):

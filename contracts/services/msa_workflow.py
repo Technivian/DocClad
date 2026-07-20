@@ -408,7 +408,7 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
         workflow.steps.filter(status=WorkflowStep.Status.IN_PROGRESS).order_by('order').first()
         or workflow.steps.filter(status=WorkflowStep.Status.PENDING).order_by('order').first()
     )
-    risk_signals = list(workflow.risk_signals.order_by('-severity', 'detected_at'))
+    risk_signals = list(workflow.risk_signals.filter(is_resolved=False).order_by('-severity', 'detected_at'))
     severity_rank = {
         RiskSignal.Severity.CRITICAL: 4,
         RiskSignal.Severity.HIGH: 3,
@@ -417,9 +417,12 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
     }
     top_signal = max(risk_signals, key=lambda signal: severity_rank.get(signal.severity, 0)) if risk_signals else None
     current_stage = current_step.name if current_step else 'Intake'
+    open_exceptions = len(risk_signals)
 
-    if top_signal and top_signal.code in {'finance_approval_required', 'nonstandard_payment_terms'}:
-        next_action = 'Review Finance approval route'
+    if open_exceptions:
+        next_action = f'Resolve {open_exceptions} exception{"s" if open_exceptions != 1 else ""}'
+    elif top_signal and top_signal.code in {'finance_approval_required', 'nonstandard_payment_terms'}:
+        next_action = 'Review approval route'
     elif top_signal and top_signal.code == 'msa_dpa_review_required':
         next_action = 'Review privacy scope and linked DPA need'
     elif top_signal and top_signal.code == 'renewal_notice_review':
@@ -429,7 +432,11 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
     else:
         next_action = 'Open generated MSA workspace'
 
-    blocking_issue = top_signal.description if top_signal else 'Field capture complete; ready for governed review.'
+    blocking_issue = (
+        f'{open_exceptions} open exception{"s" if open_exceptions != 1 else ""} must be resolved before review.'
+        if open_exceptions
+        else (top_signal.description if top_signal else 'Field capture complete; ready for governed review.')
+    )
     item, _ = CommandCenterWorkItem.objects.update_or_create(
         organization=workflow.organization,
         source_type=CommandCenterWorkItem.SourceType.WORKFLOW,
@@ -467,6 +474,7 @@ def sync_command_center_work_item_for_workflow(workflow: Workflow) -> CommandCen
                 'highest_risk_signal': top_signal.description if top_signal else 'No active risk signal',
                 'blocking_issue': blocking_issue,
                 'next_action': next_action,
+                'open_exceptions': open_exceptions,
                 'self_serve_eligible': contract.risk_level == Contract.RiskLevel.LOW if contract else False,
             },
             'last_source_synced_at': timezone.now(),

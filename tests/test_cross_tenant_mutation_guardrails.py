@@ -35,14 +35,14 @@ class CrossTenantMutationGuardrailsTests(TestCase):
             organization=self.org_a,
             title='Alpha Contract',
             contract_type=Contract.ContractType.NDA,
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user_a,
         )
         self.contract_b = Contract.objects.create(
             organization=self.org_b,
             title='Beta Contract',
             contract_type=Contract.ContractType.NDA,
-            status=Contract.Status.DRAFT,
+            status=Contract.Status.IN_PROGRESS,
             created_by=self.user_b,
         )
 

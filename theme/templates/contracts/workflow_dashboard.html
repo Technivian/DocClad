@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% load clmone_format %}
 
-{% block title %}Workflow Operations – CLM One{% endblock %}
-{% block authenticated_page_title %}Workflow Operations{% endblock %}
-{% block authenticated_page_subtitle %}Track active contract workflows and approval requests in flight.{% endblock %}
+{% block title %}Workflow Designer – CLM One{% endblock %}
+{% block authenticated_page_title %}Workflow Designer{% endblock %}
+{% block authenticated_page_subtitle %}Track active contract workflows and approval requests, and author reusable templates.{% endblock %}
 
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
@@ -15,11 +15,8 @@
     margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
     white-space: nowrap; min-width: 0; line-height: 1.2;
   }
-  .workflow-ops-page.dc-ds-list-page > .dc-ds-filterbar { margin-bottom: calc(-1 * var(--space-8)); }
-  .workflow-ops-page.dc-ds-list-page > .clm-list-summary { margin-top: var(--space-12); }
   .workflow-ops-page .dc-ds-table-wrap { overflow-x: auto; overflow-y: visible; }
   .workflow-ops-page .workflow-ops-row { cursor: pointer; }
-  .workflow-ops-page .workflow-ops-row:hover td { background: var(--color-surface-table-head, var(--well)); }
   .workflow-ops-page .workflow-ops-row:focus-visible { outline: none; box-shadow: inset var(--ds-focus-ring); }
   .workflow-ops-page .workflow-ops-name { display: grid; gap: 4px; min-width: 0; }
   .workflow-ops-page .workflow-ops-title {
@@ -47,12 +44,14 @@
   .workflow-ops-page #workflow-ops-table th[data-col="workflow"],
   .workflow-ops-page #workflow-ops-table td[data-col="workflow"] {
     position: sticky; left: 0; z-index: 2; min-width: 240px; width: 28%;
-    background: var(--card-bg, #fff);
+    background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
   .workflow-ops-page #workflow-ops-table thead th[data-col="workflow"] { z-index: 5; }
-  .workflow-ops-page .workflow-ops-row:hover td[data-col="workflow"] {
-    background: var(--color-surface-table-head, var(--well));
+  .workflow-ops-page .workflow-ops-row:hover td,
+  .workflow-ops-page .workflow-ops-row:focus-within td,
+  .workflow-ops-page .workflow-ops-row.is-row-active td {
+    background-color: var(--color-surface-table-head, var(--well));
   }
   .workflow-ops-page #workflow-ops-table th[data-col="type"],
   .workflow-ops-page #workflow-ops-table td[data-col="type"] { min-width: 150px; width: 16%; }
@@ -133,7 +132,7 @@
   <form method="get" action="{{ ops_url }}" id="workflow-ops-filters-form">
     <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="Workflow operations controls">
       <div class="clm-list-view-header">
-        {% include "components/_workflow_operations_tabs.html" with tabs=ops_tabs %}
+        {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
         <div class="clm-list-view-actions">
           <a class="dc-ds-button dc-ds-button--primary" href="{{ workflow_create_url }}">Start workflow</a>
         </div>
@@ -168,7 +167,10 @@
     <section id="workflow-ops-filters" class="clm-list-filter-drawer dc-ds-surface p-3{% if more_filters_active %} is-open{% endif %}" aria-label="Filters">
       <div class="clm-list-filter-drawer__header">
         <h2 class="clm-list-filter-drawer__title">Filters</h2>
-        <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ ops_clear_url }}">Clear filters</a>
+        <div class="clm-list-filter-drawer__actions">
+          <a class="dc-ds-button dc-ds-button--quiet text-sm" href="{{ ops_clear_url }}">Clear filters</a>
+          <button class="dc-ds-button dc-ds-button--primary text-sm" type="submit">Apply filters</button>
+        </div>
       </div>
       <div class="clm-list-filter-drawer__body">
         <label for="workflow-ops-status">Status
@@ -208,9 +210,6 @@
         <label for="workflow-ops-business-unit">Business unit
           <input id="workflow-ops-business-unit" class="dc-ds-control" type="text" name="business_unit" value="{{ filters.business_unit }}" placeholder="Business unit">
         </label>
-        <div class="clm-list-filter-drawer__actions">
-          <button class="dc-ds-button dc-ds-button--primary" type="submit">Apply filters</button>
-        </div>
       </div>
     </section>
   </form>

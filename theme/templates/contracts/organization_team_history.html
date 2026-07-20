@@ -10,5 +10,5 @@
   {% endfor %}
 </div>
 {% else %}
-  {% include "design_system/empty_state.html" with icon="clock" title="No invitation history yet" reason="This workspace has not issued any team invitations." how="Accepted, revoked, and expired invitations appear here after the first invitation is sent." action_url="#organization-team-invite" action_label="Send first invitation" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+  {% include "design_system/empty_state.html" with icon="clock" title="No invitation history yet" reason="This workspace has not issued any team invitations." how="Accepted, revoked, and expired invitations appear here after the first invitation is sent." class_name="dc-ds-empty--compact" %}
 {% endif %}

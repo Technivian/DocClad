@@ -1,60 +1,84 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Account – CLM One{% endblock %}
-{% block authenticated_page_title %}Account{% endblock %}
-{% block authenticated_page_subtitle %}Manage your identity, workspace access, and security settings.{% endblock %}
+{% block title %}Account settings – CLM One{% endblock %}
+{% block authenticated_page_title %}Account settings{% endblock %}
+{% block authenticated_page_subtitle %}Manage your identity, security, and preferences.{% endblock %}
+{% block authenticated_page_back %}
+<a href="{% url 'settings_hub' %}" class="topbar-back-link" data-workspace-back aria-label="Back to settings" title="Back to settings">
+  {% include "design_system/icon.html" with name="arrow-left" only %}
+</a>
+{% endblock %}
 {% block page_css %}<link rel="stylesheet" href="{% static 'css/profile.css' %}{% if ASSET_VERSION %}?v={{ ASSET_VERSION }}{% endif %}">{% endblock %}
 
 {% block content %}
-<main class="profile-page" aria-labelledby="account-heading">
+<main class="profile-page" aria-labelledby="account-settings-heading">
   <header class="profile-page__hero">
-    <div class="profile-page-avatar" aria-hidden="true">
-      <span class="profile-page-avatar__initial">{{ user.first_name.0|default:user.username.0|upper }}</span>
-    </div>
+    <span class="sidebar-profile-avatar" aria-hidden="true">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
     <div class="profile-page__summary">
-      <h1 id="account-heading">{{ user.get_full_name|default:user.username }}</h1>
+      <h1 id="account-settings-heading" class="sr-only">Account settings</h1>
+      <p class="profile-page__display-name">{{ user.get_full_name|default:user.username }}</p>
       <p class="profile-page__summary-meta">
         <span>{{ user.email }}</span>
         <span aria-hidden="true">·</span>
-        <span>{{ membership.get_role_display|default:"Member" }}</span>
+        <span>{{ workspace_role_label }}</span>
         <span aria-hidden="true">·</span>
-        <span>Member since {{ user.date_joined|date:"j M Y" }}</span>
+        <span>Member since {{ member_since|date:"j M Y" }}</span>
       </p>
     </div>
   </header>
 
-  {% if form %}
+  {% if identity_form %}
   <div class="profile-page__grid">
-    <section class="dc-ds-surface profile-page__card" aria-labelledby="account-card-title">
+    {# Row 1: Personal details | Account security #}
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="personal-details-title">
       <div class="dc-ds-surface__head">
         <div>
-          <h2 class="dc-ds-surface__title" id="account-card-title">Account</h2>
+          <h2 class="dc-ds-surface__title" id="personal-details-title">Personal details</h2>
+          <p class="profile-page__card-desc">Your name and contact information.</p>
         </div>
       </div>
-      <form method="post" class="dc-ds-surface__body profile-page__form" id="account-identity-form" data-dirty-form>
+      <form method="post" class="dc-ds-surface__body profile-page__form" id="profile-identity-form" data-dirty-form data-save-status data-section="identity">
         {% csrf_token %}
-        <input type="hidden" name="action" value="save">
-        {% if form.non_field_errors %}{% include "design_system/form_errors.html" with errors=form.non_field_errors %}{% endif %}
+        <input type="hidden" name="action" value="save_identity">
+        {% if identity_form.non_field_errors %}{% include "design_system/form_errors.html" with errors=identity_form.non_field_errors %}{% endif %}
         <div class="profile-page__fields">
-          {% include "design_system/form_field.html" with field=form.first_name %}
-          {% include "design_system/form_field.html" with field=form.last_name %}
-          {% include "design_system/form_field.html" with field=form.email %}
-          {% include "design_system/form_field.html" with field=form.phone %}
-          {% include "design_system/form_field.html" with field=form.department class_name="profile-page__field--wide" %}
+          {% include "design_system/form_field.html" with field=identity_form.first_name %}
+          {% include "design_system/form_field.html" with field=identity_form.last_name %}
+          <div class="dc-ds-form-field{% if identity_form.email.errors %} dc-ds-form-field--error{% endif %} profile-page__field--wide">
+            <label class="dc-ds-form-field__label" for="{{ identity_form.email.id_for_label }}">
+              <span>Email</span>
+              {% if email_managed %}
+              <span class="profile-email-badge">Managed by organization</span>
+              {% else %}
+              <span class="profile-email-badge profile-email-badge--editable">Editable</span>
+              {% endif %}
+            </label>
+            <div class="dc-ds-form-field__control">{{ identity_form.email }}</div>
+            {% if identity_form.email.errors %}
+            <div class="dc-ds-form-field__errors" role="alert">{% for error in identity_form.email.errors %}<p>{{ error }}</p>{% endfor %}</div>
+            {% endif %}
+            <p class="dc-ds-form-field__help" id="{{ identity_form.email.id_for_label }}-help">
+              {% if email_managed %}Managed by your organization and cannot be changed here.{% else %}You can update this email for your account.{% endif %}
+            </p>
+          </div>
+          {% include "design_system/form_field.html" with field=identity_form.phone %}
+          {% include "design_system/form_field.html" with field=identity_form.department %}
         </div>
         <div class="profile-page__actions">
-          <button type="submit" class="dc-ds-button dc-ds-button--primary" id="account-save-button" disabled>Save changes</button>
+          <span class="profile-page__status" data-form-status aria-live="polite"></span>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary" data-save-button disabled>Save changes</button>
         </div>
       </form>
     </section>
 
-    <section class="dc-ds-surface profile-page__card" aria-labelledby="security-card-title">
+    <section class="dc-ds-surface profile-page__card profile-page__card--security" aria-labelledby="account-security-title">
       <div class="dc-ds-surface__head">
         <div>
-          <h2 class="dc-ds-surface__title" id="security-card-title">Security</h2>
+          <h2 class="dc-ds-surface__title" id="account-security-title">Account security</h2>
+          <p class="profile-page__card-desc">Protect sign-in and manage trusted access.</p>
         </div>
         <span class="profile-status {% if profile.mfa_enabled %}profile-status--clear{% else %}profile-status--attention{% endif %}">
-          {% if profile.mfa_enabled %}MFA active{% else %}MFA not enrolled{% endif %}
+          {{ mfa_status_label }}
         </span>
       </div>
       <div class="dc-ds-surface__body profile-page__stack">
@@ -64,7 +88,7 @@
           <span>Your workspace requires multi-factor authentication before protected areas are available.</span>
         </div>
         {% endif %}
-        {% if security_error %}<div class="dc-ds-alert dc-ds-alert--attention">{{ security_error }}</div>{% endif %}
+        {% if security_error %}<div class="dc-ds-alert dc-ds-alert--attention" role="alert">{{ security_error }}</div>{% endif %}
         {% if recovery_codes_preview %}
         <div class="dc-ds-alert dc-ds-alert--success">
           <strong>Recovery codes</strong>
@@ -75,163 +99,366 @@
         </div>
         {% endif %}
 
-        <div class="profile-page__security-row">
-          <div>
-            <strong>{% if profile.mfa_enabled %}Authenticator protection is enabled{% else %}Protect your account with MFA{% endif %}</strong>
-            <span>
-              {% if profile.mfa_enabled %}
-                Verified {{ profile.mfa_verified_at|date:"j M Y" }}. Prefer an authenticator app or passkey for ongoing sign-in challenges; email codes remain available as fallback verification.
-              {% else %}
-                Prefer an authenticator app or passkey. Email verification codes are available as a fallback enrollment path.
+        <dl class="profile-security-list">
+          <div class="profile-security-list__row">
+            <dt>Multi-factor authentication</dt>
+            <dd>
+              <span class="profile-security-list__value">{{ enrolled_mfa_method }}</span>
+              <span class="profile-security-list__hint">{{ mfa_status_label }}</span>
+            </dd>
+          </div>
+          <div class="profile-security-list__row">
+            <dt>Recovery method</dt>
+            <dd><span class="profile-security-list__value">{{ recovery_method_status }}</span></dd>
+          </div>
+          <div class="profile-security-list__row">
+            <dt>Sign-in method</dt>
+            <dd><span class="profile-security-list__value">{{ sign_in_method }}</span></dd>
+          </div>
+          <div class="profile-security-list__row">
+            <dt>Last sign-in</dt>
+            <dd><span class="profile-security-list__value">{% if last_sign_in %}{{ last_sign_in|date:"j M Y, H:i" }}{% else %}Not recorded{% endif %}</span></dd>
+          </div>
+          <div class="profile-security-list__row{% if sessions_elevated %} profile-security-list__row--notice{% endif %}">
+            <dt>Active sessions</dt>
+            <dd>
+              <span class="profile-security-list__value">{{ personal_session_count }}</span>
+              {% if sessions_elevated %}
+              <span class="profile-security-list__hint">More sessions than usual — review devices you no longer use.</span>
               {% endif %}
-            </span>
-          </div>
-        </div>
-
-        {% if not profile.mfa_enabled %}
-          {% if not show_mfa_setup %}
-          <form method="post" class="profile-page__security-form">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="start_mfa_setup">
-            <button type="submit" class="dc-ds-button dc-ds-button--primary">Set up MFA</button>
-          </form>
-          {% else %}
-          <div class="profile-page__mfa-panel" id="mfa-setup-panel">
-            <p class="profile-page__muted">Authenticator app and passkey enrollment will be offered when configured for this workspace. Continue with email verification as the fallback.</p>
-            <form method="post" class="profile-page__security-form">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="send_mfa_code">
-              <button type="submit" class="dc-ds-button dc-ds-button--secondary">Send email verification code</button>
-            </form>
-            <form method="post" class="profile-page__verify-form">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="verify_mfa">
-              <label for="mfa_enrollment_code">Email verification code</label>
-              <input class="dc-ds-control" id="mfa_enrollment_code" name="mfa_enrollment_code" autocomplete="one-time-code" inputmode="numeric" required>
-              <button type="submit" class="dc-ds-button dc-ds-button--primary">Verify and enroll</button>
-            </form>
-          </div>
-          {% endif %}
-        {% else %}
-        <form method="post" class="profile-page__security-form">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="generate_mfa_recovery_codes">
-          <button type="submit" class="dc-ds-button dc-ds-button--secondary">Generate recovery codes</button>
-        </form>
-        {% endif %}
-        {% if mfa_admin_user %}
-        <a class="profile-page__text-link" href="{% url 'organization_session_audit' %}">Review workspace sessions <span aria-hidden="true">→</span></a>
-        {% endif %}
-      </div>
-    </section>
-
-    <section class="dc-ds-surface profile-page__card" aria-labelledby="workspace-card-title">
-      <div class="dc-ds-surface__head">
-        <div>
-          <h2 class="dc-ds-surface__title" id="workspace-card-title">Workspace access</h2>
-        </div>
-        <span class="profile-status profile-status--neutral">{{ membership.get_role_display|default:"Member" }}</span>
-      </div>
-      <div class="dc-ds-surface__body profile-page__stack">
-        <dl class="profile-page__details">
-          <div>
-            <dt>
-              Workspace
-              {% include "design_system/info_hint.html" with help_text="The organization workspace you are currently signed into." %}
-            </dt>
-            <dd>{{ organization.name|default:"No workspace assigned" }}</dd>
-          </div>
-          <div>
-            <dt>
-              Access level
-              {% include "design_system/info_hint.html" with help_text="Your membership role in this workspace: Owner, Admin, or Member. This controls administrative capabilities." %}
-            </dt>
-            <dd>{{ membership.get_role_display|default:"Member" }}</dd>
-          </div>
-          <div>
-            <dt>
-              Permissions
-              {% include "design_system/info_hint.html" with help_text="Your product role used for staffing and review assignments. Workspace administrators manage this value." %}
-            </dt>
-            <dd>{{ profile.get_role_display }}</dd>
+            </dd>
           </div>
         </dl>
-        <p class="profile-page__muted">Access level and permissions are managed by workspace administrators.</p>
-        {% if mfa_admin_user %}
-        <a class="profile-page__text-link" href="{% url 'contracts:organization_team' %}">Manage workspace access <span aria-hidden="true">→</span></a>
+
+        <div class="profile-page__security-actions">
+          {% if not profile.mfa_enabled %}
+            {% if not show_mfa_setup %}
+            <form method="post" class="profile-page__security-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="start_mfa_setup">
+              <button type="submit" class="dc-ds-button dc-ds-button--primary">Set up MFA</button>
+            </form>
+            {% else %}
+            <div class="profile-page__mfa-panel" id="mfa-setup-panel">
+              <p class="profile-page__muted">Continue with email verification. Authenticator apps will be offered when configured for this workspace.</p>
+              <form method="post" class="profile-page__security-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="send_mfa_code">
+                <button type="submit" class="dc-ds-button dc-ds-button--secondary">Send email verification code</button>
+              </form>
+              <form method="post" class="profile-page__verify-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="verify_mfa">
+                <label for="mfa_enrollment_code">Email verification code</label>
+                <input class="dc-ds-control" id="mfa_enrollment_code" name="mfa_enrollment_code" autocomplete="one-time-code" inputmode="numeric" required>
+                <button type="submit" class="dc-ds-button dc-ds-button--primary">Verify and enroll</button>
+              </form>
+            </div>
+            {% endif %}
+          {% else %}
+          <form method="post" class="profile-page__security-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="generate_mfa_recovery_codes">
+            <button type="submit" class="dc-ds-button dc-ds-button--secondary">Generate recovery codes</button>
+          </form>
+          {% endif %}
+          <a class="dc-ds-button dc-ds-button--quiet" href="{{ profile_sessions_url }}">Manage sessions</a>
+          {% if can_change_password %}
+          <a class="dc-ds-button dc-ds-button--quiet" href="{% url 'profile_password_change' %}">Change password</a>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {# Row 2: Workspace membership | Regional preferences #}
+    <section class="dc-ds-surface profile-page__card" aria-labelledby="workspace-membership-title">
+      <div class="dc-ds-surface__head">
+        <div>
+          <h2 class="dc-ds-surface__title" id="workspace-membership-title">Workspace membership</h2>
+          <p class="profile-page__card-desc">Your role and access in this workspace.</p>
+        </div>
+      </div>
+      <div class="dc-ds-surface__body profile-page__stack">
+        <dl class="profile-info-list">
+          <div class="profile-info-list__row">
+            <dt>Workspace</dt>
+            <dd>{{ organization.name|default:"No workspace assigned" }}</dd>
+          </div>
+          <div class="profile-info-list__row">
+            <dt>Workspace role</dt>
+            <dd>{{ workspace_role_label }}</dd>
+          </div>
+          <div class="profile-info-list__row">
+            <dt>Permission set</dt>
+            <dd>{{ permission_set_label }}</dd>
+          </div>
+          <div class="profile-info-list__row">
+            <dt>Member since</dt>
+            <dd>{{ member_since|date:"j M Y" }}</dd>
+          </div>
+        </dl>
+        {% if membership_admin %}
+        <p class="profile-page__muted">Your workspace role grants full administrative access.</p>
+        <a class="profile-page__text-link" href="{% url 'contracts:organization_team' %}">Manage members and roles <span aria-hidden="true">→</span></a>
+        {% else %}
+        <p class="profile-page__muted">Your workspace role is managed by a workspace administrator.</p>
         {% endif %}
       </div>
     </section>
 
-    <section class="dc-ds-surface profile-page__card" aria-labelledby="preferences-card-title">
+    <section class="dc-ds-surface profile-page__card" id="regional-preferences" aria-labelledby="regional-preferences-title">
       <div class="dc-ds-surface__head">
         <div>
-          <h2 class="dc-ds-surface__title" id="preferences-card-title">Preferences</h2>
+          <h2 class="dc-ds-surface__title" id="regional-preferences-title">Regional preferences</h2>
+          <p class="profile-page__card-desc">Language, time zone, and date format.</p>
         </div>
       </div>
-      <form method="post" class="dc-ds-surface__body profile-page__form" id="account-preferences-form" data-dirty-form>
+      <form method="post" class="dc-ds-surface__body profile-page__form" id="profile-regional-form" data-dirty-form data-save-status data-section="regional" data-regional-preview>
         {% csrf_token %}
-        <input type="hidden" name="action" value="save">
-        {# Keep identity fields present so a preferences-only save does not clear them. #}
-        <input type="hidden" name="first_name" value="{{ form.first_name.value|default:user.first_name }}">
-        <input type="hidden" name="last_name" value="{{ form.last_name.value|default:user.last_name }}">
-        <input type="hidden" name="email" value="{{ form.email.value|default:user.email }}">
-        <input type="hidden" name="phone" value="{{ form.phone.value|default:profile.phone }}">
-        <input type="hidden" name="department" value="{{ form.department.value|default:profile.department }}">
+        <input type="hidden" name="action" value="save_regional">
+        {% if regional_form.non_field_errors %}{% include "design_system/form_errors.html" with errors=regional_form.non_field_errors %}{% endif %}
         <div class="profile-page__fields">
-          {% include "design_system/form_field.html" with field=form.language %}
-          {% include "design_system/form_field.html" with field=form.timezone %}
-          {% include "design_system/form_field.html" with field=form.date_format class_name="profile-page__field--wide" %}
+          {% include "design_system/form_field.html" with field=regional_form.language %}
+          {% include "design_system/form_field.html" with field=regional_form.timezone %}
+          {% include "design_system/form_field.html" with field=regional_form.date_format class_name="profile-page__field--wide" %}
         </div>
-        <fieldset class="profile-page__notify">
-          <legend>Notification settings</legend>
-          <p class="profile-page__muted">Choose which alerts are sent to {{ user.email }}.</p>
-          <label class="profile-page__check">
-            {{ form.notify_contract_updates }}
-            <span>Contract updates</span>
-          </label>
-          <label class="profile-page__check">
-            {{ form.notify_workflow_events }}
-            <span>Workflow events</span>
-          </label>
-          <label class="profile-page__check">
-            {{ form.notify_security_alerts }}
-            <span>Security alerts</span>
-          </label>
-        </fieldset>
+        <p class="profile-regional-preview" id="regional-preview" aria-live="polite">
+          Example: <strong data-regional-example>{{ regional_preview }}</strong>
+        </p>
         <div class="profile-page__actions">
-          <button type="submit" class="dc-ds-button dc-ds-button--primary" disabled>Save changes</button>
+          <span class="profile-page__status" data-form-status aria-live="polite"></span>
+          <button type="submit" class="dc-ds-button dc-ds-button--primary" data-save-button disabled>Save changes</button>
         </div>
       </form>
     </section>
   </div>
+
+  {{ regional_preview_formats|json_script:"regional-preview-formats" }}
+
+  {# Full-width notifications #}
+  <section class="dc-ds-surface profile-page__card profile-page__card--notifications" id="notification-settings" aria-labelledby="notification-settings-title">
+    <div class="dc-ds-surface__head">
+      <div>
+        <h2 class="dc-ds-surface__title" id="notification-settings-title">Notifications</h2>
+        <p class="profile-page__card-desc">Choose which alerts are sent to {{ user.email }}.</p>
+      </div>
+      <span class="profile-channel-chip" title="Active delivery channel">Email</span>
+    </div>
+    <form method="post" class="dc-ds-surface__body profile-page__form" id="profile-notifications-form" data-dirty-form data-save-status data-section="notifications">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_notifications">
+      {% if notifications_form.non_field_errors %}{% include "design_system/form_errors.html" with errors=notifications_form.non_field_errors %}{% endif %}
+      <div class="profile-notify-table" role="group" aria-label="Email notification preferences">
+        <div class="profile-notify-table__head" aria-hidden="true">
+          <span>Alert</span>
+          <span class="profile-notify-table__channel">Email</span>
+        </div>
+        <label class="profile-switch">
+          <span class="profile-switch__copy">
+            <span class="profile-switch__label">{{ notifications_form.notify_contract_updates.label }}</span>
+          </span>
+          <span class="profile-switch__control">
+            <span class="profile-switch__state" data-switch-state></span>
+            {{ notifications_form.notify_contract_updates }}
+          </span>
+        </label>
+        <label class="profile-switch">
+          <span class="profile-switch__copy">
+            <span class="profile-switch__label">{{ notifications_form.notify_workflow_events.label }}</span>
+          </span>
+          <span class="profile-switch__control">
+            <span class="profile-switch__state" data-switch-state></span>
+            {{ notifications_form.notify_workflow_events }}
+          </span>
+        </label>
+        <label class="profile-switch">
+          <span class="profile-switch__copy">
+            <span class="profile-switch__label">{{ notifications_form.notify_review_approval_requests.label }}</span>
+          </span>
+          <span class="profile-switch__control">
+            <span class="profile-switch__state" data-switch-state></span>
+            {{ notifications_form.notify_review_approval_requests }}
+          </span>
+        </label>
+        <label class="profile-switch">
+          <span class="profile-switch__copy">
+            <span class="profile-switch__label">{{ notifications_form.notify_obligation_reminders.label }}</span>
+          </span>
+          <span class="profile-switch__control">
+            <span class="profile-switch__state" data-switch-state></span>
+            {{ notifications_form.notify_obligation_reminders }}
+          </span>
+        </label>
+        <div class="profile-switch profile-switch--locked is-on">
+          <span class="profile-switch__copy">
+            <span class="profile-switch__label">
+              <svg class="profile-switch__lock" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M8 1a3 3 0 0 0-3 3v2H4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-1V4a3 3 0 0 0-3-3zm1.5 5h-3V4a1.5 1.5 0 1 1 3 0v2z"/>
+              </svg>
+              {{ notifications_form.notify_security_alerts.label }}
+              <span class="profile-always-on">Always on</span>
+            </span>
+            <span class="profile-switch__hint">Required security notifications cannot be disabled.</span>
+          </span>
+          <span class="profile-switch__control">
+            <span class="profile-switch__state" aria-hidden="true">On</span>
+            {{ notifications_form.notify_security_alerts }}
+            <span class="sr-only">Security alerts are always on and cannot be disabled.</span>
+          </span>
+        </div>
+      </div>
+      <div class="profile-page__actions">
+        <span class="profile-page__status" data-form-status aria-live="polite"></span>
+        <button type="submit" class="dc-ds-button dc-ds-button--primary" data-save-button disabled>Save changes</button>
+      </div>
+    </form>
+  </section>
   {% else %}
-  <div class="dc-ds-surface"><p class="dc-ds-surface__body c-muted">Please log in to manage your account.</p></div>
+  <div class="dc-ds-surface"><p class="dc-ds-surface__body c-muted">Please log in to manage your account settings.</p></div>
   {% endif %}
 </main>
 <script nonce="{{ csp_nonce }}">
 (function () {
+  var dirtyForms = [];
+  var formatsEl = document.getElementById('regional-preview-formats');
+  var previewFormats = formatsEl ? JSON.parse(formatsEl.textContent) : {};
+  var savedSection = new URLSearchParams(window.location.search).get('saved');
+
+  function serialize(data) {
+    var pairs = [];
+    data.forEach(function (value, key) { pairs.push(key + '=' + value); });
+    return pairs.sort().join('&');
+  }
+
+  function setStatus(form, text, tone) {
+    var status = form.querySelector('[data-form-status]');
+    if (!status) return;
+    status.textContent = text || '';
+    status.className = 'profile-page__status' + (tone ? ' profile-page__status--' + tone : '');
+  }
+
+  function syncSwitchStates(root) {
+    (root || document).querySelectorAll('.profile-switch').forEach(function (row) {
+      var input = row.querySelector('.profile-switch__input');
+      var state = row.querySelector('[data-switch-state]');
+      if (!input) return;
+      input.setAttribute('aria-checked', input.checked ? 'true' : 'false');
+      if (state && !row.classList.contains('profile-switch--locked')) {
+        state.textContent = input.checked ? 'On' : 'Off';
+      }
+      row.classList.toggle('is-on', !!input.checked);
+    });
+  }
+
   function bindDirtyForm(form) {
     if (!form) return;
-    var submit = form.querySelector('button[type="submit"]');
+    var submit = form.querySelector('[data-save-button]');
     if (!submit) return;
-    var initial = new FormData(form);
-    function serialize(data) {
-      var pairs = [];
-      data.forEach(function (value, key) {
-        pairs.push(key + '=' + value);
-      });
-      return pairs.sort().join('&');
-    }
-    var baseline = serialize(initial);
+    var baseline = serialize(new FormData(form));
+    var defaultLabel = 'Save changes';
+    var section = form.getAttribute('data-section');
+
     function sync() {
-      submit.disabled = serialize(new FormData(form)) === baseline;
+      var dirty = serialize(new FormData(form)) !== baseline;
+      submit.disabled = !dirty;
+      if (submit.textContent !== 'Saving…') submit.textContent = defaultLabel;
+      if (dirty) {
+        setStatus(form, 'Unsaved changes', 'pending');
+        if (dirtyForms.indexOf(form) === -1) dirtyForms.push(form);
+      } else {
+        dirtyForms = dirtyForms.filter(function (item) { return item !== form; });
+        var status = form.querySelector('[data-form-status]');
+        var current = status ? status.textContent : '';
+        if (current === 'Unsaved changes' || current === 'Saving…') {
+          setStatus(form, '', '');
+        }
+      }
+      syncSwitchStates(form);
     }
+
     form.addEventListener('input', sync);
     form.addEventListener('change', sync);
+    form.addEventListener('submit', function (event) {
+      if (submit.disabled) {
+        event.preventDefault();
+        return;
+      }
+      setStatus(form, 'Saving…', 'pending');
+      submit.disabled = true;
+      submit.textContent = 'Saving…';
+    });
+
+    if (form.querySelector('.dc-ds-form-field--error, .dc-ds-form-field__errors, .errorlist')) {
+      setStatus(form, 'Could not save. Check the fields above.', 'error');
+    } else if (savedSection && savedSection === section) {
+      setStatus(form, 'Saved', 'success');
+    }
     sync();
   }
+
   document.querySelectorAll('form[data-dirty-form]').forEach(bindDirtyForm);
+  syncSwitchStates(document);
+
+  window.addEventListener('beforeunload', function (event) {
+    if (!dirtyForms.length) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
+  var regional = document.querySelector('[data-regional-preview]');
+  if (regional) {
+    var example = regional.querySelector('[data-regional-example]');
+    var dateField = regional.querySelector('[name="date_format"]');
+    var tzField = regional.querySelector('[name="timezone"]');
+    function updatePreview() {
+      if (!example || !dateField) return;
+      var stamp = previewFormats[dateField.value] || example.textContent;
+      var tz = tzField ? tzField.value : '';
+      example.textContent = stamp + (tz ? ' · ' + tz : '');
+    }
+    if (dateField) dateField.addEventListener('change', updatePreview);
+    if (tzField) tzField.addEventListener('change', updatePreview);
+  }
+
+  /* Settings hub deep-links (#notification-settings, #regional-preferences):
+     native hash scroll moves .dc-ds-shell__main (and can leave the sidebar mid-scroll).
+     Re-anchor under the sticky topbar and reset nav scroll. */
+  (function syncHashTarget() {
+    var hash = window.location.hash;
+    var sidebar = document.getElementById('sidebar');
+    var sidebarNav = sidebar && sidebar.querySelector('.sidebar-padding');
+    function resetSidebarScroll() {
+      if (sidebar) sidebar.scrollTop = 0;
+      if (sidebarNav) sidebarNav.scrollTop = 0;
+    }
+    resetSidebarScroll();
+    if (!hash || hash.length < 2) return;
+    var target = document.getElementById(hash.slice(1));
+    if (!target) return;
+
+    var main = document.querySelector('.dc-ds-shell__main');
+    var topbar = document.querySelector('.dc-ds-shell__main > .dc-ds-shell__topbar');
+    var offset = ((topbar && topbar.offsetHeight) || 64) + 16;
+
+    function revealTarget() {
+      resetSidebarScroll();
+      target.classList.add('is-hash-target');
+      if (main) {
+        var top = target.getBoundingClientRect().top - main.getBoundingClientRect().top + main.scrollTop;
+        main.scrollTo({ top: Math.max(0, top - offset), behavior: 'auto' });
+      } else if (typeof target.scrollIntoView === 'function') {
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+      if (typeof target.focus === 'function') {
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      }
+    }
+
+    revealTarget();
+    window.requestAnimationFrame(revealTarget);
+    window.setTimeout(revealTarget, 0);
+  })();
 })();
 </script>
 {% endblock %}
