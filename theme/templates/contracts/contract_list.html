@@ -153,22 +153,6 @@
     border: 1px dashed var(--border);
   }
   .cw-empty-owner .cw-owner-name { color: var(--text-muted); font-weight: 500; }
-  .cw-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 72px;
-    height: 30px;
-    padding: 0 10px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    background: var(--card-bg);
-    text-decoration: none;
-    font-size: 12.5px;
-    font-weight: 700;
-  }
-  .cw-action:hover { border-color: var(--text-muted); }
   .cw-panel {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -328,7 +312,7 @@
                 <td>
                   <span class="c-primary">{{ contract.client.name|default:contract.counterparty|default:"—" }}</span>
                   {% if contract.value %}
-                  <div class="cw-row-meta" data-numeric>{{ contract.value|money:contract.currency }}</div>
+                  <div class="cw-row-meta">{{ contract.value|money:contract.currency }}</div>
                   {% endif %}
                 </td>
                 <td>
