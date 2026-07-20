@@ -2667,31 +2667,7 @@
 }
 .wf-test-card h3 { margin: 0 0 8px; font: var(--text-small); font-weight: 700; }
 .wf-test-route { margin: 0; padding-left: 1.1rem; }
-.wf-table-wrap {
-  overflow: auto;
-  border: 1px solid var(--hairline, var(--line));
-  border-radius: 8px;
-  background: var(--card-bg, var(--surface));
-}
-.wf-table {
-  width: 100%;
-  border-collapse: collapse;
-  font: var(--text-small);
-}
-.wf-table th,
-.wf-table td {
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--hairline, var(--line));
-}
-.wf-table th {
-  color: var(--ink-500);
-  font-weight: 650;
-  white-space: nowrap;
-  background: var(--surface-alt, #f8fafc);
-}
-.wf-table tr.is-current {
+.wf-versions-workspace .dc-ds-table tbody tr.is-current > td {
   background: color-mix(in srgb, var(--clmone-teal, #168C8C) 6%, transparent);
 }
 .wf-versions-workspace .wf-version-cell {
@@ -2716,16 +2692,9 @@
 .wf-versions-workspace .wf-status-cell .dc-ds-badge {
   vertical-align: middle;
 }
-.wf-versions-workspace .wf-datetime-cell {
+.wf-versions-workspace .wf-datetime-cell,
+.wf-audit-workspace .wf-datetime-cell {
   white-space: nowrap;
-}
-.wf-table__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 48px;
-  width: 48px;
-  overflow: visible;
 }
 .wf-versions-workspace .wf-version-row-menu {
   position: relative;
@@ -3262,9 +3231,6 @@
   white-space: normal;
   font: var(--text-meta);
   color: var(--ink-700);
-}
-.wf-table-wrap.is-compact {
-  max-width: 100%;
 }
 .wf-multiselect__toggle {
   text-align: left;

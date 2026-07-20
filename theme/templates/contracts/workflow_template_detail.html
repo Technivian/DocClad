@@ -814,9 +814,9 @@
     <div class="wf-designer-panel__head wf-designer-panel__head--compact">
       <h2 id="wf-versions-heading">Versions</h2>
     </div>
-    {% if version_rows %}
-    <div class="wf-table-wrap{% if version_rows|length == 1 %} is-compact{% endif %}">
-      <table class="wf-table">
+    <div class="dc-ds-table-wrap">
+      <table class="dc-ds-table" aria-label="Workflow template versions">
+        <caption class="sr-only">Immutable history of published and draft workflow template revisions.</caption>
         <thead>
           <tr>
             <th scope="col">Version</th>
@@ -829,7 +829,7 @@
             <th scope="col">Change summary</th>
             <th scope="col">Validation</th>
             <th scope="col">Usage</th>
-            <th scope="col">Actions</th>
+            <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -847,7 +847,7 @@
             <td>{{ row.published_by }}</td>
             <td class="wf-datetime-cell">{% if row.published_at %}<time datetime="{{ row.published_at|date:'c' }}">{{ row.published_at|date:"j M Y H:i" }}</time>{% else %}—{% endif %}</td>
             <td>{% if row.source_version %}v{{ row.source_version }}{% else %}—{% endif %}</td>
-            <td class="wf-change-summary-cell">{{ row.change_summary }}</td>
+            <td class="wf-change-summary-cell"><span class="dc-ds-table-cell-text">{{ row.change_summary }}</span></td>
             <td>
               {% if row.is_published %}
                 {% if row.validation_ok %}Valid at publication{% else %}{{ row.blocking_count }} blocking{% endif %}
@@ -856,8 +856,8 @@
                 {{ row.blocking_count }} blocking · {{ row.warning_count }} warning{{ row.warning_count|pluralize }}
               {% endif %}
             </td>
-            <td>{{ row.active_workflow_count }} active / {{ row.total_workflow_count }} total</td>
-            <td class="wf-table__actions" data-col="actions">
+            <td data-numeric>{{ row.active_workflow_count }} active / {{ row.total_workflow_count }} total</td>
+            <td data-col="actions">
               <details class="wq-kebab wf-version-row-menu">
                 <summary class="wq-kebab-trigger" aria-haspopup="menu" aria-label="Actions for version {{ row.version_number }}">⋯</summary>
                 <div class="wq-kebab-menu" role="menu">
@@ -875,16 +875,16 @@
               </details>
             </td>
           </tr>
+          {% empty %}
+          <tr>
+            <td colspan="11">
+              {% include "design_system/empty_state.html" with icon="workflow" title="No versions" reason="Version history appears after the first workflow template is saved." how="Create or publish a template to start an immutable revision trail." class_name="dc-ds-empty--compact" %}
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    {% else %}
-    <div class="wf-empty-state" role="status">
-      <p class="wf-empty-state__title">No versions</p>
-      <p>Version history appears after the first workflow template is saved.</p>
-    </div>
-    {% endif %}
   </section>
 
   {% else %}
@@ -892,7 +892,7 @@
     <div class="wf-designer-panel__head wf-designer-panel__head--compact">
       <h2 id="wf-audit-heading">Activity</h2>
     </div>
-    <form method="get" class="wf-audit-filters" aria-label="Activity filters" data-activity-filters>
+    <form method="get" class="wf-audit-filters dc-ds-table-toolbar" aria-label="Activity filters" data-activity-filters>
       <input type="hidden" name="tab" value="activity">
       <div class="wf-field">
         <label class="form-label" for="audit-actor">Actor</label>
@@ -947,11 +947,12 @@
         <a class="dc-ds-button dc-ds-button--quiet" href="?tab=activity">Clear filters</a>
       </div>
     </form>
-    <div class="wf-table-wrap">
-      <table class="wf-table">
+    <div class="dc-ds-table-wrap">
+      <table class="dc-ds-table" aria-label="Workflow template activity">
+        <caption class="sr-only">Immutable audit trail of workflow template changes and actions.</caption>
         <thead>
           <tr>
-            <th scope="col"><span class="visually-hidden">Expand</span></th>
+            <th scope="col"><span class="sr-only">Expand</span></th>
             <th scope="col">Timestamp</th>
             <th scope="col">Actor</th>
             <th scope="col">Action</th>
@@ -969,12 +970,12 @@
             <td>
               <button type="button" class="wf-activity-expand" data-activity-expand aria-expanded="false" aria-controls="activity-detail-{{ row.event_id }}" aria-label="Show event details">▸</button>
             </td>
-            <td><time datetime="{{ row.timestamp|date:'c' }}">{{ row.timestamp|date:"j M Y H:i T" }}</time></td>
+            <td class="wf-datetime-cell"><time datetime="{{ row.timestamp|date:'c' }}">{{ row.timestamp|date:"j M Y H:i T" }}</time></td>
             <td>{{ row.actor }}</td>
             <td>{{ row.action }}</td>
-            <td>{{ row.affected }}</td>
-            <td>{{ row.previous_value }}</td>
-            <td>{{ row.new_value }}</td>
+            <td><span class="dc-ds-table-cell-text">{{ row.affected }}</span></td>
+            <td><span class="dc-ds-table-cell-text">{{ row.previous_value }}</span></td>
+            <td><span class="dc-ds-table-cell-text">{{ row.new_value }}</span></td>
             <td>{{ row.version }}</td>
             <td>{{ row.source }}</td>
             <td><code>{{ row.event_id }}</code></td>
@@ -992,18 +993,13 @@
           {% empty %}
           <tr>
             <td colspan="10">
-              <div class="wf-empty-state" role="status">
-                {% if audit_filters_active %}
-                <p class="wf-empty-state__title">No matching activity</p>
-                <p>No events match the selected filters. Clear filters to see the full trail.</p>
-                {% elif not audit_has_any_activity %}
-                <p class="wf-empty-state__title">No activity recorded</p>
-                <p>Creation, publication, edits, and tests appear here automatically.</p>
-                {% else %}
-                <p class="wf-empty-state__title">No matching activity</p>
-                <p>No events match the selected filters.</p>
-                {% endif %}
-              </div>
+              {% if audit_filters_active %}
+              {% include "design_system/empty_state.html" with icon="search" title="No matching activity" reason="No events match the selected filters." how="Clear filters to see the full audit trail." class_name="dc-ds-empty--compact" %}
+              {% elif not audit_has_any_activity %}
+              {% include "design_system/empty_state.html" with icon="clock" title="No activity recorded" reason="Creation, publication, edits, and tests appear here automatically." how="Activity is recorded as this template is edited, published, or tested." class_name="dc-ds-empty--compact" %}
+              {% else %}
+              {% include "design_system/empty_state.html" with icon="search" title="No matching activity" reason="No events match the selected filters." how="Clear filters to see the full audit trail." class_name="dc-ds-empty--compact" %}
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
