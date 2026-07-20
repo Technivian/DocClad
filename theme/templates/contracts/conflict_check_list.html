@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Conflict Checks – CLM One{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .conflict-tbody tr { border-bottom: 1px solid var(--card-border); }
-  .conflict-tbody tr:last-child { border-bottom: none; }
-  .tbl-row-hover:hover { background: var(--sidebar-hover); }
-</style>
 <div class="page-wrap">
 
   <div class="page-header mb-6">
@@ -20,38 +15,39 @@
     </div>
   </div>
 
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Conflict of interest checks">
+      <caption class="sr-only">Conflict of interest checks for this workspace</caption>
+      <thead>
         <tr>
-          <th class="tbl-th px-5 py-3">Checked Party</th>
-          <th class="tbl-th px-5 py-3">Type</th>
-          <th class="tbl-th px-5 py-3">Client</th>
-          <th class="tbl-th px-5 py-3">Matter</th>
-          <th class="tbl-th px-5 py-3">Status</th>
-          <th class="tbl-th px-5 py-3">Checked By</th>
-          <th class="tbl-th px-5 py-3">Date</th>
-          <th class="tbl-th px-5 py-3 text-right">Actions</th>
+          <th scope="col">Checked Party</th>
+          <th scope="col">Type</th>
+          <th scope="col">Client</th>
+          <th scope="col">Matter</th>
+          <th scope="col">Status</th>
+          <th scope="col">Checked By</th>
+          <th scope="col">Date</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
-      <tbody class="conflict-tbody">
+      <tbody>
         {% for check in conflict_checks %}
-        <tr class="tbl-row tbl-row-hover">
-          <td class="tbl-td px-5 py-3 font-medium">{{ check.checked_party }}</td>
-          <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_party_type|default:"—" }}</td>
-          <td class="tbl-td px-5 py-3 c-muted">{{ check.client.name|default:"—" }}</td>
-          <td class="tbl-td px-5 py-3 c-muted">{{ check.matter.matter_number|default:"—" }}</td>
-          <td class="tbl-td px-5 py-3">
+        <tr>
+          <td class="font-medium">{{ check.checked_party }}</td>
+          <td class="c-muted">{{ check.checked_party_type|default:"—" }}</td>
+          <td class="c-muted">{{ check.client.name|default:"—" }}</td>
+          <td class="c-muted">{{ check.matter.matter_number|default:"—" }}</td>
+          <td>
             <span class="dc-ds-badge dc-ds-badge--sm {% if check.status == 'CLEAR' %}dc-ds-badge--success{% elif check.status == 'CONFLICT' %}dc-ds-badge--danger{% elif check.status == 'WAIVED' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ check.get_status_display }}</span>
           </td>
-          <td class="tbl-td px-5 py-3 c-muted">{{ check.checked_by.get_full_name|default:"—" }}</td>
-          <td class="tbl-td px-5 py-3 c-muted">{{ check.created_at|date:"M d, Y" }}</td>
-          <td class="tbl-td px-5 py-3 text-right">
+          <td class="c-muted">{{ check.checked_by.get_full_name|default:"—" }}</td>
+          <td class="c-muted">{{ check.created_at|date:"M d, Y" }}</td>
+          <td data-col="actions">
             <a href="{% url 'contracts:conflict_check_update' check.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-sm rounded-lg">Edit</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8"><div class="empty-state">No conflict checks performed.</div></td></tr>
+        <tr><td colspan="8" class="empty-state">No conflict checks performed.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Compliance Checklists – CLM One{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .tbl-row { border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
-  .tbl-row:hover { background: var(--sidebar-hover); }
-  .tbl-tbody { border-collapse: collapse; }
-</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -39,29 +34,30 @@
         </div>
     </form>
 
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Compliance checklists">
+            <caption class="sr-only">Compliance checklists for this workspace</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Checklist Name</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Regulation</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Reviewed By</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                    <th scope="col">Checklist Name</th>
+                    <th scope="col">Regulation</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Due Date</th>
+                    <th scope="col">Reviewed By</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for checklist in checklists %}
-                <tr class="tbl-row">
-                    <td class="px-5 py-3 font-medium tbl-td">{{ checklist.name }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ checklist.regulation }}</td>
-                    <td class="px-5 py-3">
+                <tr>
+                    <td class="font-medium">{{ checklist.name }}</td>
+                    <td>{{ checklist.regulation }}</td>
+                    <td>
                         <span class="dc-ds-badge dc-ds-badge--sm {% if checklist.status == 'COMPLETE' %}dc-ds-badge--success{% elif checklist.status == 'IN_PROGRESS' %}dc-ds-badge--progress{% else %}dc-ds-badge--neutral{% endif %}">{{ checklist.get_status_display }}</span>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ checklist.due_date|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ checklist.reviewed_by.username|default:"—" }}</td>
-                    <td class="px-5 py-3 text-right space-x-3">
+                    <td>{{ checklist.due_date|default:"—" }}</td>
+                    <td>{{ checklist.reviewed_by.username|default:"—" }}</td>
+                    <td data-col="actions" class="space-x-3">
                         <a href="{% url 'contracts:compliance_checklist_detail' checklist.pk %}" class="text-sm c-link">View</a>
                         <a href="{% url 'contracts:compliance_checklist_update' checklist.pk %}" class="text-sm c-link">Edit</a>
                     </td>

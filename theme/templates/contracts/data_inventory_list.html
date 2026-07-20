@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Data Inventory (RoPA) – CLM One{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .di-row:hover { background: var(--sidebar-hover); }
-</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -15,27 +12,28 @@
             Add New
         </a>
     </div>
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Data inventory records">
+            <caption class="sr-only">Records of processing activities for this workspace</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Title</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Lawful Basis</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Retention</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">3rd Country</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">DPIA</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Lawful Basis</th>
+                    <th scope="col">Retention</th>
+                    <th scope="col">3rd Country</th>
+                    <th scope="col">DPIA</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in records %}
-                <tr class="border-b transition-colors tbl-row di-row">
-                    <td class="px-5 py-3"><a href="{% url 'contracts:data_inventory_detail' item.pk %}" class="font-medium c-link">{{ item.title }}</a></td>
-                    <td class="px-5 py-3 tbl-td">{{ item.get_lawful_basis_display }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ item.retention_period }}</td>
-                    <td class="px-5 py-3">{% if item.third_country_transfers %}<span class="c-danger">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
-                    <td class="px-5 py-3">{% if item.dpia_required %}{% if item.dpia_completed %}<span class="c-success">Completed</span>{% else %}<span class="c-warning">Required</span>{% endif %}{% else %}<span class="c-muted">—</span>{% endif %}</td>
-                    <td class="px-5 py-3 text-right">
+                <tr>
+                    <td><a href="{% url 'contracts:data_inventory_detail' item.pk %}" class="font-medium c-link">{{ item.title }}</a></td>
+                    <td>{{ item.get_lawful_basis_display }}</td>
+                    <td>{{ item.retention_period }}</td>
+                    <td>{% if item.third_country_transfers %}<span class="c-danger">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
+                    <td>{% if item.dpia_required %}{% if item.dpia_completed %}<span class="c-success">Completed</span>{% else %}<span class="c-warning">Required</span>{% endif %}{% else %}<span class="c-muted">—</span>{% endif %}</td>
+                    <td data-col="actions">
                         <a href="{% url 'contracts:data_inventory_update' item.pk %}" class="text-sm c-link">Edit</a>
                     </td>
                 </tr>

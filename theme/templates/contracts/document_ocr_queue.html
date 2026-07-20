@@ -6,15 +6,6 @@
 </a>
 {% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .ocr-queue-row {
-    border-bottom: 1px solid var(--card-border);
-    transition: background 0.15s;
-  }
-  .ocr-queue-row:hover {
-    background: var(--sidebar-hover);
-  }
-</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -26,30 +17,31 @@
         </div>
     </div>
 
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Text extraction queue">
+            <caption class="sr-only">Documents awaiting text extraction review</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Document</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Source</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Confidence</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
+                    <th scope="col">Document</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Source</th>
+                    <th scope="col" data-numeric>Confidence</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for review in reviews %}
-                <tr class="ocr-queue-row tbl-row">
-                    <td class="px-5 py-3">
+                <tr>
+                    <td>
                         <a href="{% url 'contracts:document_detail' review.document.pk %}" class="c-link font-medium">{{ review.document.title }}</a>
                         <div class="text-xs c-muted">v{{ review.document.version }}</div>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ review.get_status_display }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ review.source|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ review.confidence_score|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ review.updated_at|date:"M d, Y H:i" }}</td>
-                    <td class="px-5 py-3 text-right">
+                    <td>{{ review.get_status_display }}</td>
+                    <td>{{ review.source|default:"—" }}</td>
+                    <td data-numeric>{{ review.confidence_score|default:"—" }}</td>
+                    <td>{{ review.updated_at|date:"M d, Y H:i" }}</td>
+                    <td data-col="actions">
                         <a href="{% url 'contracts:document_ocr_review' review.pk %}" class="text-sm c-link">Review</a>
                     </td>
                 </tr>

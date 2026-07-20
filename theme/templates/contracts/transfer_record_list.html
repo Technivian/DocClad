@@ -14,29 +14,30 @@
       </a>
     </div>
   </div>
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Data transfer records">
+      <caption class="sr-only">Data transfer records for this workspace</caption>
+      <thead>
         <tr>
-          <th class="tbl-th">Title</th>
-          <th class="tbl-th">From</th>
-          <th class="tbl-th">To</th>
-          <th class="tbl-th">Mechanism</th>
-          <th class="tbl-th">TIA</th>
-          <th class="tbl-th">Active</th>
-          <th class="tbl-th text-right">Actions</th>
+          <th scope="col">Title</th>
+          <th scope="col">From</th>
+          <th scope="col">To</th>
+          <th scope="col">Mechanism</th>
+          <th scope="col">TIA</th>
+          <th scope="col">Active</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in transfers %}
-        <tr class="tbl-row">
-          <td class="tbl-td">{{ item.title }}</td>
-          <td class="tbl-td">{{ item.source_country }}</td>
-          <td class="tbl-td">{{ item.destination_country }}</td>
-          <td class="tbl-td">{{ item.get_transfer_mechanism_display }}</td>
-          <td class="tbl-td">{% if item.tia_completed %}<span class="c-success">✓</span>{% else %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Pending</span>{% endif %}</td>
-          <td class="tbl-td">{% if item.is_active %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-sm rounded-lg">Edit</a></td>
+        <tr>
+          <td>{{ item.title }}</td>
+          <td>{{ item.source_country }}</td>
+          <td>{{ item.destination_country }}</td>
+          <td>{{ item.get_transfer_mechanism_display }}</td>
+          <td>{% if item.tia_completed %}<span class="c-success">✓</span>{% else %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention">Pending</span>{% endif %}</td>
+          <td>{% if item.is_active %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}</td>
+          <td data-col="actions"><a href="{% url 'contracts:transfer_record_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-sm rounded-lg">Edit</a></td>
         </tr>
         {% empty %}
         {% url 'contracts:transfer_record_create' as transfer_record_create_url %}

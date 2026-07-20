@@ -52,35 +52,36 @@
     <div class="panel-head">
       <h2 class="panel-title">Compliance Operations</h2>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="tbl-head">
+    <div class="dc-ds-table-wrap" style="border:0;border-radius:0;">
+      <table class="dc-ds-table" aria-label="Compliance operations">
+        <caption class="sr-only">Compliance operations areas and status</caption>
+        <thead>
           <tr>
-            <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Area</th>
-            <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Status</th>
-            <th class="tbl-th px-5 py-3 text-left text-xs uppercase tracking-wide">Description</th>
-            <th class="tbl-th px-5 py-3 text-right text-xs uppercase tracking-wide">Action</th>
+            <th scope="col">Area</th>
+            <th scope="col">Status</th>
+            <th scope="col">Description</th>
+            <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-          <tr class="border-b transition-colors tbl-row">
-            <td class="px-5 py-3.5 tbl-td font-medium c-primary">Retention Policies</td>
-            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ retention_count }} active</span></td>
-            <td class="px-5 py-3.5 tbl-td c-secondary">Data retention schedules and disposal rules</td>
-            <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:retention_policy_list' %}" class="c-link font-medium">View →</a></td>
+          <tr>
+            <td class="font-medium c-primary">Retention Policies</td>
+            <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--progress">{{ retention_count }} active</span></td>
+            <td class="c-secondary">Data retention schedules and disposal rules</td>
+            <td data-col="actions"><a href="{% url 'contracts:retention_policy_list' %}" class="c-link font-medium">View →</a></td>
           </tr>
-          <tr class="border-b transition-colors tbl-row">
-            <td class="px-5 py-3.5 tbl-td font-medium c-primary">Legal Holds</td>
+          <tr>
+            <td class="font-medium c-primary">Legal Holds</td>
             {# Preserve legal_hold_count urgency signal: red badge when holds are active #}
-            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm {% if legal_hold_count > 0 %}dc-ds-badge--danger{% else %}dc-ds-badge--neutral{% endif %}">{{ legal_hold_count }} active</span></td>
-            <td class="px-5 py-3.5 tbl-td c-secondary">Litigation holds suspending routine deletion</td>
-            <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:legal_hold_list' %}" class="c-link font-medium">View →</a></td>
+            <td><span class="dc-ds-badge dc-ds-badge--sm {% if legal_hold_count > 0 %}dc-ds-badge--danger{% else %}dc-ds-badge--neutral{% endif %}">{{ legal_hold_count }} active</span></td>
+            <td class="c-secondary">Litigation holds suspending routine deletion</td>
+            <td data-col="actions"><a href="{% url 'contracts:legal_hold_list' %}" class="c-link font-medium">View →</a></td>
           </tr>
-          <tr class="transition-colors tbl-row">
-            <td class="px-5 py-3.5 tbl-td font-medium c-primary">Ethical Walls</td>
-            <td class="px-5 py-3.5 tbl-td"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ ethical_wall_count }} active</span></td>
-            <td class="px-5 py-3.5 tbl-td c-secondary">Conflict-of-interest access restrictions</td>
-            <td class="px-5 py-3.5 tbl-td text-right"><a href="{% url 'contracts:ethical_wall_list' %}" class="c-link font-medium">Manage →</a></td>
+          <tr>
+            <td class="font-medium c-primary">Ethical Walls</td>
+            <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ ethical_wall_count }} active</span></td>
+            <td class="c-secondary">Conflict-of-interest access restrictions</td>
+            <td data-col="actions"><a href="{% url 'contracts:ethical_wall_list' %}" class="c-link font-medium">Manage →</a></td>
           </tr>
         </tbody>
       </table>
@@ -92,27 +93,28 @@
       <h2 class="panel-title">Recent DSAR Requests</h2>
     </div>
     {% if recent_dsars %}
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="tbl-head">
+    <div class="dc-ds-table-wrap" style="border:0;border-radius:0;">
+      <table class="dc-ds-table" aria-label="Recent DSAR requests">
+        <caption class="sr-only">Recent data subject access requests</caption>
+        <thead>
           <tr>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Reference</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Requester</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due</th>
+            <th scope="col">Reference</th>
+            <th scope="col">Type</th>
+            <th scope="col">Requester</th>
+            <th scope="col">Status</th>
+            <th scope="col">Due</th>
           </tr>
         </thead>
         <tbody>
           {% for dsar in recent_dsars %}
-          <tr class="border-b transition-colors tbl-row">
-            <td class="px-5 py-3.5 tbl-td"><a href="{% url 'contracts:dsar_detail' dsar.pk %}" class="text-sm font-medium c-link">{{ dsar.reference_number }}</a></td>
-            <td class="px-5 py-3.5 tbl-td">{{ dsar.get_request_type_display }}</td>
-            <td class="px-5 py-3.5 tbl-td">{{ dsar.requester_name }}</td>
-            <td class="px-5 py-3.5 tbl-td">
+          <tr>
+            <td><a href="{% url 'contracts:dsar_detail' dsar.pk %}" class="text-sm font-medium c-link">{{ dsar.reference_number }}</a></td>
+            <td>{{ dsar.get_request_type_display }}</td>
+            <td>{{ dsar.requester_name }}</td>
+            <td>
               <span class="dc-ds-badge dc-ds-badge--sm {% if dsar.status == 'COMPLETED' %}dc-ds-badge--success{% elif dsar.is_overdue %}dc-ds-badge--danger{% else %}dc-ds-badge--attention{% endif %}">{{ dsar.get_status_display }}</span>
             </td>
-            <td class="px-5 py-3.5 tbl-td">{{ dsar.due_date|default:"—" }}</td>
+            <td>{{ dsar.due_date|default:"—" }}</td>
           </tr>
           {% endfor %}
         </tbody>

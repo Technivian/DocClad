@@ -63,40 +63,41 @@
     </form>
 </div>
 
-<div class="panel overflow-hidden table-card">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Trademark requests">
+        <caption class="sr-only">Trademark filing requests for this workspace</caption>
+        <thead>
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Mark</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Client / Matter</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Filing Basis</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Mark</th>
+                <th scope="col">Status</th>
+                <th scope="col">Client / Matter</th>
+                <th scope="col">Filing Basis</th>
+                <th scope="col">Updated</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for trademark_request in trademark_requests %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     <a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="font-medium c-link">{{ trademark_request.mark_text }}</a>
                     <p class="text-xs mt-0.5 c-muted">{{ trademark_request.description|truncatechars:72 }}</p>
                 </td>
-                <td class="px-5 py-3.5">
+                <td>
                     <span class="dc-ds-badge dc-ds-badge--sm {% if trademark_request.status == 'APPROVED' %}dc-ds-badge--success{% elif trademark_request.status == 'PENDING' or trademark_request.status == 'IN_REVIEW' %}dc-ds-badge--attention{% elif trademark_request.status == 'REJECTED' %}dc-ds-badge--danger{% else %}dc-ds-badge--progress{% endif %}">
                         {{ trademark_request.get_status_display }}
                     </span>
                 </td>
-                <td class="px-5 py-3.5 c-secondary">
+                <td class="c-secondary">
                     {% if trademark_request.client %}<div>{{ trademark_request.client.name }}</div>{% endif %}
                     {% if trademark_request.matter %}<div class="text-xs c-muted">{{ trademark_request.matter.title }}</div>{% elif not trademark_request.client %}<span class="c-dim">Unlinked</span>{% endif %}
                 </td>
-                <td class="px-5 py-3.5 c-secondary">{{ trademark_request.filing_basis|default:'—' }}</td>
-                <td class="px-5 py-3.5 c-secondary">{{ trademark_request.updated_at|date:"M d, Y" }}</td>
-                <td class="px-5 py-3.5 text-right"><div class="inline-flex items-center gap-2"><a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="dc-ds-button dc-ds-button--soft text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80">View</a><a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet">Edit</a></div></td>
+                <td class="c-secondary">{{ trademark_request.filing_basis|default:'—' }}</td>
+                <td class="c-secondary">{{ trademark_request.updated_at|date:"M d, Y" }}</td>
+                <td data-col="actions"><div class="inline-flex items-center gap-2"><a href="{% url 'contracts:trademark_request_detail' trademark_request.pk %}" class="dc-ds-button dc-ds-button--soft text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80">View</a><a href="{% url 'contracts:trademark_request_update' trademark_request.pk %}" class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet">Edit</a></div></td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div><div><p class="font-medium c-primary">No trademark requests found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_status %}Try adjusting your filters or <a href="{% url 'contracts:trademark_request_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:trademark_request_create' %}" class="c-link">creating your first request</a>.{% endif %}</p></div></div></td></tr>
+            <tr><td colspan="6" class="empty-state">{% if search_query or selected_status %}No trademark requests found. Try adjusting your filters or <a href="{% url 'contracts:trademark_request_list' %}" class="c-link">clear the search</a>.{% else %}No trademark requests found. Get started by <a href="{% url 'contracts:trademark_request_create' %}" class="c-link">creating your first request</a>.{% endif %}</td></tr>
             {% endfor %}
         </tbody>
     </table>

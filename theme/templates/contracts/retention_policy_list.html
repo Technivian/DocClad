@@ -15,41 +15,42 @@
     </div>
   </div>
 
-  <div class="panel overflow-hidden">
-    <table class="w-full">
-      <thead class="tbl-head">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Retention policies">
+      <caption class="sr-only">Retention policies for this workspace</caption>
+      <thead>
         <tr>
-          <th class="tbl-th">Title</th>
-          <th class="tbl-th">Category</th>
-          <th class="tbl-th">Period (days)</th>
-          <th class="tbl-th">Auto Delete</th>
-          <th class="tbl-th">Next Review</th>
-          <th class="tbl-th">Active</th>
-          <th class="tbl-th text-right">Actions</th>
+          <th scope="col">Title</th>
+          <th scope="col">Category</th>
+          <th scope="col" data-numeric>Period (days)</th>
+          <th scope="col">Auto Delete</th>
+          <th scope="col">Next Review</th>
+          <th scope="col">Active</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in policies %}
-        <tr class="tbl-row">
-          <td class="tbl-td">{{ item.title }}</td>
-          <td class="tbl-td c-muted">{{ item.get_category_display }}</td>
-          <td class="tbl-td c-muted">{{ item.retention_period_days }}</td>
-          <td class="tbl-td">
+        <tr>
+          <td>{{ item.title }}</td>
+          <td class="c-muted">{{ item.get_category_display }}</td>
+          <td data-numeric class="c-muted">{{ item.retention_period_days }}</td>
+          <td>
             {% if item.auto_delete %}
               <span class="c-danger font-medium">Yes</span>
             {% else %}
               <span class="c-muted">No</span>
             {% endif %}
           </td>
-          <td class="tbl-td c-muted">{{ item.next_review|default:"-" }}</td>
-          <td class="tbl-td">
+          <td class="c-muted">{{ item.next_review|default:"-" }}</td>
+          <td>
             {% if item.is_active %}
               <span class="c-success font-medium">Yes</span>
             {% else %}
               <span class="c-muted">No</span>
             {% endif %}
           </td>
-          <td class="tbl-td text-right">
+          <td data-col="actions">
             <a href="{% url 'contracts:retention_policy_update' item.pk %}" class="c-link text-sm">Edit</a>
           </td>
         </tr>

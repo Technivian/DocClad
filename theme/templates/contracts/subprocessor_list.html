@@ -14,32 +14,33 @@
       </a>
     </div>
   </div>
-  <div class="panel">
-    <table class="w-full">
-      <thead class="tbl-head">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Subprocessor registry">
+      <caption class="sr-only">Subprocessors registered for this workspace</caption>
+      <thead>
         <tr>
-          <th class="tbl-th">Name</th>
-          <th class="tbl-th">Service</th>
-          <th class="tbl-th">Country</th>
-          <th class="tbl-th">DPA</th>
-          <th class="tbl-th">SCC</th>
-          <th class="tbl-th">Risk</th>
-          <th class="tbl-th text-right">Actions</th>
+          <th scope="col">Name</th>
+          <th scope="col">Service</th>
+          <th scope="col">Country</th>
+          <th scope="col">DPA</th>
+          <th scope="col">SCC</th>
+          <th scope="col">Risk</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for item in subprocessors %}
-        <tr class="tbl-row list-row">
-          <td class="tbl-td"><a href="{% url 'contracts:subprocessor_detail' item.pk %}" class="c-link font-medium">{{ item.name }}</a></td>
-          <td class="tbl-td">{{ item.service_type }}</td>
-          <td class="tbl-td">{{ item.country }}</td>
-          <td class="tbl-td">{% if item.dpa_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
-          <td class="tbl-td">{% if item.scc_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
-          <td class="tbl-td"><span class="dc-ds-badge dc-ds-badge--sm {% if item.risk_level == 'HIGH' %}dc-ds-badge--danger{% elif item.risk_level == 'MEDIUM' %}dc-ds-badge--attention{% else %}dc-ds-badge--success{% endif %}">{{ item.risk_level }}</span></td>
-          <td class="tbl-td text-right"><a href="{% url 'contracts:subprocessor_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-sm rounded-lg">Edit</a></td>
+        <tr>
+          <td><a href="{% url 'contracts:subprocessor_detail' item.pk %}" class="c-link font-medium">{{ item.name }}</a></td>
+          <td>{{ item.service_type }}</td>
+          <td>{{ item.country }}</td>
+          <td>{% if item.dpa_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
+          <td>{% if item.scc_in_place %}<span class="c-success">✓</span>{% else %}<span class="c-danger">✗</span>{% endif %}</td>
+          <td><span class="dc-ds-badge dc-ds-badge--sm {% if item.risk_level == 'HIGH' %}dc-ds-badge--danger{% elif item.risk_level == 'MEDIUM' %}dc-ds-badge--attention{% else %}dc-ds-badge--success{% endif %}">{{ item.risk_level }}</span></td>
+          <td data-col="actions"><a href="{% url 'contracts:subprocessor_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-sm rounded-lg">Edit</a></td>
         </tr>
         {% empty %}
-        <tr><td colspan="7"><div class="empty-state">No subprocessor registry found</div></td></tr>
+        <tr><td colspan="7" class="empty-state">No subprocessor registry found</td></tr>
         {% endfor %}
       </tbody>
     </table>
