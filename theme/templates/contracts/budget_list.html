@@ -61,35 +61,46 @@
     </form>
 </div>
 
-<div class="panel">
-    <table class="w-full text-sm">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Budgets">
+        <caption class="sr-only">Budget allocations by department, year, and quarter.</caption>
         <thead class="tbl-head">
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Department</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Year</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Quarter</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Allocated</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Spent</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Remaining</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Department</th>
+                <th scope="col">Year</th>
+                <th scope="col">Quarter</th>
+                <th scope="col">Allocated</th>
+                <th scope="col">Spent</th>
+                <th scope="col">Remaining</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for budget in budgets %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     <a href="{% url 'contracts:budget_detail' budget.pk %}" class="font-medium c-link">{{ budget.department }}</a>
                     {% if budget.description %}<p class="text-xs mt-0.5 c-muted">{{ budget.description|truncatechars:72 }}</p>{% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ budget.year }}</td>
-                <td class="px-5 py-3.5 tbl-td">{{ budget.quarter }}</td>
-                <td class="px-5 py-3.5 font-medium tabular-nums c-primary">${{ budget.allocated_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 tabular-nums tbl-td">${{ budget.spent_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 tabular-nums {% if budget.is_over_budget %}c-danger{% else %}tbl-td{% endif %}">${{ budget.remaining_amount|floatformat:2 }}</td>
-                <td class="px-5 py-3.5 text-right"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="dc-ds-button dc-ds-button--quiet px-3 py-1 text-xs font-medium rounded-md">View</a></td>
+                <td data-numeric>{{ budget.year }}</td>
+                <td data-numeric>{{ budget.quarter }}</td>
+                <td data-numeric class="c-primary">${{ budget.allocated_amount|floatformat:2 }}</td>
+                <td data-numeric>${{ budget.spent_amount|floatformat:2 }}</td>
+                <td data-numeric{% if budget.is_over_budget %} class="c-danger"{% endif %}>${{ budget.remaining_amount|floatformat:2 }}</td>
+                <td data-col="actions"><a href="{% url 'contracts:budget_detail' budget.pk %}" class="dc-ds-button dc-ds-button--quiet">View</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="px-5 py-20 text-center"><div class="flex flex-col items-center gap-3"><div class="w-12 h-12 rounded-full flex items-center justify-center surface-bubble"><svg class="w-6 h-6 c-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg></div><div><p class="font-medium c-primary">No budgets found</p><p class="text-sm mt-1 c-muted">{% if search_query or selected_year %}Try adjusting your filters or <a href="{% url 'contracts:budget_list' %}" class="c-link">clear the search</a>.{% else %}Get started by <a href="{% url 'contracts:budget_create' %}" class="c-link">creating your first budget</a>.{% endif %}</p></div></div></td></tr>
+            {% url 'contracts:budget_create' as budget_create_url %}
+            {% url 'contracts:budget_list' as budget_list_url %}
+            <tr>
+                <td colspan="7">
+                    {% if search_query or selected_year %}
+                        {% include "design_system/empty_state.html" with icon="search" title="No budgets found" reason="No budget matches the current search or year filter." how="Budgets appear when their department or description matches the active view." action_url=budget_list_url action_label="Clear filters" action_tone="ghost" class_name="dc-ds-empty--compact" %}
+                    {% else %}
+                        {% include "design_system/empty_state.html" with icon="file" title="No budgets found" reason="This workspace has no planned budget allocations yet." how="Budgets appear here after a department allocation is created." action_url=budget_create_url action_label="Create first budget" class_name="dc-ds-empty--compact" %}
+                    {% endif %}
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

@@ -29,33 +29,34 @@
     </div>
   </div>
 
-  <div class="panel">
-    <table class="w-full">
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Invoices">
+      <caption class="sr-only">Invoice records with status, due dates, and amounts.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="text-left px-5 py-3 tbl-th">Invoice #</th>
-          <th class="text-left px-5 py-3 tbl-th">Client</th>
-          <th class="text-left px-5 py-3 tbl-th">Matter</th>
-          <th class="text-left px-5 py-3 tbl-th">Status</th>
-          <th class="text-left px-5 py-3 tbl-th">Issue Date</th>
-          <th class="text-left px-5 py-3 tbl-th">Due Date</th>
-          <th class="text-right px-5 py-3 tbl-th">Amount</th>
-          <th class="text-right px-5 py-3 tbl-th">Actions</th>
+          <th scope="col">Invoice #</th>
+          <th scope="col">Client</th>
+          <th scope="col">Matter</th>
+          <th scope="col">Status</th>
+          <th scope="col">Issue Date</th>
+          <th scope="col">Due Date</th>
+          <th scope="col">Amount</th>
+          <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
       <tbody>
         {% for invoice in invoices %}
-        <tr class="tbl-row{% if invoice.is_overdue %} row-overdue{% endif %}">
-          <td class="px-5 py-3 tbl-td"><a href="{% url 'contracts:invoice_detail' invoice.pk %}" class="text-sm font-semibold c-link">#{{ invoice.invoice_number }}</a></td>
-          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.client.name|truncatechars:25 }}</td>
-          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.matter.matter_number|default:"—" }}</td>
-          <td class="px-5 py-3 tbl-td">
+        <tr{% if invoice.is_overdue %} class="row-overdue"{% endif %}>
+          <td><a href="{% url 'contracts:invoice_detail' invoice.pk %}" class="font-semibold c-link">#{{ invoice.invoice_number }}</a></td>
+          <td class="c-muted">{{ invoice.client.name|truncatechars:25 }}</td>
+          <td class="c-muted">{{ invoice.matter.matter_number|default:"—" }}</td>
+          <td>
             <span class="dc-ds-badge dc-ds-badge--sm {% if invoice.status == 'PAID' %}dc-ds-badge--success{% elif invoice.status == 'OVERDUE' %}dc-ds-badge--danger{% elif invoice.status == 'SENT' %}dc-ds-badge--progress{% else %}dc-ds-badge--neutral{% endif %}">{{ invoice.get_status_display }}</span>
           </td>
-          <td class="px-5 py-3 tbl-td text-sm c-muted">{{ invoice.issue_date|date:"M d, Y" }}</td>
-          <td class="px-5 py-3 tbl-td text-sm {% if invoice.is_overdue %}c-danger font-semibold{% else %}c-muted{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</td>
-          <td class="px-5 py-3 tbl-td text-sm text-right font-semibold">${{ invoice.total_amount|floatformat:2 }}</td>
-          <td class="px-5 py-3 tbl-td text-right"><a href="{% url 'contracts:invoice_update' invoice.pk %}" class="text-xs c-muted hover:underline">Edit</a></td>
+          <td class="c-muted">{{ invoice.issue_date|date:"M d, Y" }}</td>
+          <td class="{% if invoice.is_overdue %}c-danger font-semibold{% else %}c-muted{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</td>
+          <td data-numeric>${{ invoice.total_amount|floatformat:2 }}</td>
+          <td data-col="actions"><a href="{% url 'contracts:invoice_update' invoice.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a></td>
         </tr>
         {% empty %}
         {% url 'contracts:invoice_create' as invoice_create_url %}

@@ -17,28 +17,30 @@
             New Account
         </a>
     </div>
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Trust accounts">
+            <caption class="sr-only">IOLTA trust accounts with client, matter, and balance.</caption>
             <thead class="tbl-head">
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Account Name</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Client</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Balance</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                    <th scope="col">Account Name</th>
+                    <th scope="col">Client</th>
+                    <th scope="col">Matter</th>
+                    <th scope="col">Balance</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for acct in accounts %}
-                <tr class="tbl-row">
-                    <td class="px-5 py-3"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="font-medium c-link">{{ acct.account_name }}</a></td>
-                    <td class="px-5 py-3 tbl-td">{{ acct.client.name }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ acct.matter.matter_number|default:"—" }}</td>
-                    <td class="px-5 py-3 text-right font-medium tabular-nums {% if acct.balance > 0 %}c-success{% else %}c-muted{% endif %}">${{ acct.balance|floatformat:2 }}</td>
-                    <td class="px-5 py-3 text-right"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="text-xs c-link">View</a></td>
+                <tr>
+                    <td><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="font-medium c-link">{{ acct.account_name }}</a></td>
+                    <td>{{ acct.client.name }}</td>
+                    <td>{{ acct.matter.matter_number|default:"—" }}</td>
+                    <td data-numeric class="{% if acct.balance > 0 %}c-success{% else %}c-muted{% endif %}">${{ acct.balance|floatformat:2 }}</td>
+                    <td data-col="actions"><a href="{% url 'contracts:trust_account_detail' acct.pk %}" class="dc-ds-button dc-ds-button--quiet">View</a></td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="px-5 py-12 text-center c-muted">No trust accounts.</td></tr>
+                {% url 'contracts:trust_account_create' as trust_account_create_url %}
+                <tr><td colspan="5">{% include "design_system/empty_state.html" with icon="file" title="No trust accounts" reason="This workspace has no IOLTA trust accounts yet." how="Accounts appear here after a client trust account is created." action_url=trust_account_create_url action_label="Create trust account" class_name="dc-ds-empty--compact" %}</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -29,30 +29,32 @@
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-head">
-      <h2 class="panel-title">Expenses</h2>
-    </div>
-    <table class="w-full text-sm">
+  <div class="panel-head">
+    <h2 class="panel-title">Expenses</h2>
+  </div>
+  <div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Budget expenses">
+      <caption class="sr-only">Expenses recorded against this budget.</caption>
       <thead class="tbl-head">
         <tr>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Date</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
-          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Amount</th>
+          <th scope="col">Date</th>
+          <th scope="col">Description</th>
+          <th scope="col">Category</th>
+          <th scope="col">Amount</th>
         </tr>
       </thead>
       <tbody>
         {% for expense in budget.expenses.all %}
-        <tr class="border-b transition-colors tbl-row">
-          <td class="px-5 py-3.5 tbl-td">{{ expense.date|date:"M d, Y" }}</td>
-          <td class="px-5 py-3.5">{{ expense.description }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ expense.get_category_display }}</td>
-          <td class="px-5 py-3.5 text-right font-medium tabular-nums">${{ expense.amount|floatformat:2 }}</td>
+        <tr>
+          <td>{{ expense.date|date:"M d, Y" }}</td>
+          <td>{{ expense.description }}</td>
+          <td>{{ expense.get_category_display }}</td>
+          <td data-numeric>${{ expense.amount|floatformat:2 }}</td>
         </tr>
         {% empty %}
+        {% url 'contracts:add_expense' budget.pk as add_expense_url %}
         <tr>
-          <td colspan="4"><div class="empty-state">No expenses recorded.</div></td>
+          <td colspan="4">{% include "design_system/empty_state.html" with icon="file" title="No expenses recorded" reason="This budget has no expense lines yet." how="Expenses appear here after spend is logged against the allocation." action_url=add_expense_url action_label="Add expense" class_name="dc-ds-empty--compact" %}</td>
         </tr>
         {% endfor %}
       </tbody>

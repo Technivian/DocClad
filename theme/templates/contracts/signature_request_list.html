@@ -5,7 +5,6 @@
 <style nonce="{{ csp_nonce }}">
   .failed-packets-list > div { border-bottom: 1px solid var(--card-border); }
   .failed-packets-list > div:last-child { border-bottom: none; }
-  .sig-row:hover { background: var(--sidebar-hover); }
 </style>
 <div class="page-wrap reveal-stagger">
     <div class="workspace-main hero-shell mb-6">
@@ -86,42 +85,43 @@
     </div>
     {% endif %}
 
-    <div class="panel overflow-hidden">
-        <div class="panel-head">
-            <span class="panel-title">Packet Queue</span>
-            <span class="panel-link">Contract, provider, lifecycle, and retry controls</span>
-        </div>
-        <table class="w-full text-sm">
+    <div class="panel-head">
+        <span class="panel-title">Packet Queue</span>
+        <span class="panel-link">Contract, provider, lifecycle, and retry controls</span>
+    </div>
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Signature packet queue">
+            <caption class="sr-only">Signature packets with provider, status, dates, and actions.</caption>
             <thead class="tbl-head">
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Contract</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Packet</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Provider</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Sent date</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due date</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Signers</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                    <th scope="col">Contract</th>
+                    <th scope="col">Packet</th>
+                    <th scope="col">Provider</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Sent date</th>
+                    <th scope="col">Due date</th>
+                    <th scope="col">Signers</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for packet in packet_rows %}
-                <tr class="border-b transition-colors tbl-row sig-row">
-                    <td class="px-5 py-3">
+                <tr>
+                    <td>
                         <a href="{{ packet.detail_url }}" class="c-link">{{ packet.contract_title }}</a>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.packet_label }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.provider_label }}</td>
-                    <td class="px-5 py-3">
+                    <td>{{ packet.packet_label }}</td>
+                    <td>{{ packet.provider_label }}</td>
+                    <td>
                             <span class="dc-ds-badge dc-ds-badge--sm {% if packet.status == 'SIGNED' %}dc-ds-badge--success{% elif packet.status == 'DECLINED' or packet.status == 'EXPIRED' or packet.status == 'CANCELLED' %}dc-ds-badge--danger{% elif packet.status == 'VIEWED' %}dc-ds-badge--special{% elif packet.status == 'SENT' %}dc-ds-badge--progress{% else %}dc-ds-badge--attention{% endif %}">
                             {{ packet.status_display }}
                         </span>
                         <div class="text-[11px] c-muted mt-1">{{ packet.completion_percent }}% complete</div>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.sent_at|iso_datetime|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.due_at|iso_datetime|default:"—" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ packet.signer_count }} total · {{ packet.completed_count }} signed</td>
-                    <td class="px-5 py-3 text-right">
+                    <td>{{ packet.sent_at|iso_datetime|default:"—" }}</td>
+                    <td>{{ packet.due_at|iso_datetime|default:"—" }}</td>
+                    <td>{{ packet.signer_count }} total · {{ packet.completed_count }} signed</td>
+                    <td data-col="actions">
                         <div class="flex items-center justify-end gap-2 flex-wrap">
                             <a href="{{ packet.detail_url }}" class="dc-ds-button dc-ds-button--quiet px-3 py-2 text-sm rounded-lg">Open</a>
                             {% if packet.status == 'PENDING' or packet.status == 'SENT' or packet.status == 'VIEWED' %}
