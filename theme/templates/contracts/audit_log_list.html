@@ -15,9 +15,6 @@
     outline: none;
     border-color: var(--primary);
   }
-  .tbl-row:hover {
-    background: var(--sidebar-hover);
-  }
 </style>
 <div id="audit-trail-root" class="page-wrap page-wrap-fluid">
     <div class="arch-header">
@@ -64,29 +61,30 @@
         </select>
     </form>
 
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Audit trail">
+            <caption class="sr-only">Audit log entries with timestamp, user, action, type, object, and IP</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Timestamp</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">User</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Action</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Object</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">IP</th>
+                    <th scope="col">Timestamp</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Object</th>
+                    <th scope="col">IP</th>
                 </tr>
             </thead>
-            <tbody class="divide-y">
+            <tbody>
                 {% for log in logs %}
-                <tr class="border-b transition-colors tbl-row">
-                    <td class="px-5 py-3 tbl-td">{{ log.timestamp|date:"M d, Y H:i" }}</td>
-                    <td class="px-5 py-3 tbl-td">{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}{{ log.get_actor_type_display }}{% endif %}</td>
-                    <td class="px-5 py-3">
+                <tr>
+                    <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
+                    <td>{% if log.user %}{{ log.user.get_full_name|default:log.user.username }}{% else %}{{ log.get_actor_type_display }}{% endif %}</td>
+                    <td>
                         <span class="dc-ds-badge dc-ds-badge--sm {% if log.action == 'CREATE' %}dc-ds-badge--success{% elif log.action == 'UPDATE' %}dc-ds-badge--progress{% elif log.action == 'DELETE' %}dc-ds-badge--danger{% else %}dc-ds-badge--neutral{% endif %}">{{ log.get_action_display }}</span>
                     </td>
-                    <td class="px-5 py-3 tbl-td">{{ log.model_name|object_type_label }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ log.object_repr|brand_name|truncatechars:50 }}</td>
-                    <td class="px-5 py-3 tbl-td font-mono text-xs">{{ log.ip_address|default:"—" }}</td>
+                    <td>{{ log.model_name|object_type_label }}</td>
+                    <td>{{ log.object_repr|brand_name|truncatechars:50 }}</td>
+                    <td class="font-mono text-xs">{{ log.ip_address|default:"—" }}</td>
                 </tr>
                 {% empty %}
                 <tr>

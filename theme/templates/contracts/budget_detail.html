@@ -29,35 +29,38 @@
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-head">
-      <h2 class="panel-title">Expenses</h2>
+  <section class="dc-ds-surface">
+    <div class="dc-ds-surface__head">
+      <h2 class="dc-ds-surface__title">Expenses</h2>
     </div>
-    <table class="w-full text-sm">
-      <thead class="tbl-head">
-        <tr>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Date</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
-          <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Category</th>
-          <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for expense in budget.expenses.all %}
-        <tr class="border-b transition-colors tbl-row">
-          <td class="px-5 py-3.5 tbl-td">{{ expense.date|date:"M d, Y" }}</td>
-          <td class="px-5 py-3.5">{{ expense.description }}</td>
-          <td class="px-5 py-3.5 tbl-td">{{ expense.get_category_display }}</td>
-          <td class="px-5 py-3.5 text-right font-medium tabular-nums">${{ expense.amount|floatformat:2 }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="4"><div class="empty-state">No expenses recorded.</div></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="dc-ds-table-wrap" style="border:0;border-radius:0;">
+      <table class="dc-ds-table" aria-label="Budget expenses">
+        <caption class="sr-only">Expenses recorded against this budget</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Description</th>
+            <th scope="col">Category</th>
+            <th scope="col" data-numeric>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for expense in budget.expenses.all %}
+          <tr>
+            <td>{{ expense.date|date:"M d, Y" }}</td>
+            <td>{{ expense.description }}</td>
+            <td>{{ expense.get_category_display }}</td>
+            <td data-numeric class="font-medium">${{ expense.amount|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4"><div class="empty-state">No expenses recorded.</div></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
 </div>
 {% endblock %}

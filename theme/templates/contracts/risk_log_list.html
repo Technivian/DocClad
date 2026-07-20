@@ -80,23 +80,24 @@
     </form>
 </div>
 
-<div class="panel overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="tbl-head">
+<div class="dc-ds-table-wrap">
+    <table class="dc-ds-table" aria-label="Risk register">
+        <caption class="sr-only">Contract and compliance risks with severity, owner, and status</caption>
+        <thead>
             <tr>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Risk</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Related Contract/Record</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Severity</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Owner</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Updated</th>
-                <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Related Contract/Record</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Status</th>
+                <th scope="col">Updated</th>
+                <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
             </tr>
         </thead>
         <tbody>
             {% for risk in risk_logs %}
-            <tr class="border-b transition-colors tbl-row">
-                <td class="px-5 py-3.5">
+            <tr>
+                <td>
                     <div class="font-medium c-primary">{{ risk.title }}</div>
                     <p class="text-xs mt-0.5 c-muted">{{ risk.description|truncatechars:88 }}</p>
                     {% if risk.mitigation_plan %}
@@ -105,7 +106,7 @@
                     <p class="text-xs mt-0.5 c-dim">No mitigation plan recorded</p>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5 tbl-td">
+                <td>
                     {% if risk.contract %}
                     <a href="{% url 'contracts:contract_detail' risk.contract.pk %}" class="c-link">{{ risk.contract.title }}</a>
                     {% elif risk.matter %}
@@ -114,7 +115,7 @@
                     <span class="c-dim">Unlinked</span>
                     {% endif %}
                 </td>
-                <td class="px-5 py-3.5">
+                <td>
                     <span class="dc-ds-badge dc-ds-badge--sm
                         {% if risk.risk_level == 'CRITICAL' %}dc-ds-badge--danger
                         {% elif risk.risk_level == 'HIGH' %}dc-ds-badge--attention
@@ -123,12 +124,12 @@
                         {{ risk.get_risk_level_display }}
                     </span>
                 </td>
-                <td class="px-5 py-3.5">{% assignee_chip risk.assigned_to %}</td>
-                <td class="px-5 py-3.5">
+                <td>{% assignee_chip risk.assigned_to %}</td>
+                <td>
                     <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ risk.status|risk_status_badge_class|legacy_badge_tone }}">{{ risk.status|risk_status_label }}</span>
                 </td>
-                <td class="px-5 py-3.5 tbl-td">{{ risk.updated_at|date:"d M Y" }}</td>
-                <td class="px-5 py-3.5 text-right">
+                <td>{{ risk.updated_at|date:"d M Y" }}</td>
+                <td data-col="actions">
                     <a href="{% url 'contracts:risk_log_update' risk.pk %}"
                        class="text-xs font-medium px-2.5 py-1 rounded-md border transition-opacity hover:opacity-80 dc-ds-button dc-ds-button--quiet">Edit</a>
                 </td>

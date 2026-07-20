@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Time Tracking – CLM One{% endblock %}
 {% block content %}
-<style nonce="{{ csp_nonce }}">
-  .tbl-row-hover:hover { background: var(--sidebar-hover); }
-</style>
 <div class="page-wrap">
     <div class="page-header">
         <div>
@@ -28,33 +25,34 @@
             <div class="text-2xl font-bold tabular-nums">{{ month_hours|floatformat:1 }}h</div>
         </div>
     </div>
-    <div class="panel overflow-hidden">
-        <table class="w-full text-sm">
-            <thead class="tbl-head">
+    <div class="dc-ds-table-wrap">
+        <table class="dc-ds-table" aria-label="Time entries">
+            <caption class="sr-only">Time entries with matter, hours, amount, and billable status</caption>
+            <thead>
                 <tr>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Date</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Matter</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Description</th>
-                    <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Activity</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Hours</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Amount</th>
-                    <th class="text-center px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Billable</th>
-                    <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Actions</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Matter</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Activity</th>
+                    <th scope="col" data-numeric>Hours</th>
+                    <th scope="col" data-numeric>Amount</th>
+                    <th scope="col">Billable</th>
+                    <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
                 {% for entry in time_entries %}
-                <tr class="border-b transition-colors tbl-row tbl-row-hover">
-                    <td class="px-5 py-3 tbl-td">{{ entry.date|date:"M d" }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ entry.matter.matter_number|default:"—" }}</td>
-                    <td class="px-5 py-3">{{ entry.description|truncatechars:50 }}</td>
-                    <td class="px-5 py-3 tbl-td">{{ entry.get_activity_type_display }}</td>
-                    <td class="px-5 py-3 text-right font-medium tabular-nums">{{ entry.hours|floatformat:2 }}</td>
-                    <td class="px-5 py-3 text-right tabular-nums">${{ entry.total_amount|floatformat:2 }}</td>
-                    <td class="px-5 py-3 text-center">
+                <tr>
+                    <td>{{ entry.date|date:"M d" }}</td>
+                    <td>{{ entry.matter.matter_number|default:"—" }}</td>
+                    <td>{{ entry.description|truncatechars:50 }}</td>
+                    <td>{{ entry.get_activity_type_display }}</td>
+                    <td data-numeric class="font-medium">{{ entry.hours|floatformat:2 }}</td>
+                    <td data-numeric>${{ entry.total_amount|floatformat:2 }}</td>
+                    <td>
                         {% if entry.is_billable %}<span class="c-success">Yes</span>{% else %}<span class="c-muted">No</span>{% endif %}
                     </td>
-                    <td class="px-5 py-3 text-right"><a href="{% url 'contracts:time_entry_update' entry.pk %}" class="text-xs c-link">Edit</a></td>
+                    <td data-col="actions"><a href="{% url 'contracts:time_entry_update' entry.pk %}" class="text-xs c-link">Edit</a></td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="8" class="px-5 py-12 text-center c-muted">No time entries.</td></tr>
