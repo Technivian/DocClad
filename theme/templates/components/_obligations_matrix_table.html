@@ -1,4 +1,5 @@
 {% load clmone_format %}
+{% include "components/_governance_styles.html" %}
 <table id="obligations-table" class="dc-ds-table dc-ds-table--fixed wq-table" data-table-core="server" aria-label="Obligations">
   <caption class="sr-only">Tracked obligations across contracts and matters, ordered by earliest due date.</caption>
   <thead class="tbl-head">
@@ -16,8 +17,9 @@
     {% for obligation in obligations %}
     <tr class="obligations-row" data-href="{% url 'contracts:deadline_update' obligation.pk %}" tabindex="0" role="link" aria-label="Open obligation {{ obligation.title|truncatechars:50 }}">
       <td data-col="obligation">
-        <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link">{{ obligation.title|truncatechars:60 }}</a>
-        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
+        <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>{{ obligation.title|truncatechars:60 }}</a>
+        <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}{% if obligation.priority_reason %} · {{ obligation.priority_reason }}{% endif %}</div>
+        {% include "components/_governance_blocked.html" with is_blocked=obligation.is_blocked blocking_issue=obligation.blocking_issue blocker_owner=obligation.blocker_owner %}
       </td>
       <td data-col="contract">
         {% if obligation.contract %}

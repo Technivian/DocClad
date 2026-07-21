@@ -727,8 +727,14 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
     def _build_queue_tabs(self):
         from django.urls import reverse
 
+        from contracts.permissions import can_manage_organization
         from contracts.services.approval_workflow import actor_can_decide
         from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, pending_approvals_queryset
+        from contracts.services.governance_ux import (
+            approval_blocker_for_request,
+            build_delegation_info,
+            sla_priority_reason,
+        )
         from contracts.services.queue_rows import latest_activity_map
         from contracts.templatetags.clmone_format import (
             approval_status_badge_class,
@@ -739,6 +745,8 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         org = self.get_organization()
         user = self.request.user
         now = timezone.now()
+        today = timezone.localdate()
+        can_manage = can_manage_organization(user, org) if org else False
 
         if not org:
             empty_tabs = [
@@ -753,10 +761,18 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
 
         base_qs = scope_queryset_for_organization(
             ApprovalRequest.objects.select_related(
-                'contract', 'contract__created_by', 'assigned_to', 'delegated_to',
+                'contract', 'contract__created_by', 'assigned_to', 'delegated_to', 'rule',
             ),
             org,
         )
+        open_siblings = list(
+            base_qs.filter(status__in=['PENDING', 'ESCALATED']).select_related(
+                'assigned_to', 'delegated_to',
+            )
+        )
+        siblings_by_contract = {}
+        for step in open_siblings:
+            siblings_by_contract.setdefault(step.contract_id, []).append(step)
 
         def _to_rows(qs, limit=25):
             items = list(qs.order_by('-created_at')[:limit])
@@ -787,6 +803,19 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     next_action = 'Revise after rejection'
                 else:
                     next_action = 'Open approval'
+                sla_hours = approval.rule.sla_hours if approval.rule_id and approval.rule else None
+                priority_reason = sla_priority_reason(
+                    due_date=due.date() if due else None,
+                    today=today,
+                    sla_hours=sla_hours,
+                    overdue=overdue,
+                    risk_level=contract.risk_level if contract else '',
+                    escalated=approval.status == 'ESCALATED',
+                )
+                blocker = approval_blocker_for_request(
+                    approval,
+                    sibling_pending=siblings_by_contract.get(approval.contract_id),
+                )
                 rows.append({
                     'id': approval.pk,
                     'title': contract.title if contract else f'Approval #{approval.pk}',
@@ -795,26 +824,34 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'contract': contract,
                     'requester': contract.created_by if contract else None,
                     'assignee': effective_assignee,
+                    'assigned_to': approval.assigned_to,
+                    'delegated_to': approval.delegated_to,
+                    'delegation': build_delegation_info(
+                        approval.assigned_to,
+                        approval.delegated_to,
+                        approval.delegated_at,
+                        reason=getattr(approval, 'delegation_reason', ''),
+                        ends_at=getattr(approval, 'delegation_ends_at', None),
+                    ),
                     'activity': activity_map.get(approval.pk),
                     'due_date': due,
                     'due_overdue': overdue,
                     'status_label': approval.get_status_display(),
                     'status_badge_class': approval_status_badge_class(approval.status),
                     'next_action': next_action,
-                    # actor_can_decide() checks authorization only; a decision on an
-                    # already-APPROVED/REJECTED row would still be rejected by the
-                    # API's own status guard (ApprovalWorkflowService._decide), but
-                    # showing live-looking buttons that can only ever fail reads as a
-                    # fake control. Gate the UI on the same PENDING/ESCALATED
-                    # condition the API enforces, so a button only appears when the
-                    # action can actually succeed.
+                    'priority_reason': priority_reason,
+                    'is_blocked': blocker['is_blocked'],
+                    'blocking_issue': blocker['blocking_issue'],
+                    'blocker_owner': blocker['blocker_owner'],
                     'can_decide': (
                         approval.status in ('PENDING', 'ESCALATED')
                         and actor_can_decide(approval, user, 'approve')
                     ),
+                    'can_reassign': can_manage and approval.status in ('PENDING', 'ESCALATED'),
                     'approve_url': reverse('contracts:approval_approve_api', kwargs={'approval_id': approval.pk}),
                     'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
                     'return_url': reverse('contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk}),
+                    'reassign_url': reverse('contracts:approval_reassign_api', kwargs={'approval_id': approval.pk}),
                     'edit_url': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
                 })
             return rows
@@ -906,6 +943,7 @@ class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin
         ar = self.object
         new_status = form.cleaned_data.get('status')
         delegated_to = form.cleaned_data.get('delegated_to')
+        assigned_to = form.cleaned_data.get('assigned_to')
         comments = form.cleaned_data.get('comments') or ''
         # NB: form.is_valid() has already copied POST data onto self.object, so
         # ar.status reflects the *submitted* value. Read the PERSISTED status and
@@ -913,17 +951,34 @@ class ApprovalRequestUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin
         persisted = (
             type(ar).objects
             .filter(pk=ar.pk)
-            .values('status', 'assigned_to_id')
+            .values('status', 'assigned_to_id', 'delegated_to_id')
             .first()
             or {}
         )
         original_status = persisted.get('status')
         previous_assignee_id = persisted.get('assigned_to_id')
+        previous_delegate_id = persisted.get('delegated_to_id')
 
         decision_made = False
         try:
-            if delegated_to and delegated_to.id != previous_assignee_id:
-                svc.delegate(ar.pk, delegated_to, self.request.user)
+            if (
+                assigned_to
+                and assigned_to.id != previous_assignee_id
+            ):
+                svc.reassign(
+                    ar.pk,
+                    assigned_to,
+                    self.request.user,
+                    reason=comments or 'Reassigned via approval record',
+                )
+                decision_made = True
+            elif delegated_to and delegated_to.id != previous_delegate_id:
+                svc.delegate(
+                    ar.pk,
+                    delegated_to,
+                    self.request.user,
+                    reason=comments or 'Delegated coverage',
+                )
                 decision_made = True
             if new_status == ApprovalRequest.Status.APPROVED and original_status != ApprovalRequest.Status.APPROVED:
                 svc.approve(ar.pk, self.request.user, comments)

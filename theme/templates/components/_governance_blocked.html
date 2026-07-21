@@ -1,0 +1,10 @@
+{# Compact blocked-state chip used across work queues. #}
+{% if is_blocked %}
+<span class="gov-blocked"
+      title="{% if blocking_issue %}{{ blocking_issue }}{% if blocker_owner %} — waiting on {{ blocker_owner }}{% endif %}{% else %}Blocked{% endif %}">
+  <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--danger">Blocked</span>
+  {% if blocking_issue %}
+  <span class="gov-blocked__detail">{{ blocking_issue }}{% if blocker_owner %} · {{ blocker_owner }}{% endif %}</span>
+  {% endif %}
+</span>
+{% endif %}

@@ -86,10 +86,33 @@ def _matches_due_period(obligation, due_period, today):
 
 
 class DeadlineListView(LoginRequiredMixin, ListView):
+    """Legacy deadlines list — Phase 4 retires it in favor of Obligations."""
+
     model = Deadline
     template_name = 'contracts/deadline_list.html'
     context_object_name = 'deadlines'
     paginate_by = 25
+
+    def dispatch(self, request, *args, **kwargs):
+        from urllib.parse import urlencode
+
+        params = {}
+        show = request.GET.get('show')
+        if show == 'overdue':
+            params['view'] = 'overdue'
+        elif show == 'completed':
+            params['view'] = 'completed'
+        elif show in (None, '', 'upcoming'):
+            if show == 'upcoming':
+                params['view'] = 'due_soon'
+        for key in request.GET:
+            if key == 'show' or key in params:
+                continue
+            params[key] = request.GET.get(key)
+        target = reverse('contracts:obligations_workspace')
+        if params:
+            target = f'{target}?{urlencode(params)}'
+        return redirect(target, permanent=False)
 
     def get_organization(self):
         if not hasattr(self.request, '_cached_organization'):
@@ -161,10 +184,24 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             'PENDING': 0,
         }
         due_within_30_count = 0
+        from contracts.services.governance_ux import obligation_blocker_for_deadline, sla_priority_reason
         for obligation in all_obligations:
             obligation.compliance_status = obligation_compliance_status(obligation)
             obligation.source = obligation.contract or obligation.matter
             obligation.next_action = _next_action_for_obligation(obligation)
+            blocker = obligation_blocker_for_deadline(obligation, today=today)
+            obligation.is_blocked = blocker['is_blocked']
+            obligation.blocking_issue = blocker['blocking_issue']
+            obligation.blocker_owner = blocker['blocker_owner']
+            obligation.priority_reason = sla_priority_reason(
+                due_date=obligation.due_date,
+                today=today,
+                overdue=obligation.is_overdue,
+                fallback=(
+                    obligation.get_priority_display() + ' priority'
+                    if obligation.priority in ('HIGH', 'CRITICAL') else ''
+                ),
+            )
             counts[obligation.compliance_status] = counts.get(obligation.compliance_status, 0) + 1
             if (
                 not obligation.is_completed

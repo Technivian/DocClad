@@ -150,6 +150,7 @@ from contracts.api.admin import (
     approval_reject_api,
     approval_request_changes_api,
     approval_delegate_api,
+    approval_reassign_api,
     approval_overdue_api,
     approval_escalate_overdue_api,
     approval_list_api,

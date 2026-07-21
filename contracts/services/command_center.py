@@ -543,7 +543,7 @@ def get_workflow_type_summary(rows):
 def get_command_center_rail_items(organization, counts):
     paths = {
         'APPROVALS': reverse('contracts:approval_request_list'),
-        'DEADLINES': reverse('contracts:deadline_list'),
+        'DEADLINES': reverse('contracts:obligations_workspace'),
         'DPA_CONFLICTS': reverse('contracts:dpa_review_pack_list'),
         'REVIEW_MEMOS': reverse('contracts:dpa_review_pack_list'),
         'RISK': reverse('contracts:risk_log_list'),
@@ -846,7 +846,7 @@ def refresh_command_center_projection(organization, actor=None, today=None):
                 'severity': Contract.RiskLevel.HIGH if kind == 'DPA_CONFLICTS' and count else Contract.RiskLevel.LOW,
                 'action_path': {
                     'APPROVALS': reverse('contracts:approval_request_list'),
-                    'DEADLINES': reverse('contracts:deadline_list'),
+                    'DEADLINES': reverse('contracts:obligations_workspace'),
                     'DPA_CONFLICTS': reverse('contracts:dpa_review_pack_list'),
                     'REVIEW_MEMOS': reverse('contracts:dpa_review_pack_list'),
                 }[kind],

@@ -118,10 +118,20 @@ User = get_user_model()
 
 
 class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
+    """Legacy parallel list — Phase 4 retires it in favor of the repository."""
+
     model = Contract
     template_name = 'contracts/contract_list.html'
     context_object_name = 'contracts'
     paginate_by = 25
+
+    def dispatch(self, request, *args, **kwargs):
+        # Canonical Contracts destination is the repository workspace.
+        target = reverse('contracts:repository')
+        query = request.META.get('QUERY_STRING')
+        if query:
+            target = f'{target}?{query}'
+        return redirect(target, permanent=False)
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -2714,7 +2724,7 @@ def dashboard(request):
             'title': 'Notice / Renewal Risk',
             'value': clm_renewals_count,
             'supporting_text': 'Deadlines in the next 30 days',
-            'href': reverse('contracts:deadline_list'),
+            'href': reverse('contracts:obligations_workspace'),
             'tone': 'amber' if clm_renewals_count else 'teal',
             'empty_headline': None if clm_renewals_count else 'No renewals due',
             'empty_detail': 'No renewal or notice dates in the next 30 days.',

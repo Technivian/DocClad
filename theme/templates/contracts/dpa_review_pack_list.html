@@ -254,8 +254,9 @@
         {% for row in review_pack_rows %}
         <tr class="dpa-review-row" data-href="{{ row.detail_url }}" tabindex="0" role="link" aria-label="Open review pack for {{ row.pack.contract.title }}">
           <td data-col="agreement">
-            <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title">{{ row.pack.contract.title }}</a>
+            <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.pack.contract.title }}</a>
             <div class="dpa-review-counterparty">{% if row.pack.counterparty %}{{ row.pack.counterparty.name }}{% else %}No counterparty{% endif %}</div>
+            {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
           </td>
           <td data-col="role">
             {% if row.role_is_ambiguous %}

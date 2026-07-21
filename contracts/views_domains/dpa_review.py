@@ -768,6 +768,12 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 1 for risk in unresolved_risks
                 if getattr(risk, 'is_cross_document_conflict', False)
             )
+            from contracts.services.governance_ux import privacy_blocker_for_pack
+            blocker = privacy_blocker_for_pack(
+                pack,
+                unresolved_critical=critical_risk_count,
+                conflict_count=conflict_count,
+            )
             role_is_ambiguous = (
                 pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS
             )
@@ -782,6 +788,14 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 'unresolved_risk_count': len(unresolved_risks),
                 'critical_risk_count': critical_risk_count,
                 'conflict_count': conflict_count,
+                'is_blocked': blocker['is_blocked'],
+                'blocking_issue': blocker['blocking_issue'],
+                'blocker_owner': blocker['blocker_owner'],
+                'priority_reason': (
+                    'Cross-document conflicts blocking completion' if conflict_count
+                    else f'{critical_risk_count} critical risk{"s" if critical_risk_count != 1 else ""} open'
+                    if critical_risk_count else ''
+                ),
                 'risk_tone': 'danger' if unresolved_risks else 'success',
                 'approval_tone': _REVIEW_STATUS_TONES.get(pack.approval_status, 'neutral'),
                 'review_status_label': _review_status_list_label(pack),

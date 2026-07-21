@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phase 2 complete)  
+**Last updated:** 2026-07-21 (Phases 3–4 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -121,7 +121,7 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
-## Phase 3 — Governance as visible product value
+## Phase 3 — Governance as visible product value (complete)
 
 **Goal:** Make CLM One’s edge obvious in the UI, not only in backend rules.
 
@@ -136,16 +136,16 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ### Delivery items
 
-- [ ] Blocked-state pattern across all queues
-- [ ] Delegation / absence coverage in UI (original assignee, acting assignee, period, reason, audit)
-- [ ] SLA / priority reason tooltips and expandable detail everywhere priority is shown
-- [ ] Manager reassignment controls for authorized roles (no silent ownership transfer)
+- [x] Blocked-state pattern across all queues (My Work, Approvals, Obligations, Privacy)
+- [x] Delegation / absence coverage in UI (original assignee, acting assignee, period, reason, audit)
+- [x] SLA / priority reason tooltips and expandable detail wherever priority is shown
+- [x] Manager reassignment controls for authorized roles (audited `approval.reassigned`; no silent ownership transfer)
 
-**Phase 3 exit:** Governance is a user-visible operating advantage, not an implementation detail.
+**Phase 3 exit:** ✅ Governance is a user-visible operating advantage, not an implementation detail.
 
 ---
 
-## Phase 4 — Navigation cleanup and legacy retirement
+## Phase 4 — Navigation cleanup and legacy retirement (complete)
 
 **Goal:** A smaller nav with complete destinations.
 
@@ -157,11 +157,11 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ### Retire or demote
 
-- [ ] Parallel repository / list routes where a canonical route exists
-- [ ] Half-migrated law-firm modules without an in-house CLM job-to-be-done
-- [ ] Dashboard widgets that merely repeat specialist workspaces
+- [x] Parallel repository / list routes where a canonical route exists (`contract_list` → repository; `deadline_list` → Obligations)
+- [x] Half-migrated law-firm modules without an in-house CLM job-to-be-done (clients/invoices redirect for `in_house_clm`; matters stay deep-linkable but out of nav)
+- [x] Dashboard widgets that merely repeat specialist workspaces (Recent Matters demoted to deep links; deadlines CTA → Obligations)
 
-**Phase 4 exit:** Default navigation only exposes destinations that are complete enough to trust.
+**Phase 4 exit:** ✅ Default navigation only exposes destinations that are complete enough to trust.
 
 ---
 

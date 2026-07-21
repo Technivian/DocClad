@@ -294,15 +294,15 @@ def _sort_key(row, today):
     )
 
 
-def _delegation_info(assigned_to, delegated_to, delegated_at):
-    if not delegated_to or delegated_to == assigned_to:
-        return None
-    return {
-        'original_assignee': assigned_to,
-        'acting_assignee': delegated_to,
-        'effective_from': delegated_at,
-        'reason': 'Delegated coverage',
-    }
+def _delegation_info(assigned_to, delegated_to, delegated_at, reason='', ends_at=None):
+    from contracts.services.governance_ux import build_delegation_info
+    return build_delegation_info(
+        assigned_to,
+        delegated_to,
+        delegated_at,
+        reason=reason,
+        ends_at=ends_at,
+    )
 
 
 def _base_row(
@@ -445,26 +445,45 @@ def _attach_activity(rows, org):
 
 
 def _collect_approval_rows(org, user, today):
+    from contracts.services.governance_ux import approval_blocker_for_request, sla_priority_reason
+
     rows = []
     qs = scope_queryset_for_organization(
         ApprovalRequest.objects.select_related(
-            'contract', 'contract__created_by', 'assigned_to', 'delegated_to',
+            'contract', 'contract__created_by', 'assigned_to', 'delegated_to', 'rule',
         ),
         org,
     )
     pending = pending_approvals_queryset(org, user, queryset=qs)
-    for approval in pending:
+    pending_list = list(pending)
+    # Sibling open steps on the same contract — used for prior-step blockers.
+    contract_ids = {a.contract_id for a in pending_list if a.contract_id}
+    siblings_by_contract = {}
+    if contract_ids:
+        sibling_qs = qs.filter(
+            contract_id__in=contract_ids,
+            status__in=['PENDING', 'ESCALATED'],
+        ).select_related('assigned_to', 'delegated_to')
+        for step in sibling_qs:
+            siblings_by_contract.setdefault(step.contract_id, []).append(step)
+
+    for approval in pending_list:
         contract = approval.contract
         due = _date_only(approval.due_date)
         overdue = bool(due and due < today)
-        priority_reason = ''
-        if overdue:
-            days = (today - due).days
-            priority_reason = f'Overdue by {days} day{"s" if days != 1 else ""}'
-        elif contract and contract.risk_level in ('HIGH', 'CRITICAL'):
-            priority_reason = 'High-risk contract'
-        elif approval.status == ApprovalRequest.Status.ESCALATED:
-            priority_reason = 'Executive approval required'
+        sla_hours = approval.rule.sla_hours if approval.rule_id and approval.rule else None
+        priority_reason = sla_priority_reason(
+            due_date=due,
+            today=today,
+            sla_hours=sla_hours,
+            overdue=overdue,
+            risk_level=contract.risk_level if contract else '',
+            escalated=approval.status == ApprovalRequest.Status.ESCALATED,
+        )
+        blocker = approval_blocker_for_request(
+            approval,
+            sibling_pending=siblings_by_contract.get(approval.contract_id),
+        )
         rows.append(_base_row(
             row_id=f'approval:{approval.pk}',
             title=f'Approve {approval.approval_step.replace("_", " ").strip().title()}',
@@ -480,11 +499,20 @@ def _collect_approval_rows(org, user, today):
             description=approval.comments or f'Approval required for {approval.approval_step}.',
             workflow_stage='Approval',
             priority_reason=priority_reason,
+            blocking_issue=blocker['blocking_issue'],
+            blocker_owner=blocker['blocker_owner'],
+            is_blocked=blocker['is_blocked'],
             action_href=reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
             action_label='Approve',
             source_status=approval.status,
             priority_value=contract.risk_level if contract else 'HIGH' if approval.status == 'ESCALATED' else 'MEDIUM',
-            delegation=_delegation_info(approval.assigned_to, approval.delegated_to, approval.delegated_at),
+            delegation=_delegation_info(
+                approval.assigned_to,
+                approval.delegated_to,
+                approval.delegated_at,
+                reason=getattr(approval, 'delegation_reason', ''),
+                ends_at=getattr(approval, 'delegation_ends_at', None),
+            ),
             reference=f'APR-{approval.pk}',
             today=today,
         ))
@@ -582,6 +610,8 @@ def _collect_task_rows(org, user, today):
 
 
 def _collect_obligation_rows(org, user, today):
+    from contracts.services.governance_ux import obligation_blocker_for_deadline, sla_priority_reason
+
     rows = []
     deadlines = open_obligations_queryset(org, user)
     for deadline in deadlines:
@@ -589,6 +619,18 @@ def _collect_obligation_rows(org, user, today):
         title = deadline.title
         if deadline.deadline_type == Deadline.DeadlineType.RENEWAL:
             title = title or 'Complete renewal obligation'
+        due = _date_only(deadline.due_date)
+        overdue = bool(due and due < today)
+        priority_reason = sla_priority_reason(
+            due_date=due,
+            today=today,
+            overdue=overdue,
+            fallback=(
+                deadline.get_priority_display() + ' priority obligation'
+                if deadline.priority in ('HIGH', 'CRITICAL') else ''
+            ),
+        )
+        blocker = obligation_blocker_for_deadline(deadline, today=today)
         rows.append(_base_row(
             row_id=f'obligation:{deadline.pk}',
             title=title,
@@ -602,7 +644,10 @@ def _collect_obligation_rows(org, user, today):
             assigned_by=deadline.created_by,
             description=deadline.description,
             workflow_stage=deadline.get_deadline_type_display(),
-            priority_reason=deadline.get_priority_display() + ' priority obligation' if deadline.priority in ('HIGH', 'CRITICAL') else '',
+            priority_reason=priority_reason,
+            blocking_issue=blocker['blocking_issue'],
+            blocker_owner=blocker['blocker_owner'],
+            is_blocked=blocker['is_blocked'],
             action_href=reverse('contracts:deadline_update', kwargs={'pk': deadline.pk}),
             action_label='Complete',
             source_status='OPEN',
@@ -614,10 +659,35 @@ def _collect_obligation_rows(org, user, today):
 
 
 def _collect_privacy_rows(org, user, today):
+    from contracts.services.governance_ux import privacy_blocker_for_pack
+
     rows = []
     packs = reviewer_privacy_packs_queryset(org, user).prefetch_related('risk_items')
     for pack in packs:
         contract = pack.contract
+        risk_items = list(pack.risk_items.all())
+        unresolved_critical = sum(
+            1 for item in risk_items
+            if getattr(item, 'severity', '') == 'CRITICAL'
+            and getattr(item, 'status', '') not in ('RESOLVED', 'FALSE_POSITIVE')
+        )
+        conflict_count = sum(
+            1 for item in risk_items
+            if getattr(item, 'is_cross_document_conflict', False)
+            and getattr(item, 'status', '') not in ('RESOLVED', 'FALSE_POSITIVE')
+        )
+        blocker = privacy_blocker_for_pack(
+            pack,
+            unresolved_critical=unresolved_critical,
+            conflict_count=conflict_count,
+        )
+        priority_reason = ''
+        if conflict_count:
+            priority_reason = 'Cross-document conflicts blocking completion'
+        elif pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED:
+            priority_reason = 'Privacy assessment blocking signature'
+        elif unresolved_critical:
+            priority_reason = f'{unresolved_critical} critical privacy risk{"s" if unresolved_critical != 1 else ""}'
         rows.append(_base_row(
             row_id=f'privacy:{pack.pk}',
             title='Answer privacy questionnaire' if pack.approval_status == DPAReviewPack.ApprovalStatus.DRAFT else 'Complete data transfer assessment',
@@ -630,11 +700,14 @@ def _collect_privacy_rows(org, user, today):
             due_date=None,
             description='Privacy review pack assigned to you.',
             workflow_stage=pack.get_approval_status_display(),
-            priority_reason='Privacy assessment blocking signature' if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED else '',
+            priority_reason=priority_reason,
+            blocking_issue=blocker['blocking_issue'],
+            blocker_owner=blocker['blocker_owner'],
+            is_blocked=blocker['is_blocked'],
             action_href=reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk}),
             action_label='Review',
             source_status=pack.approval_status,
-            priority_value='HIGH' if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED else 'MEDIUM',
+            priority_value='HIGH' if pack.approval_status == DPAReviewPack.ApprovalStatus.ESCALATED or conflict_count or unresolved_critical else 'MEDIUM',
             reference=f'DPA-{pack.pk}',
             today=today,
         ))

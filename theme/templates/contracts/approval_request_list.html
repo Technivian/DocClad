@@ -394,6 +394,56 @@
         });
     });
   });
+
+  /* Manager reassignment — requires assignee user id + reason; never silent. */
+  root.querySelectorAll('[data-approval-reassign]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-reassign-url');
+      var current = btn.getAttribute('data-current-assignee') || '';
+      var toUserId = window.prompt(
+        'Reassign to user id (required). Current owner: ' + (current || 'unassigned'),
+        ''
+      );
+      if (toUserId === null) return;
+      toUserId = (toUserId || '').trim();
+      if (!toUserId) return;
+      var reason = window.prompt('Reason for reassignment (required):', '');
+      if (reason === null) return;
+      reason = (reason || '').trim();
+      if (!reason) {
+        window.alert('A reassignment reason is required.');
+        return;
+      }
+      var cell = btn.closest('.wq-approval-actions');
+      var errorEl = cell ? cell.querySelector('.wq-action-error') : null;
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({ to_user_id: Number(toUserId), reason: reason }),
+      })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (result) {
+          if (result.ok) {
+            window.location.reload();
+            return;
+          }
+          if (errorEl) {
+            errorEl.textContent = (result.data && result.data.error) || 'Reassignment failed.';
+            errorEl.hidden = false;
+          } else {
+            window.alert((result.data && result.data.error) || 'Reassignment failed.');
+          }
+        })
+        .catch(function () {
+          if (errorEl) {
+            errorEl.textContent = 'Network error — please try again.';
+            errorEl.hidden = false;
+          }
+        });
+    });
+  });
 })();
 </script>
 {% endblock %}

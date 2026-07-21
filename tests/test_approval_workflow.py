@@ -148,15 +148,20 @@ class TestApprovalWorkflowService(unittest.TestCase):
     @patch('contracts.models.OrganizationMembership')
     @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_delegate_reassigns_user(self, MockAR, mock_txn, MockOM, _mock_auth):
+    def test_delegate_preserves_original_assignee(self, MockAR, mock_txn, MockOM, _mock_auth):
+        original = MagicMock()
+        original.pk = 5
         ar = _make_ar(status='PENDING', assigned_to_id=5)
+        ar.assigned_to = original
         self._wire_fetch(MockAR, mock_txn, ar)
         MockOM.objects.filter.return_value.exists.return_value = True  # delegate is in-org
         new_user = MagicMock()
         new_user.pk = 7
-        dto = self.svc.delegate(1, new_user, self.actor)
+        new_user.id = 7
+        dto = self.svc.delegate(1, new_user, self.actor, reason='Coverage')
         self.assertEqual(ar.delegated_to, new_user)
-        self.assertEqual(ar.assigned_to, new_user)
+        self.assertEqual(ar.assigned_to, original)
+        self.assertEqual(ar.delegation_reason, 'Coverage')
         ar.save.assert_called_once()
 
     @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)

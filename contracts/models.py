@@ -3859,6 +3859,15 @@ class ApprovalRequest(models.Model):
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_assignments')
     delegated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_approval_assignments')
     delegated_at = models.DateTimeField(null=True, blank=True)
+    delegation_reason = models.TextField(
+        blank=True,
+        help_text='Why coverage was delegated (absence, workload, specialty).',
+    )
+    delegation_ends_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When delegated coverage ends. Blank means open-ended.',
+    )
     escalated_at = models.DateTimeField(null=True, blank=True)
     comments = models.TextField(blank=True)
     due_date = models.DateTimeField(null=True, blank=True)

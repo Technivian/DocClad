@@ -461,9 +461,47 @@ def approval_delegate_api(request, approval_id):
         to_user = User.objects.get(pk=to_user_id)
     except User.DoesNotExist:
         return JsonResponse({'error': 'Delegate user not found'}, status=404)
+    ends_at = None
+    ends_at_raw = data.get('ends_at')
+    if ends_at_raw:
+        from django.utils.dateparse import parse_datetime
+        ends_at = parse_datetime(str(ends_at_raw))
     svc = get_approval_workflow_service()
     try:
-        dto = svc.delegate(approval_id, to_user, request.user)
+        dto = svc.delegate(
+            approval_id,
+            to_user,
+            request.user,
+            reason=data.get('reason') or '',
+            ends_at=ends_at,
+        )
+    except ApprovalRequest.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    except ApprovalAccessDenied as e:
+        return JsonResponse({'error': str(e)}, status=e.status_code)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'ok': True, 'request': _approval_dto_to_dict(dto)})
+
+
+@login_required
+@require_http_methods(['POST'])
+def approval_reassign_api(request, approval_id):
+    data = json.loads(request.body or '{}')
+    to_user_id = data.get('to_user_id')
+    reason = (data.get('reason') or '').strip()
+    if not to_user_id:
+        return JsonResponse({'error': 'to_user_id is required'}, status=400)
+    if not reason:
+        return JsonResponse({'error': 'A reassignment reason is required'}, status=400)
+    User = get_user_model()
+    try:
+        to_user = User.objects.get(pk=to_user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Assignee not found'}, status=404)
+    svc = get_approval_workflow_service()
+    try:
+        dto = svc.reassign(approval_id, to_user, request.user, reason=reason)
     except ApprovalRequest.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
     except ApprovalAccessDenied as e:

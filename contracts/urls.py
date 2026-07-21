@@ -109,6 +109,7 @@ urlpatterns = [
     path('api/approvals/<int:approval_id>/reject/', api_views.approval_reject_api, name='approval_reject_api'),
     path('api/approvals/<int:approval_id>/request-changes/', api_views.approval_request_changes_api, name='approval_request_changes_api'),
     path('api/approvals/<int:approval_id>/delegate/', api_views.approval_delegate_api, name='approval_delegate_api'),
+    path('api/approvals/<int:approval_id>/reassign/', api_views.approval_reassign_api, name='approval_reassign_api'),
     path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
     path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
 

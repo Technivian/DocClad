@@ -418,10 +418,12 @@
                   <div style="grid-column:1/-1;"><dt>Blocking dependencies</dt><dd>{{ row.blocking_issue }}{% if row.blocker_owner %} — waiting on {{ row.blocker_owner }}{% endif %}</dd></div>
                   {% endif %}
                   {% if row.delegation %}
-                  <div style="grid-column:1/-1;"><dt>Delegation</dt><dd>
+                  <div style="grid-column:1/-1;"><dt>Delegation / coverage</dt><dd>
                     {% if row.delegation.original_assignee %}{{ row.delegation.original_assignee.get_full_name|default:row.delegation.original_assignee.username }}{% endif %}
                     covered by {{ row.delegation.acting_assignee.get_full_name|default:row.delegation.acting_assignee.username }}
-                    {% if row.delegation.effective_from %}from {{ row.delegation.effective_from|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.effective_from %} from {{ row.delegation.effective_from|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.effective_until %} until {{ row.delegation.effective_until|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.reason %} · {{ row.delegation.reason }}{% endif %}
                   </dd></div>
                   {% endif %}
                   {% if row.recent_activity %}

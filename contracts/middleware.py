@@ -99,7 +99,7 @@ class ControlledPilotScopeMiddleware:
 
     def __call__(self, request):
         path = request.path or '/'
-        decision = self._deny_reason(path)
+        decision = self._deny_reason(path, request=request)
         if decision:
             logger.info(
                 'pilot_scope_denied path=%s reason=%s',
@@ -109,17 +109,23 @@ class ControlledPilotScopeMiddleware:
             if request.user.is_authenticated:
                 try:
                     from django.contrib import messages
-                    messages.warning(
-                        request,
-                        'That area is outside the approved controlled-pilot scope.',
-                    )
+                    if decision == 'law_firm_module_retired':
+                        messages.warning(
+                            request,
+                            'That module is retired for in-house CLM. Use Contracts, Approvals, Privacy Reviews, or Obligations instead.',
+                        )
+                    else:
+                        messages.warning(
+                            request,
+                            'That area is outside the approved controlled-pilot scope.',
+                        )
                 except Exception:
                     pass
                 return redirect(reverse('dashboard'))
             return redirect(reverse('login'))
         return self.get_response(request)
 
-    def _deny_reason(self, path):
+    def _deny_reason(self, path, request=None):
         billing_on = getattr(settings, 'BILLING_SELF_SERVE_ENABLED', True)
         trust_on = getattr(settings, 'TRUST_ACCOUNTING_ENABLED', True)
         pilot_on = getattr(settings, 'CONTROLLED_PILOT_ENABLED', False)
@@ -131,6 +137,15 @@ class ControlledPilotScopeMiddleware:
             return 'trust_accounting_disabled'
 
         if not pilot_on:
+            # Phase 4: demote half-migrated commercial modules for in-house CLM.
+            # Matters stay reachable for obligation/source deep links but stay
+            # out of the default nav. Clients and invoices have no in-house JTBD.
+            if path.startswith(('/contracts/clients', '/contracts/invoices')):
+                user = getattr(request, 'user', None) if request is not None else None
+                if user is not None and getattr(user, 'is_authenticated', False):
+                    org = get_user_organization(user)
+                    if org and getattr(org, 'workspace_mode', None) == 'in_house_clm':
+                        return 'law_firm_module_retired'
             return None
 
         # Law-firm / commercial modules out of pilot.
