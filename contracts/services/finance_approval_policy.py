@@ -1,6 +1,6 @@
 """Single source of truth for Finance approval threshold routing.
 
-See docs/pdr/0001-finance-approval-threshold.md for product authority.
+See docs/governance/decisions/pdr/0001-finance-approval-threshold.md for product authority.
 """
 from __future__ import annotations
 

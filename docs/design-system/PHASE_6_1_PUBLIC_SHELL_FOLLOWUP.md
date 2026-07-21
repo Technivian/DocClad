@@ -40,4 +40,4 @@ repository-wide consumer search is clean.
 
 - [`PHASE_6_LEGACY_RETIREMENT.md`](PHASE_6_LEGACY_RETIREMENT.md)
 - [`LEGACY_COMPATIBILITY_INVENTORY.md`](LEGACY_COMPATIBILITY_INVENTORY.md)
-- [`docs/adr/0008-frontend-design-system-phase-1.md`](../adr/0008-frontend-design-system-phase-1.md)
+- [`docs/governance/decisions/adr/0008-frontend-design-system-phase-1.md`](../governance/decisions/adr/0008-frontend-design-system-phase-1.md)

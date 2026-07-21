@@ -1,7 +1,9 @@
 import logging
 import secrets
+import subprocess
 import time
 import traceback
+from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
@@ -23,6 +25,64 @@ from .observability import record_request_metric
 from .tenancy import get_user_organization
 
 logger = logging.getLogger(__name__)
+
+
+class DevServerCodeDriftMiddleware:
+    """Fail closed when a --noreload worker outlives a git checkout/branch switch.
+
+    Local DEBUG uses uncached template loaders, so HTML can change on disk while
+    URLconf stays frozen. That produces NoReverseMatch (e.g. my_work_saved_views_api)
+    after switching branches without restarting. When scripts/dev_up.sh records
+    logs/devserver.boot_sha, refuse requests until the server is restarted.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self._boot_sha = None
+        self._warned = False
+        boot_file = Path(settings.BASE_DIR) / 'logs' / 'devserver.boot_sha'
+        if boot_file.exists():
+            self._boot_sha = boot_file.read_text(encoding='utf-8').strip() or None
+
+    def __call__(self, request):
+        if not settings.DEBUG or not self._boot_sha:
+            return self.get_response(request)
+        path = request.path or ''
+        if path.startswith(('/static/', '/media/', '/__reload__/', '/csp-report/')):
+            return self.get_response(request)
+        try:
+            current = subprocess.check_output(
+                ['git', '-C', str(settings.BASE_DIR), 'rev-parse', 'HEAD'],
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=1,
+            ).strip()
+        except (OSError, subprocess.SubprocessError):
+            return self.get_response(request)
+        if not current or current == self._boot_sha:
+            return self.get_response(request)
+        if not self._warned:
+            logger.warning(
+                'dev_server_code_drift boot=%s current=%s path=%s',
+                self._boot_sha[:8],
+                current[:8],
+                path,
+            )
+            self._warned = True
+        body = (
+            '<!doctype html><html><head><meta charset="utf-8"><title>Restart required</title></head>'
+            '<body style="font:14px/1.45 system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem">'
+            '<h1>Dev server is out of date</h1>'
+            '<p>This worker was started on commit '
+            f'<code>{self._boot_sha[:12]}</code> but the workspace is now on '
+            f'<code>{current[:12]}</code>.</p>'
+            '<p>With <code>--noreload</code>, URLconf stays frozen while templates '
+            'reload from disk — that causes <code>NoReverseMatch</code> after a '
+            'branch switch.</p>'
+            '<p>Run <code>bash scripts/dev_restart.sh</code> and reload.</p>'
+            '</body></html>'
+        )
+        return HttpResponse(body, status=503, content_type='text/html; charset=utf-8')
 
 
 class PreviewExceptionMiddleware:

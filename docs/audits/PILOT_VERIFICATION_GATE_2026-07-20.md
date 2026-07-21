@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20  
 **Scope:** Close remaining Sprint 0 verification gaps only. No new features, unrelated redesign, module expansion, or production-readiness work.  
-**Authority:** `GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001, PDR-0002, `CLM_ONE_APPLICATION_AUDIT_2026-07-20.md`, `PILOT_STABILISATION_SPRINT_0_REPORT_2026-07-20.md`, canonical design-system docs.  
+**Authority:** `docs/governance/GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001 (finance threshold), PDR-0002, `CLM_ONE_APPLICATION_AUDIT_2026-07-20.md`, `PILOT_STABILISATION_SPRINT_0_REPORT_2026-07-20.md`, canonical design-system docs.  
 **Production / enterprise readiness:** Not claimed.
 
 ---

@@ -4,14 +4,14 @@
 {% block authenticated_page_title %}My Work{% endblock %}
 {% block authenticated_page_subtitle %}{% if work_scope == 'team' %}Open work across your organization (admin triage).{% else %}Review and complete the work currently assigned to you.{% endif %}{% endblock %}
 {% block authenticated_page_actions %}
-<div class="my-work-header-actions" style="display:inline-flex;align-items:center;gap:10px;">
+<div class="topbar-page-actions my-work-header-actions">
   {% if can_view_team_queue %}
-  <nav class="my-work-scope-tabs" aria-label="Work scope" style="display:inline-flex;align-items:center;gap:6px;">
+  <nav class="my-work-scope-tabs" aria-label="Work scope">
     <a class="dc-ds-button dc-ds-button--ghost{% if work_scope != 'team' %} is-active{% endif %}" href="?scope=personal"{% if work_scope != 'team' %} aria-current="page"{% endif %}>My work</a>
     <a class="dc-ds-button dc-ds-button--ghost{% if work_scope == 'team' %} is-active{% endif %}" href="?scope=team"{% if work_scope == 'team' %} aria-current="page"{% endif %}>Team queue</a>
   </nav>
   {% endif %}
-  <span class="my-work-last-updated" id="my-work-last-updated" style="font:var(--text-meta);color:var(--ink-600);white-space:nowrap;">
+  <span class="my-work-last-updated" id="my-work-last-updated">
     Updated {{ last_updated|date:"g:i A" }}
   </span>
   <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
@@ -50,7 +50,25 @@
   .my-work-page .my-work-summary-chip--warning .my-work-summary-chip__count { color: var(--status-pending-fg); }
   .my-work-page .my-work-summary-chip--info .my-work-summary-chip__count { color: var(--status-progress-fg); }
 
-  .my-work-page .my-work-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .my-work-header-actions {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  .my-work-header-actions .my-work-scope-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+  }
+  .my-work-header-actions .my-work-last-updated {
+    font: var(--text-meta);
+    color: var(--ink-600);
+    white-space: nowrap;
+  }
+  .my-work-page .my-work-view-tabs.dc-ds-workspace-tabs {
+    width: auto;
+    margin-bottom: 0;
+  }
   .my-work-page .my-work-type-filters {
     display: flex; flex: 1 1 auto; align-items: center; gap: 6px;
     min-width: 0; overflow-x: auto; padding: 1px;
@@ -100,8 +118,8 @@
   .my-work-page #my-work-table td[data-col="assignee"] { min-width: 120px; width: 12%; }
   .my-work-page #my-work-table th[data-col="due"],
   .my-work-page #my-work-table td[data-col="due"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .my-work-page .my-work-header-actions .dc-ds-button.is-active,
-  .my-work-page .my-work-scope-tabs .dc-ds-button[aria-current="page"] {
+  .my-work-header-actions .dc-ds-button.is-active,
+  .my-work-header-actions .my-work-scope-tabs .dc-ds-button[aria-current="page"] {
     border-color: var(--seal);
     background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
     color: var(--seal-dark, var(--seal));
@@ -230,9 +248,23 @@
 
   <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="My Work controls">
     <div class="clm-list-view-header">
-      <nav class="my-work-view-tabs clm-list-view-tabs" aria-label="Work queue views">
-        <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
-        <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
+      <nav class="my-work-view-tabs clm-list-view-tabs dc-ds-workspace-tabs" role="tablist" aria-label="Work queue views">
+        <div class="dc-ds-workspace-tabs__list">
+          <button type="button"
+                  class="dc-ds-workspace-tabs__tab is-active"
+                  role="tab"
+                  id="my-work-tab-active"
+                  data-view-tab="active"
+                  aria-selected="true"
+                  tabindex="0">Active work</button>
+          <button type="button"
+                  class="dc-ds-workspace-tabs__tab"
+                  role="tab"
+                  id="my-work-tab-completed"
+                  data-view-tab="completed"
+                  aria-selected="false"
+                  tabindex="-1">Recently completed</button>
+        </div>
       </nav>
     </div>
 
@@ -990,7 +1022,8 @@
     root.querySelectorAll('[data-view-tab]').forEach(function (tab) {
       var active = tab.getAttribute('data-view-tab') === view;
       tab.classList.toggle('is-active', active);
-      tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      tab.setAttribute('tabindex', active ? '0' : '-1');
     });
     if (!window.history || !window.history.replaceState) return;
     var params = new URLSearchParams(window.location.search);

@@ -1,5 +1,70 @@
 # AGENTS.md
 
+## CLM One mandatory documentation
+
+Before performing material product, architecture, design, database,
+security, workflow, AI, integration, or engineering work, read:
+
+1. `docs/governance/GOVERNANCE_CHARTER.md`
+2. `docs/product/MASTER_BLUEPRINT.md`
+3. `docs/product/CANONICAL_DOMAIN_MODEL.md`
+4. `docs/architecture/PLATFORM_AND_MODULE_ARCHITECTURE.md`
+5. `docs/engineering/ENGINEERING_GUARDRAILS.md`
+
+Then read the domain-specific documentation relevant to the task.
+
+For workflow work, also read:
+
+- `docs/architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`
+
+For UI, navigation, terminology, or design work, also read:
+
+- `docs/product/UX_NAVIGATION_AND_WORK_SURFACES.md`
+
+For data, AI, extraction, search, or analytics work, also read:
+
+- `docs/architecture/DATA_AI_AND_INTELLIGENCE.md`
+
+For authentication, authorization, privacy, audit, exports, or security work, also read:
+
+- `docs/architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`
+
+For roadmap or release-readiness work, also read:
+
+- `docs/roadmap/DELIVERY_ROADMAP_AND_RELEASE_GATES.md`
+
+Documentation index: `docs/README.md`.
+
+The current approved Governance Charter remains authoritative:
+
+- Active: `docs/governance/GOVERNANCE_CHARTER.md`
+- Proposed (not approved): `docs/governance/GOVERNANCE_CHARTER_V3_PROPOSED.md`
+
+Accepted supporting documentation (PDR-0003) does not amend the constitution.
+Proposed documents (including Charter v3) do not supersede approved governance until formally approved.
+
+Current code does not override approved governance documentation.
+
+If implementation conflicts with the approved Charter or an approved decision record:
+
+1. stop;
+2. identify the conflict;
+3. do not silently work around it;
+4. propose the required PDR, ADR, Charter amendment, or exception.
+
+Do not silently introduce new:
+
+- domain objects;
+- modules;
+- roles;
+- statuses;
+- permissions;
+- lifecycle stages;
+- terminology;
+- architecture patterns.
+
+Decision records live under `docs/governance/decisions/`. See `docs/governance/decisions/README.md`.
+
 ## Cursor Cloud specific instructions
 
 CLM One is a single Django 5.2 app (project `config`, main domain app `contracts`, Tailwind theme app `theme`). Dev runs on SQLite with all third-party integrations (Redis, Stripe, Gemini AI, S3, OIDC/SAML SSO, Salesforce, NetSuite, e-sign) feature-flagged off, so no external services are needed to run or test it.
@@ -10,7 +75,8 @@ CLM One is a single Django 5.2 app (project `config`, main domain app `contracts
 - `.env` (gitignored) is required and already created from `.env.example` with a dev `DJANGO_SECRET_KEY`. Settings auto-load `.env` via `config/settings_base.py`. Keep `DATABASE_URL` empty so dev uses SQLite; a dev safety guard refuses to start against a non-local `DATABASE_URL`.
 
 ### Run
-- Dev server: `bash scripts/dev_server.sh` (foreground, port 8060, forces `DJANGO_SETTINGS_MODULE=config.settings_development` and empty `DATABASE_URL`). App at `http://127.0.0.1:8060/`, health at `/_health/`, auth at `/login/` and `/register/`.
+- Dev server (foreground): `bash scripts/dev_server.sh`
+- Dev server (background, supervised autoreload): `bash scripts/dev_up.sh` / `bash scripts/dev_restart.sh` (foreground, port 8060, forces `DJANGO_SETTINGS_MODULE=config.settings_development` and empty `DATABASE_URL`). App at `http://127.0.0.1:8060/`, health at `/_health/`, auth at `/login/` and `/register/`.
 - Registering at `/register/` auto-provisions an organization and logs you in (lands on `/dashboard/`).
 - After changing models, run `.venv/bin/python manage.py migrate` manually (migrations are intentionally not in the update script). The dev `db.sqlite3` persists across sessions.
 

@@ -118,15 +118,23 @@ class WorkflowTemplateVersioningTests(TestCase):
 
         list_response = self.client.get(reverse('contracts:workflow_template_list'))
         self.assertEqual(list_response.status_code, 200)
-        self.assertContains(list_response, 'v1')
-        self.assertContains(list_response, 'Intake')
+        self.assertContains(list_response, 'Contract Review')
+        self.assertContains(list_response, 'Published')
+        body = list_response.content.decode()
+        self.assertNotIn('Not published', body)
+        self.assertIn('template-tile__secondary', body)
+        self.assertIn('template-status-dot--live', body)
+        self.assertIn('>Live</span>', body)
+        self.assertNotIn('0 Live', body)
+        self.assertRegex(body, r'Used by \d+|Not used yet')
 
         detail_response = self.client.get(reverse('contracts:workflow_template_detail', args=[self.template.pk]))
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'v1')
         self.assertContains(detail_response, 'Design')
-        self.assertContains(detail_response, 'Activity')
-        self.assertNotContains(detail_response, 'Save changes')
+        self.assertContains(detail_response, 'Audit trail')
+        self.assertContains(detail_response, 'Intake')
+        self.assertNotContains(detail_response, 'data-save-changes')
         self.assertNotContains(detail_response, 'Add a step')
         self.assertNotContains(detail_response, 'Workflow Steps')
         versions_response = self.client.get(
@@ -302,7 +310,9 @@ class WorkflowTemplateVersioningTests(TestCase):
         body = response.content.decode()
         self.assertIn('Setup required', body)
         self.assertIn('Open designer', body)
-        self.assertIn('Add at least one stage', body)
+        self.assertIn('No workflow stages configured', body)
+        self.assertIn('Add at least one stage to continue', body)
+        self.assertIn('Drafts', body)
         standard = WorkflowTemplate.objects.get(name='Standard', organization=self.org)
         self.assertFalse(standard.is_active)
 
@@ -470,3 +480,39 @@ class WorkflowTemplateVersioningTests(TestCase):
         self.assertContains(response, 'Suggested template')
         self.assertContains(response, 'Compare against selected template')
         self.assertContains(response, 'Open legal ops diff')
+
+    def test_duplicate_names_use_copy_n_not_nested_copy_of(self):
+        from contracts.services.workflow_designer import duplicate_workflow_template, next_duplicate_template_name
+
+        first = next_duplicate_template_name(self.template)
+        self.assertEqual(first, 'Contract Review Copy 2')
+        clone = duplicate_workflow_template(self.template)
+        self.assertEqual(clone.name, 'Contract Review Copy 2')
+        self.assertFalse(clone.is_active)
+        second = duplicate_workflow_template(self.template)
+        self.assertEqual(second.name, 'Contract Review Copy 3')
+        nested_source = WorkflowTemplate.objects.create(
+            name='Copy of Copy of NDA Self-Serve Workflow',
+            description='Legacy nested name',
+            category=WorkflowTemplate.Category.GENERAL,
+            version=1,
+            is_active=False,
+        )
+        cleaned = duplicate_workflow_template(nested_source)
+        self.assertEqual(cleaned.name, 'NDA Self-Serve Workflow Copy 2')
+        self.assertNotIn('Copy of', cleaned.name)
+
+    def test_duplicate_action_prompts_rename_before_designer(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse('contracts:workflow_template_duplicate', args=[self.template.pk]))
+        self.assertEqual(response.status_code, 302)
+        clone = WorkflowTemplate.objects.get(name='Contract Review Copy 2')
+        self.assertIn(
+            reverse('contracts:workflow_template_update', args=[clone.pk]),
+            response['Location'],
+        )
+        self.assertIn('after_duplicate=1', response['Location'])
+        rename_page = self.client.get(response['Location'])
+        self.assertEqual(rename_page.status_code, 200)
+        self.assertContains(rename_page, 'Rename duplicated template')
+        self.assertContains(rename_page, 'Contract Review Copy 2')

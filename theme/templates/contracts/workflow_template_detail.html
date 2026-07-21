@@ -31,26 +31,32 @@
       <h1 class="wf-designer-header__title">{{ workflow_template.name }}</h1>
       <div class="wf-designer-header__meta" aria-label="Workflow identity">
         <span class="wf-identity-chip wf-identity-chip--version">v{{ workflow_template.version }}</span>
-        <span class="wf-identity-chip {% if is_published %}wf-identity-chip--published{% else %}wf-identity-chip--draft{% endif %}">{{ lifecycle_label }}</span>
-        {% if published_has_blocking_issues %}
-        <span class="wf-identity-chip wf-identity-chip--issue">Configuration issue</span>
-        {% elif validation_status_label and validation_status_label != 'Valid' %}
-        <span class="wf-identity-chip wf-identity-chip--issue">{{ validation_status_label }}</span>
-        {% elif not is_published and validation_status_label == 'Valid' %}
-        <span class="wf-identity-chip wf-identity-chip--valid">Valid</span>
-        {% elif is_published and validation_status_label == 'Valid' %}
-        <span class="wf-identity-chip wf-identity-chip--valid">Valid</span>
-        {% endif %}
-        <span class="wf-identity-chip {% if can_edit_template %}wf-identity-chip--editable{% else %}wf-identity-chip--readonly{% endif %}">{{ edit_state_label }}</span>
+        <span class="wf-identity-chip {% if is_published %}wf-identity-chip--published{% else %}wf-identity-chip--draft{% endif %}">
+          <span class="wf-status-dot {% if is_published %}wf-status-dot--live{% else %}wf-status-dot--draft{% endif %}" aria-hidden="true"></span>
+          {{ lifecycle_label }}
+        </span>
         {% if can_edit_template %}
-        <span class="wf-designer-save-status" data-save-status aria-live="polite">All changes saved</span>
+        <span class="wf-identity-chip wf-identity-chip--editable">{{ edit_state_label }}</span>
+        {% elif is_published %}
+        <span class="wf-identity-chip wf-identity-chip--readonly">{{ edit_state_label }}</span>
         {% endif %}
       </div>
     </div>
     <div class="wf-designer-header__actions" data-tab-actions>
       {% if active_tab == 'design' %}
         {% if can_edit_template %}
-        <button type="button" class="dc-ds-button dc-ds-button--quiet" data-save-changes hidden disabled title="Save changes (⌘/Ctrl+S)">Save changes</button>
+        <span class="wf-designer-save-status" data-save-status aria-live="polite">All changes saved</span>
+        {% if issue_badge_count %}
+        <button
+          type="button"
+          class="wf-issue-badge"
+          data-open-validation
+          aria-controls="wf-validation-summary"
+          title="{{ validation_status_label }}"
+          aria-label="{{ issue_badge_count }} configuration issue{{ issue_badge_count|pluralize }}"
+        >{{ issue_badge_count }}</button>
+        {% endif %}
+        <button type="button" class="dc-ds-button dc-ds-button--quiet" data-save-changes hidden disabled title="Save changes (⌘/Ctrl+S)">Save</button>
         <a href="?tab=test" class="dc-ds-button dc-ds-button--quiet" title="Open the Test tab">Test workflow</a>
         {% if can_publish %}
         <button type="button" class="dc-ds-button dc-ds-button--primary" data-publish-confirm title="Publish v{{ workflow_template.version }}">Publish</button>
@@ -69,6 +75,16 @@
         </button>
         {% endif %}
         {% elif is_published %}
+        {% if issue_badge_count %}
+        <button
+          type="button"
+          class="wf-issue-badge"
+          data-toggle-remediation-issues
+          aria-controls="wf-remediation-issues"
+          title="{{ validation_status_label }}"
+          aria-label="{{ issue_badge_count }} configuration issue{{ issue_badge_count|pluralize }}"
+        >{{ issue_badge_count }}</button>
+        {% endif %}
         {% if show_header_create_version %}
         <form method="post" action="{% url 'contracts:workflow_template_clone_version' workflow_template.pk %}">
           {% csrf_token %}
@@ -105,7 +121,7 @@
         <a
           class="dc-ds-button dc-ds-button--primary"
           href="{% url 'contracts:workflow_template_audit_export' workflow_template.pk %}?actor={{ audit_filters.actor|urlencode }}{% for et in audit_filters.event_types %}&amp;event_type={{ et|urlencode }}{% endfor %}&amp;version={{ audit_filters.version|urlencode }}&amp;date_from={{ audit_filters.date_from|urlencode }}&amp;date_to={{ audit_filters.date_to|urlencode }}"
-        >Export activity</a>
+        >Export audit trail</a>
       {% endif %}
     </div>
   </header>
@@ -358,7 +374,7 @@
     <aside class="wf-designer-inspector is-open" data-inspector id="workflow-step-inspector" aria-labelledby="workflow-inspector-title">
       <div class="wf-designer-inspector__head">
         <h2 id="workflow-inspector-title" class="wf-designer-inspector__title">
-          {% if selected_step %}{% if can_edit_template %}Configure step{% else %}Step details{% endif %}{% elif step_form.errors %}Add step{% else %}Inspector{% endif %}
+          {% if selected_step %}Step details{% elif step_form.errors %}Add step{% else %}Inspector{% endif %}
         </h2>
         <button type="button" class="wf-designer-inspector__collapse dc-ds-button dc-ds-button--quiet" data-toggle-inspector aria-controls="workflow-step-inspector" title="Collapse inspector">Collapse</button>
       </div>
@@ -890,9 +906,9 @@
   {% else %}
   <section class="wf-audit-workspace" aria-labelledby="wf-audit-heading">
     <div class="wf-designer-panel__head wf-designer-panel__head--compact">
-      <h2 id="wf-audit-heading">Activity</h2>
+      <h2 id="wf-audit-heading">Audit trail</h2>
     </div>
-    <form method="get" class="wf-audit-filters" aria-label="Activity filters" data-activity-filters>
+    <form method="get" class="wf-audit-filters" aria-label="Audit trail filters" data-activity-filters>
       <input type="hidden" name="tab" value="activity">
       <div class="wf-field">
         <label class="form-label" for="audit-actor">Actor</label>
@@ -994,13 +1010,13 @@
             <td colspan="10">
               <div class="wf-empty-state" role="status">
                 {% if audit_filters_active %}
-                <p class="wf-empty-state__title">No matching activity</p>
+                <p class="wf-empty-state__title">No matching audit events</p>
                 <p>No events match the selected filters. Clear filters to see the full trail.</p>
                 {% elif not audit_has_any_activity %}
-                <p class="wf-empty-state__title">No activity recorded</p>
+                <p class="wf-empty-state__title">No audit events recorded</p>
                 <p>Creation, publication, edits, and tests appear here automatically.</p>
                 {% else %}
-                <p class="wf-empty-state__title">No matching activity</p>
+                <p class="wf-empty-state__title">No matching audit events</p>
                 <p>No events match the selected filters.</p>
                 {% endif %}
               </div>

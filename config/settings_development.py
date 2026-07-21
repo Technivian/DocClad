@@ -40,6 +40,8 @@ if DEBUG:
 
 INSTALLED_APPS.append('django_browser_reload')
 MIDDLEWARE.append('django_browser_reload.middleware.BrowserReloadMiddleware')
+# Catch --noreload workers that outlive a git branch/checkout switch.
+MIDDLEWARE.insert(0, 'contracts.middleware.DevServerCodeDriftMiddleware')
 
 # The vertical toolbar changes page width and contaminates visual baselines.
 # Keep it opt-in for an explicit debugging session rather than enabling it on

@@ -72,13 +72,14 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
         self.assertTrue(response.context['hide_app_footer'])
-        for label in ('Design', 'Test', 'Versions', 'Activity'):
+        for label in ('Design', 'Test', 'Versions', 'Audit trail'):
             self.assertIn(label, body)
         self.assertIn('Workflow Designer', body)
         self.assertEqual(body.count('wf-designer-header__title'), 1)
         self.assertIn(f'>{self.template.name}<', body)
         self.assertNotIn('topbar-page-title">' + self.template.name, body)
-        self.assertIn('Save changes', body)
+        self.assertIn('data-save-changes', body)
+        self.assertIn('>Save<', body)
         self.assertIn('Test workflow', body)
         self.assertIn('Publish', body)
         self.assertNotIn('Create new version', body)
@@ -100,7 +101,7 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertIn('hidden disabled', body)  # Save only appears when dirty
         # First editable step is selected so the inspector is useful immediately.
         self.assertEqual(response.context['selected_step_id'], self.draft.pk)
-        self.assertIn('Configure step', body)
+        self.assertIn('Step details', body)
         self.assertIn('Select a workflow step', body)
         self.assertIn('Signer configuration missing', body)
 
@@ -163,7 +164,7 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertIn('tab=design', created['Location'])
 
         draft_page = self.client.get(reverse('contracts:workflow_template_detail', args=[clone.pk]))
-        self.assertContains(draft_page, 'Save changes')
+        self.assertContains(draft_page, 'data-save-changes')
         self.assertContains(draft_page, 'Publish')
         self.assertTrue(draft_page.context['can_edit_template'])
 
@@ -220,14 +221,13 @@ class WorkflowDesignerCanvasTests(TestCase):
         self.assertIn('Create corrected version', body)
         self.assertIn('This immutable published version contains configuration that no longer passes validation.', body)
         self.assertIn('wf-identity-chip--published', body)
-        self.assertIn('wf-identity-chip--issue', body)
+        self.assertIn('wf-issue-badge', body)
         self.assertIn('wf-identity-chip--readonly', body)
-        self.assertRegex(body, r'wf-identity-chip--published[^>]*>Published<')
-        self.assertRegex(body, r'wf-identity-chip--issue[^>]*>Configuration issue<')
-        self.assertRegex(body, r'wf-identity-chip--readonly[^>]*>Read-only<')
+        self.assertIn('Live', body)
+        self.assertIn('Read-only published version', body)
         self.assertNotIn('Published · Issues', body)
         self.assertNotIn('Published · Action required', body)
-        self.assertNotRegex(body, r'wf-identity-chip--draft[^>]*>Draft<')
+        self.assertNotIn('wf-identity-chip--draft', body)
         # Header owns primary Create corrected version; card may also include it.
         self.assertGreaterEqual(body.count('Create corrected version'), 1)
         self.assertTrue(response.context['new_launches_blocked'])
@@ -438,8 +438,8 @@ class WorkflowDesignerCanvasTests(TestCase):
         )
         body = response.content.decode()
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Activity', body)
-        self.assertIn('Export activity', body)
+        self.assertIn('Audit trail', body)
+        self.assertIn('Export audit trail', body)
         self.assertNotIn('View all activity', body)
         self.assertIn('Previous value', body)
         self.assertIn('Event ID', body)

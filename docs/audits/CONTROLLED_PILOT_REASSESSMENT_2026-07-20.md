@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20  
 **Scope:** Verification and remediation of remaining Sprint 0 evidence gaps only.  
-**Authority:** `GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001, PDR-0002, application audit 2026-07-20, Sprint 0 report.  
+**Authority:** `docs/governance/GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001 (finance threshold), PDR-0002, application audit 2026-07-20, Sprint 0 report.  
 **Production / enterprise readiness:** Not claimed.
 
 ---

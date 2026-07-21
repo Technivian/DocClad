@@ -205,6 +205,6 @@ class WorkflowAuditTrailTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['active_tab'], 'activity')
-        self.assertContains(response, 'Activity')
+        self.assertContains(response, 'Audit trail')
         self.assertContains(response, 'Create')
         self.assertNotContains(response, 'View all activity')

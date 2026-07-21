@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -186,7 +187,7 @@ def can_mutate_workflow_template(user, organization, template: WorkflowTemplate 
 
 
 def workflow_template_canvas_tabs(*, template_pk: int, active: str) -> list[dict]:
-    """Detail-page tabs: Design / Test / Versions / Activity."""
+    """Detail-page tabs: Design / Test / Versions / Audit trail."""
     base = reverse('contracts:workflow_template_detail', kwargs={'pk': template_pk})
     # Canonical tab key is activity; accept legacy ?tab=audit.
     if active == 'audit':
@@ -195,7 +196,7 @@ def workflow_template_canvas_tabs(*, template_pk: int, active: str) -> list[dict
         ('design', 'Design'),
         ('test', 'Test'),
         ('versions', 'Versions'),
-        ('activity', 'Activity'),
+        ('activity', 'Audit trail'),
     )
     return [
         {
@@ -558,23 +559,35 @@ def validate_template_for_publish(template: WorkflowTemplate) -> PublishValidati
 
 
 def _status_presentation(template: WorkflowTemplate) -> dict:
+    """Card/list status. Section headers own Published vs Drafts grouping."""
     if is_incomplete_template(template):
         return {
             'label': 'Setup required',
+            'catalog_label': 'Drafts',
+            'badge': 'Setup required',
             'tone': 'attention',
+            'dot': 'draft',
             'is_published': False,
             'is_incomplete': True,
         }
     if template.is_active:
+        has_blocking = not validate_template_for_publish(template).ok
         return {
             'label': 'Published',
-            'tone': 'success',
+            'catalog_label': 'Published',
+            'badge': 'Configuration issue' if has_blocking else '',
+            'tone': 'attention' if has_blocking else 'success',
+            'dot': 'live',
             'is_published': True,
             'is_incomplete': False,
+            'has_configuration_issue': has_blocking,
         }
     return {
         'label': 'Draft',
+        'catalog_label': 'Drafts',
+        'badge': 'Draft',
         'tone': 'attention',
+        'dot': 'draft',
         'is_published': False,
         'is_incomplete': False,
     }
@@ -645,7 +658,57 @@ def _template_icon_key(template: WorkflowTemplate) -> str:
 def _incomplete_reason(template: WorkflowTemplate) -> str:
     if not is_incomplete_template(template):
         return ''
-    return 'Add at least one stage to finish setup.'
+    return 'Add at least one stage to continue.'
+
+
+def _normalize_duplicate_base_name(name: str) -> str:
+    """Strip nested Copy-of / Copy-N suffixes so duplicates stay readable."""
+    base = (name or '').strip() or 'Workflow'
+    changed = True
+    while changed:
+        changed = False
+        stripped = re.sub(r'^(?:Copy of\s+)+', '', base, flags=re.IGNORECASE).strip()
+        if stripped != base:
+            base = stripped or 'Workflow'
+            changed = True
+            continue
+        stripped = re.sub(r'\s+Copy(?:\s+\d+)?$', '', base, flags=re.IGNORECASE).strip()
+        if stripped != base:
+            base = stripped or 'Workflow'
+            changed = True
+    return base
+
+
+def next_duplicate_template_name(template: WorkflowTemplate, *, explicit_name: Optional[str] = None) -> str:
+    """
+    Prefer ``{Name} Copy 2`` over ``Copy of Copy of {Name}``.
+
+    The original keeps its name; the first duplicate becomes ``Copy 2``, then ``Copy 3``.
+    """
+    if explicit_name and explicit_name.strip():
+        return explicit_name.strip()
+
+    base = _normalize_duplicate_base_name(template.name)
+    qs = WorkflowTemplate.objects.all()
+    if template.organization_id:
+        qs = qs.filter(organization_id=template.organization_id)
+    else:
+        qs = qs.filter(organization__isnull=True)
+
+    existing = set(qs.values_list('name', flat=True))
+    copy_re = re.compile(rf'^{re.escape(base)} Copy (\d+)$', re.IGNORECASE)
+    used_numbers = set()
+    for name in existing:
+        match = copy_re.match(name or '')
+        if match:
+            used_numbers.add(int(match.group(1)))
+    if base in existing:
+        used_numbers.add(1)
+
+    next_number = 2
+    while next_number in used_numbers:
+        next_number += 1
+    return f'{base} Copy {next_number}'
 
 
 def _owner_is_meaningful(owner_label: str) -> bool:
@@ -718,6 +781,49 @@ def _card_description(template: WorkflowTemplate, contract_type_label: str) -> s
     return 'Reusable approval and review blueprint.'
 
 
+def _card_badge(status: dict, *, has_unpublished_changes: bool) -> str:
+    """Only surface badges that add meaning beyond the section header / Live status."""
+    if status.get('is_incomplete'):
+        return 'Setup required'
+    if status.get('has_configuration_issue'):
+        return 'Configuration issue'
+    if has_unpublished_changes and status.get('is_published'):
+        return 'Changes pending'
+    # Drafts: keep a Draft badge; “Changes pending” lives on the secondary line.
+    if status.get('badge') == 'Draft':
+        return 'Draft'
+    return status.get('badge') or ''
+
+
+def _card_secondary_line(
+    template: WorkflowTemplate,
+    *,
+    status: dict,
+    contract_type_label: str,
+    stage_count: int,
+    active_count: int,
+    updated_at,
+    has_unpublished_changes: bool,
+) -> str:
+    """One concise secondary line — never dump owner/version/dates/usage together."""
+    from django.utils.formats import date_format
+
+    if status.get('is_incomplete'):
+        return 'No workflow stages configured'
+
+    if status.get('is_published'):
+        type_part = contract_type_label or 'Workflow'
+        usage = f'Used by {active_count}' if active_count else 'Not used yet'
+        return f'{type_part} · {usage}'
+
+    stage_part = '1 stage' if stage_count == 1 else f'{stage_count} stages'
+    if has_unpublished_changes:
+        return f'{stage_part} · Changes pending'
+    if updated_at:
+        return f'{stage_part} · Updated {date_format(updated_at, "j M Y")}'
+    return stage_part
+
+
 def build_template_card(template: WorkflowTemplate) -> dict:
     status = _status_presentation(template)
     latest_audit = _latest_audit(template)
@@ -739,6 +845,18 @@ def build_template_card(template: WorkflowTemplate) -> dict:
         select_disabled_reason = ''
     contract_type_label = _contract_type_label(template)
     active_count = active_workflow_count_for_template(template)
+    stage_count = template_stage_count(template)
+    has_unpublished_changes = _has_unpublished_changes(template)
+    badge = _card_badge(status, has_unpublished_changes=has_unpublished_changes)
+    secondary_line = _card_secondary_line(
+        template,
+        status=status,
+        contract_type_label=contract_type_label,
+        stage_count=stage_count,
+        active_count=active_count,
+        updated_at=updated_at,
+        has_unpublished_changes=has_unpublished_changes,
+    )
     return {
         'template': template,
         'name': template.name,
@@ -746,16 +864,24 @@ def build_template_card(template: WorkflowTemplate) -> dict:
         'description': _card_description(template, contract_type_label),
         'icon_key': _template_icon_key(template),
         'status_label': status['label'],
+        'catalog_status_label': status['catalog_label'],
+        'status_badge': badge,
+        'show_status_badge': bool(badge),
+        # Published templates always show green Live; issue badges sit beside it.
+        'show_live_status': bool(status['is_published']),
+        'live_status_label': 'Live',
         'status_tone': status['tone'],
+        'status_dot': status['dot'],
         'is_published': status['is_published'],
         'is_incomplete': status['is_incomplete'],
         'incomplete_reason': incomplete_reason,
+        'secondary_line': secondary_line,
         'version_label': f'v{template.version}',
         'stage_path': _stage_path(template),
         'stage_names': stages['visible'],
         'stage_more_count': stages['more_count'],
         'stages_empty': stages['empty'],
-        'stage_count': template_stage_count(template),
+        'stage_count': stage_count,
         'owner_label': owner_label,
         'show_owner': _owner_is_meaningful(owner_label),
         'updated_at': updated_at,
@@ -766,7 +892,7 @@ def build_template_card(template: WorkflowTemplate) -> dict:
             if active_count == 1
             else f'{active_count} active workflows'
         ),
-        'has_unpublished_changes': _has_unpublished_changes(template),
+        'has_unpublished_changes': has_unpublished_changes,
         'designer_url': reverse('contracts:workflow_template_detail', kwargs={'pk': template.pk}),
         'can_delete': bool(template.organization_id),
         'can_publish': validate_template_for_publish(template).ok and not template.is_active,
@@ -777,7 +903,7 @@ def build_template_card(template: WorkflowTemplate) -> dict:
 
 def duplicate_workflow_template(template: WorkflowTemplate, *, name: Optional[str] = None) -> WorkflowTemplate:
     """Create an independent unpublished copy (not a version bump)."""
-    copy_name = name or f'Copy of {template.name}'
+    copy_name = next_duplicate_template_name(template, explicit_name=name)
     clone = WorkflowTemplate.objects.create(
         name=copy_name,
         description=template.description,

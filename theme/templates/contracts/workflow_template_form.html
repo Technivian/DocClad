@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Create Workflow Template – CLM One{% endblock %}
+{% block title %}{% if is_update %}Edit Workflow Template{% else %}Create Workflow Template{% endif %} – CLM One{% endblock %}
 {% block authenticated_page_title %}Workflow Designer{% endblock %}
-{% block authenticated_page_subtitle %}Create a template, then open the full designer to configure stages.{% endblock %}
+{% block authenticated_page_subtitle %}{% if after_duplicate %}Rename the copy, then continue in the designer.{% elif is_update %}Update template details, then open the designer.{% else %}Create a template, then open the full designer to configure stages.{% endif %}{% endblock %}
 {% block authenticated_page_back %}
 <a href="{% url 'contracts:workflow_template_list' %}" class="topbar-back-link" data-workspace-back aria-label="Back to templates" title="Back to templates">
   {% include "design_system/icon.html" with name="arrow-left" %}
@@ -18,9 +18,9 @@
   </header>
 
   <section class="dc-ds-surface" style="padding: var(--space-20); max-width: 720px;">
-    <h2 class="dc-ds-workspace__surface-title" style="margin:0 0 var(--space-8);">Create template</h2>
+    <h2 class="dc-ds-workspace__surface-title" style="margin:0 0 var(--space-8);">{{ form_title|default:"Create template" }}</h2>
     <p class="profile-page__muted" style="margin:0 0 var(--space-16); color: var(--ink-500); font: var(--text-small);">
-      Name the blueprint, choose a contract type, then open Workflow Designer to add stages before publishing.
+      {{ form_subtitle|default:"Name the blueprint, choose a contract type, then open Workflow Designer to add stages before publishing." }}
     </p>
     <form method="post" class="grid gap-4">
       {% csrf_token %}
@@ -65,10 +65,24 @@
       </div>
       {% endif %}
       <div class="flex justify-end gap-3 mt-2">
+        {% if is_update and form.instance.pk %}
+        <a href="{% url 'contracts:workflow_template_detail' form.instance.pk %}" class="dc-ds-button dc-ds-button--quiet">{% if after_duplicate %}Skip for now{% else %}Cancel{% endif %}</a>
+        {% else %}
         <a href="{% url 'contracts:workflow_template_list' %}" class="dc-ds-button dc-ds-button--quiet">Cancel</a>
-        <button type="submit" class="dc-ds-button dc-ds-button--primary">Create and open designer</button>
+        {% endif %}
+        <button type="submit" class="dc-ds-button dc-ds-button--primary">{{ submit_label|default:"Create and open designer" }}</button>
       </div>
     </form>
   </section>
 </div>
+{% if after_duplicate %}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var field = document.getElementById('{{ form.name.id_for_label }}');
+  if (!field) return;
+  field.focus();
+  field.select();
+})();
+</script>
+{% endif %}
 {% endblock %}

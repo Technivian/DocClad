@@ -1847,6 +1847,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   box-sizing: border-box;
   min-height: 24px;
   max-width: 100%;
@@ -1897,6 +1898,40 @@
 .wf-designer-save-status[data-tone="danger"] { color: var(--color-status-danger-fg, #b91c1c); }
 .wf-designer-save-status[data-tone="success"] { color: var(--ink-500); }
 .wf-designer-save-status[data-tone="progress"] { color: var(--ink-600); }
+.wf-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  background: var(--ink-400, #94a3b8);
+}
+.wf-status-dot--live {
+  background: var(--color-status-success-fg, #15803d);
+}
+.wf-status-dot--draft {
+  background: var(--ink-400, #94a3b8);
+}
+.wf-issue-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--status-danger-fg, #b91c1c);
+  color: #fff;
+  font: var(--text-meta);
+  font-weight: 700;
+  cursor: pointer;
+}
+.wf-issue-badge:hover,
+.wf-issue-badge:focus-visible {
+  filter: brightness(0.95);
+  outline: 2px solid var(--focus-ring, #99f6e4);
+  outline-offset: 2px;
+}
 .wf-designer-header__actions {
   display: flex;
   flex-wrap: wrap;

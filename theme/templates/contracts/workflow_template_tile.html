@@ -1,0 +1,80 @@
+<article
+  class="template-tile dc-ds-surface dc-ds-surface--interactive{% if card.is_incomplete %} is-incomplete{% endif %}"
+  data-template-id="{{ card.template.pk }}"
+  data-template-name="{{ card.name }}"
+  data-designer-url="{{ card.designer_url }}"
+  data-selectable="{% if card.selectable %}true{% else %}false{% endif %}"
+  {% if selection_mode %}
+  role="option"
+  tabindex="0"
+  aria-selected="false"
+  {% if not card.selectable %}aria-disabled="true"{% endif %}
+  aria-label="{% if card.selectable %}Select template {{ card.name }}{% else %}{{ card.name }}. {{ card.select_disabled_reason|default:card.incomplete_reason }}{% endif %}"
+  {% else %}
+  role="link"
+  tabindex="0"
+  aria-label="{% if card.is_incomplete %}Finish setup for {{ card.name }}{% else %}Open designer for {{ card.name }}{% endif %}"
+  {% endif %}
+>
+  {% if selection_mode %}
+  <span class="template-tile__selected-label" aria-hidden="true">
+    {% include "design_system/icon.html" with name="check" %}
+    Selected
+  </span>
+  {% endif %}
+
+  <div class="template-tile__corner">
+    <div class="template-tile__status-cluster">
+      {% if card.show_live_status %}
+      <span class="template-tile__status template-tile__status--live" title="Published and available for use">
+        <span class="template-status-dot template-status-dot--live" aria-hidden="true"></span>
+        <span>{{ card.live_status_label }}</span>
+      </span>
+      {% endif %}
+      {% if card.show_status_badge %}
+      <span class="template-tile__badge template-tile__badge--{{ card.status_tone }}">{{ card.status_badge }}</span>
+      {% endif %}
+    </div>
+    {% if selection_mode and card.selectable %}
+    <span class="template-tile__select-mark" aria-hidden="true">{% include "design_system/icon.html" with name="check" %}</span>
+    {% endif %}
+    {% if not selection_mode %}
+    <details class="template-tile__menu js-tile-action" data-stop-tile="true">
+      <summary aria-label="More actions for {{ card.name }}">⋯</summary>
+      <div class="template-tile__menu-panel" role="menu">
+        <a href="{{ card.designer_url }}" class="template-tile__menu-item" role="menuitem">Open designer</a>
+        <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" role="none">{% csrf_token %}
+          <button type="submit" class="template-tile__menu-item" role="menuitem">Duplicate</button>
+        </form>
+        <form method="post" action="{% url 'contracts:workflow_template_clone_version' card.template.pk %}" role="none">{% csrf_token %}
+          <button type="submit" class="template-tile__menu-item" role="menuitem">New version</button>
+        </form>
+        <a href="{{ card.designer_url }}?tab=versions" class="template-tile__menu-item" role="menuitem">View versions</a>
+        <a href="{{ card.designer_url }}?tab=test" class="template-tile__menu-item" role="menuitem">Test</a>
+        {% if card.is_published %}
+        <form method="post" action="{% url 'contracts:workflow_template_archive' card.template.pk %}" role="none">{% csrf_token %}
+          <button type="submit" class="template-tile__menu-item" role="menuitem">Archive</button>
+        </form>
+        {% endif %}
+        {% if card.can_delete %}
+        <form method="post" action="{% url 'contracts:workflow_template_delete' card.template.pk %}" role="none" onsubmit="return confirm('Delete this template? This cannot be undone.');">{% csrf_token %}
+          <button type="submit" class="template-tile__menu-item template-tile__menu-item--danger" role="menuitem">Delete</button>
+        </form>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+
+  <div class="template-tile__body">
+    <h3 class="template-tile__title">{{ card.name }}</h3>
+    {% if card.secondary_line %}
+    <p class="template-tile__secondary">{{ card.secondary_line }}</p>
+    {% endif %}
+    {% if card.is_incomplete and card.incomplete_reason %}
+    <p class="template-tile__setup">{{ card.incomplete_reason }}</p>
+    {% elif selection_mode and not card.selectable and card.select_disabled_reason %}
+    <p class="template-tile__setup">{{ card.select_disabled_reason }}</p>
+    {% endif %}
+  </div>
+</article>

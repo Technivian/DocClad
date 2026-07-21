@@ -2,7 +2,7 @@
 > inventory retained for audit trail. The authoritative post–Phase 6 inventory
 > is [`LEGACY_COMPATIBILITY_INVENTORY.md`](LEGACY_COMPATIBILITY_INVENTORY.md).
 > Phase 6 evidence: [`PHASE_6_LEGACY_RETIREMENT.md`](PHASE_6_LEGACY_RETIREMENT.md).
-> ADR/PDR: [`docs/adr/0008-frontend-design-system-phase-1.md`](../adr/0008-frontend-design-system-phase-1.md).
+> ADR/PDR: [`docs/governance/decisions/adr/0008-frontend-design-system-phase-1.md`](../governance/decisions/adr/0008-frontend-design-system-phase-1.md).
 
 # Legacy compatibility inventory (Phase 1 — superseded)
 

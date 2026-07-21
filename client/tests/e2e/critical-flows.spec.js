@@ -179,7 +179,7 @@ test('critical redesigned workflow path works end-to-end', async ({ page }) => {
   expect(templateCreateResponse.status()).toBeLessThan(400);
 
   await expect(page).toHaveURL(/\/contracts\/workflows\/templates\/create\/?$/);
-  await expect(page.getByText(/Create template/).first()).toBeVisible();
+  await expect(page.getByText(/New workflow|Create template/).first()).toBeVisible();
   await page.fill('input[name="name"]', templateName);
   await page.fill('textarea[name="description"]', 'Automated template for redesigned path test');
   await page.selectOption('select[name="category"]', { index: 1 });

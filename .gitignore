@@ -18,6 +18,11 @@ media/
 .upm/
 node_modules/
 client/node_modules/
+
+# Local documentation package staging (never commit the ZIP or extract dump)
+clm_one_documentation_v2/
+CLM_One_Documentation_v2.zip
+**/CLM_One_Documentation_v2.zip
 test-results/
 playwright-report/
 *.z01

@@ -10,7 +10,7 @@ Historical Phase 1 inventory (superseded, retained):
 [`LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md`](LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md).
 
 Phase 6 evidence: [`PHASE_6_LEGACY_RETIREMENT.md`](PHASE_6_LEGACY_RETIREMENT.md).  
-ADR/PDR 0008: [`docs/adr/0008-frontend-design-system-phase-1.md`](../adr/0008-frontend-design-system-phase-1.md).  
+ADR/PDR 0008: [`docs/governance/decisions/adr/0008-frontend-design-system-phase-1.md`](../governance/decisions/adr/0008-frontend-design-system-phase-1.md).  
 Optional non-blocking follow-up: [`PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md`](PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md).
 
 ## Approved template exceptions (may still use legacy classes)

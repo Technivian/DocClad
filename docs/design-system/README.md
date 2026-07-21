@@ -19,8 +19,8 @@ generic document store, a marketing site, or an AI demonstration.
 
 When sources disagree, use this order:
 
-1. [`GOVERNANCE_CHARTER.md`](../../GOVERNANCE_CHARTER.md) (the CLM One Governance Charter).
-2. [`DESIGN_CONSTITUTION.md`](../../DESIGN_CONSTITUTION.md) — historical CMS Aegis v1.5 snapshot only.
+1. [`GOVERNANCE_CHARTER.md`](../governance/GOVERNANCE_CHARTER.md) (the active CLM One Governance Charter).
+2. [`DESIGN_CONSTITUTION.md`](../governance/archive/DESIGN_CONSTITUTION.md) — historical CMS Aegis v1.5 snapshot only.
 3. [Frontend Architecture](ARCHITECTURE.md).
 4. `theme/static/css/clmone-tokens.css`.
 5. Live components under `theme/templates/design_system/` and canonical
@@ -30,7 +30,7 @@ When sources disagree, use this order:
 Phase 6 (authenticated legacy retirement + anti-drift) is recorded in
 [PHASE_6_LEGACY_RETIREMENT.md](PHASE_6_LEGACY_RETIREMENT.md) and
 [LEGACY_COMPATIBILITY_INVENTORY.md](LEGACY_COMPATIBILITY_INVENTORY.md).
-ADR/PDR [0008](../adr/0008-frontend-design-system-phase-1.md) is marked
+ADR/PDR [0008](../governance/decisions/adr/0008-frontend-design-system-phase-1.md) is marked
 completed for the authenticated app. Optional public-shell follow-up:
 [PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md](PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md).
 The Phase 1 inventory is retained as superseded:

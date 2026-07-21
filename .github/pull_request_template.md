@@ -3,6 +3,10 @@
 - What changed:
 - Why:
 
+## Governance and agent context
+
+Before material product, architecture, design, security, workflow, AI, or engineering work, follow root [`AGENTS.md`](../AGENTS.md). The active Governance Charter is [`docs/governance/GOVERNANCE_CHARTER.md`](../docs/governance/GOVERNANCE_CHARTER.md). Accepted supporting docs (PDR-0003) remain subordinate to the active Charter. Proposed Charter v3 does not supersede approved governance until separately approved.
+
 ## Risk and Scope
 
 - Tenant isolation impact: `none | low | medium | high`

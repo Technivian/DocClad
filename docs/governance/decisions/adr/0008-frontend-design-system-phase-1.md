@@ -68,10 +68,10 @@ neutral change hard to validate and made calibration non-local.
 
 ## Evidence and inventories
 
-- Phase 6 evidence: [`docs/design-system/PHASE_6_LEGACY_RETIREMENT.md`](../design-system/PHASE_6_LEGACY_RETIREMENT.md)
-- Current inventory: [`docs/design-system/LEGACY_COMPATIBILITY_INVENTORY.md`](../design-system/LEGACY_COMPATIBILITY_INVENTORY.md)
-- Historical Phase 1 inventory (superseded): [`docs/design-system/LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md`](../design-system/LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md)
-- Optional follow-up (non-blocking): [`docs/design-system/PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md`](../design-system/PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md)
+- Phase 6 evidence: [`docs/design-system/PHASE_6_LEGACY_RETIREMENT.md`](../../../design-system/PHASE_6_LEGACY_RETIREMENT.md)
+- Current inventory: [`docs/design-system/LEGACY_COMPATIBILITY_INVENTORY.md`](../../../design-system/LEGACY_COMPATIBILITY_INVENTORY.md)
+- Historical Phase 1 inventory (superseded): [`docs/design-system/LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md`](../../../design-system/LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md)
+- Optional follow-up (non-blocking): [`docs/design-system/PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md`](../../../design-system/PHASE_6_1_PUBLIC_SHELL_FOLLOWUP.md)
 
 ## Approved exceptions (remain)
 

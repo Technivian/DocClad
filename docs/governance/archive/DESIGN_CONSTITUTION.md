@@ -2,8 +2,8 @@
 
 > **HISTORICAL — SUPERSEDED**
 >
-> Superseded by [`GOVERNANCE_CHARTER.md`](GOVERNANCE_CHARTER.md) on 2026-07-20
-> per [ADR-0009](docs/adr/0009-governance-charter-supersession.md).
+> Superseded by [`../GOVERNANCE_CHARTER.md`](../GOVERNANCE_CHARTER.md) on 2026-07-20
+> per [ADR-0009](../decisions/adr/0009-governance-charter-supersession.md).
 >
 > Retained for traceability only. **Do not implement** requirements from this
 > file when they conflict with the current CLM One Governance Charter.

@@ -40,6 +40,7 @@
     min-height: 0;
     height: 100%;
     padding: 12px;
+    padding-right: 12px;
     text-decoration: none;
     color: inherit;
     outline: none;
@@ -50,6 +51,28 @@
     box-shadow: var(--wtl-shadow);
     overflow: visible;
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+  .workflow-templates-page .template-tile__corner {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    max-width: calc(100% - 24px);
+  }
+  .workflow-templates-page .template-tile__body {
+    min-width: 0;
+    /* Reserve room for Live / badges / menu in the top-right corner. */
+    padding-right: 5.75rem;
+  }
+  .workflow-templates-page .template-tile:has(.template-tile__badge) .template-tile__body {
+    padding-right: 11.5rem;
+  }
+  .workflow-templates-page .template-tile:has(.template-tile__status):has(.template-tile__badge) .template-tile__body {
+    padding-right: 13.5rem;
   }
   .workflow-templates-page .template-tile.dc-ds-surface,
   .workflow-templates-page .template-tile.dc-ds-surface--interactive {
@@ -117,13 +140,15 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
+    width: 100%;
   }
   .workflow-templates-page .template-tile__title {
     margin: 0;
-    font-size: 14px;
+    min-width: 0;
+    font-size: 15px;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.35;
     color: var(--ink-900);
     letter-spacing: -0.01em;
     display: -webkit-box;
@@ -131,6 +156,7 @@
     -webkit-line-clamp: 2;
     line-clamp: 2;
     overflow: hidden;
+    padding-right: 0;
   }
   .workflow-templates-page .template-tile__badges {
     display: inline-flex;
@@ -386,6 +412,110 @@
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
   }
 
+  .workflow-templates-page .template-tile__status-cluster {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .workflow-templates-page .template-tile__badge {
+    display: inline-flex;
+    align-items: center;
+    max-width: 9.5rem;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--well, #f4f6f8) 80%, #fff);
+    color: var(--ink-700);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .workflow-templates-page .template-tile__badge--attention {
+    border-color: color-mix(in srgb, var(--status-pending-fg, #8a5a00) 28%, var(--line));
+    background: color-mix(in srgb, var(--status-pending-bg, #fff7e6) 70%, #fff);
+    color: var(--status-pending-fg, #8a5a00);
+  }
+  .workflow-templates-page .template-tile__badge--success {
+    border-color: color-mix(in srgb, var(--color-status-success-fg, #15803d) 28%, var(--line));
+    background: color-mix(in srgb, var(--color-status-success-bg, #ecfdf3) 70%, #fff);
+    color: var(--color-status-success-fg, #15803d);
+  }
+  .workflow-templates-page .template-tile__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--ink-600);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .workflow-templates-page .template-tile__status--live {
+    color: var(--color-status-success-fg, #15803d);
+  }
+  .workflow-templates-page .template-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    background: var(--ink-400, #94a3b8);
+  }
+  .workflow-templates-page .template-status-dot--live {
+    background: var(--color-status-success-fg, #15803d);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-status-success-fg, #15803d) 16%, transparent);
+  }
+  .workflow-templates-page .template-status-dot--draft {
+    background: var(--ink-400, #94a3b8);
+  }
+  .workflow-templates-page .template-tile__secondary {
+    margin: 6px 0 0;
+    color: var(--ink-500);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .workflow-templates-page .template-catalog-section {
+    margin-top: 20px;
+  }
+  .workflow-templates-page .template-catalog-section:first-of-type {
+    margin-top: 16px;
+  }
+  .workflow-templates-page .template-catalog-section__title {
+    margin: 0 0 10px;
+    color: var(--ink-700, var(--text-secondary));
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .workflow-templates-page .template-tile__icon,
+  .workflow-templates-page .template-tile__type,
+  .workflow-templates-page .template-tile__path,
+  .workflow-templates-page .template-tile__meta,
+  .workflow-templates-page .template-tile__badges,
+  .workflow-templates-page .template-tile__foot {
+    display: none !important;
+  }
+  .workflow-templates-page .template-tile__menu {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease;
+  }
+  .workflow-templates-page .template-tile:hover .template-tile__menu,
+  .workflow-templates-page .template-tile:focus-within .template-tile__menu,
+  .workflow-templates-page .template-tile.is-actions-open .template-tile__menu {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  @media (hover: none) {
+    .workflow-templates-page .template-tile__menu {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .workflow-templates-page .template-tile { transition: none; }
     .workflow-templates-page .template-tile:hover:not([aria-disabled="true"]) { transform: none; }
@@ -411,7 +541,7 @@
       <div class="clm-list-view-header">
         {% include "components/_workflow_designer_tabs.html" with tabs=hub_tabs %}
         <div class="clm-list-view-actions">
-          <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">Create template</a>
+          <a href="{% url 'contracts:workflow_template_create' %}" class="dc-ds-button dc-ds-button--primary">+ New workflow</a>
         </div>
       </div>
 
@@ -490,144 +620,35 @@
     </section>
   </form>
 
-  <div class="template-card-grid" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
-    {% for card in template_cards %}
-    <article
-      class="template-tile dc-ds-surface dc-ds-surface--interactive{% if card.is_incomplete %} is-incomplete{% endif %}"
-      data-template-id="{{ card.template.pk }}"
-      data-template-name="{{ card.name }}"
-      data-designer-url="{{ card.designer_url }}"
-      data-selectable="{% if card.selectable %}true{% else %}false{% endif %}"
-      {% if selection_mode %}
-      role="option"
-      tabindex="0"
-      aria-selected="false"
-      {% if not card.selectable %}aria-disabled="true"{% endif %}
-      aria-label="{% if card.selectable %}Select template {{ card.name }}{% else %}{{ card.name }}. {{ card.select_disabled_reason|default:card.incomplete_reason }}{% endif %}"
-      {% else %}
-      role="listitem"
-      tabindex="0"
-      aria-label="{% if card.is_incomplete %}Finish setup for {{ card.name }}{% else %}Open designer for {{ card.name }}{% endif %}"
-      {% endif %}
-    >
-      {% if selection_mode %}
-      <span class="template-tile__selected-label" aria-hidden="true">
-        {% include "design_system/icon.html" with name="check" %}
-        Selected
-      </span>
-      {% endif %}
-
-      <div class="template-tile__top">
-        <span class="template-tile__icon" aria-hidden="true">
-          {% include "design_system/icon.html" with name=card.icon_key class_name="dc-ds-icon" %}
-        </span>
-        <div class="template-tile__main">
-          <div class="template-tile__title-row">
-            <h3 class="template-tile__title">{{ card.name }}</h3>
-            <div class="template-tile__badges">
-              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ card.status_tone }}">{{ card.status_label }}</span>
-              <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ card.version_label }}</span>
-              {% if selection_mode and card.selectable %}
-              <span class="template-tile__select-mark" aria-hidden="true">{% include "design_system/icon.html" with name="check" %}</span>
-              {% endif %}
-            </div>
-          </div>
-          <p class="template-tile__type">{{ card.contract_type_label }}</p>
-        </div>
-      </div>
-
-      {% if not card.stages_empty %}
-      <div class="template-tile__path" aria-label="Workflow path">
-        {% for stage in card.stage_names %}
-          {% if not forloop.first %}<span class="template-tile__stage-join" aria-hidden="true"></span>{% endif %}
-          <span class="template-tile__stage">{{ stage }}</span>
+  {% if template_cards %}
+    {% if published_cards %}
+    <section class="template-catalog-section" aria-labelledby="wf-catalog-published">
+      <h2 class="template-catalog-section__title" id="wf-catalog-published">Published</h2>
+      <div class="template-card-grid" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Published workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
+        {% for card in published_cards %}
+          {% include "contracts/workflow_template_tile.html" %}
         {% endfor %}
-        {% if card.stage_more_count %}
-          <span class="template-tile__stage-join" aria-hidden="true"></span>
-          <span class="template-tile__stage template-tile__stage--more">+{{ card.stage_more_count }} more</span>
-        {% endif %}
       </div>
-      {% endif %}
-
-      {% if card.is_incomplete and card.incomplete_reason %}
-      <p class="template-tile__setup">{{ card.incomplete_reason }}</p>
-      {% elif selection_mode and not card.selectable and card.select_disabled_reason %}
-      <p class="template-tile__setup">{{ card.select_disabled_reason }}</p>
-      {% endif %}
-
-      <p class="template-tile__meta">
-        Updated {{ card.updated_at|date:"j M Y" }}
-        <span class="template-tile__meta-sep"></span>Used by {{ card.active_workflow_count }}
-        {% if card.show_owner %}
-        <span class="template-tile__meta-sep"></span>Owner {{ card.owner_label }}
-        {% endif %}
-        {% if card.has_unpublished_changes %}
-        <span class="template-tile__meta-sep"></span>Unpublished changes
-        {% endif %}
-      </p>
-
-      <div class="template-tile__foot">
-        {% if selection_mode %}
-          {% if card.selectable %}
-          <span class="template-tile__cta" aria-hidden="true">Select template →</span>
-          {% else %}
-          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Unavailable{% endif %}</span>
-          {% endif %}
-        {% else %}
-          <span class="template-tile__cta" aria-hidden="true">{% if card.is_incomplete %}Finish setup →{% else %}Open designer →{% endif %}</span>
-        {% endif %}
-
-        <div class="template-tile__actions">
-          <a
-            href="{{ card.designer_url }}"
-            class="template-tile__action js-tile-action"
-            data-stop-tile="true"
-            aria-label="Open designer for {{ card.name }}"
-            title="Open designer"
-          >
-            {% include "design_system/icon.html" with name="edit" %}
-          </a>
-          <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" class="js-tile-action" data-stop-tile="true">
-            {% csrf_token %}
-            <button type="submit" class="template-tile__action" aria-label="Duplicate {{ card.name }}" title="Duplicate">
-              {% include "design_system/icon.html" with name="copy" %}
-            </button>
-          </form>
-          <details class="template-tile__menu js-tile-action" data-stop-tile="true">
-            <summary aria-label="More actions for {{ card.name }}">⋯</summary>
-            <div class="template-tile__menu-panel" role="menu">
-              <a href="{{ card.designer_url }}" class="template-tile__menu-item" role="menuitem">Open designer</a>
-              <form method="post" action="{% url 'contracts:workflow_template_duplicate' card.template.pk %}" role="none">{% csrf_token %}
-                <button type="submit" class="template-tile__menu-item" role="menuitem">Duplicate</button>
-              </form>
-              <form method="post" action="{% url 'contracts:workflow_template_clone_version' card.template.pk %}" role="none">{% csrf_token %}
-                <button type="submit" class="template-tile__menu-item" role="menuitem">New version</button>
-              </form>
-              <a href="{{ card.designer_url }}#version-history" class="template-tile__menu-item" role="menuitem">View versions</a>
-              <a href="{% url 'contracts:workflow_template_preview' card.template.pk %}" class="template-tile__menu-item" role="menuitem">Test</a>
-              {% if card.is_published %}
-              <form method="post" action="{% url 'contracts:workflow_template_archive' card.template.pk %}" role="none">{% csrf_token %}
-                <button type="submit" class="template-tile__menu-item" role="menuitem">Archive</button>
-              </form>
-              {% endif %}
-              {% if card.can_delete %}
-              <form method="post" action="{% url 'contracts:workflow_template_delete' card.template.pk %}" role="none" onsubmit="return confirm('Delete this template? This cannot be undone.');">{% csrf_token %}
-                <button type="submit" class="template-tile__menu-item template-tile__menu-item--danger" role="menuitem">Delete</button>
-              </form>
-              {% endif %}
-            </div>
-          </details>
-        </div>
+    </section>
+    {% endif %}
+    {% if unpublished_cards %}
+    <section class="template-catalog-section" aria-labelledby="wf-catalog-unpublished">
+      <h2 class="template-catalog-section__title" id="wf-catalog-unpublished">Drafts</h2>
+      <div class="template-card-grid" role="{% if selection_mode %}listbox{% else %}list{% endif %}" aria-label="Draft workflow templates"{% if selection_mode %} aria-multiselectable="false"{% endif %}>
+        {% for card in unpublished_cards %}
+          {% include "contracts/workflow_template_tile.html" %}
+        {% endfor %}
       </div>
-    </article>
-    {% empty %}
+    </section>
+    {% endif %}
+  {% else %}
+  <div class="template-card-grid" role="list" aria-label="Workflow templates">
     {% url 'contracts:workflow_template_create' as workflow_template_create_url %}
     <div class="col-span-full" style="grid-column: 1 / -1;">
-      {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules in Workflow Designer." action_url=workflow_template_create_url action_label="Create first template" %}
+      {% include "design_system/empty_state.html" with icon="workflow" title="No workflow templates yet" reason="This workspace has no reusable approval or review blueprint." how="Templates appear here after an administrator defines the stages, owners, and routing rules in Workflow Designer." action_url=workflow_template_create_url action_label="New workflow" %}
     </div>
-    {% endfor %}
   </div>
-
+  {% endif %}
   {% if selection_mode %}
   <div class="template-selection-bar" id="template-selection-bar" aria-live="polite" hidden>
     <div class="template-selection-bar__copy">

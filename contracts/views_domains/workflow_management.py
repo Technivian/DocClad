@@ -143,6 +143,8 @@ def _workflow_template_list_context(request, templates_qs):
     )
     templates = list(filtered)
     cards = [build_template_card(template) for template in templates]
+    published_cards = [card for card in cards if card.get('is_published')]
+    unpublished_cards = [card for card in cards if not card.get('is_published')]
     filter_q = (params.get('q') or '').strip()
     filter_contract_type = (params.get('contract_type') or '').strip()
     filter_status = (params.get('status') or '').strip()
@@ -162,6 +164,8 @@ def _workflow_template_list_context(request, templates_qs):
     return {
         'workflow_templates': templates,
         'template_cards': cards,
+        'published_cards': published_cards,
+        'unpublished_cards': unpublished_cards,
         'result_count': len(cards),
         'hub_tabs': workflow_hub_tabs(active='templates'),
         'filter_q': filter_q,
@@ -283,6 +287,29 @@ class WorkflowTemplateUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
 
     def get_queryset(self):
         return _workflow_template_queryset_for_organization(self.get_organization())
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['template_queryset'] = self.get_queryset()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        after_duplicate = self.request.GET.get('after_duplicate') == '1'
+        ctx.update({
+            'hub_tabs': workflow_hub_tabs(active='templates'),
+            'hide_app_footer': True,
+            'is_update': True,
+            'after_duplicate': after_duplicate,
+            'form_title': 'Rename duplicated template' if after_duplicate else 'Edit template',
+            'form_subtitle': (
+                'Give this copy a clear name, then open Workflow Designer to continue.'
+                if after_duplicate
+                else 'Update the template name, description, or contract type.'
+            ),
+            'submit_label': 'Save name and open designer' if after_duplicate else 'Save and open designer',
+        })
+        return ctx
 
     def get_success_url(self):
         return reverse_lazy('contracts:workflow_template_detail', kwargs={'pk': self.object.pk})
@@ -914,8 +941,13 @@ def workflow_template_duplicate(request, pk):
     set_organization_on_instance(clone, organization or template.organization)
     clone.save(update_fields=['organization'])
     log_workflow_template_created(clone, request.user, request=request)
-    messages.success(request, f'Duplicated “{template.name}” as “{clone.name}”.')
-    return redirect('contracts:workflow_template_detail', pk=clone.pk)
+    messages.info(
+        request,
+        f'Duplicated as “{clone.name}”. Rename it now so it stays easy to find.',
+    )
+    return redirect(
+        reverse('contracts:workflow_template_update', kwargs={'pk': clone.pk}) + '?after_duplicate=1'
+    )
 
 
 @login_required
@@ -2890,7 +2922,7 @@ def _workflow_template_detail_context(
             issue for issue in publish_validation.warnings
             if issue.get('step_id') == selected_step.pk
         ]
-    lifecycle_label = 'Published' if is_published else 'Draft'
+    lifecycle_label = 'Live' if is_published else 'Not published'
     if published_has_blocking_issues:
         validation_status_label = 'Configuration issue'
         validation_status_tone = 'attention'
@@ -2903,7 +2935,13 @@ def _workflow_template_detail_context(
     else:
         validation_status_label = 'Valid'
         validation_status_tone = 'success'
-    edit_state_label = 'Editable' if can_mutate else 'Read-only'
+    if can_mutate:
+        edit_state_label = 'Editable'
+    elif is_published:
+        edit_state_label = 'Read-only published version'
+    else:
+        edit_state_label = 'Read-only'
+    issue_badge_count = blocking_count + warning_count
 
     active_workflow_usage_count = Workflow.objects.filter(
         template=template,
@@ -2948,6 +2986,7 @@ def _workflow_template_detail_context(
         'validation_status_label': validation_status_label,
         'validation_status_tone': validation_status_tone,
         'edit_state_label': edit_state_label,
+        'issue_badge_count': issue_badge_count,
         'selected_step_issues': selected_step_issues,
         'selected_step_warnings': selected_step_warnings,
         'can_publish': publish_validation.ok and not is_published and can_mutate,

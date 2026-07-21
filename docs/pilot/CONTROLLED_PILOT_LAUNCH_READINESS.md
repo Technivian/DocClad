@@ -1,7 +1,7 @@
 # Controlled Pilot Launch Readiness
 
 **Date:** 2026-07-20  
-**Authority:** `GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001, PDR-0002, `docs/audits/PILOT_VERIFICATION_GATE_2026-07-20.md`, `docs/pilot/CONTROLLED_PILOT_OPERATIONS.md`  
+**Authority:** `docs/governance/GOVERNANCE_CHARTER.md` v2.0, ADR-0009, PDR-0001 (finance threshold), PDR-0002, `docs/audits/PILOT_VERIFICATION_GATE_2026-07-20.md`, `docs/pilot/CONTROLLED_PILOT_OPERATIONS.md`  
 **Production / enterprise readiness:** Not claimed
 
 ---
