@@ -100,6 +100,14 @@ EXCLUDE_FILES=(
   'QA_CHECKLIST.md'
   'TECH_DEBT.md'
   'DECISIONS.md'
+  # Canonical governance charter — deliberately retains legacy-brand references
+  # only in its migration/supersession/traceability notes (see the file header).
+  'GOVERNANCE_CHARTER.md'
+  # Internal readiness/audit reports — legacy-brand strings appear as tracked
+  # audit findings (issues to remediate) and negative "not found" assertions,
+  # not as product surface copy.
+  'PRE_DEMO_READINESS_REPORT.md'
+  'PAYROLLMINDS_CLM_READINESS_AUDIT.md'
 )
 
 # Build grep exclude args
