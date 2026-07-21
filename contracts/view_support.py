@@ -146,16 +146,71 @@ def organization_user_queryset(organization):
     ).distinct()
 
 
-def reassign_member_options(organization):
-    """Active org members for manager reassignment pickers (id + display label)."""
+def open_work_count_by_user(organization):
+    """Open actionable work counts keyed by assignee user id (approvals, tasks, obligations)."""
+    from django.db.models import Count
+
+    from contracts.models import ApprovalRequest, Deadline, LegalTask
+    from contracts.tenancy import scope_queryset_for_organization
+
+    if organization is None:
+        return {}
+    counts = {}
+
+    def _add(user_id, n):
+        if not user_id:
+            return
+        counts[user_id] = counts.get(user_id, 0) + int(n or 0)
+
+    approvals = scope_queryset_for_organization(
+        ApprovalRequest.objects.filter(
+            status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
+        ),
+        organization,
+    )
+    for row in approvals.values('assigned_to_id').annotate(c=Count('id')):
+        _add(row['assigned_to_id'], row['c'])
+    for row in approvals.exclude(delegated_to_id=None).values('delegated_to_id').annotate(c=Count('id')):
+        _add(row['delegated_to_id'], row['c'])
+
+    tasks = LegalTask.objects.for_organization(organization).filter(
+        status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS],
+    )
+    for row in tasks.values('assigned_to_id').annotate(c=Count('id')):
+        _add(row['assigned_to_id'], row['c'])
+
+    obligations = (
+        Deadline.objects.for_organization(organization)
+        .filter(is_completed=False)
+        .values('assigned_to_id')
+        .annotate(c=Count('id'))
+    )
+    for row in obligations:
+        _add(row['assigned_to_id'], row['c'])
+
+    return counts
+
+
+def reassign_member_options(organization, *, include_workload=True):
+    """Active org members for manager reassignment pickers (id + display label + open work)."""
     users = organization_user_queryset(organization).order_by('first_name', 'last_name', 'username')
+    workload = open_work_count_by_user(organization) if include_workload else {}
     options = []
     for user in users:
         full = (user.get_full_name() or '').strip()
         label = full or user.username
         if full and user.username and full.lower() != user.username.lower():
             label = f'{full} ({user.username})'
-        options.append({'id': user.pk, 'label': label, 'username': user.username})
+        open_count = int(workload.get(user.pk, 0))
+        options.append({
+            'id': user.pk,
+            'label': label,
+            'username': user.username,
+            'open_count': open_count,
+            'search': f'{label} {user.username}'.lower(),
+        })
+    # Lightest workload first, then name — helps managers rebalance.
+    options.sort(key=lambda row: (row['open_count'], row['label'].casefold()))
     return options
 
 

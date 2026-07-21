@@ -112,6 +112,11 @@ urlpatterns = [
     path('api/approvals/<int:approval_id>/request-changes/', api_views.approval_request_changes_api, name='approval_request_changes_api'),
     path('api/approvals/<int:approval_id>/delegate/', api_views.approval_delegate_api, name='approval_delegate_api'),
     path('api/approvals/<int:approval_id>/reassign/', api_views.approval_reassign_api, name='approval_reassign_api'),
+    path(
+        'api/approvals/<int:approval_id>/suggest-decision-comment/',
+        api_views.approval_suggest_decision_api,
+        name='approval_suggest_decision_api',
+    ),
     path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
     path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
 

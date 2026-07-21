@@ -43,6 +43,8 @@ class Phase10ReassignPickerTests(TestCase):
         teammate = next(row for row in options if row["id"] == self.teammate.pk)
         self.assertIn("Tess", teammate["label"])
         self.assertEqual(teammate["username"], "picker_teammate")
+        self.assertIn("open_count", teammate)
+        self.assertIn("search", teammate)
 
     def test_my_work_admin_gets_reassign_members_and_dialog(self):
         self.client.login(username="picker_admin", password="pass")
@@ -54,7 +56,11 @@ class Phase10ReassignPickerTests(TestCase):
         content = response.content.decode()
         self.assertIn("my-work-reassign-dialog", content)
         self.assertIn("data-reassign-assignee", content)
+        self.assertIn("data-reassign-search", content)
+        self.assertIn("data-reassign-options", content)
         self.assertIn("reassign-members-data", content)
+        self.assertIn("my-work-decision-dialog", content)
+        self.assertIn("data-decision-suggest", content)
         self.assertNotIn("Enter the new assignee user id", content)
         self.assertNotIn("User ID:", content)
 
@@ -74,5 +80,20 @@ class Phase10ReassignPickerTests(TestCase):
         content = response.content.decode()
         self.assertIn("approvals-reassign-dialog", content)
         self.assertIn("data-reassign-assignee", content)
+        self.assertIn("data-reassign-search", content)
         self.assertIn("openReassignDialog", content)
+        self.assertIn("approvals-decision-dialog", content)
+        self.assertIn("openDecisionCommentDialog", content)
         self.assertNotIn("Enter user ID", content)
+
+    def test_my_work_team_queue_toggle_for_admin(self):
+        self.client.login(username="picker_admin", password="pass")
+        response = self.client.get(reverse("contracts:my_work") + "?scope=team")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["can_view_team_queue"])
+        self.assertEqual(response.context["work_scope"], "team")
+        content = response.content.decode()
+        self.assertIn("Team queue", content)
+        self.assertIn("Open work across your organization", content)
+        self.assertIn("data-col=\"assignee\"", content)
+        self.assertIn("my-work-filter-assignee", content)

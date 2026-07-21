@@ -288,6 +288,33 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
         key=lambda item: (-item['overdue_rate'], -item['overdue'], item['work_kind']),
     )[:8]
 
+    # Daily activity series for work-health charts (last N days, inclusive).
+    day_count = max(1, min(int(days or 30), 180))
+    day_buckets = {
+        (since.date() + timedelta(days=offset)).isoformat(): {
+            'day': (since.date() + timedelta(days=offset)).isoformat(),
+            'surfaced': 0,
+            'completed': 0,
+            'returned': 0,
+            'rejected': 0,
+        }
+        for offset in range(day_count + 1)
+    }
+    for row in events.filter(event__in=['surfaced', 'completed', 'returned', 'rejected']).values(
+        'event', 'occurred_at',
+    ):
+        occurred = row.get('occurred_at')
+        if not occurred:
+            continue
+        key = timezone.localtime(occurred).date().isoformat() if timezone.is_aware(occurred) else occurred.date().isoformat()
+        bucket = day_buckets.get(key)
+        if not bucket:
+            continue
+        event_name = row.get('event') or ''
+        if event_name in bucket:
+            bucket[event_name] += 1
+    daily_activity = [day_buckets[k] for k in sorted(day_buckets.keys())]
+
     return {
         'window_days': days,
         'generated_at': timezone.now().isoformat(),
@@ -313,6 +340,7 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             'bottlenecks': bottlenecks,
             'sla_breaches': sla_breaches,
             'audit_sla_breaches': audit_breaches,
+            'daily_activity': daily_activity,
         },
     }
 

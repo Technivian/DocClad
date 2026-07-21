@@ -93,53 +93,61 @@ QUEUE_EMPTY_PERSONAL = {
 }
 
 
-def pending_approvals_queryset(organization, user, *, queryset=None):
-    """Approvals pending on the signed-in user (assignee or delegate)."""
+def pending_approvals_queryset(organization, user, *, queryset=None, scope='personal'):
+    """Approvals pending on the signed-in user (or org-wide for team scope)."""
     qs = queryset or scope_queryset_for_organization(
         ApprovalRequest.objects.select_related(
             'contract', 'contract__created_by', 'assigned_to', 'delegated_to',
         ),
         organization,
     )
-    return qs.filter(
-        Q(assigned_to=user) | Q(delegated_to=user),
+    qs = qs.filter(
         status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
     )
+    if scope != 'team':
+        qs = qs.filter(Q(assigned_to=user) | Q(delegated_to=user))
+    return qs
 
 
-def open_tasks_queryset(organization, user, *, queryset=None):
-    """Open legal tasks assigned to the signed-in user."""
+def open_tasks_queryset(organization, user, *, queryset=None, scope='personal'):
+    """Open legal tasks assigned to the signed-in user (or org-wide for team scope)."""
     if organization is None:
         return LegalTask.objects.none()
     qs = queryset or LegalTask.objects.select_related(
         'contract', 'matter', 'assigned_to',
     ).filter(Q(contract__organization=organization) | Q(matter__organization=organization))
-    return qs.filter(
-        assigned_to=user,
-        status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS],
-    )
+    qs = qs.filter(status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS])
+    if scope != 'team':
+        qs = qs.filter(assigned_to=user)
+    return qs
 
 
-def open_obligations_queryset(organization, user):
-    """Incomplete obligations owned by the signed-in user."""
+def open_obligations_queryset(organization, user, *, scope='personal'):
+    """Incomplete obligations owned by the signed-in user (or org-wide for team scope)."""
     if organization is None:
         return Deadline.objects.none()
-    return (
+    qs = (
         Deadline.objects.for_organization(organization)
         .select_related('matter', 'contract', 'assigned_to', 'created_by')
-        .filter(assigned_to=user, is_completed=False)
+        .filter(is_completed=False)
     )
+    if scope != 'team':
+        qs = qs.filter(assigned_to=user)
+    return qs
 
 
-def reviewer_privacy_packs_queryset(organization, user):
-    """Non-approved DPA review packs assigned to the signed-in reviewer."""
+def reviewer_privacy_packs_queryset(organization, user, *, scope='personal'):
+    """Non-approved DPA review packs assigned to the signed-in reviewer (or org-wide)."""
     if organization is None:
         return DPAReviewPack.objects.none()
-    return (
-        DPAReviewPack.objects.filter(organization=organization, reviewer=user)
+    qs = (
+        DPAReviewPack.objects.filter(organization=organization)
         .exclude(approval_status__in=[DPAReviewPack.ApprovalStatus.APPROVED])
         .select_related('contract', 'counterparty', 'reviewer')
     )
+    if scope != 'team':
+        qs = qs.filter(reviewer=user)
+    return qs
 
 
 def _date_only(value):
@@ -483,7 +491,16 @@ def _attach_activity(rows, org):
         row['recent_activity'] = f'{actor} {log.get_action_display().lower()} {log.model_name}'
 
 
-def _collect_approval_rows(org, user, today):
+def _assignee_fields(assignee):
+    if assignee is None:
+        return {'assignee_id': None, 'assignee_label': 'Unassigned'}
+    return {
+        'assignee_id': assignee.pk,
+        'assignee_label': assignee.get_full_name() or assignee.username,
+    }
+
+
+def _collect_approval_rows(org, user, today, *, scope='personal'):
     from contracts.services.governance_ux import approval_blocker_for_request, sla_priority_reason
 
     rows = []
@@ -493,7 +510,7 @@ def _collect_approval_rows(org, user, today):
         ),
         org,
     )
-    pending = pending_approvals_queryset(org, user, queryset=qs)
+    pending = pending_approvals_queryset(org, user, queryset=qs, scope=scope)
     pending_list = list(pending)
     # Sibling open steps on the same contract — used for prior-step blockers.
     contract_ids = {a.contract_id for a in pending_list if a.contract_id}
@@ -569,6 +586,9 @@ def _collect_approval_rows(org, user, today):
                 row['return_url'] = reverse(
                     'contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk},
                 )
+                row['suggest_decision_url'] = reverse(
+                    'contracts:approval_suggest_decision_api', kwargs={'approval_id': approval.pk},
+                )
             can_reassign = (
                 approval.status in (ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED)
                 and can_manage_organization(user, org)
@@ -583,7 +603,13 @@ def _collect_approval_rows(org, user, today):
                     (approval.assigned_to.get_full_name() or approval.assigned_to.username)
                     if approval.assigned_to_id else 'unassigned'
                 )
+            row.update(_assignee_fields(
+                approval.delegated_to if approval.delegated_to_id else approval.assigned_to
+            ))
         rows.append(row)
+
+    if scope == 'team':
+        return rows
 
     returned = qs.filter(
         status=ApprovalRequest.Status.CHANGES_REQUESTED,
@@ -649,11 +675,11 @@ def _collect_approval_rows(org, user, today):
     return rows
 
 
-def _collect_task_rows(org, user, today):
+def _collect_task_rows(org, user, today, *, scope='personal'):
     from contracts.services.governance_ux import sla_priority_reason
 
     rows = []
-    tasks = open_tasks_queryset(org, user)
+    tasks = open_tasks_queryset(org, user, scope=scope)
     for task in tasks:
         contract = task.contract
         due = _date_only(task.due_date)
@@ -694,15 +720,17 @@ def _collect_task_rows(org, user, today):
         ):
             row['can_complete'] = True
             row['complete_url'] = reverse('contracts:legal_task_complete', kwargs={'pk': task.pk})
+        if not row.get('is_restricted'):
+            row.update(_assignee_fields(task.assigned_to))
         rows.append(row)
     return rows
 
 
-def _collect_obligation_rows(org, user, today):
+def _collect_obligation_rows(org, user, today, *, scope='personal'):
     from contracts.services.governance_ux import obligation_blocker_for_deadline, sla_priority_reason
 
     rows = []
-    deadlines = open_obligations_queryset(org, user)
+    deadlines = open_obligations_queryset(org, user, scope=scope)
     for deadline in deadlines:
         contract = deadline.contract
         title = deadline.title
@@ -755,15 +783,17 @@ def _collect_obligation_rows(org, user, today):
                 row['complete_url'] = reverse('contracts:deadline_complete', kwargs={'pk': deadline.pk})
                 row['defer_url'] = reverse('contracts:deadline_defer', kwargs={'pk': deadline.pk})
                 row['escalate_url'] = reverse('contracts:deadline_escalate', kwargs={'pk': deadline.pk})
+        if not row.get('is_restricted'):
+            row.update(_assignee_fields(deadline.assigned_to))
         rows.append(row)
     return rows
 
 
-def _collect_privacy_rows(org, user, today):
+def _collect_privacy_rows(org, user, today, *, scope='personal'):
     from contracts.services.governance_ux import privacy_blocker_for_pack
 
     rows = []
-    packs = reviewer_privacy_packs_queryset(org, user).prefetch_related('risk_items')
+    packs = reviewer_privacy_packs_queryset(org, user, scope=scope).prefetch_related('risk_items')
     for pack in packs:
         contract = pack.contract
         risk_items = list(pack.risk_items.all())
@@ -815,15 +845,19 @@ def _collect_privacy_rows(org, user, today):
         )
         if not row.get('is_restricted') and conflict_count:
             row['risks_href'] = risks_href
+        if not row.get('is_restricted'):
+            row.update(_assignee_fields(pack.reviewer))
         rows.append(row)
 
-    conflicts = (
-        DPARiskItem.objects
-        .filter(review_pack__organization=org, review_pack__reviewer=user, is_cross_document_conflict=True)
-        .exclude(status__in=['RESOLVED', 'FALSE_POSITIVE'])
-        .select_related('review_pack', 'review_pack__contract')
+    conflict_qs = DPARiskItem.objects.filter(
+        review_pack__organization=org,
+        is_cross_document_conflict=True,
+    ).exclude(status__in=['RESOLVED', 'FALSE_POSITIVE']).select_related(
+        'review_pack', 'review_pack__contract', 'review_pack__reviewer',
     )
-    for item in conflicts:
+    if scope != 'team':
+        conflict_qs = conflict_qs.filter(review_pack__reviewer=user)
+    for item in conflict_qs:
         pack = item.review_pack
         contract = pack.contract
         risks_href = f"{reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})}?tab=risks"
@@ -852,22 +886,25 @@ def _collect_privacy_rows(org, user, today):
             row['can_resolve_conflict'] = True
             row['conflict_status_url'] = status_url
             row['risks_href'] = risks_href
+            row.update(_assignee_fields(pack.reviewer))
         rows.append(row)
     return rows
 
 
-def _collect_review_rows(org, user, today):
+def _collect_review_rows(org, user, today, *, scope='personal'):
     rows = []
     findings = (
         ContractReviewFinding.objects
-        .filter(contract__organization=org, assigned_reviewer=user)
+        .filter(contract__organization=org)
         .exclude(status__in=['RESOLVED', 'DISMISSED'])
-        .select_related('contract', 'created_by')
+        .select_related('contract', 'created_by', 'assigned_reviewer')
     )
+    if scope != 'team':
+        findings = findings.filter(assigned_reviewer=user)
     for finding in findings:
         contract = finding.contract
         is_question = finding.status == ContractReviewFinding.Status.INFORMATION_REQUESTED
-        rows.append(_base_row(
+        row = _base_row(
             row_id=f'finding:{finding.pk}',
             title=finding.title,
             work_kind='question' if is_question else 'finding',
@@ -888,17 +925,19 @@ def _collect_review_rows(org, user, today):
             priority_value=finding.severity,
             reference=f'FIND-{finding.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted'):
+            row.update(_assignee_fields(finding.assigned_reviewer))
+        rows.append(row)
     return rows
 
 
-def _collect_workflow_step_rows(org, user, today):
+def _collect_workflow_step_rows(org, user, today, *, scope='personal'):
     rows = []
     steps = (
         WorkflowStep.objects
         .filter(
             workflow__organization=org,
-            assigned_to=user,
             status__in=[
                 WorkflowStep.Status.PENDING,
                 WorkflowStep.Status.IN_PROGRESS,
@@ -907,10 +946,12 @@ def _collect_workflow_step_rows(org, user, today):
         )
         .select_related('workflow', 'workflow__contract', 'assigned_to')
     )
+    if scope != 'team':
+        steps = steps.filter(assigned_to=user)
     for step in steps:
         contract = step.workflow.contract if step.workflow else None
         blocked = bool(step.blocked_reason)
-        rows.append(_base_row(
+        row = _base_row(
             row_id=f'workflow-step:{step.pk}',
             title=step.name,
             work_kind='review',
@@ -932,7 +973,10 @@ def _collect_workflow_step_rows(org, user, today):
             priority_value='HIGH' if step.status == WorkflowStep.Status.ESCALATED else 'MEDIUM',
             reference=f'WF-{step.pk}',
             today=today,
-        ))
+        )
+        if not row.get('is_restricted'):
+            row.update(_assignee_fields(step.assigned_to))
+        rows.append(row)
     return rows
 
 
@@ -960,20 +1004,21 @@ def build_summary_counts(rows):
     return counts
 
 
-def get_active_work_items(organization, user, *, today=None):
+def get_active_work_items(organization, user, *, today=None, scope='personal'):
     if organization is None or user is None or not getattr(user, 'is_authenticated', False):
         return []
     if get_active_org_membership(user, organization) is None:
         return []
 
+    scope = 'team' if scope == 'team' else 'personal'
     today = today or timezone.localdate()
     rows = []
-    rows.extend(_collect_approval_rows(organization, user, today))
-    rows.extend(_collect_task_rows(organization, user, today))
-    rows.extend(_collect_obligation_rows(organization, user, today))
-    rows.extend(_collect_privacy_rows(organization, user, today))
-    rows.extend(_collect_review_rows(organization, user, today))
-    rows.extend(_collect_workflow_step_rows(organization, user, today))
+    rows.extend(_collect_approval_rows(organization, user, today, scope=scope))
+    rows.extend(_collect_task_rows(organization, user, today, scope=scope))
+    rows.extend(_collect_obligation_rows(organization, user, today, scope=scope))
+    rows.extend(_collect_privacy_rows(organization, user, today, scope=scope))
+    rows.extend(_collect_review_rows(organization, user, today, scope=scope))
+    rows.extend(_collect_workflow_step_rows(organization, user, today, scope=scope))
     rows = _dedupe_rows(rows)
     _attach_activity(rows, organization)
     org_overdue_rates = None
@@ -1080,19 +1125,29 @@ def build_filter_options(rows):
     contract_types = sorted({row['contract_type'] for row in rows if row.get('contract_type')})
     counterparties = sorted({row['counterparty'] for row in rows if row.get('counterparty')})
     assigners = []
-    seen = set()
+    assignees = []
+    seen_assigners = set()
+    seen_assignees = set()
     for row in rows:
         user = row.get('assigned_by')
-        if not user or user.pk in seen:
-            continue
-        seen.add(user.pk)
-        assigners.append({
-            'id': user.pk,
-            'label': user.get_full_name() or user.username,
-        })
+        if user and user.pk not in seen_assigners:
+            seen_assigners.add(user.pk)
+            assigners.append({
+                'id': user.pk,
+                'label': user.get_full_name() or user.username,
+            })
+        assignee_id = row.get('assignee_id')
+        if assignee_id and assignee_id not in seen_assignees:
+            seen_assignees.add(assignee_id)
+            assignees.append({
+                'id': assignee_id,
+                'label': row.get('assignee_label') or f'User {assignee_id}',
+            })
     assigners.sort(key=lambda item: item['label'].casefold())
+    assignees.sort(key=lambda item: item['label'].casefold())
     return {
         'contract_types': contract_types,
         'counterparties': counterparties,
         'assigners': assigners,
+        'assignees': assignees,
     }

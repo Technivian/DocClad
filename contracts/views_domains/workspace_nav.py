@@ -163,8 +163,13 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
         load_error = False
         active_rows = []
         completed_rows = []
+        from contracts.permissions import can_manage_organization
+        can_team = bool(organization and can_manage_organization(user, organization))
+        scope = self.request.GET.get('scope', 'personal')
+        if scope != 'team' or not can_team:
+            scope = 'personal'
         try:
-            active_rows = get_active_work_items(organization, user, today=today)
+            active_rows = get_active_work_items(organization, user, today=today, scope=scope)
             completed_rows = get_recently_completed_items(organization, user, today=today)
         except Exception:
             load_error = True
@@ -203,6 +208,8 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             'work_type_choices': WORK_TYPE_CHOICES,
             'filter_options': filter_options,
             'view_mode': view_mode,
+            'work_scope': scope,
+            'can_view_team_queue': can_team,
             'load_error': load_error,
             'last_updated': timezone.now(),
             'recently_completed_days': RECENTLY_COMPLETED_DAYS,
@@ -233,14 +240,13 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
                 }
                 for v in saved
             ])
-        from contracts.permissions import can_manage_organization
         from contracts.view_support import reassign_member_options
-        members = (
-            reassign_member_options(organization)
-            if organization and can_manage_organization(user, organization)
-            else []
-        )
+        from contracts.services.ai_decision_assist import ai_decision_assist_enabled
+        members = reassign_member_options(organization) if can_team else []
         ctx['reassign_members'] = members
+        ctx['decision_assist_enabled'] = bool(organization and ai_decision_assist_enabled(organization))
+        # Template suggestions always available for reject/return (even when Gemini is off).
+        ctx['decision_suggest_available'] = True
         return ctx
 
     def render_to_response(self, context, **response_kwargs):

@@ -869,6 +869,9 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                     'reject_url': reverse('contracts:approval_reject_api', kwargs={'approval_id': approval.pk}),
                     'return_url': reverse('contracts:approval_request_changes_api', kwargs={'approval_id': approval.pk}),
                     'reassign_url': reverse('contracts:approval_reassign_api', kwargs={'approval_id': approval.pk}),
+                    'suggest_decision_url': reverse(
+                        'contracts:approval_suggest_decision_api', kwargs={'approval_id': approval.pk},
+                    ),
                     'current_assignee_id': approval.assigned_to_id,
                     'edit_url': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
                 })

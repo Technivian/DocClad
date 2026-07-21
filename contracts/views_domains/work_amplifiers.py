@@ -52,6 +52,20 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             }
         rbf = metrics.get('restricted_blocked_frequency') or {}
         completed_pct = metrics.get('completed_from_my_work_pct')
+        completed_display = (
+            round(float(completed_pct) * 100) if completed_pct is not None else None
+        )
+        daily_series = metrics.get('daily_activity') or []
+        daily_series_max = 1
+        for day in daily_series:
+            day_total = (
+                int(day.get('surfaced') or 0)
+                + int(day.get('completed') or 0)
+                + int(day.get('returned') or 0)
+                + int(day.get('rejected') or 0)
+            )
+            if day_total > daily_series_max:
+                daily_series_max = day_total
         ctx.update({
             'organization': org,
             'report': report,
@@ -60,9 +74,12 @@ class WorkHealthReportView(LoginRequiredMixin, TemplateView):
             'return_reject_by_type': return_reject,
             'sla_breaches': metrics.get('sla_breaches') or [],
             'blocked_rate_pct': round(float(rbf.get('blocked_rate') or 0) * 100),
-            'completed_from_my_work_pct_display': (
-                round(float(completed_pct) * 100) if completed_pct is not None else None
+            'completed_from_my_work_pct_display': completed_display,
+            'hub_completion_healthy': (
+                completed_display is not None and completed_display >= 40
             ),
+            'daily_series': daily_series,
+            'daily_series_max': daily_series_max,
             'window_days': days,
             'hide_app_footer': True,
         })

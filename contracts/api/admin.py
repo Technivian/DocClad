@@ -523,6 +523,32 @@ def approval_reassign_api(request, approval_id):
 
 
 @login_required
+@require_http_methods(['POST'])
+def approval_suggest_decision_api(request, approval_id):
+    """Suggest a reject/return comment — never auto-submits the decision."""
+    from contracts.services.ai_decision_assist import suggest_approval_decision_comment
+    from contracts.services.approval_workflow import actor_can_decide
+    from contracts.tenancy import scope_queryset_for_organization
+
+    data = json.loads(request.body or '{}')
+    decision = (data.get('decision') or 'return').strip().lower()
+    org = get_user_organization(request.user)
+    approval = scope_queryset_for_organization(
+        ApprovalRequest.objects.select_related('contract', 'organization'),
+        org,
+    ).filter(pk=approval_id).first()
+    if approval is None:
+        return JsonResponse({'error': 'Not found'}, status=404)
+    if not actor_can_decide(approval, request.user, 'approve'):
+        return JsonResponse({'error': 'Not permitted'}, status=403)
+    try:
+        result = suggest_approval_decision_comment(approval, decision, allow_ai=True)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({'ok': True, **result})
+
+
+@login_required
 @require_http_methods(['GET'])
 def approval_overdue_api(request):
     org = get_user_organization(request.user)

@@ -225,6 +225,7 @@
 </div>
 
 {% include "components/_reassign_dialog.html" with dialog_id="approvals-reassign-dialog" reassign_members=reassign_members %}
+{% include "components/_decision_comment_dialog.html" with dialog_id="approvals-decision-dialog" %}
 
 <script nonce="{{ csp_nonce }}">
 (function () {
@@ -330,6 +331,114 @@
 
   /* Approve / Reject / Return — POST to existing audited APIs.
      Reject and Return require a reason; Approve may include an optional note. */
+  function deriveSuggestUrl(rejectUrl) {
+    if (!rejectUrl) return '';
+    return rejectUrl.replace(/\/reject\/?$/, '/suggest-decision-comment/');
+  }
+
+  function openDecisionCommentDialog(opts) {
+    var backdrop = document.getElementById('approvals-decision-dialog');
+    if (!backdrop || !opts) return;
+    var titleEl = backdrop.querySelector('[data-decision-title]');
+    var metaEl = backdrop.querySelector('[data-decision-meta]');
+    var reasonEl = backdrop.querySelector('[data-decision-reason]');
+    var err = backdrop.querySelector('[data-decision-error]');
+    var hint = backdrop.querySelector('[data-decision-hint]');
+    var suggestBtn = backdrop.querySelector('[data-decision-suggest]');
+    var confirmBtn = backdrop.querySelector('[data-decision-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-decision-cancel]');
+    var decision = (opts.decision || 'return').toLowerCase();
+    if (titleEl) {
+      titleEl.textContent = decision === 'reject' ? 'Reject approval' : 'Return for changes';
+    }
+    if (metaEl) {
+      metaEl.textContent = decision === 'reject'
+        ? 'A rejection reason is required before confirming.'
+        : 'Describe the changes required before confirming.';
+    }
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (hint) { hint.hidden = true; hint.textContent = ''; }
+    if (reasonEl) {
+      reasonEl.value = '';
+      reasonEl.placeholder = decision === 'reject'
+        ? 'Reason for rejection'
+        : 'What changes are required?';
+    }
+    if (suggestBtn) {
+      suggestBtn.hidden = !opts.suggestUrl;
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+    }
+
+    function close() {
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (suggestBtn) {
+      suggestBtn.onclick = function () {
+        if (!opts.suggestUrl) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        fetch(opts.suggestUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ decision: decision }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            if (hint) {
+              hint.textContent = result.data.source === 'ai'
+                ? 'Suggested with AI — edit before confirming.'
+                : 'Suggested from template — edit before confirming.';
+              hint.hidden = false;
+            }
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var comments = reasonEl ? reasonEl.value.trim() : '';
+        if (!comments) {
+          if (err) {
+            err.textContent = decision === 'reject'
+              ? 'A rejection reason is required.'
+              : 'A return reason is required.';
+            err.hidden = false;
+          }
+          return;
+        }
+        close();
+        if (opts.onConfirm) opts.onConfirm(comments);
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (reasonEl) reasonEl.focus();
+  }
+
   root.querySelectorAll('[data-approval-action]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var action = btn.getAttribute('data-approval-action');
@@ -339,65 +448,67 @@
           ? btn.getAttribute('data-reject-url')
           : btn.getAttribute('data-return-url');
       var errorEl = btn.parentElement.querySelector('.wq-action-error');
-      var comments = '';
-      if (action === 'reject') {
-        comments = window.prompt('Reason for rejection (required):', '');
-        if (comments === null) return;
-        comments = (comments || '').trim();
-        if (!comments) {
-          if (errorEl) {
-            errorEl.textContent = 'A rejection reason is required.';
-            errorEl.hidden = false;
-          }
-          return;
-        }
+      var cell = btn.closest('.wq-approval-actions');
+      var suggestUrl = (cell && cell.getAttribute('data-suggest-decision-url')) || '';
+      if (!suggestUrl && action === 'reject') {
+        suggestUrl = deriveSuggestUrl(btn.getAttribute('data-reject-url') || '');
+      } else if (!suggestUrl && action === 'return') {
+        var rejectSibling = cell ? cell.querySelector('[data-reject-url]') : null;
+        suggestUrl = deriveSuggestUrl(
+          (rejectSibling && rejectSibling.getAttribute('data-reject-url')) || ''
+        );
       }
-      if (action === 'return') {
-        comments = window.prompt('What changes are required? (required):', '');
-        if (comments === null) return;
-        comments = (comments || '').trim();
-        if (!comments) {
-          if (errorEl) {
-            errorEl.textContent = 'A return reason is required.';
-            errorEl.hidden = false;
-          }
-          return;
-        }
-      }
-      var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn, .wq-return-btn');
-      buttons.forEach(function (b) { b.disabled = true; });
-      if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
 
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-        body: JSON.stringify({ comments: comments, surface: 'approvals' }),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      function submitDecision(comments) {
+        var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn, .wq-return-btn');
+        buttons.forEach(function (b) { b.disabled = true; });
+        if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+          body: JSON.stringify({ comments: comments || '', surface: 'approvals' }),
         })
-        .then(function (result) {
-          if (result.ok) {
-            window.location.reload();
-            return;
-          }
-          buttons.forEach(function (b) { b.disabled = false; });
-          if (errorEl) {
-            errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
-            errorEl.hidden = false;
-          }
-        })
-        .catch(function () {
-          buttons.forEach(function (b) { b.disabled = false; });
-          if (errorEl) {
-            errorEl.textContent = 'Network error — please try again.';
-            errorEl.hidden = false;
-          }
+          .then(function (res) {
+            return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+          })
+          .then(function (result) {
+            if (result.ok) {
+              window.location.reload();
+              return;
+            }
+            buttons.forEach(function (b) { b.disabled = false; });
+            if (errorEl) {
+              errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+              errorEl.hidden = false;
+            }
+          })
+          .catch(function () {
+            buttons.forEach(function (b) { b.disabled = false; });
+            if (errorEl) {
+              errorEl.textContent = 'Network error — please try again.';
+              errorEl.hidden = false;
+            }
+          });
+      }
+
+      if (action === 'reject' || action === 'return') {
+        openDecisionCommentDialog({
+          url: url,
+          decision: action,
+          suggestUrl: suggestUrl,
+          onConfirm: function (comments) { submitDecision(comments); },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
         });
+        return;
+      }
+      submitDecision('');
     });
   });
 
-  /* Manager reassignment — name picker + required reason; never silent. */
+  /* Manager reassignment — searchable picker + workload + required reason; never silent. */
   function loadReassignMembers() {
     try {
       var el = document.getElementById('reassign-members-data');
@@ -405,10 +516,17 @@
     } catch (err) { return []; }
   }
 
+  function memberSearchHaystack(m) {
+    if (m && typeof m.search === 'string' && m.search) return m.search.toLowerCase();
+    return ((m.label || '') + ' ' + (m.username || '')).toLowerCase();
+  }
+
   function openReassignDialog(opts) {
     var backdrop = document.getElementById('approvals-reassign-dialog');
     if (!backdrop || !opts || !opts.url) return;
-    var select = backdrop.querySelector('[data-reassign-assignee]');
+    var hidden = backdrop.querySelector('[data-reassign-assignee]');
+    var searchEl = backdrop.querySelector('[data-reassign-search]');
+    var optionsEl = backdrop.querySelector('[data-reassign-options]');
     var reasonEl = backdrop.querySelector('[data-reassign-reason]');
     var meta = backdrop.querySelector('[data-reassign-current]');
     var err = backdrop.querySelector('[data-reassign-error]');
@@ -416,19 +534,73 @@
     var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
     var members = loadReassignMembers();
     var currentId = String(opts.currentId || '');
+    var selectedId = '';
     if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
     if (err) { err.hidden = true; err.textContent = ''; }
     if (reasonEl) reasonEl.value = '';
-    if (select) {
-      select.innerHTML = '<option value="">Select a teammate</option>';
-      members.forEach(function (m) {
-        if (String(m.id) === currentId) return;
-        var opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.label;
-        select.appendChild(opt);
+    if (hidden) hidden.value = '';
+    if (searchEl) searchEl.value = '';
+
+    function eligibleMembers(query) {
+      var q = (query || '').trim().toLowerCase();
+      var list = members.filter(function (m) {
+        return String(m.id) !== currentId;
+      });
+      if (q) {
+        list = list.filter(function (m) {
+          return memberSearchHaystack(m).indexOf(q) !== -1;
+        });
+      }
+      list.sort(function (a, b) {
+        var ac = Number(a.open_count || 0);
+        var bc = Number(b.open_count || 0);
+        if (ac !== bc) return ac - bc;
+        return String(a.label || '').localeCompare(String(b.label || ''), undefined, { sensitivity: 'base' });
+      });
+      return list;
+    }
+
+    function renderOptions() {
+      if (!optionsEl) return;
+      optionsEl.innerHTML = '';
+      var list = eligibleMembers(searchEl ? searchEl.value : '');
+      if (!list.length) {
+        var empty = document.createElement('p');
+        empty.className = 'reassign-combobox__empty';
+        empty.textContent = 'No teammates match.';
+        optionsEl.appendChild(empty);
+        return;
+      }
+      list.forEach(function (m) {
+        var optionBtn = document.createElement('button');
+        optionBtn.type = 'button';
+        optionBtn.className = 'reassign-option' + (String(m.id) === selectedId ? ' is-selected' : '');
+        optionBtn.setAttribute('role', 'option');
+        optionBtn.setAttribute('data-user-id', String(m.id));
+        optionBtn.setAttribute('aria-selected', String(m.id) === selectedId ? 'true' : 'false');
+        var label = document.createElement('span');
+        label.className = 'reassign-option__label';
+        label.textContent = m.label || m.username || ('User ' + m.id);
+        var workload = document.createElement('span');
+        workload.className = 'reassign-option__meta';
+        workload.textContent = Number(m.open_count || 0) + ' open';
+        optionBtn.appendChild(label);
+        optionBtn.appendChild(workload);
+        optionBtn.addEventListener('click', function () {
+          selectedId = String(m.id);
+          if (hidden) hidden.value = selectedId;
+          renderOptions();
+          if (err) { err.hidden = true; err.textContent = ''; }
+        });
+        optionsEl.appendChild(optionBtn);
       });
     }
+
+    if (searchEl) {
+      searchEl.oninput = function () { renderOptions(); };
+    }
+    renderOptions();
+
     function close() {
       backdrop.classList.remove('is-open');
       backdrop.setAttribute('hidden', '');
@@ -443,7 +615,7 @@
     };
     if (confirmBtn) {
       confirmBtn.onclick = function () {
-        var toUserId = select ? select.value : '';
+        var toUserId = hidden ? hidden.value : selectedId;
         var reason = reasonEl ? reasonEl.value.trim() : '';
         if (!toUserId) {
           if (err) { err.textContent = 'Select a teammate to reassign to.'; err.hidden = false; }
@@ -481,7 +653,7 @@
     backdrop.removeAttribute('hidden');
     backdrop.classList.add('is-open');
     document.addEventListener('keydown', onKey);
-    if (select) select.focus();
+    if (searchEl) searchEl.focus();
   }
 
   root.querySelectorAll('[data-approval-reassign]').forEach(function (btn) {

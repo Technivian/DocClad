@@ -36,7 +36,7 @@
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}" data-col="due"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
       <td data-col="status"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
       <td data-col="next_action"><span class="wq-next-action">{{ row.next_action }}</span></td>
-      <td class="wq-approval-actions" data-col="actions">
+      <td class="wq-approval-actions" data-col="actions"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}>
         {% if row.can_decide %}
         <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
         <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>

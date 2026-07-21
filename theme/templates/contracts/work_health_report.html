@@ -6,6 +6,81 @@
 {% block authenticated_page_subtitle %}Bottlenecks, SLA breaches, and hub completion across the operating loop.{% endblock %}
 
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+  .wh-meter { display: grid; gap: 8px; margin-top: var(--space-12); }
+  .wh-meter__track {
+    height: 10px; border-radius: 999px; overflow: hidden;
+    background: var(--well, color-mix(in srgb, var(--line) 55%, #fff));
+    border: 1px solid var(--line, var(--hairline));
+  }
+  .wh-meter__fill {
+    display: block; height: 100%; border-radius: inherit;
+    background: var(--seal, #1f4b3a);
+    min-width: 0;
+  }
+  .wh-meter__fill.is-muted { background: color-mix(in srgb, var(--seal, #1f4b3a) 45%, var(--ink-400)); }
+  .wh-meter__label {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 12px; color: var(--ink-600, var(--text-secondary));
+  }
+  .wh-bar-list { display: grid; gap: 10px; margin-top: var(--space-12); }
+  .wh-bar-row { display: grid; gap: 4px; }
+  .wh-bar-row__head {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 13px; color: var(--ink-800);
+  }
+  .wh-bar-row__head strong { font-weight: 650; }
+  .wh-bar-row__meta { font-variant-numeric: tabular-nums; color: var(--ink-500); font-size: 12px; }
+  .wh-bar-row__track {
+    height: 8px; border-radius: 999px; overflow: hidden;
+    background: var(--well, color-mix(in srgb, var(--line) 55%, #fff));
+  }
+  .wh-bar-row__fill {
+    display: block; height: 100%; border-radius: inherit;
+    background: color-mix(in srgb, var(--status-pending-fg, #b54708) 75%, var(--seal, #1f4b3a));
+  }
+  .wh-bar-row__fill--danger {
+    background: color-mix(in srgb, var(--status-danger-fg, #b42318) 80%, var(--seal, #1f4b3a));
+  }
+  .wh-note {
+    margin: var(--space-12) 0 0;
+    font-size: 13px; color: var(--ink-500, var(--text-secondary));
+  }
+  .wh-spark {
+    display: grid; gap: 10px; margin-top: var(--space-12);
+  }
+  .wh-spark__legend {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 12px; color: var(--ink-600);
+  }
+  .wh-spark__swatch {
+    display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 4px; vertical-align: -1px;
+  }
+  .wh-spark__swatch--completed { background: var(--seal, #1f4b3a); }
+  .wh-spark__swatch--returned { background: var(--status-pending-fg, #b54708); }
+  .wh-spark__swatch--rejected { background: var(--status-danger-fg, #b42318); }
+  .wh-spark__swatch--surfaced { background: color-mix(in srgb, var(--ink-400) 70%, var(--seal)); }
+  .wh-spark__chart {
+    display: flex; align-items: flex-end; gap: 2px;
+    min-height: 88px; padding: 4px 0 0;
+    border-bottom: 1px solid var(--line, var(--hairline));
+  }
+  .wh-spark__day {
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column;
+    justify-content: flex-end; align-items: stretch; gap: 0;
+    height: 80px;
+  }
+  .wh-spark__stack {
+    display: flex; flex-direction: column-reverse; justify-content: flex-start;
+    width: 100%; min-height: 2px; overflow: hidden;
+  }
+  .wh-spark__seg { width: 100%; min-height: 1px; flex: 0 0 auto; }
+  .wh-spark__seg--completed { background: var(--seal, #1f4b3a); }
+  .wh-spark__seg--returned { background: var(--status-pending-fg, #b54708); }
+  .wh-spark__seg--rejected { background: var(--status-danger-fg, #b42318); }
+  .wh-spark__seg--surfaced { background: color-mix(in srgb, var(--ink-400) 70%, var(--seal)); opacity: 0.55; }
+</style>
 <div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow">
   <header class="clm-list-shell dc-ds-filterbar" style="margin-bottom:var(--space-16);">
     <div class="clm-list-view-header">
@@ -28,6 +103,15 @@
       <span class="dc-ds-summary__label">Completed from My Work</span>
       <strong class="dc-ds-summary__value">{% if completed_from_my_work_pct_display != None %}{{ completed_from_my_work_pct_display }}%{% else %}—{% endif %}</strong>
       <span class="dc-ds-summary__meta">{{ metrics.completed_from_my_work|default:0 }} of {{ metrics.completed_total|default:0 }}</span>
+      <div class="wh-meter" aria-hidden="true">
+        <div class="wh-meter__track">
+          <span class="wh-meter__fill{% if not hub_completion_healthy %} is-muted{% endif %}" style="width:{% if completed_from_my_work_pct_display != None %}{{ completed_from_my_work_pct_display }}{% else %}0{% endif %}%;"></span>
+        </div>
+        <div class="wh-meter__label">
+          <span>Hub completion</span>
+          <span>{% if completed_from_my_work_pct_display != None %}{{ completed_from_my_work_pct_display }}%{% else %}Not measured{% endif %}</span>
+        </div>
+      </div>
     </div>
     <div class="dc-ds-summary__item">
       <span class="dc-ds-summary__label">Blocked on surface</span>
@@ -40,11 +124,28 @@
     </div>
   </section>
 
+  {% if not hub_completion_healthy %}
+  <p class="wh-note">Charts deepen once hub completion is measured at 40% or higher. Bars below still show available operating data.</p>
+  {% endif %}
+
   <div style="display:grid;gap:var(--space-20);grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
     <section class="dc-ds-surface" style="padding:var(--space-16);">
       <h2 style="margin:0 0 var(--space-12);font:var(--text-h3);">Bottlenecks by work type</h2>
       {% if bottlenecks %}
-      <table class="dc-ds-table dc-ds-table--auto wq-table">
+      <div class="wh-bar-list" aria-label="Bottleneck overdue rates">
+        {% for row in bottlenecks %}
+        <div class="wh-bar-row">
+          <div class="wh-bar-row__head">
+            <strong>{{ row.work_kind }}</strong>
+            <span class="wh-bar-row__meta">{{ row.overdue_rate_pct }}% · {{ row.overdue }}/{{ row.total }} overdue</span>
+          </div>
+          <div class="wh-bar-row__track">
+            <span class="wh-bar-row__fill{% if row.overdue_rate_pct >= 40 %} wh-bar-row__fill--danger{% endif %}" style="width:{{ row.overdue_rate_pct }}%;"></span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <table class="dc-ds-table dc-ds-table--auto wq-table" style="margin-top:var(--space-16);">
         <thead><tr><th>Work type</th><th>Surfaced</th><th>Overdue</th><th>Rate</th></tr></thead>
         <tbody>
           {% for row in bottlenecks %}
@@ -65,7 +166,20 @@
     <section class="dc-ds-surface" style="padding:var(--space-16);">
       <h2 style="margin:0 0 var(--space-12);font:var(--text-h3)">Return / reject by contract type</h2>
       {% if return_reject_by_type %}
-      <table class="dc-ds-table dc-ds-table--auto wq-table">
+      <div class="wh-bar-list" aria-label="Return and reject rates">
+        {% for ctype, row in return_reject_by_type.items %}
+        <div class="wh-bar-row">
+          <div class="wh-bar-row__head">
+            <strong>{{ ctype }}</strong>
+            <span class="wh-bar-row__meta">{{ row.return_reject_rate_pct }}% · {{ row.returned }} returned · {{ row.rejected }} rejected</span>
+          </div>
+          <div class="wh-bar-row__track">
+            <span class="wh-bar-row__fill{% if row.return_reject_rate_pct >= 40 %} wh-bar-row__fill--danger{% endif %}" style="width:{{ row.return_reject_rate_pct }}%;"></span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <table class="dc-ds-table dc-ds-table--auto wq-table" style="margin-top:var(--space-16);">
         <thead><tr><th>Type</th><th>Decisions</th><th>Returned</th><th>Rejected</th><th>Rate</th></tr></thead>
         <tbody>
           {% for ctype, row in return_reject_by_type.items %}
@@ -84,6 +198,42 @@
       {% endif %}
     </section>
   </div>
+
+  {% if daily_series %}
+  <section class="dc-ds-surface" style="padding:var(--space-16);margin-top:var(--space-20);">
+    <h2 style="margin:0;font:var(--text-h3);">Daily activity</h2>
+    <div class="wh-spark" aria-label="Daily activity series">
+      <div class="wh-spark__legend">
+        <span><i class="wh-spark__swatch wh-spark__swatch--surfaced"></i>Surfaced</span>
+        <span><i class="wh-spark__swatch wh-spark__swatch--completed"></i>Completed</span>
+        <span><i class="wh-spark__swatch wh-spark__swatch--returned"></i>Returned</span>
+        <span><i class="wh-spark__swatch wh-spark__swatch--rejected"></i>Rejected</span>
+      </div>
+      {% with max_daily=daily_series_max|default:1 %}
+      <div class="wh-spark__chart">
+        {% for day in daily_series %}
+        {% with surfaced=day.surfaced|default:0 completed=day.completed|default:0 returned=day.returned|default:0 rejected=day.rejected|default:0 %}
+        {% with total=surfaced|add:completed|add:returned|add:rejected %}
+        <div class="wh-spark__day" title="{{ day.day }}: {{ surfaced }} surfaced, {{ completed }} completed, {{ returned }} returned, {{ rejected }} rejected">
+          {% if total %}
+          <div class="wh-spark__stack" style="height:{% widthratio total max_daily 80 %}px;">
+            {% if surfaced %}<span class="wh-spark__seg wh-spark__seg--surfaced" style="height:{% widthratio surfaced total 100 %}%;"></span>{% endif %}
+            {% if completed %}<span class="wh-spark__seg wh-spark__seg--completed" style="height:{% widthratio completed total 100 %}%;"></span>{% endif %}
+            {% if returned %}<span class="wh-spark__seg wh-spark__seg--returned" style="height:{% widthratio returned total 100 %}%;"></span>{% endif %}
+            {% if rejected %}<span class="wh-spark__seg wh-spark__seg--rejected" style="height:{% widthratio rejected total 100 %}%;"></span>{% endif %}
+          </div>
+          {% else %}
+          <div class="wh-spark__stack" style="height:2px;opacity:0.35;background:var(--line);"></div>
+          {% endif %}
+        </div>
+        {% endwith %}
+        {% endwith %}
+        {% endfor %}
+      </div>
+      {% endwith %}
+    </div>
+  </section>
+  {% endif %}
 
   <section class="dc-ds-surface" style="padding:var(--space-16);margin-top:var(--space-20);">
     <h2 style="margin:0 0 var(--space-12);font:var(--text-h3);">Recent SLA breaches</h2>
