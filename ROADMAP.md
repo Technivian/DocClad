@@ -1,6 +1,8 @@
 # CLM One Delivery Roadmap
 
-Last updated: 2026-06-21
+Last updated: 2026-07-21
+
+> **Product sequencing:** See [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md) for the governed work-system product map, persona lens, and phased outcomes (My Work → canonical assignment model → core loop → governance → instrumentation). This file remains the engineering delivery / readiness tracker.
 
 ## Audit Baseline (measured before Wave 0-1 work)
 
