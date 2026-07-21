@@ -174,6 +174,8 @@ urlpatterns = [
     path('deadlines/new/', views.DeadlineCreateView.as_view(), name='deadline_create'),
     path('deadlines/<int:pk>/edit/', views.DeadlineUpdateView.as_view(), name='deadline_update'),
     path('deadlines/<int:pk>/complete/', views.deadline_complete, name='deadline_complete'),
+    path('deadlines/<int:pk>/defer/', views.deadline_defer, name='deadline_defer'),
+    path('deadlines/<int:pk>/escalate/', views.deadline_escalate, name='deadline_escalate'),
     path('deadlines/<int:pk>/delete/', views.deadline_delete, name='deadline_delete'),
 
     # Conflict Checks

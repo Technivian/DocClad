@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phase 1 complete; Phase 2 started)  
+**Last updated:** 2026-07-21 (Phase 2 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -75,15 +75,11 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 - [x] Fix naming drift (e.g. dashboard / hub labels that still say “My work”)
 - [x] Document the canonical route for each job-to-be-done ([`PRODUCT_MAP.md`](PRODUCT_MAP.md))
 
-**Acceptance:** No two primary nav destinations answer the same question with different data shapes.
-
 ### 1.2 Canonical assignment model ✅
 
 - [x] My Work is a **view** over `contracts/services/assignments.py`
 - [x] Specialist personal tabs read shared assignment querysets (approvals, tasks, obligations, privacy)
 - [x] Command Center saved views are org-wide only (“Blocked work” replaces “My Queue”)
-
-**Acceptance:** Adding a new personal work type does not require a new bespoke ETL per page.
 
 ### 1.3 Queue honesty baseline ✅
 
@@ -95,35 +91,33 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
-## Phase 2 — Finish the core loop in context (in progress)
+## Phase 2 — Finish the core loop in context (complete)
 
 **Goal:** Make Intake → Close undeniable before expanding breadth.
 
-### 2.1 Action-context deep links
+### 2.1 Action-context deep links ✅
 
 - [x] Review findings and returned/rejected work open contract workflow context (`?tab=workflow&section=…`)
-- [x] Approvals, tasks, obligations, privacy packs, and workflow steps already deep-link to action surfaces
-- [ ] Row click vs primary action parity across My Work cards and specialist tables
-- [ ] Secondary actions stay in overflow menus everywhere
+- [x] Approvals, tasks, obligations, privacy packs, and workflow steps deep-link to action surfaces
+- [x] My Work row click / Enter opens the primary action context; details stay in overflow
+- [x] Secondary actions stay in overflow menus (My Work, Approvals Edit, Privacy risks, Obligations)
 
-### 2.2 Specialist depth (not alternate lists)
-
-Score and harden each specialist surface against the four loop checks:
+### 2.2 Specialist depth ✅
 
 | Surface | Focus | Status |
 |--------|--------|--------|
-| Reviews & Approvals | Decision in place, return / reject with reason, audit outcome | In progress |
-| Privacy Reviews | Questionnaire / assessment completion, conflict resolution path | In progress |
-| Obligations | Complete / defer / escalate with due and owner clarity | In progress |
-| Contract detail | Next required action visible without leaving the record | Planned |
+| Reviews & Approvals | Approve / Reject / Return with required reason; audit via existing APIs | ✅ Done |
+| Privacy Reviews | Conflict-aware next action; Resolve conflicts path on list kebab → Risks tab | ✅ Done |
+| Obligations | Complete / Defer 7 days / Escalate priority with audit trail | ✅ Done |
+| Contract detail | Next required action strip on every tab; overview Action required card | ✅ Done |
 
-### 2.3 Command Center as org ops
+### 2.3 Command Center as org ops ✅
 
 - [x] Command Center subtitle and approval KPIs are explicitly organization-wide
 - [x] Personal-inbox framing removed from attention banner and rail copy
-- [ ] Surface blockers, overdue risk, and cross-team wait states in recommended actions
+- [x] Recommended actions tagged Blocked / Overdue / Waiting / Open; blocked-work summary in Action queue
 
-**Phase 2 exit:** A counsel can discover, understand, act, and leave an audit trail for the full loop without relying on tribal knowledge of which queue is “real.”
+**Phase 2 exit:** ✅ A counsel can discover, understand, act, and leave an audit trail for the full loop without relying on tribal knowledge of which queue is “real.”
 
 ---
 
@@ -216,7 +210,7 @@ Do **not** start these until Phases 1–3 are solid.
 |------|--------|-----------------|--------|
 | **0** | Personal hub | My Work answers “what needs me now?” | ✅ Complete |
 | **1** | Boundaries + one work model | App stops arguing with itself | ✅ Complete |
-| **2** | Core loop in context | Intake → Close is completable | 🔄 In progress |
+| **2** | Core loop in context | Intake → Close is completable | ✅ Complete |
 | **3** | Governance visible | Trust and control are product features | Planned |
 | **4** | Nav / legacy cleanup | Smaller, complete IA | Planned |
 | **5** | Instrumentation | Operating metrics guide the roadmap | Planned |
@@ -238,11 +232,11 @@ Do **not** start these until Phases 1–3 are solid.
 
 ## Near-term backlog (recommended next builds)
 
-1. **My Work row-click parity** — open action context on row click, not only primary button
-2. **Contract detail next-action strip** — surface required action without leaving the record
-3. **Command Center blocker surfacing** — recommended actions for cross-team wait states
-4. **Delegation + blocked-state UX** across queues (Phase 3)
-5. **Work-event instrumentation** and first operating dashboard for legal ops
+1. **Delegation + blocked-state UX** across queues (Phase 3)
+2. **SLA / priority reason tooltips** everywhere priority is shown
+3. **Manager reassignment** for authorized roles
+4. **Work-event instrumentation** and first operating dashboard for legal ops
+5. **Nav / legacy retirement** of parallel list routes (Phase 4)
 
 ---
 

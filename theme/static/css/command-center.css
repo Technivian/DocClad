@@ -747,6 +747,22 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
   text-align: right;
 }
 .cc-v3-rail-state strong.is-clear { color: var(--status-positive-fg); }
+.cc-v3-rail-state--blocked {
+  border-color: color-mix(in srgb, var(--status-danger-fg, #B42318) 25%, var(--line-strong));
+  background: color-mix(in srgb, var(--status-danger-fg, #B42318) 6%, transparent);
+  padding: var(--space-12);
+  border-radius: var(--radius-control);
+  margin-bottom: var(--space-8);
+}
+.cc-v3-rail-state--blocked strong { color: var(--status-danger-fg, #B42318); text-align: left; }
+.cc-v3-action-category {
+  display: inline-block;
+  color: var(--ink-500);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
 .cc-v3-rail-card .cc-v3-setup-block { margin: 0; }
 .cc-v3-rail-card .cc-v3-setup-label { margin: 0 0 var(--space-8); }
 .cc-v3-rail-card .dc-ds-setup-list {

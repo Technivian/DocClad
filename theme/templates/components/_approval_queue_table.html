@@ -33,8 +33,15 @@
         {% if row.can_decide %}
         <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
         <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>
+        <button type="button" class="wq-return-btn" data-approval-action="return" data-return-url="{{ row.return_url }}">Return</button>
         {% endif %}
-        <a href="{{ row.edit_url }}" class="wq-edit-link">Edit</a>
+        <details class="wq-kebab" onclick="event.stopPropagation();">
+          <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+          <div class="wq-kebab-menu" role="menu">
+            <a href="{{ row.edit_url }}" class="wq-kebab-action" role="menuitem">Open approval record</a>
+            {% if row.href %}<a href="{{ row.href }}" class="wq-kebab-action" role="menuitem">Open contract</a>{% endif %}
+          </div>
+        </details>
         <div class="wq-action-error" hidden></div>
       </td>
     </tr>

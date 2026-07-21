@@ -326,22 +326,43 @@
       ?.split('=')[1] || '';
   }
 
-  /* Approve/Reject — POST to the existing, already-authorized/audited
-     approval_approve_api / approval_reject_api endpoints (see
-     contracts/services/approval_workflow.py). This page only decides
-     whether to SHOW the buttons (server-computed row.can_decide); the real
-     authorization boundary is those endpoints, unchanged by this page. */
+  /* Approve / Reject / Return — POST to existing audited APIs.
+     Reject and Return require a reason; Approve may include an optional note. */
   root.querySelectorAll('[data-approval-action]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var action = btn.getAttribute('data-approval-action');
-      var url = action === 'approve' ? btn.getAttribute('data-approve-url') : btn.getAttribute('data-reject-url');
+      var url = action === 'approve'
+        ? btn.getAttribute('data-approve-url')
+        : action === 'reject'
+          ? btn.getAttribute('data-reject-url')
+          : btn.getAttribute('data-return-url');
       var errorEl = btn.parentElement.querySelector('.wq-action-error');
       var comments = '';
       if (action === 'reject') {
-        comments = window.prompt('Add a comment for this rejection (optional):', '') || '';
+        comments = window.prompt('Reason for rejection (required):', '');
         if (comments === null) return;
+        comments = (comments || '').trim();
+        if (!comments) {
+          if (errorEl) {
+            errorEl.textContent = 'A rejection reason is required.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
       }
-      var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn');
+      if (action === 'return') {
+        comments = window.prompt('What changes are required? (required):', '');
+        if (comments === null) return;
+        comments = (comments || '').trim();
+        if (!comments) {
+          if (errorEl) {
+            errorEl.textContent = 'A return reason is required.';
+            errorEl.hidden = false;
+          }
+          return;
+        }
+      }
+      var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn, .wq-return-btn');
       buttons.forEach(function (b) { b.disabled = true; });
       if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
 

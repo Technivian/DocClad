@@ -277,6 +277,11 @@
             <details class="wq-kebab dpa-row-menu">
               <summary aria-label="More actions for {{ row.pack.contract.title }}" class="wq-kebab-trigger">&#8942;</summary>
               <div class="wq-kebab-menu" role="menu">
+                {% if row.conflict_count %}
+                <a href="{{ row.risks_url }}" role="menuitem">Resolve conflicts ({{ row.conflict_count }})</a>
+                {% elif row.unresolved_risk_count %}
+                <a href="{{ row.risks_url }}" role="menuitem">Resolve open risks</a>
+                {% endif %}
                 <a href="{{ row.detail_url }}" role="menuitem">Open review</a>
                 <a href="{{ row.memo_url }}" role="menuitem">View memo</a>
                 <a href="{{ row.contract_url }}" role="menuitem">View contract record</a>

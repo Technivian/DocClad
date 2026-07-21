@@ -347,7 +347,9 @@
           {% for row in my_work_rows %}
           <tr class="my-work-row"
               tabindex="0"
+              role="link"
               data-row-id="{{ row.id }}"
+              data-action-href="{{ row.action_href }}"
               data-work-type="{{ row.work_type_key }}"
               data-summary-tags="{{ row.summary_tags|join:',' }}"
               data-priority="{{ row.priority_label }}"
@@ -356,7 +358,8 @@
               data-counterparty="{{ row.counterparty }}"
               data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
-              data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+              data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+              aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
               <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}"
                     {% if row.priority_reason %}title="{{ row.priority_reason }}"{% endif %}>
@@ -392,7 +395,7 @@
               <details class="wq-kebab" onclick="event.stopPropagation();">
                 <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
                 <div class="wq-kebab-menu">
-                  {% if row.action_href %}<a href="{{ row.action_href }}">{{ row.action_label }}</a>{% endif %}
+                  <button type="button" class="wq-kebab-action" data-toggle-detail="{{ row.id }}">View details</button>
                   {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}">Open contract</a>{% endif %}
                 </div>
               </details>
@@ -437,7 +440,9 @@
       {% for row in my_work_rows %}
       <article class="my-work-card my-work-row"
                tabindex="0"
+               role="link"
                data-row-id="{{ row.id }}"
+               data-action-href="{{ row.action_href }}"
                data-work-type="{{ row.work_type_key }}"
                data-summary-tags="{{ row.summary_tags|join:',' }}"
                data-priority="{{ row.priority_label }}"
@@ -446,7 +451,8 @@
                data-counterparty="{{ row.counterparty }}"
                data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
                data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
-               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
           <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}">{{ row.priority_label }}</span>
@@ -458,7 +464,7 @@
           <span class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">Due {{ row.due_context.due_date|date:"j M" }}</span>
           {% endif %}
           {% if row.action_href %}
-          <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet">{{ row.action_label }}</a>
+          <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet" onclick="event.stopPropagation();">{{ row.action_label }}</a>
           {% endif %}
         </div>
       </article>
@@ -647,6 +653,15 @@
     applyFilters();
   }
 
+  function openActionContext(row) {
+    var href = row.getAttribute('data-action-href');
+    if (href) {
+      window.location.href = href;
+      return;
+    }
+    toggleDetail(row);
+  }
+
   function toggleDetail(row) {
     var id = row.getAttribute('data-row-id');
     var detail = root.querySelector('[data-detail-for="' + id + '"]');
@@ -715,13 +730,25 @@
   allRows().forEach(function (row) {
     row.addEventListener('click', function (event) {
       if (event.target.closest('a, button, summary, .wq-kebab')) return;
-      toggleDetail(row);
+      openActionContext(row);
     });
     row.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        toggleDetail(row);
+        openActionContext(row);
       }
+    });
+  });
+
+  root.querySelectorAll('[data-toggle-detail]').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var id = btn.getAttribute('data-toggle-detail');
+      var row = root.querySelector('.my-work-row[data-row-id="' + id + '"]');
+      var menu = btn.closest('details');
+      if (menu) menu.open = false;
+      if (row) toggleDetail(row);
     });
   });
 

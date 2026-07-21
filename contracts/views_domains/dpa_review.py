@@ -89,10 +89,12 @@ def _unresolved_risks(pack):
     return [risk for risk in pack.risk_items.all() if risk.status not in _RESOLVED_RISK_STATUSES]
 
 
-def _next_action_for_pack(pack, unresolved_risks, critical_risk_count):
+def _next_action_for_pack(pack, unresolved_risks, critical_risk_count, conflict_count=0):
     """Surface the highest-priority unresolved work for the review queue."""
     if pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS:
         return 'Resolve role qualification'
+    if conflict_count:
+        return 'Resolve cross-document conflicts'
     if critical_risk_count:
         return 'Address critical risks'
     if unresolved_risks:
@@ -762,17 +764,24 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 1 for risk in unresolved_risks
                 if risk.severity == DPARiskItem.Severity.CRITICAL
             )
+            conflict_count = sum(
+                1 for risk in unresolved_risks
+                if getattr(risk, 'is_cross_document_conflict', False)
+            )
             role_is_ambiguous = (
                 pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS
             )
             at_approval_gate = pack.approval_status in _APPROVAL_GATE_STATUSES
+            risks_url = f"{reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})}?tab=risks"
             rows.append({
                 'pack': pack,
                 'detail_url': reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk}),
+                'risks_url': risks_url,
                 'memo_url': reverse('contracts:dpa_review_pack_memo', kwargs={'pk': pack.pk}),
                 'contract_url': reverse('contracts:contract_detail', kwargs={'pk': pack.contract_id}),
                 'unresolved_risk_count': len(unresolved_risks),
                 'critical_risk_count': critical_risk_count,
+                'conflict_count': conflict_count,
                 'risk_tone': 'danger' if unresolved_risks else 'success',
                 'approval_tone': _REVIEW_STATUS_TONES.get(pack.approval_status, 'neutral'),
                 'review_status_label': _review_status_list_label(pack),
@@ -784,7 +793,9 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                     (pack.reviewer.get_full_name() or pack.reviewer.username)
                     if pack.reviewer_id else 'Unassigned'
                 ),
-                'next_action': _next_action_for_pack(pack, unresolved_risks, critical_risk_count),
+                'next_action': _next_action_for_pack(
+                    pack, unresolved_risks, critical_risk_count, conflict_count=conflict_count,
+                ),
             })
         ctx['review_pack_rows'] = rows
         if selected_view == 'my_reviews' and not rows:

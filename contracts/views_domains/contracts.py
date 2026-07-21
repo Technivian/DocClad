@@ -2370,7 +2370,7 @@ def dashboard(request):
     # onboarding-checklist substitution when the workspace has none. An
     # empty workspace renders the panel's real "No open governed actions"
     # empty state instead.
-    clm_recommended_actions = group_recommended_actions(priority_queue_rows, today=today, limit=3)
+    clm_recommended_actions = group_recommended_actions(priority_queue_rows, today=today, limit=5)
 
     # Secondary-filter option lists for the Filters popover — derived from
     # what's actually present in the queue, so no filter ever shows an

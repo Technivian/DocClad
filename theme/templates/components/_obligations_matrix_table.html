@@ -46,6 +46,14 @@
               {% csrf_token %}
               <button type="submit" class="wq-kebab-action" role="menuitem">Mark complete</button>
             </form>
+            <form method="post" action="{% url 'contracts:deadline_defer' obligation.pk %}" role="none">
+              {% csrf_token %}
+              <button type="submit" class="wq-kebab-action" role="menuitem">Defer 7 days</button>
+            </form>
+            <form method="post" action="{% url 'contracts:deadline_escalate' obligation.pk %}" role="none">
+              {% csrf_token %}
+              <button type="submit" class="wq-kebab-action" role="menuitem">Escalate priority</button>
+            </form>
             {% endif %}
             <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-kebab-action" role="menuitem">Edit obligation</a>
             <div class="wq-kebab-divider" role="separator"></div>

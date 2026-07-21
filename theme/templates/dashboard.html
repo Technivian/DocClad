@@ -107,8 +107,14 @@
       <section class="cc-v3-card cc-v3-rail-card cc-v3-actions dc-ds-surface dc-ds-surface--expressive" aria-labelledby="recommended-actions-title">
         <div class="cc-v3-section-head"><h2 id="recommended-actions-title">Action queue</h2>{% if clm_recommended_actions %}<a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:repository' %}">View all</a>{% endif %}</div>
         <div class="cc-v3-rail-body cc-v3-rail-list">
-          {% for action in clm_recommended_actions|slice:":2" %}
-          <a class="cc-v3-action-row" href="{{ action.href }}"><span class="cc-v3-action-copy"><strong>{{ action.title }}{% if action.count > 1 %} · {{ action.count }} contracts{% endif %}</strong><span class="cc-v3-action-explanation">{{ action.explanation }}</span><span class="cc-v3-action-entities">{{ action.category|default:action.counterparty_text }}</span></span><span class="cc-v3-action-date">{% if action.due_label %}{{ action.due_label }}{% else %}Open{% endif %} →</span></a>
+          {% if blocked_work_count %}
+          <div class="cc-v3-rail-state cc-v3-rail-state--blocked" role="status">
+            <span>Blocked work</span>
+            <strong>{{ blocked_work_count }} item{{ blocked_work_count|pluralize }} waiting on a dependency or approval</strong>
+          </div>
+          {% endif %}
+          {% for action in clm_recommended_actions|slice:":4" %}
+          <a class="cc-v3-action-row" href="{{ action.href }}"><span class="cc-v3-action-copy"><strong>{% if action.category %}<span class="cc-v3-action-category">{{ action.category }}</span> · {% endif %}{{ action.title }}{% if action.count > 1 %} · {{ action.count }} contracts{% endif %}</strong><span class="cc-v3-action-explanation">{{ action.explanation }}</span><span class="cc-v3-action-entities">{{ action.owner_text|default:action.counterparty_text }}</span></span><span class="cc-v3-action-date">{% if action.due_label %}{{ action.due_label }}{% else %}Open{% endif %} →</span></a>
           {% empty %}<div class="cc-v3-rail-state"><span>No active issues</span><strong class="is-clear">Monitored queues are clear.</strong></div>{% endfor %}
           {% if clm_setup_required_count %}<div class="cc-v3-setup-block"><span class="cc-v3-setup-label">Setup required</span><div class="dc-ds-setup-list">{% if not approval_path_configured %}{% url 'contracts:approval_rule_list' as approval_rules_url %}{% include "design_system/setup_action.html" with href=approval_rules_url icon="workflow" label="Configure approvals" copy="Define who reviews contract decisions." %}{% endif %}{% if not dpa_monitoring_configured %}{% url 'contracts:dpa_review_pack_list' as dpa_reviews_url %}{% include "design_system/setup_action.html" with href=dpa_reviews_url icon="file-text" label="Configure DPA reviews" copy="Enable cross-document monitoring." %}{% endif %}{% if reviewer_setup_required %}{% url 'contracts:organization_team' as organization_team_url %}{% include "design_system/setup_action.html" with href=organization_team_url icon="user-plus" label="Invite a reviewer" copy="Add a legal, privacy, or finance owner." %}{% endif %}</div></div>{% endif %}
         </div>

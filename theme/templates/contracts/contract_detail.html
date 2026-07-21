@@ -63,6 +63,27 @@
 
   {% include "components/_workspace_tabs.html" with tabs=workspace_tabs aria_label="Contract workspace tabs" role_tablist=True nav_class="dc-ds-workspace__tabs" %}
 
+  {% if contract_command.show_primary_action or current_blockers %}
+  {% if active_tab != 'overview' %}
+  <section class="contract-action-card contract-action-card--compact" aria-labelledby="action-needed-heading-global" role="status">
+    <div class="contract-action-card__copy">
+      <p class="contract-action-card__eyebrow" id="action-needed-heading-global">Next required action</p>
+      <p class="contract-action-card__body">{{ contract_command.next_action }}</p>
+      {% if current_blockers %}
+      <p class="contract-action-card__meta">Blocked on: {{ current_blockers.0 }}</p>
+      {% endif %}
+    </div>
+    {% if contract_command.show_primary_action %}
+    {% if contract_command.primary_action.mode == 'dialog' %}
+    <button type="button" class="dc-ds-button dc-ds-button--primary" data-open-attach-dialog>{{ contract_command.primary_action.label }}</button>
+    {% else %}
+    <a href="{{ contract_command.primary_action.target }}" class="dc-ds-button dc-ds-button--primary">{{ contract_command.primary_action.label }}</a>
+    {% endif %}
+    {% endif %}
+  </section>
+  {% endif %}
+  {% endif %}
+
   <div class="dc-ds-workspace__layout">
     <div class="dc-ds-workspace__main">
       {% if active_tab == 'overview' %}

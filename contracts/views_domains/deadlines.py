@@ -69,6 +69,8 @@ def _next_action_for_obligation(obligation):
         return 'View record'
     if obligation.is_overdue:
         return 'Mark completed'
+    if obligation.priority in (Deadline.Priority.HIGH, Deadline.Priority.CRITICAL):
+        return 'Complete high-priority obligation'
     return _TYPE_NEXT_ACTIONS.get(obligation.deadline_type, 'Review obligation')
 
 
@@ -402,7 +404,7 @@ def deadline_complete(request, pk):
         return HttpResponseForbidden('You do not have permission to complete this contract deadline.')
     if deadline.is_completed:
         messages.info(request, f'Deadline "{deadline.title}" was already complete.')
-        return redirect('contracts:deadline_list')
+        return redirect('contracts:obligations_workspace')
     deadline.is_completed = True
     deadline.completed_at = timezone.now()
     deadline.completed_by = request.user
@@ -417,7 +419,64 @@ def deadline_complete(request, pk):
         },
     )
     messages.success(request, f'Deadline "{deadline.title}" marked as complete.')
-    return redirect('contracts:deadline_list')
+    return redirect('contracts:obligations_workspace')
+
+
+@login_required
+@require_POST
+def deadline_defer(request, pk):
+    """Defer an open obligation by seven days and record the reason in audit."""
+    organization = get_user_organization(request.user)
+    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        return HttpResponseForbidden('You do not have permission to defer this obligation.')
+    if deadline.is_completed:
+        messages.info(request, f'Obligation "{deadline.title}" is already complete.')
+        return redirect('contracts:obligations_workspace')
+
+    previous_due = deadline.due_date
+    deadline.due_date = previous_due + timedelta(days=7)
+    deadline.save(update_fields=['due_date'])
+    log_action(
+        request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
+        changes={
+            'event': 'deadline.deferred',
+            'contract_id': deadline.contract_id,
+            'previous_due_date': previous_due.isoformat(),
+            'new_due_date': deadline.due_date.isoformat(),
+            'defer_days': 7,
+        },
+    )
+    messages.success(request, f'Obligation "{deadline.title}" deferred to {deadline.due_date.strftime("%d %b %Y")}.')
+    return redirect('contracts:obligations_workspace')
+
+
+@login_required
+@require_POST
+def deadline_escalate(request, pk):
+    """Escalate an open obligation to critical priority and leave an audit trail."""
+    organization = get_user_organization(request.user)
+    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        return HttpResponseForbidden('You do not have permission to escalate this obligation.')
+    if deadline.is_completed:
+        messages.info(request, f'Obligation "{deadline.title}" is already complete.')
+        return redirect('contracts:obligations_workspace')
+
+    previous_priority = deadline.priority
+    deadline.priority = Deadline.Priority.CRITICAL
+    deadline.save(update_fields=['priority'])
+    log_action(
+        request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
+        changes={
+            'event': 'deadline.escalated',
+            'contract_id': deadline.contract_id,
+            'previous_priority': previous_priority,
+            'new_priority': deadline.priority,
+        },
+    )
+    messages.success(request, f'Obligation "{deadline.title}" escalated to critical priority.')
+    return redirect('contracts:obligations_workspace')
 
 
 @login_required
@@ -442,4 +501,4 @@ def deadline_delete(request, pk):
         request=request, changes=snapshot,
     )
     messages.success(request, f'Deadline "{snapshot["title"]}" deleted.')
-    return redirect('contracts:deadline_list')
+    return redirect('contracts:obligations_workspace')

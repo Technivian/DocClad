@@ -146,7 +146,9 @@ from .views_domains.deadlines import (
     DeadlineUpdateView,
     ObligationsWorkspaceView,
     deadline_complete,
+    deadline_defer,
     deadline_delete,
+    deadline_escalate,
 )
 from .views_domains.contracts import (
     ContractCreateView,
