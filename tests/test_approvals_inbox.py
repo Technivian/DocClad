@@ -426,7 +426,7 @@ class ApprovalsCopyQualityTests(TestCase):
     def test_empty_states_render_exact_specified_copy(self):
         response = self.client.get(reverse('contracts:approval_request_list'))
         body = approvals_body(response.content.decode())
-        self.assertIn('No approvals waiting on you.', body)
+        self.assertIn('No approvals waiting on you', body)
         self.assertIn('No approvals requested by you.', body)
         self.assertIn('No open approvals.', body)
         self.assertIn('No approved approvals yet.', body)

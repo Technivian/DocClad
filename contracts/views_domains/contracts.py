@@ -118,10 +118,20 @@ User = get_user_model()
 
 
 class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
+    """Legacy parallel list — Phase 4 retires it in favor of the repository."""
+
     model = Contract
     template_name = 'contracts/contract_list.html'
     context_object_name = 'contracts'
     paginate_by = 25
+
+    def dispatch(self, request, *args, **kwargs):
+        # Canonical Contracts destination is the repository workspace.
+        target = reverse('contracts:repository')
+        query = request.META.get('QUERY_STRING')
+        if query:
+            target = f'{target}?{query}'
+        return redirect(target, permanent=False)
 
     def get_queryset(self):
         org = get_user_organization(self.request.user)
@@ -846,10 +856,9 @@ def legal_front_door(request):
         {
             'key': 'legal_question',
             'title': 'Ask a legal question',
-            'description': 'Route a question to the Legal team.',
+            'description': 'Log a question for the Legal team and track it as an assigned task.',
             'icon': 'question',
-            'href': None,
-            'coming_soon': True,
+            'href': reverse('contracts:legal_task_create'),
         },
         {
             'key': 'approval',
@@ -1909,16 +1918,6 @@ def dashboard(request):
     if not request.user.is_authenticated:
         return redirect(f"{settings.LOGIN_URL}?next={request.get_full_path()}")
 
-    def _normalize_sort_date(value):
-        if value is None:
-            return date.max
-        if hasattr(value, 'date'):
-            try:
-                return value.date()
-            except TypeError:
-                return value
-        return value
-
     today = date.today()
     seven_days = today + timedelta(days=7)
     thirty_days = today + timedelta(days=30)
@@ -1996,120 +1995,6 @@ def dashboard(request):
         .filter(risk_level__in=['HIGH', 'CRITICAL'], status__in=['OPEN', 'IN_PROGRESS'])
         .order_by('-risk_level', '-created_at')[:5]
     )
-
-    # ── "Waiting on Me" queue rows — heterogeneous items assigned to the
-    # current user, normalized (via _finalize_waiting_on_me below) to the
-    # same row shape as the contract-based queues so one WorkQueueTable
-    # component can render every tab.
-    waiting_on_me_raw = []
-    if org:
-        my_legal_tasks = list(
-            CaseSignal.objects.for_organization(org)
-            .select_related('contract', 'matter', 'assigned_to')
-            .filter(assigned_to=request.user, status__in=['PENDING', 'IN_PROGRESS'])
-            .order_by('due_date', 'created_at')[:4]
-        )
-        for task in my_legal_tasks:
-            waiting_on_me_raw.append({
-                'title': task.title,
-                'meta': f'Legal task · {task.get_status_display()}',
-                'href': reverse('contracts:legal_task_update', kwargs={'pk': task.pk}),
-                'contract': task.contract,
-                'assignee': request.user,
-                'due_date': task.due_date,
-                'status_label': 'In progress' if task.status == 'IN_PROGRESS' else 'Pending',
-                'status_badge_class': 'badge-blue',
-                'sort_key': (_normalize_sort_date(task.due_date), 10, task.pk),
-            })
-
-        for deadline in list(
-            Deadline.objects.for_organization(org)
-            .select_related('contract', 'matter', 'assigned_to')
-            .filter(assigned_to=request.user, is_completed=False)
-            .order_by('due_date')[:4]
-        ):
-            waiting_on_me_raw.append({
-                'title': deadline.title,
-                'meta': f"Deadline · {deadline.contract.title if deadline.contract else deadline.matter.title if deadline.matter else 'Unlinked'}",
-                'href': reverse('contracts:deadline_update', kwargs={'pk': deadline.pk}),
-                'contract': deadline.contract,
-                'assignee': request.user,
-                'due_date': deadline.due_date,
-                'status_label': 'Overdue' if deadline.due_date and deadline.due_date < today else 'Upcoming',
-                'status_badge_class': 'badge-red' if deadline.due_date and deadline.due_date < today else 'badge-yellow',
-                'sort_key': (_normalize_sort_date(deadline.due_date), 20, deadline.pk),
-            })
-
-        for approval in list(
-            approvals_qs.select_related('contract', 'assigned_to')
-            .filter(assigned_to=request.user, status='PENDING')
-            .order_by('due_date', 'created_at')[:4]
-        ):
-            waiting_on_me_raw.append({
-                'title': approval.contract.title,
-                'meta': f"Approval · {approval.approval_step}",
-                'href': reverse('contracts:approval_request_update', kwargs={'pk': approval.pk}),
-                'contract': approval.contract,
-                'assignee': request.user,
-                'due_date': approval.due_date.date() if approval.due_date else None,
-                'status_label': approval.get_status_display(),
-                'status_badge_class': 'badge-yellow',
-                'sort_key': (_normalize_sort_date(approval.due_date), 30, approval.pk),
-            })
-
-        for dsar in list(
-            dsars_qs.select_related('client', 'assigned_to')
-            .filter(assigned_to=request.user, status__in=['RECEIVED', 'VERIFIED', 'IN_PROGRESS'])
-            .order_by('due_date', 'received_date')[:4]
-        ):
-            client_name = dsar.client.name if dsar.client else 'Unlinked'
-            waiting_on_me_raw.append({
-                'title': dsar.requester_name,
-                'meta': f"Data subject request · {client_name}",
-                'href': reverse('contracts:dsar_update', kwargs={'pk': dsar.pk}),
-                'contract': None,
-                'assignee': request.user,
-                'due_date': dsar.due_date,
-                'status_label': dsar.get_status_display(),
-                'status_badge_class': 'badge-purple',
-                'sort_key': (_normalize_sort_date(dsar.due_date or dsar.received_date), 40, dsar.pk),
-            })
-
-        for step in list(
-            WorkflowStep.objects.select_related('workflow', 'assigned_to')
-            .filter(workflow__organization=org, assigned_to=request.user, status='PENDING')
-            .order_by('order', 'pk')[:4]
-        ):
-            waiting_on_me_raw.append({
-                'title': step.name,
-                'meta': f"Workflow · {step.workflow.title}",
-                'href': reverse('contracts:workflow_step_update', kwargs={'pk': step.pk}),
-                'contract': step.workflow.contract,
-                'assignee': request.user,
-                'due_date': step.due_date.date() if step.due_date else None,
-                'status_label': 'Waiting on you',
-                'status_badge_class': 'badge-yellow',
-                'sort_key': (_normalize_sort_date(step.due_date), 50, step.order, step.pk),
-            })
-
-        for signature in list(
-            signatures_qs.select_related('contract')
-                .filter(signer_email__iexact=request.user.email, status__in=['PENDING', 'SENT', 'VIEWED'])
-                .order_by('order', 'created_at')[:4]
-        ):
-            waiting_on_me_raw.append({
-                'title': signature.contract.title,
-                'meta': f"Signature · {signature.signer_name} · {signature.get_status_display()}",
-                'href': reverse('contracts:signature_request_detail', kwargs={'pk': signature.pk}),
-                'contract': signature.contract,
-                'assignee': request.user,
-                'due_date': None,
-                'status_label': signature.get_status_display(),
-                'status_badge_class': 'badge-blue',
-                'sort_key': (_normalize_sort_date(signature.created_at), 60, signature.order, signature.pk),
-            })
-
-    waiting_on_me_raw = sorted(waiting_on_me_raw, key=lambda item: item['sort_key'])[:10]
 
     case_status_data = []
     status_mapping = [
@@ -2212,7 +2097,14 @@ def dashboard(request):
                 # these keys were absent entirely, and every tab but "All"
                 # rendered empty).
                 'filter_all': True,
-                'filter_mine': bool(assignee and assignee.pk == request.user.pk),
+                'filter_blocked': (
+                    contract.status == Contract.Status.IN_PROGRESS
+                    and contract.lifecycle_stage in (
+                        Contract.LifecycleStage.INTERNAL_REVIEW,
+                        Contract.LifecycleStage.NEGOTIATION,
+                        Contract.LifecycleStage.APPROVAL,
+                    )
+                ),
                 'filter_dpa': contract.contract_type == 'DPA',
                 'filter_high_risk': contract.risk_level in ('HIGH', 'CRITICAL'),
                 'filter_renewals': bool(due),
@@ -2224,30 +2116,6 @@ def dashboard(request):
                         Contract.LifecycleStage.APPROVAL,
                     )
                 ),
-            })
-        return rows
-
-    def _finalize_waiting_on_me(raw_rows):
-        contract_ids = [r['contract'].pk for r in raw_rows if r['contract']]
-        activity_map = _latest_activity_map(contract_ids)
-        rows = []
-        for r in raw_rows:
-            rows.append({
-                'title': r['title'],
-                'href': r['href'],
-                'edit_href': r['href'],
-                'meta': r['meta'],
-                'contract': r['contract'],
-                'assignee': r['assignee'],
-                'owner_role': _role_for_user(r['assignee']),
-                'activity': activity_map.get(r['contract'].pk) if r['contract'] else None,
-                'due_date': r['due_date'],
-                'due_overdue': bool(r['due_date'] and r['due_date'] < today),
-                'due_today': bool(r['due_date'] and r['due_date'] == today),
-                'status_label': r['status_label'],
-                'status_badge_class': r['status_badge_class'],
-                'action_label': _QUEUE_ACTION_LABELS.get(r['contract'].lifecycle_stage, 'View') if r['contract'] else 'Open',
-                'next_action': _QUEUE_ACTION_LABELS.get(r['contract'].lifecycle_stage, 'Open') if r['contract'] else 'Open',
             })
         return rows
 
@@ -2285,11 +2153,9 @@ def dashboard(request):
             ],
         ).order_by('-updated_at')
     )
-    queue_waiting_on_me = _finalize_waiting_on_me(waiting_on_me_raw)
 
     queue_tabs = [
         {'key': 'in_progress', 'label': 'In Progress', 'rows': queue_in_progress, 'empty_message': 'No contracts currently in progress.'},
-        {'key': 'waiting_on_me', 'label': 'Waiting on Me', 'rows': queue_waiting_on_me, 'empty_message': 'Nothing is waiting on you right now.'},
         {'key': 'needs_review', 'label': 'Needs Review', 'rows': queue_needs_review, 'empty_message': 'Nothing awaiting review.'},
         {'key': 'renewals', 'label': 'Renewals', 'rows': queue_renewals, 'empty_message': 'No renewals due in the next 30 days.'},
         {'key': 'completed', 'label': 'Completed', 'rows': queue_completed, 'empty_message': 'No completed contracts yet.'},
@@ -2408,7 +2274,7 @@ def dashboard(request):
         clm_my_approvals_count = approvals_qs.filter(status='PENDING', assigned_to=request.user).count()
         clm_pending_approvals_count = approvals_qs.filter(status='PENDING').count()
         clm_approval_overdue_count = approvals_qs.filter(
-            status='PENDING', assigned_to=request.user, due_date__lt=timezone.now(),
+            status='PENDING', due_date__lt=timezone.now(),
         ).count()
 
         clm_deadlines_30d_count = deadlines_qs.filter(
@@ -2459,13 +2325,13 @@ def dashboard(request):
     if clm_needs_review_count:
         n = clm_needs_review_count
         attention_parts.append(f"{n} contract{'s' if n != 1 else ''} needing legal review")
-    if clm_my_approvals_count:
-        n = clm_my_approvals_count
-        attention_parts.append(f"{n} approval{'s' if n != 1 else ''} in your queue")
+    if clm_pending_approvals_count:
+        n = clm_pending_approvals_count
+        attention_parts.append(f"{n} open approval{'s' if n != 1 else ''} across the organization")
     if clm_renewals_count:
         n = clm_renewals_count
         attention_parts.append(f"{n} renewal{'s' if n != 1 else ''}/deadline{'s' if n != 1 else ''} due soon")
-    attention_total = (clm_conflict_count or 0) + (clm_needs_review_count or 0) + (clm_my_approvals_count or 0) + (clm_renewals_count or 0)
+    attention_total = (clm_conflict_count or 0) + (clm_needs_review_count or 0) + (clm_pending_approvals_count or 0) + (clm_renewals_count or 0)
     if len(attention_parts) <= 1:
         attention_summary = attention_parts[0] if attention_parts else ''
     elif len(attention_parts) == 2:
@@ -2514,7 +2380,7 @@ def dashboard(request):
     # onboarding-checklist substitution when the workspace has none. An
     # empty workspace renders the panel's real "No open governed actions"
     # empty state instead.
-    clm_recommended_actions = group_recommended_actions(priority_queue_rows, today=today, limit=3)
+    clm_recommended_actions = group_recommended_actions(priority_queue_rows, today=today, limit=5)
 
     # Secondary-filter option lists for the Filters popover — derived from
     # what's actually present in the queue, so no filter ever shows an
@@ -2858,7 +2724,7 @@ def dashboard(request):
             'title': 'Notice / Renewal Risk',
             'value': clm_renewals_count,
             'supporting_text': 'Deadlines in the next 30 days',
-            'href': reverse('contracts:deadline_list'),
+            'href': reverse('contracts:obligations_workspace'),
             'tone': 'amber' if clm_renewals_count else 'teal',
             'empty_headline': None if clm_renewals_count else 'No renewals due',
             'empty_detail': 'No renewal or notice dates in the next 30 days.',

@@ -2,6 +2,8 @@
 
 Last updated: 2026-06-21
 
+Product boundaries, persona sequencing, and phase outcomes: [`docs/PRODUCT_ROADMAP.md`](docs/PRODUCT_ROADMAP.md).
+
 ## Audit Baseline (measured before Wave 0-1 work)
 
 | Dimension | Score |

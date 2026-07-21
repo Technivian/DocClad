@@ -164,7 +164,7 @@ class DashboardQueueRowContentTests(TestCase):
         self.assertIn('Raw Value Check Contract', html)
         self.assertIn('Countersign the amendment', html)
 
-    def test_waiting_on_me_row_shows_assignee_and_due_date_for_current_user(self):
+    def test_assigned_approval_surfaces_on_my_work_not_dashboard_queue(self):
         contract = Contract.objects.create(
             organization=self.organization,
             title='Assigned To Me Contract',
@@ -179,10 +179,9 @@ class DashboardQueueRowContentTests(TestCase):
             status='PENDING',
             assigned_to=self.user,
         )
-        response = self.client.get(reverse('dashboard'))
-        self.assertContains(response, 'Assigned To Me Contract')
-        # The signed-in user's own name/initial renders via AssigneeChip.
-        self.assertContains(response, self.user.username)
+        my_work = self.client.get(reverse('contracts:my_work'))
+        self.assertContains(my_work, 'Assigned To Me Contract')
+        self.assertContains(my_work, 'Approve Finance')
 
 
 class StageDotsComponentTests(TestCase):

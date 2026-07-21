@@ -51,6 +51,8 @@ urlpatterns = [
     path('api/analytics/executive/', api_views.executive_analytics_api, name='executive_analytics_api'),
     path('api/analytics/executive/presets/', api_views.executive_dashboard_presets_api, name='executive_dashboard_presets_api'),
     path('api/analytics/executive/presets/<int:preset_id>/', api_views.executive_dashboard_preset_delete_api, name='executive_dashboard_preset_delete_api'),
+    path('api/analytics/work-events/', api_views.work_interaction_api, name='work_interaction_api'),
+    path('api/analytics/work-metrics/', api_views.work_operating_metrics_api, name='work_operating_metrics_api'),
     path('api/documents/upload/', api_views.document_upload_api, name='document_upload_api'),
     path('api/documents/extract-preview/', api_views.document_extract_preview_api, name='document_extract_preview_api'),
     path('api/contracts/<str:contract_id>/ai-extract/', api_views.contract_ai_extract_api, name='contract_ai_extract_api'),
@@ -109,8 +111,15 @@ urlpatterns = [
     path('api/approvals/<int:approval_id>/reject/', api_views.approval_reject_api, name='approval_reject_api'),
     path('api/approvals/<int:approval_id>/request-changes/', api_views.approval_request_changes_api, name='approval_request_changes_api'),
     path('api/approvals/<int:approval_id>/delegate/', api_views.approval_delegate_api, name='approval_delegate_api'),
-    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),
-    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
+    path('api/approvals/<int:approval_id>/reassign/', api_views.approval_reassign_api, name='approval_reassign_api'),
+    path(
+        'api/approvals/<int:approval_id>/suggest-decision-comment/',
+        api_views.approval_suggest_decision_api,
+        name='approval_suggest_decision_api',
+    ),
+    path('api/org/assignee-options/', api_views.assignee_options_api, name='assignee_options_api'),
+    path('api/work/suggest-comment/', api_views.work_suggest_comment_api, name='work_suggest_comment_api'),
+    path('api/contracts/<int:contract_id>/approvals/', api_views.approval_contract_list_api, name='approval_contract_list_api'),    path('api/contracts/<int:contract_id>/approvals/initiate/', api_views.approval_initiate_api, name='approval_initiate_api'),
 
     # Clause Analytics
     path('api/clause-analytics/stats/', api_views.clause_analytics_stats, name='clause_analytics_stats'),
@@ -174,6 +183,8 @@ urlpatterns = [
     path('deadlines/new/', views.DeadlineCreateView.as_view(), name='deadline_create'),
     path('deadlines/<int:pk>/edit/', views.DeadlineUpdateView.as_view(), name='deadline_update'),
     path('deadlines/<int:pk>/complete/', views.deadline_complete, name='deadline_complete'),
+    path('deadlines/<int:pk>/defer/', views.deadline_defer, name='deadline_defer'),
+    path('deadlines/<int:pk>/escalate/', views.deadline_escalate, name='deadline_escalate'),
     path('deadlines/<int:pk>/delete/', views.deadline_delete, name='deadline_delete'),
 
     # Conflict Checks
@@ -316,6 +327,9 @@ urlpatterns = [
     # Repository
     path('repository/', views.RepositoryView.as_view(), name='repository'),
     path('my-work/', views.MyWorkView.as_view(), name='my_work'),
+    path('my-work/saved-views/', views.my_work_saved_views_api, name='my_work_saved_views_api'),
+    path('my-work/saved-views/<int:view_id>/', views.my_work_saved_view_detail_api, name='my_work_saved_view_detail_api'),
+    path('ops/work-health/', views.WorkHealthReportView.as_view(), name='work_health_report'),
     path('templates-playbooks/', views.TemplatesPlaybooksHubView.as_view(), name='templates_playbooks_hub'),
 
     # Counterparties

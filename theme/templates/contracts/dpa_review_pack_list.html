@@ -4,6 +4,7 @@
 {% block authenticated_page_subtitle %}DPA reviews, transfer assessments, subprocessor checks, and privacy deviations that need a decision.{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
+{% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
   .dpa-review-page .dpa-review-contract-link { color: var(--ds-color-text); font-weight: 780; text-decoration: none; }
   .dpa-review-page .dpa-review-contract-link:hover { color: var(--ds-color-action); }
@@ -254,8 +255,12 @@
         {% for row in review_pack_rows %}
         <tr class="dpa-review-row" data-href="{{ row.detail_url }}" tabindex="0" role="link" aria-label="Open review pack for {{ row.pack.contract.title }}">
           <td data-col="agreement">
-            <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title">{{ row.pack.contract.title }}</a>
+            <a href="{{ row.detail_url }}" class="dpa-review-contract-link dpa-review-agreement-title"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.pack.contract.title }}</a>
             <div class="dpa-review-counterparty">{% if row.pack.counterparty %}{{ row.pack.counterparty.name }}{% else %}No counterparty{% endif %}</div>
+            {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
+            {% if row.priority_reason %}
+            {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+            {% endif %}
           </td>
           <td data-col="role">
             {% if row.role_is_ambiguous %}
@@ -277,6 +282,11 @@
             <details class="wq-kebab dpa-row-menu">
               <summary aria-label="More actions for {{ row.pack.contract.title }}" class="wq-kebab-trigger">&#8942;</summary>
               <div class="wq-kebab-menu" role="menu">
+                {% if row.conflict_count %}
+                <a href="{{ row.risks_url }}" role="menuitem">Resolve conflicts ({{ row.conflict_count }})</a>
+                {% elif row.unresolved_risk_count %}
+                <a href="{{ row.risks_url }}" role="menuitem">Resolve open risks</a>
+                {% endif %}
                 <a href="{{ row.detail_url }}" role="menuitem">Open review</a>
                 <a href="{{ row.memo_url }}" role="menuitem">View memo</a>
                 <a href="{{ row.contract_url }}" role="menuitem">View contract record</a>
@@ -287,7 +297,11 @@
         {% empty %}
         <tr>
           <td colspan="7">
+            {% if privacy_empty_state %}
+              {% include "components/_work_queue_empty_state.html" with title=privacy_empty_state.title copy=privacy_empty_state.copy how=privacy_empty_state.how personal_hub=privacy_empty_state.personal_hub only %}
+            {% else %}
             {% include "design_system/empty_state.html" with icon="shield" title="No active Privacy Reviews" reason="No governed privacy review packs are open in this workspace." how="Start a DPA review to open a review pack, or upload an existing DPA into the repository." action_url=start_dpa_url action_label="Start DPA review" class_name="dc-ds-empty--compact" %}
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

@@ -239,7 +239,7 @@ class CommandCenterProductionSurfaceTests(TestCase):
         self.assertNotContains(response, 'Configure deadlines')
         self.assertNotContains(response, 'See all deadlines')
 
-    def test_kpi_counts_are_user_and_workspace_scoped(self):
+    def test_kpi_counts_use_org_wide_pending_approvals(self):
         contract = Contract.objects.create(
             organization=self.org, title='Approval Contract', content='x', created_by=self.user,
         )
@@ -248,5 +248,5 @@ class CommandCenterProductionSurfaceTests(TestCase):
             status=ApprovalRequest.Status.PENDING, assigned_to=self.user,
         )
         response = self.client_.get(reverse('dashboard'))
-        self.assertEqual(response.context['clm_my_approvals_count'], 1)
-        self.assertContains(response, '1 awaiting review')
+        self.assertEqual(response.context['clm_pending_approvals_count'], 1)
+        self.assertContains(response, '1 open across the organization')

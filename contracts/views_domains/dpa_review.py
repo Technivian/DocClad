@@ -32,6 +32,7 @@ from contracts.models import (
     DPARiskItemNote,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
+from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, reviewer_privacy_packs_queryset
 from contracts.services.dpa_conflict import check_cross_document_conflicts
 from contracts.services.dpa_review import generate_review_memo, run_dpa_analysis
 from contracts.tenancy import get_user_organization
@@ -88,10 +89,12 @@ def _unresolved_risks(pack):
     return [risk for risk in pack.risk_items.all() if risk.status not in _RESOLVED_RISK_STATUSES]
 
 
-def _next_action_for_pack(pack, unresolved_risks, critical_risk_count):
+def _next_action_for_pack(pack, unresolved_risks, critical_risk_count, conflict_count=0):
     """Surface the highest-priority unresolved work for the review queue."""
     if pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS:
         return 'Resolve role qualification'
+    if conflict_count:
+        return 'Resolve cross-document conflicts'
     if critical_risk_count:
         return 'Address critical risks'
     if unresolved_risks:
@@ -636,6 +639,9 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
             .order_by('-updated_at')
         )
         params = self.request.GET
+        selected_view = (params.get('view') or '').strip()
+        if selected_view == 'my_reviews':
+            qs = reviewer_privacy_packs_queryset(org, self.request.user)
         search = (params.get('q') or '').strip()
         if search:
             qs = qs.filter(
@@ -703,11 +709,13 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
         )
 
         params = self.request.GET
+        selected_view = (params.get('view') or '').strip()
         ctx['search_query'] = (params.get('q') or '').strip()
         ctx['selected_status'] = (params.get('status') or '').strip()
         ctx['selected_role'] = (params.get('role') or '').strip()
         ctx['selected_severity'] = (params.get('severity') or '').strip()
         ctx['selected_owner'] = (params.get('owner') or '').strip()
+        ctx['selected_view'] = selected_view
         list_url = reverse('contracts:dpa_review_pack_list')
         selected_status = ctx['selected_status']
         selected_severity = ctx['selected_severity']
@@ -716,7 +724,13 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 'key': 'all',
                 'label': 'All reviews',
                 'url': list_url,
-                'active': not selected_status and not selected_severity,
+                'active': not selected_status and not selected_severity and selected_view != 'my_reviews',
+            },
+            {
+                'key': 'my_reviews',
+                'label': 'My reviews',
+                'url': f'{list_url}?view=my_reviews',
+                'active': selected_view == 'my_reviews',
             },
             {
                 'key': 'needs_decision',
@@ -750,17 +764,42 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 1 for risk in unresolved_risks
                 if risk.severity == DPARiskItem.Severity.CRITICAL
             )
+            conflict_count = sum(
+                1 for risk in unresolved_risks
+                if getattr(risk, 'is_cross_document_conflict', False)
+            )
+            from contracts.services.governance_ux import privacy_blocker_for_pack
+            blocker = privacy_blocker_for_pack(
+                pack,
+                unresolved_critical=critical_risk_count,
+                conflict_count=conflict_count,
+            )
             role_is_ambiguous = (
                 pack.role_qualification == DPAReviewPack.RoleQualification.AMBIGUOUS
             )
             at_approval_gate = pack.approval_status in _APPROVAL_GATE_STATUSES
+            risks_url = f"{reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk})}?tab=risks"
             rows.append({
                 'pack': pack,
                 'detail_url': reverse('contracts:dpa_review_pack_detail', kwargs={'pk': pack.pk}),
+                'risks_url': risks_url,
                 'memo_url': reverse('contracts:dpa_review_pack_memo', kwargs={'pk': pack.pk}),
                 'contract_url': reverse('contracts:contract_detail', kwargs={'pk': pack.contract_id}),
                 'unresolved_risk_count': len(unresolved_risks),
                 'critical_risk_count': critical_risk_count,
+                'conflict_count': conflict_count,
+                'is_blocked': blocker['is_blocked'],
+                'blocking_issue': blocker['blocking_issue'],
+                'blocker_owner': blocker['blocker_owner'],
+                'priority_reason': (
+                    'Cross-document conflicts blocking completion' if conflict_count
+                    else f'{critical_risk_count} critical risk{"s" if critical_risk_count != 1 else ""} open'
+                    if critical_risk_count else ''
+                ),
+                'priority_label': (
+                    'Critical' if critical_risk_count or conflict_count else ''
+                ),
+                'priority_tone': 'danger' if critical_risk_count or conflict_count else 'neutral',
                 'risk_tone': 'danger' if unresolved_risks else 'success',
                 'approval_tone': _REVIEW_STATUS_TONES.get(pack.approval_status, 'neutral'),
                 'review_status_label': _review_status_list_label(pack),
@@ -772,9 +811,19 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                     (pack.reviewer.get_full_name() or pack.reviewer.username)
                     if pack.reviewer_id else 'Unassigned'
                 ),
-                'next_action': _next_action_for_pack(pack, unresolved_risks, critical_risk_count),
+                'next_action': _next_action_for_pack(
+                    pack, unresolved_risks, critical_risk_count, conflict_count=conflict_count,
+                ),
             })
         ctx['review_pack_rows'] = rows
+        if selected_view == 'my_reviews' and not rows:
+            title, copy, how = QUEUE_EMPTY_PERSONAL['privacy_mine']
+            ctx['privacy_empty_state'] = {
+                'title': title,
+                'copy': copy,
+                'how': how,
+                'personal_hub': True,
+            }
         return ctx
 
 
@@ -1128,6 +1177,13 @@ def dpa_risk_item_set_status(request, pk):
 
     risk_item.status = new_status
     risk_item.save(update_fields=['status', 'updated_at'])
+    note_text = (payload.get('note') or payload.get('reason') or payload.get('comments') or '').strip()
+    note_id = None
+    if note_text:
+        note = DPARiskItemNote.objects.create(
+            risk_item=risk_item, author=request.user, note=note_text,
+        )
+        note_id = note.pk
     log_action(
         request.user, AuditLog.Action.UPDATE, 'DPARiskItem',
         object_id=risk_item.pk, object_repr=str(risk_item), organization=risk_item.review_pack.organization,
@@ -1136,10 +1192,12 @@ def dpa_risk_item_set_status(request, pk):
             'contract_id': risk_item.review_pack.contract_id,
             'previous_status': previous_status,
             'new_status': new_status,
+            'note_id': note_id,
+            'note': note_text[:240] if note_text else '',
         },
         request=request,
     )
-    return JsonResponse({'ok': True, 'status': new_status})
+    return JsonResponse({'ok': True, 'status': new_status, 'note_id': note_id})
 
 
 @require_POST

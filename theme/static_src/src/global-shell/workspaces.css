@@ -515,6 +515,15 @@
   color: var(--ink-900);
   font: var(--text-subheading);
 }
+.dc-ds-workspace--record .contract-action-card__meta {
+  margin: var(--space-4) 0 0;
+  color: var(--ink-600);
+  font: var(--text-meta);
+}
+.dc-ds-workspace--record .contract-action-card--compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0 0 var(--space-16);
+}
 .dc-ds-workspace--record .contract-overview-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

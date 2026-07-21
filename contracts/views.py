@@ -146,7 +146,9 @@ from .views_domains.deadlines import (
     DeadlineUpdateView,
     ObligationsWorkspaceView,
     deadline_complete,
+    deadline_defer,
     deadline_delete,
+    deadline_escalate,
 )
 from .views_domains.contracts import (
     ContractCreateView,
@@ -270,6 +272,11 @@ from .views_domains.core import (
 from .views_domains.workspace_nav import (
     MyWorkView,
     TemplatesPlaybooksHubView,
+)
+from .views_domains.work_amplifiers import (
+    WorkHealthReportView,
+    my_work_saved_view_detail_api,
+    my_work_saved_views_api,
 )
 from .views_domains.activity import (
     AuditLogListView,

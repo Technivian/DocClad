@@ -81,6 +81,8 @@ from contracts.api.integrations import (
 )
 from contracts.api.analytics import (
     executive_analytics_api,
+    work_interaction_api,
+    work_operating_metrics_api,
     executive_dashboard_presets_api,
     executive_dashboard_preset_delete_api,
     clause_analytics_stats,
@@ -150,6 +152,10 @@ from contracts.api.admin import (
     approval_reject_api,
     approval_request_changes_api,
     approval_delegate_api,
+    approval_reassign_api,
+    approval_suggest_decision_api,
+    assignee_options_api,
+    work_suggest_comment_api,
     approval_overdue_api,
     approval_escalate_overdue_api,
     approval_list_api,

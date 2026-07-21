@@ -1,0 +1,144 @@
+{# Shared manager reassignment dialog — searchable teammate picker + workload + required reason. #}
+<style nonce="{{ csp_nonce }}">
+  .reassign-dialog-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--ink-900, #111) 35%, transparent);
+    padding: 16px;
+  }
+  .reassign-dialog-backdrop.is-open { display: flex; }
+  .reassign-dialog {
+    width: min(420px, 100%);
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 12px;
+    background: var(--card, #fff);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    padding: 16px;
+  }
+  .reassign-dialog h2 {
+    margin: 0 0 4px;
+    font: var(--text-h3, 600 16px/1.3 system-ui);
+    color: var(--ink-900, var(--text-primary));
+  }
+  .reassign-dialog__meta {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: var(--ink-600, var(--text-secondary));
+  }
+  .reassign-dialog__field {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .reassign-dialog__field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-600, var(--text-secondary));
+  }
+  .reassign-dialog__suggest-row {
+    display: flex;
+    justify-content: flex-start;
+    margin: -4px 0 12px;
+  }
+  .reassign-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .reassign-dialog__error {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--status-danger-fg, #b42318);
+  }
+  .reassign-dialog__error[hidden] { display: none; }
+  .reassign-combobox {
+    display: grid;
+    gap: 6px;
+  }
+  .reassign-combobox [data-reassign-options] {
+    max-height: 200px;
+    overflow: auto;
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 8px;
+    background: var(--card, #fff);
+  }
+  .reassign-option {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-bottom: 1px solid var(--line, var(--hairline));
+    background: transparent;
+    color: var(--ink-900, var(--text-primary));
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .reassign-option:last-child { border-bottom: 0; }
+  .reassign-option:hover,
+  .reassign-option:focus-visible {
+    background: color-mix(in srgb, var(--seal, #1f4b3a) 8%, var(--card, #fff));
+    outline: none;
+  }
+  .reassign-option.is-selected {
+    background: color-mix(in srgb, var(--seal, #1f4b3a) 12%, var(--card, #fff));
+    box-shadow: inset 3px 0 0 var(--seal, #1f4b3a);
+  }
+  .reassign-option__label { font-weight: 600; min-width: 0; }
+  .reassign-option__meta {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-500, var(--text-secondary));
+  }
+  .reassign-combobox__empty {
+    margin: 0;
+    padding: 12px 10px;
+    font-size: 13px;
+    color: var(--ink-500, var(--text-secondary));
+  }
+</style>
+<div class="reassign-dialog-backdrop" id="{{ dialog_id|default:'reassign-dialog' }}"{% if assignee_options_url %} data-assignee-options-url="{{ assignee_options_url }}"{% endif %} hidden role="presentation">
+  <div class="reassign-dialog" role="dialog" aria-modal="true" aria-labelledby="{{ dialog_id|default:'reassign-dialog' }}-title">
+    <h2 id="{{ dialog_id|default:'reassign-dialog' }}-title">Reassign approval</h2>
+    <p class="reassign-dialog__meta" data-reassign-current>Current owner: —</p>
+    <p class="reassign-dialog__error" data-reassign-error hidden></p>
+    <div class="reassign-dialog__field">
+      <label for="{{ dialog_id|default:'reassign-dialog' }}-search">New assignee</label>
+      <div class="reassign-combobox">
+        <input type="hidden" data-reassign-assignee value="" />
+        <input type="search"
+               id="{{ dialog_id|default:'reassign-dialog' }}-search"
+               class="dc-ds-control"
+               data-reassign-search
+               placeholder="Search by name or username"
+               autocomplete="off"
+               aria-autocomplete="list"
+               aria-controls="{{ dialog_id|default:'reassign-dialog' }}-options" />
+        <div id="{{ dialog_id|default:'reassign-dialog' }}-options"
+             class="reassign-options"
+             data-reassign-options
+             role="listbox"
+             aria-label="Teammates"></div>
+      </div>
+    </div>
+    <div class="reassign-dialog__field">
+      <label for="{{ dialog_id|default:'reassign-dialog' }}-reason">Reason (required)</label>
+      <textarea id="{{ dialog_id|default:'reassign-dialog' }}-reason" class="dc-ds-control" rows="3" data-reassign-reason placeholder="Why is this being reassigned?"></textarea>
+    </div>
+    <div class="reassign-dialog__suggest-row">
+      <button type="button" class="dc-ds-button dc-ds-button--ghost" data-reassign-suggest>Suggest reason</button>
+    </div>
+    <div class="reassign-dialog__actions">
+      <button type="button" class="dc-ds-button dc-ds-button--ghost" data-reassign-cancel>Cancel</button>
+      <button type="button" class="dc-ds-button dc-ds-button--primary" data-reassign-confirm>Reassign</button>
+    </div>
+  </div>
+</div>
+{{ reassign_members|json_script:"reassign-members-data" }}

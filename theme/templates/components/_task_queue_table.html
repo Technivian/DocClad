@@ -1,4 +1,5 @@
 {% load clmone_components %}
+{% include "components/_governance_styles.html" %}
 <table class="dc-ds-table wq-table" data-table-core="server" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %}>
   <thead>
     <tr>
@@ -15,14 +16,14 @@
     {% for row in rows %}
     <tr>
       <td>
-        <span class=" {{ row.priority_badge_class }}">{{ row.priority_label }}</span>
-        <a href="{{ row.href }}" class="wq-item-link">{{ row.title|truncatechars:44 }}</a>
+        {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+        <a href="{{ row.href }}" class="wq-item-link"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.title|truncatechars:44 }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
       <td>{% stage_dots row.contract %}</td>
       <td>{% assignee_chip row.assignee %}</td>
       <td>{% activity_line row.activity %}</td>
-      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}">{{ row.due_date|date:"d M Y" }}</td>
+      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.due_date|date:"d M Y" }}</td>
       <td><span class=" {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
       <td class="wq-approval-actions">
         {% if row.can_complete %}
@@ -33,7 +34,9 @@
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="7" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>
+    <tr><td colspan="7">
+      {% include "components/_work_queue_empty_state.html" with title=empty_title copy=empty_copy how=empty_how personal_hub=personal_hub only %}
+    </td></tr>
     {% endfor %}
   </tbody>
 </table>

@@ -47,19 +47,9 @@ from contracts.view_support import TenantAssignCreateMixin, TenantScopedFormMixi
 
 
 def _can_actor_complete_task(task, user, org):
-    """Single source of truth for "can this actor complete this task" —
-    used by both the Tasks queue (to decide whether to show a live Complete
-    button) and the legal_task_complete endpoint (the real enforcement
-    boundary), so the UI can never claim an action is available that the
-    API would then refuse. Mirrors the exact rule LegalTaskUpdateView.dispatch
-    already applies to editing: contract-linked tasks require contract-edit
-    access; matter-linked tasks require the matter to belong to the actor's
-    organization. A task with neither link has nothing further to check."""
-    if task.contract_id and not can_access_contract_action(user, task.contract, ContractAction.EDIT):
-        return False
-    if task.matter_id and (not org or task.matter.organization_id != org.id):
-        return False
-    return True
+    """Delegate to the shared assignments rule used by My Work and Tasks."""
+    from contracts.services.assignments import can_actor_complete_task
+    return can_actor_complete_task(task, user, org)
 
 
 class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
@@ -92,6 +82,8 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
     def _build_queue_tabs(self):
         from datetime import timedelta
 
+        from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, open_tasks_queryset
+        from contracts.services.governance_ux import priority_tone_for_label, sla_priority_reason
         from contracts.services.queue_rows import creator_map, latest_activity_map
         from contracts.templatetags.clmone_format import task_priority_badge_class, task_status_badge_class
 
@@ -140,6 +132,16 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                     if matter.client_id:
                         meta_parts.append(matter.client.name)
 
+                priority_label = task.get_priority_display()
+                priority_reason = sla_priority_reason(
+                    due_date=due,
+                    today=today,
+                    overdue=overdue,
+                    fallback=(
+                        f'{priority_label} priority task'
+                        if task.priority in ('HIGH', 'URGENT') else ''
+                    ),
+                )
                 rows.append({
                     'id': task.pk,
                     'title': task.title,
@@ -153,8 +155,10 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                     'due_overdue': overdue,
                     'status_label': task.get_status_display(),
                     'status_badge_class': task_status_badge_class(task.status),
-                    'priority_label': task.get_priority_display(),
+                    'priority_label': priority_label,
+                    'priority_tone': priority_tone_for_label(priority_label),
                     'priority_badge_class': task_priority_badge_class(task.priority),
+                    'priority_reason': priority_reason,
                     # Gate on BOTH "is this actor eligible" and "is this task
                     # still open" — an eligible admin must not see a live
                     # Complete button on an already-completed/cancelled task,
@@ -168,7 +172,7 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                 })
             return rows
 
-        assigned_qs = base_qs.filter(assigned_to=user, status__in=open_statuses)
+        assigned_qs = open_tasks_queryset(org, user, queryset=base_qs)
         due_soon_qs = base_qs.filter(
             status__in=open_statuses, due_date__gte=today, due_date__lte=today + timedelta(days=7),
         )
@@ -181,9 +185,11 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         created_ids = [task_id for task_id, creator in creators.items() if creator and creator.id == user.id]
         created_qs = base_qs.filter(pk__in=created_ids)
 
+        assigned_title, assigned_copy, assigned_how = QUEUE_EMPTY_PERSONAL['tasks_assigned']
         return [
             {'key': 'assigned_to_me', 'label': 'Assigned to Me', 'rows': _to_rows(assigned_qs),
-             'empty_message': 'No tasks assigned to you.'},
+             'empty_message': 'No tasks assigned to you.', 'personal_hub': True,
+             'empty_title': assigned_title, 'empty_copy': assigned_copy, 'empty_how': assigned_how},
             {'key': 'created_by_me', 'label': 'Created by Me', 'rows': _to_rows(created_qs),
              'empty_message': 'No tasks created by you.'},
             {'key': 'due_soon', 'label': 'Due Soon', 'rows': _to_rows(due_soon_qs),
@@ -287,7 +293,20 @@ def legal_task_complete(request, pk):
         changes={'event': 'legal_task_completed'},
         request=request,
     )
-    return JsonResponse({'ok': True})
+    from contracts.services.work_instrumentation import record_outcome, resolve_surface
+    surface = resolve_surface(request)
+    record_outcome(
+        organization=task_org,
+        user=request.user,
+        event='completed',
+        work_item_id=f'task:{task.pk}',
+        work_kind='task',
+        surface=surface,
+        contract=task.contract,
+        contract_id=task.contract_id,
+        is_overdue=bool(task.due_date and task.due_date < timezone.localdate()),
+    )
+    return JsonResponse({'ok': True, 'surface': surface})
 
 
 class TrademarkRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):

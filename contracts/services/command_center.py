@@ -35,10 +35,10 @@ DEFAULT_SAVED_VIEWS = [
         'sort_order': 10,
     },
     {
-        'key': 'mine',
-        'name': 'My Queue',
-        'description': 'Work assigned to the current user',
-        'filters': {'owner': 'current_user'},
+        'key': 'blocked',
+        'name': 'Blocked work',
+        'description': 'Work blocked on approvals, input, or dependencies',
+        'filters': {'status': ['BLOCKED']},
         'sort_order': 20,
     },
     {
@@ -86,7 +86,7 @@ DEFAULT_RAIL_ITEMS = [
     {
         'kind': 'APPROVALS',
         'title': 'Blocking approvals',
-        'summary': 'Business approvals assigned to you or waiting on owners.',
+        'summary': 'Open business approvals blocking contracts across the organization.',
         'action_path': None,
         'sort_order': 10,
     },
@@ -203,13 +203,25 @@ def explainable_risk_score(risk_level, contributors, history=None):
     }
 
 
-def group_recommended_actions(rows, today=None, limit=3):
-    """Group identical governed actions, retaining auditable row context."""
+def group_recommended_actions(rows, today=None, limit=5):
+    """Group identical governed actions, retaining auditable row context.
+
+    Prefers blocked and overdue work, and tags each group with an operational
+    category so Command Center can surface cross-team wait states.
+    """
     ranked = rank_command_center_rows(rows, today=today)
     groups = {}
     for row in ranked:
         recommendation = governed_recommendation(row)
         key = recommendation['title'].strip().casefold()
+        if row.get('status_label') == 'Blocked':
+            category = 'Blocked'
+        elif row.get('due_overdue'):
+            category = 'Overdue'
+        elif row.get('filter_waiting') or row.get('filter_blocked'):
+            category = 'Waiting'
+        else:
+            category = 'Open'
         group = groups.setdefault(key, {
             'title': recommendation['title'],
             'explanation': recommendation['explanation'],
@@ -217,11 +229,12 @@ def group_recommended_actions(rows, today=None, limit=3):
             'count': 0,
             'counterparties': [],
             'owners': [],
+            'category': category,
             'urgency': row.get('recommendation_reason') or row.get('risk_label') or 'Action required',
             'due_label': row.get('due_label') if row.get('due_date') else '',
             'updated_at': row.get('updated_at'),
             'sort_key': (
-                0 if row.get('status_label') == 'Blocked' else 1,
+                0 if category == 'Blocked' else 1 if category == 'Overdue' else 2 if category == 'Waiting' else 3,
                 0 if row.get('due_overdue') else 1,
                 row.get('updated_at') or timezone.now(),
                 -RISK_RANK.get(row.get('risk_level'), 0),
@@ -229,6 +242,10 @@ def group_recommended_actions(rows, today=None, limit=3):
             ),
         })
         group['count'] += 1
+        # Keep the most urgent category when merging identical titles.
+        category_rank = {'Blocked': 0, 'Overdue': 1, 'Waiting': 2, 'Open': 3}
+        if category_rank.get(category, 9) < category_rank.get(group.get('category'), 9):
+            group['category'] = category
         counterparty = row.get('counterparty') or 'No counterparty'
         if counterparty not in group['counterparties']:
             group['counterparties'].append(counterparty)
@@ -475,7 +492,7 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
         'due_label': _format_due_label(due_date, today),
         'due_note': _format_due_note(due_date, today),
         'is_workflow': item.source_type == CommandCenterWorkItem.SourceType.WORKFLOW,
-        'filter_mine': bool(current_user and item.owner_id == current_user.id),
+        'filter_blocked': item.status == CommandCenterWorkItem.Status.BLOCKED or bool(flags.get('waiting_on_business')),
         'filter_dpa': item.source_type == CommandCenterWorkItem.SourceType.DPA_CONFLICT or (contract and contract.contract_type == 'DPA'),
         'filter_high_risk': item.risk_level in ('HIGH', 'CRITICAL'),
         'filter_renewals': item.source_type == CommandCenterWorkItem.SourceType.DEADLINE or bool(due_date),
@@ -526,7 +543,7 @@ def get_workflow_type_summary(rows):
 def get_command_center_rail_items(organization, counts):
     paths = {
         'APPROVALS': reverse('contracts:approval_request_list'),
-        'DEADLINES': reverse('contracts:deadline_list'),
+        'DEADLINES': reverse('contracts:obligations_workspace'),
         'DPA_CONFLICTS': reverse('contracts:dpa_review_pack_list'),
         'REVIEW_MEMOS': reverse('contracts:dpa_review_pack_list'),
         'RISK': reverse('contracts:risk_log_list'),
@@ -829,7 +846,7 @@ def refresh_command_center_projection(organization, actor=None, today=None):
                 'severity': Contract.RiskLevel.HIGH if kind == 'DPA_CONFLICTS' and count else Contract.RiskLevel.LOW,
                 'action_path': {
                     'APPROVALS': reverse('contracts:approval_request_list'),
-                    'DEADLINES': reverse('contracts:deadline_list'),
+                    'DEADLINES': reverse('contracts:obligations_workspace'),
                     'DPA_CONFLICTS': reverse('contracts:dpa_review_pack_list'),
                     'REVIEW_MEMOS': reverse('contracts:dpa_review_pack_list'),
                 }[kind],

@@ -482,3 +482,83 @@ def api_search_telemetry(request):
     ]})
 
 
+@login_required
+@require_http_methods(['POST'])
+def work_interaction_api(request):
+    """Beacon for My Work open / primary-action discovery events."""
+    from contracts.services.work_instrumentation import VALID_SURFACES, record_work_event, resolve_surface
+
+    org = get_user_organization(request.user)
+    if org is None:
+        return JsonResponse({'error': 'No organization'}, status=400)
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    event = (data.get('event') or '').strip()
+    work_item_id = (data.get('work_item_id') or '').strip()
+    evidence_key = (data.get('evidence') or data.get('evidence_key') or '').strip()
+    if evidence_key:
+        from contracts.services.work_instrumentation import record_adoption_event
+        record_adoption_event(
+            organization=org,
+            user=request.user,
+            evidence_key=evidence_key,
+            surface=resolve_surface(request, explicit=data.get('surface') or ''),
+            metadata=data.get('metadata') if isinstance(data.get('metadata'), dict) else {'via': 'beacon'},
+        )
+        return JsonResponse({'ok': True})
+    if event not in {'opened', 'primary_action', 'surfaced'}:
+        return JsonResponse({'error': 'Unsupported event'}, status=400)
+    if not work_item_id:
+        return JsonResponse({'error': 'work_item_id is required'}, status=400)
+
+    surface = resolve_surface(request, explicit=data.get('surface') or '')
+    if surface not in VALID_SURFACES:
+        surface = 'my_work'
+
+    record_work_event(
+        organization=org,
+        user=request.user,
+        event=event,
+        work_item_id=work_item_id,
+        work_kind=data.get('work_kind') or '',
+        surface=surface,
+        contract_id=data.get('contract_id'),
+        contract_type=data.get('contract_type') or '',
+        is_restricted=bool(data.get('is_restricted')),
+        is_blocked=bool(data.get('is_blocked')),
+        is_overdue=bool(data.get('is_overdue')),
+        metadata={'via': 'beacon'},
+        dedupe_days=1 if event == 'opened' else None,
+    )
+    return JsonResponse({'ok': True})
+
+
+@login_required
+@require_http_methods(['GET'])
+def work_operating_metrics_api(request):
+    """Phase 5 operating metrics — hub proof, not a decorative dashboard."""
+    from contracts.permissions import can_manage_organization
+    from contracts.services.work_instrumentation import build_operating_metrics, build_operating_trends
+
+    org = get_user_organization(request.user)
+    if org is None:
+        return JsonResponse({'error': 'No organization'}, status=400)
+    if not can_manage_organization(request.user, org):
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    try:
+        days = int(request.GET.get('days') or 30)
+    except (TypeError, ValueError):
+        days = 30
+    days = max(1, min(days, 180))
+    payload = build_operating_metrics(org, days=days)
+    if request.GET.get('trends') in ('1', 'true', 'yes'):
+        payload['trends'] = build_operating_trends(org, days=days).get('trends') or {}
+    if request.GET.get('adoption') in ('1', 'true', 'yes'):
+        from contracts.services.work_instrumentation import build_adoption_evidence
+        payload['adoption'] = build_adoption_evidence(org, days=days)
+    return JsonResponse(payload)
+
+

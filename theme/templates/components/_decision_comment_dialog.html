@@ -1,0 +1,83 @@
+{# Shared reject/return reason dialog — optional AI/template suggest, never auto-submits. #}
+<style nonce="{{ csp_nonce }}">
+  .decision-dialog-backdrop {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--ink-900, #111) 35%, transparent);
+    padding: 16px;
+  }
+  .decision-dialog-backdrop.is-open { display: flex; }
+  .decision-dialog {
+    width: min(440px, 100%);
+    border: 1px solid var(--line, var(--hairline));
+    border-radius: 12px;
+    background: var(--card, #fff);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    padding: 16px;
+  }
+  .decision-dialog h2 {
+    margin: 0 0 4px;
+    font: var(--text-h3, 600 16px/1.3 system-ui);
+    color: var(--ink-900, var(--text-primary));
+  }
+  .decision-dialog__meta {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: var(--ink-600, var(--text-secondary));
+  }
+  .decision-dialog__field {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .decision-dialog__field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-600, var(--text-secondary));
+  }
+  .decision-dialog__suggest-row {
+    display: flex;
+    justify-content: flex-start;
+    margin: -4px 0 12px;
+  }
+  .decision-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .decision-dialog__error {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--status-danger-fg, #b42318);
+  }
+  .decision-dialog__error[hidden] { display: none; }
+  .decision-dialog__hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ink-500, var(--text-secondary));
+  }
+</style>
+<div class="decision-dialog-backdrop" id="{{ dialog_id|default:'decision-comment-dialog' }}" hidden role="presentation">
+  <div class="decision-dialog" role="dialog" aria-modal="true" aria-labelledby="{{ dialog_id|default:'decision-comment-dialog' }}-title">
+    <h2 id="{{ dialog_id|default:'decision-comment-dialog' }}-title" data-decision-title>Decision reason</h2>
+    <p class="decision-dialog__meta" data-decision-meta>Provide a reason before confirming.</p>
+    <p class="decision-dialog__error" data-decision-error hidden></p>
+    <div class="decision-dialog__field">
+      <label for="{{ dialog_id|default:'decision-comment-dialog' }}-reason">Reason (required)</label>
+      <textarea id="{{ dialog_id|default:'decision-comment-dialog' }}-reason"
+                class="dc-ds-control"
+                rows="4"
+                data-decision-reason
+                placeholder="Explain the decision"></textarea>
+    </div>
+    <div class="decision-dialog__suggest-row">
+      <button type="button" class="dc-ds-button dc-ds-button--ghost" data-decision-suggest>Suggest reason</button>
+    </div>
+    <p class="decision-dialog__hint" data-decision-hint hidden></p>
+    <div class="decision-dialog__actions">
+      <button type="button" class="dc-ds-button dc-ds-button--ghost" data-decision-cancel>Cancel</button>
+      <button type="button" class="dc-ds-button dc-ds-button--primary" data-decision-confirm>Confirm</button>
+    </div>
+  </div>
+</div>

@@ -44,11 +44,11 @@ class LegalFrontDoorViewTests(TestCase):
         ):
             self.assertContains(response, title)
 
-    def test_ask_a_legal_question_is_marked_coming_soon_and_not_linked(self):
+    def test_ask_a_legal_question_links_to_task_create(self):
         response = self.client_.get(reverse('contracts:legal_front_door'))
-        self.assertContains(response, 'Coming soon')
-        # The coming-soon option must not render as a clickable card wrapper.
-        self.assertNotContains(response, '<a href="None"')
+        self.assertContains(response, 'Ask a legal question')
+        self.assertContains(response, reverse('contracts:legal_task_create'))
+        self.assertNotContains(response, 'Coming soon')
 
     def test_options_link_to_existing_routes(self):
         response = self.client_.get(reverse('contracts:legal_front_door'))

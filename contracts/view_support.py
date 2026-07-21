@@ -146,6 +146,111 @@ def organization_user_queryset(organization):
     ).distinct()
 
 
+def open_work_count_by_user(organization):
+    """Open actionable work counts keyed by assignee user id (approvals, tasks, obligations)."""
+    from django.core.cache import cache
+    from django.db.models import Count
+
+    from contracts.models import ApprovalRequest, Deadline, LegalTask
+    from contracts.tenancy import scope_queryset_for_organization
+
+    if organization is None:
+        return {}
+    cache_key = f'clmone:open_work_count:v1:{organization.pk}'
+    cached = cache.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
+    counts = {}
+
+    def _add(user_id, n):
+        if not user_id:
+            return
+        counts[user_id] = counts.get(user_id, 0) + int(n or 0)
+
+    approvals = scope_queryset_for_organization(
+        ApprovalRequest.objects.filter(
+            status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
+        ),
+        organization,
+    )
+    for row in approvals.values('assigned_to_id').annotate(c=Count('id')):
+        _add(row['assigned_to_id'], row['c'])
+    for row in approvals.exclude(delegated_to_id=None).values('delegated_to_id').annotate(c=Count('id')):
+        _add(row['delegated_to_id'], row['c'])
+
+    tasks = LegalTask.objects.for_organization(organization).filter(
+        status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS],
+    )
+    for row in tasks.values('assigned_to_id').annotate(c=Count('id')):
+        _add(row['assigned_to_id'], row['c'])
+
+    obligations = (
+        Deadline.objects.for_organization(organization)
+        .filter(is_completed=False)
+        .values('assigned_to_id')
+        .annotate(c=Count('id'))
+    )
+    for row in obligations:
+        _add(row['assigned_to_id'], row['c'])
+
+    cache.set(cache_key, counts, 60)
+    return counts
+
+
+def reassign_member_options(
+    organization,
+    *,
+    include_workload=True,
+    q='',
+    limit=None,
+    exclude_ids=None,
+):
+    """Active org members for manager reassignment pickers (id + display label + open work).
+
+    Optional ``q`` filters by name/username (case-insensitive contains).
+    Optional ``limit`` caps results after workload sort (for live typeahead).
+    """
+    from django.db.models import Q
+
+    users = organization_user_queryset(organization)
+    query = (q or '').strip()
+    if query:
+        users = users.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+        )
+    users = users.order_by('first_name', 'last_name', 'username')
+    exclude = {int(x) for x in (exclude_ids or []) if str(x).isdigit() or isinstance(x, int)}
+    workload = open_work_count_by_user(organization) if include_workload else {}
+    options = []
+    for user in users:
+        if user.pk in exclude:
+            continue
+        full = (user.get_full_name() or '').strip()
+        label = full or user.username
+        if full and user.username and full.lower() != user.username.lower():
+            label = f'{full} ({user.username})'
+        open_count = int(workload.get(user.pk, 0))
+        options.append({
+            'id': user.pk,
+            'label': label,
+            'username': user.username,
+            'open_count': open_count,
+            'search': f'{label} {user.username}'.lower(),
+        })
+    options.sort(key=lambda row: (row['open_count'], row['label'].casefold()))
+    if limit is not None:
+        try:
+            lim = max(1, min(int(limit), 100))
+        except (TypeError, ValueError):
+            lim = 40
+        options = options[:lim]
+    return options
+
+
 def configure_workflow_form(form, organization):
     form = apply_form_queryset_scopes(form, organization, {'contract': Contract})
     if 'template' in form.fields:

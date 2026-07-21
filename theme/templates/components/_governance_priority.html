@@ -1,0 +1,16 @@
+{# Priority label with rule-based reason tooltip / expandable detail. #}
+{% if priority_label or priority_reason %}
+<span class="gov-priority"{% if priority_reason %} title="{{ priority_reason }}"{% endif %}>
+  {% if priority_label %}
+  <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ priority_tone|default:'neutral' }}">{{ priority_label }}</span>
+  {% endif %}
+  {% if priority_reason and show_detail %}
+  <details class="gov-priority__detail">
+    <summary>Why this priority</summary>
+    <p>{{ priority_reason }}</p>
+  </details>
+  {% elif priority_reason and not priority_label %}
+  <span class="gov-priority__reason">{{ priority_reason }}</span>
+  {% endif %}
+</span>
+{% endif %}

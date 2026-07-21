@@ -263,15 +263,10 @@ class NavigationContractTests(_ContainmentFixtureMixin, TestCase):
         self.assertEqual(firm_labels, clm_labels)
         self.assertNotIn('Playbooks', firm_labels)
 
-    def test_deadline_list_renders_generically_for_in_house_clm(self):
+    def test_deadline_list_redirects_to_obligations_for_in_house_clm(self):
         response = self.clm_client.get(reverse('contracts:deadline_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Deadlines')
-        # It must stay unbranched — no hub-specific chrome bleeding into
-        # the page body (base.html's shared stylesheet and sidebar nav
-        # legitimately mention hub/Command Center labels on every page,
-        # so this checks the page's own heading area, not the full body).
-        self.assertNotContains(response, 'Legal Intelligence Hub')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:obligations_workspace'))
 
     def test_dpa_playbook_list_renders_for_in_house_clm(self):
         response = self.clm_client.get(reverse('contracts:dpa_playbook_list'))

@@ -172,14 +172,43 @@ def _audit_approval_decision(
             object_id=ar.pk,
             object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
             organization_id=organization_id,
+            event_type={
+                'approve': 'approval.approved',
+                'reject': 'approval.rejected',
+                'request_changes': 'approval.returned',
+            }.get(action, f'approval.{action}'),
             changes={
                 'event': f'approval_{action}_{"succeeded" if allowed else "blocked"}',
                 'contract_id': ar.contract_id,
                 'previous_state': previous_status,
                 'new_state': ar.status if allowed else previous_status,
                 'comment': comments,
+                'source_surface': (getattr(actor, '_work_surface', None) or 'api'),
             },
         )
+        if allowed:
+            from contracts.models import Organization
+            from contracts.services.work_instrumentation import record_outcome
+            org = None
+            if organization_id:
+                org = Organization.objects.filter(pk=organization_id).first()
+            outcome = {
+                'approve': 'completed',
+                'reject': 'rejected',
+                'request_changes': 'returned',
+            }.get(action)
+            if outcome and org is not None:
+                record_outcome(
+                    organization=org,
+                    user=actor,
+                    event=outcome,
+                    work_item_id=f'approval:{ar.pk}',
+                    work_kind='approval',
+                    surface=getattr(actor, '_work_surface', None) or 'api',
+                    contract=getattr(ar, 'contract', None),
+                    contract_id=ar.contract_id,
+                    metadata={'approval_action': action},
+                )
     except Exception:
         logger.warning('approval audit logging failed for action=%s', action, exc_info=True)
 
@@ -476,7 +505,20 @@ class ApprovalWorkflowService:
             comments=comments,
         )
 
-    def delegate(self, approval_id: int, to_user: User, actor: User) -> ApprovalRequestDTO:
+    def delegate(
+        self,
+        approval_id: int,
+        to_user: User,
+        actor: User,
+        *,
+        reason: str = '',
+        ends_at=None,
+    ) -> ApprovalRequestDTO:
+        """Grant acting coverage without transferring ownership.
+
+        ``assigned_to`` remains the original accountable assignee.
+        ``delegated_to`` is the acting assignee for the coverage period.
+        """
         from contracts.models import OrganizationMembership
 
         with transaction.atomic():
@@ -502,12 +544,17 @@ class ApprovalWorkflowService:
                 raise ApprovalAccessDenied(
                     'Delegate must be a member of this organization.', status_code=400,
                 )
+            if ar.assigned_to_id and to_user.id == ar.assigned_to_id:
+                raise ValueError('Cannot delegate an approval to its original assignee.')
 
+            original_assignee_id = ar.assigned_to_id
             ar.delegated_to = to_user
             ar.delegated_at = timezone.now()
-            ar.assigned_to = to_user
-            ar.save(update_fields=['delegated_to', 'delegated_at', 'assigned_to'])
-            # Audit the delegation atomically with the state change.
+            ar.delegation_reason = (reason or '').strip()
+            ar.delegation_ends_at = ends_at
+            ar.save(update_fields=[
+                'delegated_to', 'delegated_at', 'delegation_reason', 'delegation_ends_at',
+            ])
             from contracts.middleware import log_action
             log_action(
                 actor, AuditLog.Action.UPDATE, 'ApprovalRequest',
@@ -516,7 +563,86 @@ class ApprovalWorkflowService:
                 changes={
                     'event': 'approval.delegated',
                     'contract_id': ar.contract_id,
+                    'original_assignee_id': original_assignee_id,
                     'delegated_to_id': to_user.id,
+                    'reason': ar.delegation_reason,
+                    'delegation_ends_at': ends_at.isoformat() if ends_at else None,
+                },
+            )
+        return _to_dto(ar)
+
+    def reassign(
+        self,
+        approval_id: int,
+        to_user: User,
+        actor: User,
+        *,
+        reason: str = '',
+    ) -> ApprovalRequestDTO:
+        """Transfer ownership to a new assignee. Manager/admin only; always audited."""
+        from contracts.models import OrganizationMembership
+        from contracts.permissions import can_manage_organization
+        from contracts.tenancy import get_user_organization
+
+        reason = (reason or '').strip()
+        if not reason:
+            raise ValueError('A reassignment reason is required.')
+
+        with transaction.atomic():
+            ar = (
+                ApprovalRequest.objects
+                .select_related('contract', 'rule', 'assigned_to', 'delegated_to')
+                .select_for_update(of=('self',))
+                .get(pk=approval_id)
+            )
+            # Tenant check via authorize; ownership transfer is admin-only.
+            self._authorize_actor(ar, actor, action='delegate')
+            actor_org = get_user_organization(actor)
+            effective_org_id = ar.organization_id or (ar.contract.organization_id if ar.contract_id else None)
+            if not can_manage_organization(actor, actor_org):
+                raise ApprovalAccessDenied(
+                    'Only organization admins or owners can reassign approvals.',
+                    status_code=403,
+                )
+            if ar.status not in ('PENDING', 'ESCALATED'):
+                raise ValueError(f'Can only reassign open approvals, current status: {ar.status}')
+
+            in_org = OrganizationMembership.objects.filter(
+                organization_id=effective_org_id,
+                user=to_user,
+                is_active=True,
+            ).exists()
+            if not in_org:
+                raise ApprovalAccessDenied(
+                    'Assignee must be a member of this organization.', status_code=400,
+                )
+            if ar.assigned_to_id == to_user.id:
+                raise ValueError('Approval is already assigned to that user.')
+
+            previous_assignee_id = ar.assigned_to_id
+            previous_delegate_id = ar.delegated_to_id
+            ar.assigned_to = to_user
+            # Clear stale coverage — new owner starts clean unless re-delegated.
+            ar.delegated_to = None
+            ar.delegated_at = None
+            ar.delegation_reason = ''
+            ar.delegation_ends_at = None
+            ar.save(update_fields=[
+                'assigned_to', 'delegated_to', 'delegated_at',
+                'delegation_reason', 'delegation_ends_at',
+            ])
+            from contracts.middleware import log_action
+            log_action(
+                actor, AuditLog.Action.UPDATE, 'ApprovalRequest',
+                object_id=ar.pk, object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
+                organization_id=effective_org_id, event_type='approval.reassigned',
+                changes={
+                    'event': 'approval.reassigned',
+                    'contract_id': ar.contract_id,
+                    'from_user_id': previous_assignee_id,
+                    'to_user_id': to_user.id,
+                    'cleared_delegate_id': previous_delegate_id,
+                    'reason': reason,
                 },
             )
         return _to_dto(ar)
@@ -528,6 +654,38 @@ class ApprovalWorkflowService:
         ar.status = 'ESCALATED'
         ar.escalated_at = timezone.now()
         ar.save(update_fields=['status', 'escalated_at'])
+        effective_org_id = ar.organization_id or (ar.contract.organization_id if ar.contract_id else None)
+        try:
+            from contracts.middleware import log_action
+            log_action(
+                None, AuditLog.Action.UPDATE, 'ApprovalRequest',
+                object_id=ar.pk, object_repr=f'ApprovalRequest #{ar.pk} ({ar.approval_step})',
+                organization_id=effective_org_id, event_type='approval.sla_breached',
+                changes={
+                    'event': 'approval.sla_breached',
+                    'contract_id': ar.contract_id,
+                    'due_date': ar.due_date.isoformat() if ar.due_date else None,
+                    'sla_hours': ar.rule.sla_hours if ar.rule_id and ar.rule else None,
+                },
+            )
+            if effective_org_id:
+                from contracts.models import Organization
+                from contracts.services.work_instrumentation import record_outcome
+                org = Organization.objects.filter(pk=effective_org_id).first()
+                if org is not None:
+                    record_outcome(
+                        organization=org,
+                        user=None,
+                        event='sla_breached',
+                        work_item_id=f'approval:{ar.pk}',
+                        work_kind='approval',
+                        surface='job',
+                        contract=getattr(ar, 'contract', None),
+                        contract_id=ar.contract_id,
+                        is_overdue=True,
+                    )
+        except Exception:
+            logger.exception('Failed to audit SLA breach for approval %s', ar.pk)
         return _to_dto(ar)
 
     def get_overdue_approvals(self, org: Organization) -> list[ApprovalRequestDTO]:

@@ -624,6 +624,41 @@ class SearchPreset(models.Model):
         return f'{self.organization.slug}:{self.name}'
 
 
+class MyWorkSavedView(models.Model):
+    """Per-user My Work filter presets (Phase 6 persistent saved views)."""
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='my_work_saved_views',
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='my_work_saved_views',
+    )
+    name = models.CharField(max_length=120)
+    filters = models.JSONField(default=dict, blank=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'user', 'name'],
+                name='my_work_view_org_user_name_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'user', 'is_default'], name='my_work_view_default_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id}:{self.name}'
+
+
 class Client(models.Model):
     class ClientType(models.TextChoices):
         INDIVIDUAL = 'INDIVIDUAL', 'Individual'
@@ -3859,6 +3894,15 @@ class ApprovalRequest(models.Model):
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_assignments')
     delegated_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_approval_assignments')
     delegated_at = models.DateTimeField(null=True, blank=True)
+    delegation_reason = models.TextField(
+        blank=True,
+        help_text='Why coverage was delegated (absence, workload, specialty).',
+    )
+    delegation_ends_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When delegated coverage ends. Blank means open-ended.',
+    )
     escalated_at = models.DateTimeField(null=True, blank=True)
     comments = models.TextField(blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
@@ -4233,6 +4277,63 @@ class SearchTelemetryEvent(models.Model):
 
     def __str__(self):
         return f'Search "{self.query}" by {self.performed_by} ({self.search_type})'
+
+
+class WorkInteractionEvent(models.Model):
+    """Lightweight product telemetry for the personal work operating loop.
+
+    Distinct from AuditLog: high-volume discovery/open events live here.
+    Outcome mutations still write AuditLog; this table carries surface
+    attribution needed to prove whether My Work is the hub.
+    """
+
+    class Event(models.TextChoices):
+        SURFACED = 'surfaced', 'Work item surfaced'
+        OPENED = 'opened', 'Work item opened'
+        PRIMARY_ACTION = 'primary_action', 'Primary action taken'
+        COMPLETED = 'completed', 'Work completed'
+        RETURNED = 'returned', 'Work returned'
+        REJECTED = 'rejected', 'Work rejected'
+        SLA_BREACHED = 'sla_breached', 'SLA breached / overdue transition'
+
+    class Surface(models.TextChoices):
+        MY_WORK = 'my_work', 'My Work'
+        APPROVALS = 'approvals', 'Reviews & Approvals'
+        OBLIGATIONS = 'obligations', 'Obligations'
+        PRIVACY = 'privacy', 'Privacy Reviews'
+        TASKS = 'tasks', 'Legal Tasks'
+        CONTRACT_DETAIL = 'contract_detail', 'Contract detail'
+        API = 'api', 'API'
+        JOB = 'job', 'Background job'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='work_interaction_events',
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='work_interaction_events',
+    )
+    event = models.CharField(max_length=32, choices=Event.choices)
+    work_item_id = models.CharField(max_length=80, help_text='Stable row id, e.g. approval:12')
+    work_kind = models.CharField(max_length=40, blank=True)
+    surface = models.CharField(max_length=32, choices=Surface.choices, default=Surface.MY_WORK)
+    contract_id = models.PositiveIntegerField(null=True, blank=True)
+    contract_type = models.CharField(max_length=40, blank=True)
+    is_restricted = models.BooleanField(default=False)
+    is_blocked = models.BooleanField(default=False)
+    is_overdue = models.BooleanField(default=False)
+    metadata = models.JSONField(default=dict, blank=True)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-occurred_at']
+        indexes = [
+            models.Index(fields=['organization', 'event', 'occurred_at'], name='work_evt_org_evt_ix'),
+            models.Index(fields=['organization', 'work_item_id', 'event'], name='work_evt_item_evt_ix'),
+            models.Index(fields=['organization', 'surface', 'event'], name='work_evt_surface_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.event} {self.work_item_id} via {self.surface}'
 
 
 class RetentionActionLog(models.Model):

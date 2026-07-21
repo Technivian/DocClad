@@ -1,5 +1,6 @@
 """Lightweight workspace destinations introduced for sidebar information architecture."""
 
+import json
 from datetime import date
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -12,13 +13,13 @@ from django.views.generic import TemplateView
 
 from contracts.models import ApprovalRule, ClauseTemplate, DPAPlaybookPosition, WorkflowTemplate
 from contracts.permissions import can_manage_organization
-from contracts.services.my_work import (
+from contracts.services.assignments import (
     RECENTLY_COMPLETED_DAYS,
     SUMMARY_FILTERS,
     WORK_TYPE_CHOICES,
     build_filter_options,
     build_summary_counts,
-    get_active_work_items,
+    get_active_work_items_result,
     get_recently_completed_items,
 )
 from contracts.tenancy import get_user_organization, scope_queryset_for_organization
@@ -162,11 +163,37 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
         load_error = False
         active_rows = []
         completed_rows = []
+        work_result = {'truncated': False, 'total_before_cap': 0, 'row_limit': None}
+        from contracts.permissions import can_manage_organization
+        can_team = bool(organization and can_manage_organization(user, organization))
+        scope = self.request.GET.get('scope', 'personal')
+        if scope != 'team' or not can_team:
+            scope = 'personal'
         try:
-            active_rows = get_active_work_items(organization, user, today=today)
+            work_result = get_active_work_items_result(organization, user, today=today, scope=scope)
+            active_rows = work_result['rows']
             completed_rows = get_recently_completed_items(organization, user, today=today)
         except Exception:
             load_error = True
+        else:
+            if organization and active_rows and view_mode == 'active':
+                try:
+                    from contracts.services.work_instrumentation import record_rows_surfaced, record_adoption_event
+                    record_rows_surfaced(organization, user, active_rows, surface='my_work')
+                    if scope == 'team':
+                        record_adoption_event(
+                            organization=organization,
+                            user=user,
+                            evidence_key='team_queue',
+                            surface='my_work',
+                            metadata={
+                                'row_count': len(active_rows),
+                                'truncated': bool(work_result.get('truncated')),
+                                'total_before_cap': work_result.get('total_before_cap'),
+                            },
+                        )
+                except Exception:
+                    pass
 
         summary_counts = build_summary_counts(active_rows)
         filter_options = build_filter_options(active_rows)
@@ -195,12 +222,53 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             'work_type_choices': WORK_TYPE_CHOICES,
             'filter_options': filter_options,
             'view_mode': view_mode,
+            'work_scope': scope,
+            'can_view_team_queue': can_team,
+            'team_queue_truncated': bool(work_result.get('truncated')),
+            'team_queue_total': work_result.get('total_before_cap') or len(active_rows),
+            'team_queue_limit': work_result.get('row_limit'),
             'load_error': load_error,
             'last_updated': timezone.now(),
             'recently_completed_days': RECENTLY_COMPLETED_DAYS,
             'recently_completed_copy': f'Completed items from the last {RECENTLY_COMPLETED_DAYS} days will appear here.',
             'hide_app_footer': True,
+            'my_work_saved_views': [],
+            'my_work_default_filters': {},
+            'my_work_default_filters_json': '{}',
+            'my_work_saved_views_json': '[]',
+            'my_work_row_signature': ','.join(sorted(r.get('id') or '' for r in active_rows)),
         })
+        if organization and not load_error:
+            from contracts.models import MyWorkSavedView
+            saved = list(
+                MyWorkSavedView.objects.filter(organization=organization, user=user).order_by('name')
+            )
+            ctx['my_work_saved_views'] = saved
+            default = next((v for v in saved if v.is_default), None)
+            if default:
+                ctx['my_work_default_filters'] = default.filters or {}
+            ctx['my_work_default_filters_json'] = json.dumps(ctx['my_work_default_filters'])
+            ctx['my_work_saved_views_json'] = json.dumps([
+                {
+                    'id': v.pk,
+                    'name': v.name,
+                    'filters': v.filters or {},
+                    'is_default': bool(v.is_default),
+                }
+                for v in saved
+            ])
+        from contracts.view_support import reassign_member_options
+        from contracts.services.ai_decision_assist import ai_decision_assist_enabled
+        members = (
+            reassign_member_options(organization, limit=50)
+            if can_team else []
+        )
+        ctx['reassign_members'] = members
+        ctx['assignee_options_url'] = reverse('contracts:assignee_options_api') if can_team else ''
+        ctx['work_suggest_comment_url'] = reverse('contracts:work_suggest_comment_api')
+        ctx['decision_assist_enabled'] = bool(organization and ai_decision_assist_enabled(organization))
+        # Template suggestions always available for reject/return (even when Gemini is off).
+        ctx['decision_suggest_available'] = True
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
@@ -208,6 +276,7 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             rows = context.get('my_work_rows') or []
             return JsonResponse({
                 'count': len(rows),
+                'signature': context.get('my_work_row_signature') or '',
                 'summary': context.get('summary_counts') or {},
                 'last_updated': context['last_updated'].isoformat(),
             })

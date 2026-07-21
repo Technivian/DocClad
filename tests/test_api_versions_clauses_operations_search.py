@@ -304,7 +304,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
         self.assertContains(response, 'Variant differences', html=False)
         self.assertContains(response, 'Security Clause Revised', html=False)
 
-    def test_approval_request_delegation_updates_assignee(self):
+    def test_approval_request_delegation_preserves_original_assignee(self):
         delegate = User.objects.create_user(username='delegate', email='delegate@example.com', password='testpass123')
         OrganizationMembership.objects.create(
             organization=self.organization,
@@ -343,7 +343,7 @@ class ApiVersionsClausesOperationsSearchTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         approval.refresh_from_db()
-        self.assertEqual(approval.assigned_to_id, delegate.id)
+        self.assertEqual(approval.assigned_to_id, self.user.id)
         self.assertEqual(approval.delegated_to_id, delegate.id)
         self.assertIsNotNone(approval.delegated_at)
 

@@ -1,9 +1,10 @@
 from datetime import date, timedelta
+import json
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -14,6 +15,7 @@ from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.assignments import open_obligations_queryset
 from contracts.templatetags.clmone_format import obligation_compliance_status
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
@@ -22,6 +24,16 @@ from contracts.view_support import (
     TenantScopedQuerysetMixin,
     organization_user_queryset,
 )
+
+
+def _wants_json(request) -> bool:
+    accept = (request.headers.get('Accept') or '').lower()
+    if 'application/json' in accept:
+        return True
+    if (request.GET.get('format') or '').lower() == 'json':
+        return True
+    content_type = (request.content_type or '').lower()
+    return 'application/json' in content_type
 
 _OBLIGATION_VIEW_TABS = (
     ('all', 'All'),
@@ -68,6 +80,8 @@ def _next_action_for_obligation(obligation):
         return 'View record'
     if obligation.is_overdue:
         return 'Mark completed'
+    if obligation.priority in (Deadline.Priority.HIGH, Deadline.Priority.CRITICAL):
+        return 'Complete high-priority obligation'
     return _TYPE_NEXT_ACTIONS.get(obligation.deadline_type, 'Review obligation')
 
 
@@ -83,10 +97,33 @@ def _matches_due_period(obligation, due_period, today):
 
 
 class DeadlineListView(LoginRequiredMixin, ListView):
+    """Legacy deadlines list — Phase 4 retires it in favor of Obligations."""
+
     model = Deadline
     template_name = 'contracts/deadline_list.html'
     context_object_name = 'deadlines'
     paginate_by = 25
+
+    def dispatch(self, request, *args, **kwargs):
+        from urllib.parse import urlencode
+
+        params = {}
+        show = request.GET.get('show')
+        if show == 'overdue':
+            params['view'] = 'overdue'
+        elif show == 'completed':
+            params['view'] = 'completed'
+        elif show in (None, '', 'upcoming'):
+            if show == 'upcoming':
+                params['view'] = 'due_soon'
+        for key in request.GET:
+            if key == 'show' or key in params:
+                continue
+            params[key] = request.GET.get(key)
+        target = reverse('contracts:obligations_workspace')
+        if params:
+            target = f'{target}?{urlencode(params)}'
+        return redirect(target, permanent=False)
 
     def get_organization(self):
         if not hasattr(self.request, '_cached_organization'):
@@ -158,10 +195,30 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             'PENDING': 0,
         }
         due_within_30_count = 0
+        from contracts.services.governance_ux import (
+            obligation_blocker_for_deadline,
+            priority_tone_for_label,
+            sla_priority_reason,
+        )
         for obligation in all_obligations:
             obligation.compliance_status = obligation_compliance_status(obligation)
             obligation.source = obligation.contract or obligation.matter
             obligation.next_action = _next_action_for_obligation(obligation)
+            blocker = obligation_blocker_for_deadline(obligation, today=today)
+            obligation.is_blocked = blocker['is_blocked']
+            obligation.blocking_issue = blocker['blocking_issue']
+            obligation.blocker_owner = blocker['blocker_owner']
+            obligation.priority_label = obligation.get_priority_display()
+            obligation.priority_tone = priority_tone_for_label(obligation.priority_label)
+            obligation.priority_reason = sla_priority_reason(
+                due_date=obligation.due_date,
+                today=today,
+                overdue=obligation.is_overdue,
+                fallback=(
+                    obligation.priority_label + ' priority'
+                    if obligation.priority in ('HIGH', 'CRITICAL') else ''
+                ),
+            )
             counts[obligation.compliance_status] = counts.get(obligation.compliance_status, 0) + 1
             if (
                 not obligation.is_completed
@@ -182,7 +239,10 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
 
         filtered = all_obligations
         if selected_view == 'mine':
-            filtered = [o for o in filtered if o.assigned_to_id == self.request.user.id]
+            mine_ids = set(
+                open_obligations_queryset(org, self.request.user).values_list('pk', flat=True)
+            )
+            filtered = [o for o in filtered if o.pk in mine_ids]
         elif selected_view == 'due_soon':
             filtered = [
                 o for o in filtered
@@ -281,6 +341,15 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             search_query or selected_status or selected_owner
             or selected_contract or selected_type or selected_due
         )
+        from contracts.services.assignments import QUEUE_EMPTY_PERSONAL
+        if selected_view == 'mine' and not filtered:
+            title, copy, how = QUEUE_EMPTY_PERSONAL['obligations_mine']
+            context['obligations_empty_state'] = {
+                'title': title,
+                'copy': copy,
+                'how': how,
+                'personal_hub': True,
+            }
         return context
 
 
@@ -382,14 +451,19 @@ def deadline_complete(request, pk):
     if not hasattr(request, '_cached_organization'):
         request._cached_organization = get_user_organization(request.user)
     organization = request._cached_organization
+    wants_json = _wants_json(request)
 
     deadline_queryset = Deadline.objects.for_organization(organization)
     deadline = get_object_or_404(deadline_queryset, pk=pk)
     if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to complete this contract deadline.'}, status=403)
         return HttpResponseForbidden('You do not have permission to complete this contract deadline.')
     if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
         messages.info(request, f'Deadline "{deadline.title}" was already complete.')
-        return redirect('contracts:deadline_list')
+        return redirect('contracts:obligations_workspace')
     deadline.is_completed = True
     deadline.completed_at = timezone.now()
     deadline.completed_by = request.user
@@ -402,9 +476,109 @@ def deadline_complete(request, pk):
             'previous_state': 'OPEN',
             'new_state': 'COMPLETED',
         },
+        event_type='deadline.completed',
     )
+    from contracts.services.work_instrumentation import record_outcome, resolve_surface
+    surface = resolve_surface(request)
+    record_outcome(
+        organization=organization,
+        user=request.user,
+        event='completed',
+        work_item_id=f'obligation:{deadline.pk}',
+        work_kind='obligation',
+        surface=surface,
+        contract=deadline.contract,
+        contract_id=deadline.contract_id,
+        is_overdue=bool(deadline.is_overdue),
+    )
+    if wants_json:
+        return JsonResponse({'ok': True, 'surface': surface})
     messages.success(request, f'Deadline "{deadline.title}" marked as complete.')
-    return redirect('contracts:deadline_list')
+    return redirect('contracts:obligations_workspace')
+
+
+@login_required
+@require_POST
+def deadline_defer(request, pk):
+    """Defer an open obligation by seven days and record the reason in audit."""
+    organization = get_user_organization(request.user)
+    wants_json = _wants_json(request)
+    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to defer this obligation.'}, status=403)
+        return HttpResponseForbidden('You do not have permission to defer this obligation.')
+    if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
+        messages.info(request, f'Obligation "{deadline.title}" is already complete.')
+        return redirect('contracts:obligations_workspace')
+
+    previous_due = deadline.due_date
+    deadline.due_date = previous_due + timedelta(days=7)
+    deadline.save(update_fields=['due_date'])
+    log_action(
+        request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
+        changes={
+            'event': 'deadline.deferred',
+            'contract_id': deadline.contract_id,
+            'previous_due_date': previous_due.isoformat(),
+            'new_due_date': deadline.due_date.isoformat(),
+            'defer_days': 7,
+        },
+    )
+    if wants_json:
+        return JsonResponse({
+            'ok': True,
+            'due_date': deadline.due_date.isoformat(),
+        })
+    messages.success(request, f'Obligation "{deadline.title}" deferred to {deadline.due_date.strftime("%d %b %Y")}.')
+    return redirect('contracts:obligations_workspace')
+
+
+@login_required
+@require_POST
+def deadline_escalate(request, pk):
+    """Escalate an open obligation to critical priority and leave an audit trail."""
+    organization = get_user_organization(request.user)
+    wants_json = _wants_json(request)
+    deadline = get_object_or_404(Deadline.objects.for_organization(organization), pk=pk)
+    if deadline.contract and not can_access_contract_action(request.user, deadline.contract, ContractAction.EDIT):
+        if wants_json:
+            return JsonResponse({'error': 'You do not have permission to escalate this obligation.'}, status=403)
+        return HttpResponseForbidden('You do not have permission to escalate this obligation.')
+    if deadline.is_completed:
+        if wants_json:
+            return JsonResponse({'ok': True, 'already_complete': True})
+        messages.info(request, f'Obligation "{deadline.title}" is already complete.')
+        return redirect('contracts:obligations_workspace')
+
+    previous_priority = deadline.priority
+    deadline.priority = Deadline.Priority.CRITICAL
+    deadline.save(update_fields=['priority'])
+    reason = ''
+    if wants_json:
+        try:
+            payload = json.loads(request.body or '{}')
+        except json.JSONDecodeError:
+            payload = {}
+        reason = (payload.get('reason') or payload.get('comments') or '').strip()
+    else:
+        reason = (request.POST.get('reason') or '').strip()
+    log_action(
+        request.user, 'UPDATE', 'Deadline', deadline.id, str(deadline), request=request,
+        changes={
+            'event': 'deadline.escalated',
+            'contract_id': deadline.contract_id,
+            'previous_priority': previous_priority,
+            'new_priority': deadline.priority,
+            'reason': reason[:500],
+        },
+    )
+    if wants_json:
+        return JsonResponse({'ok': True, 'priority': deadline.priority})
+    messages.success(request, f'Obligation "{deadline.title}" escalated to critical priority.')
+    return redirect('contracts:obligations_workspace')
 
 
 @login_required
@@ -429,4 +603,4 @@ def deadline_delete(request, pk):
         request=request, changes=snapshot,
     )
     messages.success(request, f'Deadline "{snapshot["title"]}" deleted.')
-    return redirect('contracts:deadline_list')
+    return redirect('contracts:obligations_workspace')

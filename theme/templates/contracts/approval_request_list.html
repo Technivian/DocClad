@@ -219,15 +219,21 @@
 
   <div class="dc-ds-table-wrap">
     {% for tab in queue_tabs %}
-      {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+      {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first tab.personal_hub tab.empty_title tab.empty_copy tab.empty_how %}
     {% endfor %}
   </div>
 </div>
+
+{% include "components/_reassign_dialog.html" with dialog_id="approvals-reassign-dialog" reassign_members=reassign_members assignee_options_url=assignee_options_url %}
+{% include "components/_decision_comment_dialog.html" with dialog_id="approvals-decision-dialog" %}
 
 <script nonce="{{ csp_nonce }}">
 (function () {
   var root = document.getElementById('approvals-root');
   if (!root) return;
+
+  var assigneeOptionsUrl = "{{ assignee_options_url|default:''|escapejs }}";
+  var workSuggestCommentUrl = "{{ work_suggest_comment_url|default:''|escapejs }}";
 
   var tabs = root.querySelectorAll('[data-queue-tab]');
   var panels = root.querySelectorAll('table.wq-table[data-queue-panel]');
@@ -326,51 +332,454 @@
       ?.split('=')[1] || '';
   }
 
-  /* Approve/Reject — POST to the existing, already-authorized/audited
-     approval_approve_api / approval_reject_api endpoints (see
-     contracts/services/approval_workflow.py). This page only decides
-     whether to SHOW the buttons (server-computed row.can_decide); the real
-     authorization boundary is those endpoints, unchanged by this page. */
+  /* Approve / Reject / Return — POST to existing audited APIs.
+     Reject and Return require a reason; Approve may include an optional note. */
+  function deriveSuggestUrl(rejectUrl) {
+    if (!rejectUrl) return '';
+    return rejectUrl.replace(/\/reject\/?$/, '/suggest-decision-comment/');
+  }
+
+  function openDecisionCommentDialog(opts) {
+    var backdrop = document.getElementById('approvals-decision-dialog');
+    if (!backdrop || !opts) return;
+    var titleEl = backdrop.querySelector('[data-decision-title]');
+    var metaEl = backdrop.querySelector('[data-decision-meta]');
+    var reasonEl = backdrop.querySelector('[data-decision-reason]');
+    var err = backdrop.querySelector('[data-decision-error]');
+    var hint = backdrop.querySelector('[data-decision-hint]');
+    var suggestBtn = backdrop.querySelector('[data-decision-suggest]');
+    var confirmBtn = backdrop.querySelector('[data-decision-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-decision-cancel]');
+    var decision = (opts.decision || 'return').toLowerCase();
+    if (titleEl) {
+      titleEl.textContent = decision === 'reject' ? 'Reject approval' : 'Return for changes';
+    }
+    if (metaEl) {
+      metaEl.textContent = decision === 'reject'
+        ? 'A rejection reason is required before confirming.'
+        : 'Describe the changes required before confirming.';
+    }
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (hint) { hint.hidden = true; hint.textContent = ''; }
+    if (reasonEl) {
+      reasonEl.value = '';
+      reasonEl.placeholder = decision === 'reject'
+        ? 'Reason for rejection'
+        : 'What changes are required?';
+    }
+    if (suggestBtn) {
+      suggestBtn.hidden = !opts.suggestUrl;
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+    }
+
+    function close() {
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (suggestBtn) {
+      suggestBtn.onclick = function () {
+        if (!opts.suggestUrl) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        var suggestBody = opts.suggestPayload
+          ? Object.assign({}, opts.suggestPayload)
+          : { decision: decision };
+        fetch(opts.suggestUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify(suggestBody),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            if (hint) {
+              hint.textContent = result.data.source === 'ai'
+                ? 'Suggested with AI — edit before confirming.'
+                : 'Suggested from template — edit before confirming.';
+              hint.hidden = false;
+            }
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var comments = reasonEl ? reasonEl.value.trim() : '';
+        if (!comments) {
+          if (err) {
+            err.textContent = decision === 'reject'
+              ? 'A rejection reason is required.'
+              : 'A return reason is required.';
+            err.hidden = false;
+          }
+          return;
+        }
+        close();
+        if (opts.onConfirm) opts.onConfirm(comments);
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (reasonEl) reasonEl.focus();
+  }
+
   root.querySelectorAll('[data-approval-action]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var action = btn.getAttribute('data-approval-action');
-      var url = action === 'approve' ? btn.getAttribute('data-approve-url') : btn.getAttribute('data-reject-url');
+      var url = action === 'approve'
+        ? btn.getAttribute('data-approve-url')
+        : action === 'reject'
+          ? btn.getAttribute('data-reject-url')
+          : btn.getAttribute('data-return-url');
       var errorEl = btn.parentElement.querySelector('.wq-action-error');
-      var comments = '';
-      if (action === 'reject') {
-        comments = window.prompt('Add a comment for this rejection (optional):', '') || '';
-        if (comments === null) return;
+      var cell = btn.closest('.wq-approval-actions');
+      var suggestUrl = (cell && cell.getAttribute('data-suggest-decision-url')) || '';
+      if (!suggestUrl && action === 'reject') {
+        suggestUrl = deriveSuggestUrl(btn.getAttribute('data-reject-url') || '');
+      } else if (!suggestUrl && action === 'return') {
+        var rejectSibling = cell ? cell.querySelector('[data-reject-url]') : null;
+        suggestUrl = deriveSuggestUrl(
+          (rejectSibling && rejectSibling.getAttribute('data-reject-url')) || ''
+        );
       }
-      var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn');
-      buttons.forEach(function (b) { b.disabled = true; });
-      if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
 
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-        body: JSON.stringify({ comments: comments }),
-      })
-        .then(function (res) {
-          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      function submitDecision(comments) {
+        var buttons = btn.parentElement.querySelectorAll('.wq-approve-btn, .wq-reject-btn, .wq-return-btn');
+        buttons.forEach(function (b) { b.disabled = true; });
+        if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+          body: JSON.stringify({ comments: comments || '', surface: 'approvals' }),
         })
-        .then(function (result) {
+          .then(function (res) {
+            return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+          })
+          .then(function (result) {
+            if (result.ok) {
+              window.location.reload();
+              return;
+            }
+            buttons.forEach(function (b) { b.disabled = false; });
+            if (errorEl) {
+              errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+              errorEl.hidden = false;
+            }
+          })
+          .catch(function () {
+            buttons.forEach(function (b) { b.disabled = false; });
+            if (errorEl) {
+              errorEl.textContent = 'Network error — please try again.';
+              errorEl.hidden = false;
+            }
+          });
+      }
+
+      if (action === 'reject' || action === 'return') {
+        openDecisionCommentDialog({
+          url: url,
+          decision: action,
+          suggestUrl: suggestUrl,
+          onConfirm: function (comments) { submitDecision(comments); },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
+      }
+      submitDecision('');
+    });
+  });
+
+  /* Manager reassignment — searchable picker + workload + required reason; never silent. */
+  function loadReassignMembers() {
+    try {
+      var el = document.getElementById('reassign-members-data');
+      return el ? JSON.parse(el.textContent || '[]') : [];
+    } catch (err) { return []; }
+  }
+
+  function memberSearchHaystack(m) {
+    if (m && typeof m.search === 'string' && m.search) return m.search.toLowerCase();
+    return ((m.label || '') + ' ' + (m.username || '')).toLowerCase();
+  }
+
+  function approvalIdFromReassignUrl(url) {
+    if (!url) return '';
+    var match = String(url).match(/\/approvals\/(\d+)\/reassign\/?/);
+    return match ? match[1] : '';
+  }
+
+  function openReassignDialog(opts) {
+    var backdrop = document.getElementById('approvals-reassign-dialog');
+    if (!backdrop || !opts || !opts.url) return;
+    var hidden = backdrop.querySelector('[data-reassign-assignee]');
+    var searchEl = backdrop.querySelector('[data-reassign-search]');
+    var optionsEl = backdrop.querySelector('[data-reassign-options]');
+    var reasonEl = backdrop.querySelector('[data-reassign-reason]');
+    var meta = backdrop.querySelector('[data-reassign-current]');
+    var err = backdrop.querySelector('[data-reassign-error]');
+    var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
+    var suggestBtn = backdrop.querySelector('[data-reassign-suggest]');
+    var fallbackMembers = loadReassignMembers();
+    var members = fallbackMembers.slice();
+    var currentId = String(opts.currentId || '');
+    var selectedId = '';
+    var optionsUrl = backdrop.getAttribute('data-assignee-options-url') || assigneeOptionsUrl || '';
+    var approvalId = String(opts.approvalId || approvalIdFromReassignUrl(opts.url) || '');
+    var searchTimer = null;
+    var fetchSeq = 0;
+    var liveSearchActive = false;
+    if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (reasonEl) reasonEl.value = '';
+    if (hidden) hidden.value = '';
+    if (searchEl) searchEl.value = '';
+
+    function eligibleMembers(query) {
+      var q = (query || '').trim().toLowerCase();
+      var list = members.filter(function (m) {
+        return String(m.id) !== currentId;
+      });
+      if (q && !liveSearchActive) {
+        list = list.filter(function (m) {
+          return memberSearchHaystack(m).indexOf(q) !== -1;
+        });
+      }
+      list.sort(function (a, b) {
+        var ac = Number(a.open_count || 0);
+        var bc = Number(b.open_count || 0);
+        if (ac !== bc) return ac - bc;
+        return String(a.label || '').localeCompare(String(b.label || ''), undefined, { sensitivity: 'base' });
+      });
+      return list;
+    }
+
+    function renderOptions() {
+      if (!optionsEl) return;
+      optionsEl.innerHTML = '';
+      var list = eligibleMembers(searchEl ? searchEl.value : '');
+      if (!list.length) {
+        var empty = document.createElement('p');
+        empty.className = 'reassign-combobox__empty';
+        empty.textContent = 'No teammates match.';
+        optionsEl.appendChild(empty);
+        return;
+      }
+      list.forEach(function (m) {
+        var optionBtn = document.createElement('button');
+        optionBtn.type = 'button';
+        optionBtn.className = 'reassign-option' + (String(m.id) === selectedId ? ' is-selected' : '');
+        optionBtn.setAttribute('role', 'option');
+        optionBtn.setAttribute('data-user-id', String(m.id));
+        optionBtn.setAttribute('aria-selected', String(m.id) === selectedId ? 'true' : 'false');
+        var label = document.createElement('span');
+        label.className = 'reassign-option__label';
+        label.textContent = m.label || m.username || ('User ' + m.id);
+        var workload = document.createElement('span');
+        workload.className = 'reassign-option__meta';
+        workload.textContent = Number(m.open_count || 0) + ' open';
+        optionBtn.appendChild(label);
+        optionBtn.appendChild(workload);
+        optionBtn.addEventListener('click', function () {
+          selectedId = String(m.id);
+          if (hidden) hidden.value = selectedId;
+          renderOptions();
+          if (err) { err.hidden = true; err.textContent = ''; }
+        });
+        optionsEl.appendChild(optionBtn);
+      });
+    }
+
+    function fetchAssigneeOptions(query) {
+      if (!optionsUrl) {
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+        return;
+      }
+      var seq = ++fetchSeq;
+      var params = new URLSearchParams();
+      params.set('q', query || '');
+      params.set('limit', '40');
+      if (currentId) params.set('exclude', currentId);
+      var sep = optionsUrl.indexOf('?') >= 0 ? '&' : '?';
+      fetch(optionsUrl + sep + params.toString(), {
+        headers: { 'Accept': 'application/json' },
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (seq !== fetchSeq) return;
+        if (result.ok && result.data && Array.isArray(result.data.members)) {
+          liveSearchActive = true;
+          members = result.data.members;
+          renderOptions();
+          return;
+        }
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      }).catch(function () {
+        if (seq !== fetchSeq) return;
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      });
+    }
+
+    if (searchEl) {
+      searchEl.oninput = function () {
+        var q = (searchEl.value || '').trim();
+        if (optionsUrl) {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { fetchAssigneeOptions(q); }, 250);
+        } else {
+          liveSearchActive = false;
+          members = fallbackMembers.slice();
+          renderOptions();
+        }
+      };
+    }
+    if (optionsUrl) {
+      fetchAssigneeOptions('');
+    } else {
+      renderOptions();
+    }
+
+    if (suggestBtn) {
+      suggestBtn.hidden = !(workSuggestCommentUrl && approvalId);
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+      suggestBtn.onclick = function () {
+        if (!workSuggestCommentUrl || !approvalId) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        fetch(workSuggestCommentUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ kind: 'reassign', approval_id: Number(approvalId) }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
+
+    function close() {
+      clearTimeout(searchTimer);
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var toUserId = hidden ? hidden.value : selectedId;
+        var reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!toUserId) {
+          if (err) { err.textContent = 'Select a teammate to reassign to.'; err.hidden = false; }
+          return;
+        }
+        if (!reason) {
+          if (err) { err.textContent = 'A reassignment reason is required.'; err.hidden = false; }
+          return;
+        }
+        confirmBtn.disabled = true;
+        fetch(opts.url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+          body: JSON.stringify({ to_user_id: Number(toUserId), reason: reason }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          confirmBtn.disabled = false;
           if (result.ok) {
+            close();
             window.location.reload();
             return;
           }
-          buttons.forEach(function (b) { b.disabled = false; });
-          if (errorEl) {
-            errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
-            errorEl.hidden = false;
-          }
-        })
-        .catch(function () {
-          buttons.forEach(function (b) { b.disabled = false; });
-          if (errorEl) {
-            errorEl.textContent = 'Network error — please try again.';
-            errorEl.hidden = false;
-          }
+          var msg = (result.data && result.data.error) || 'Reassignment failed.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        }).catch(function () {
+          confirmBtn.disabled = false;
+          var msg = 'Network error — please try again.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
         });
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (searchEl) searchEl.focus();
+  }
+
+  root.querySelectorAll('[data-approval-reassign]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-reassign-url');
+      var current = btn.getAttribute('data-current-assignee') || '';
+      var currentId = btn.getAttribute('data-current-assignee-id') || '';
+      var cell = btn.closest('.wq-approval-actions');
+      var errorEl = cell ? cell.querySelector('.wq-action-error') : null;
+      openReassignDialog({
+        url: url,
+        approvalId: approvalIdFromReassignUrl(url),
+        currentLabel: current || 'unassigned',
+        currentId: currentId,
+        onError: function (msg) {
+          if (errorEl) {
+            errorEl.textContent = msg;
+            errorEl.hidden = false;
+          } else {
+            window.alert(msg);
+          }
+        },
+      });
     });
   });
 })();

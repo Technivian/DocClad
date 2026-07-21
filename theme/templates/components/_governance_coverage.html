@@ -1,0 +1,21 @@
+{# Delegation / absence coverage summary for queue cells and detail panels. #}
+{% if delegation %}
+<span class="gov-coverage"
+      title="{% if delegation.reason %}{{ delegation.reason }}{% else %}Delegated coverage{% endif %}{% if delegation.effective_until %} until {{ delegation.effective_until|date:'j M Y' }}{% endif %}">
+  <span class="gov-coverage__acting">
+    {% if delegation.acting_assignee %}
+      {{ delegation.acting_assignee.get_full_name|default:delegation.acting_assignee.username }}
+    {% endif %}
+  </span>
+  {% if delegation.original_assignee %}
+  <span class="gov-coverage__meta">
+    covering for {{ delegation.original_assignee.get_full_name|default:delegation.original_assignee.username }}
+    {% if delegation.effective_until %} · until {{ delegation.effective_until|date:"j M Y" }}{% endif %}
+  </span>
+  {% endif %}
+</span>
+{% elif assignee %}
+  {% include "components/_assignee_chip.html" with user=assignee %}
+{% else %}
+  <span class="c-dim">—</span>
+{% endif %}

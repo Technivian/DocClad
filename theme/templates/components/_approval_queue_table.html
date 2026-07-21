@@ -1,5 +1,6 @@
 {% load clmone_components %}
 {% load clmone_format %}
+{% include "components/_governance_styles.html" %}
 <table class="dc-ds-table dc-ds-table--fixed wq-table approvals-table" data-table-core="server" data-queue-panel="{{ panel_key }}"{% if not is_active %} hidden{% endif %} aria-label="Approval requests">
   <caption class="sr-only">Approval requests requiring review or decision.</caption>
   <thead class="tbl-head">
@@ -19,27 +20,53 @@
     {% for row in rows %}
     <tr>
       <td data-col="title">
-        <a href="{{ row.href }}" class="wq-item-link" title="{{ row.title }}">{{ row.title }}</a>
+        <a href="{{ row.href }}" class="wq-item-link" title="{{ row.title }}{% if row.priority_reason %} — {{ row.priority_reason }}{% endif %}">{{ row.title }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
+        {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
+        {% if row.priority_reason %}
+        {% include "components/_governance_priority.html" with priority_label=row.priority_label|default:"" priority_reason=row.priority_reason priority_tone=row.priority_tone|default:"warning" show_detail=1 %}
+        {% endif %}
       </td>
       <td data-col="stage">{% stage_dots row.contract %}</td>
       <td data-col="requester">{% assignee_chip row.requester %}</td>
-      <td data-col="assignee">{% assignee_chip row.assignee %}</td>
+      <td data-col="assignee">
+        {% include "components/_governance_coverage.html" with delegation=row.delegation assignee=row.assignee %}
+      </td>
       <td data-col="activity">{% activity_line row.activity %}</td>
-      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}" data-col="due">{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
+      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}" data-col="due"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
       <td data-col="status"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
       <td data-col="next_action"><span class="wq-next-action">{{ row.next_action }}</span></td>
-      <td class="wq-approval-actions" data-col="actions">
+      <td class="wq-approval-actions" data-col="actions"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}>
         {% if row.can_decide %}
         <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
         <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>
+        <button type="button" class="wq-return-btn" data-approval-action="return" data-return-url="{{ row.return_url }}">Return</button>
         {% endif %}
-        <a href="{{ row.edit_url }}" class="wq-edit-link">Edit</a>
+        <details class="wq-kebab" onclick="event.stopPropagation();">
+          <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+          <div class="wq-kebab-menu" role="menu">
+            <a href="{{ row.edit_url }}" class="wq-kebab-action" role="menuitem">Open approval record</a>
+            {% if row.href %}<a href="{{ row.href }}" class="wq-kebab-action" role="menuitem">Open contract</a>{% endif %}
+            {% if row.can_reassign %}
+            <button type="button"
+                    class="wq-kebab-action"
+                    role="menuitem"
+                    data-approval-reassign
+                    data-reassign-url="{{ row.reassign_url }}"
+                    data-current-assignee="{% if row.assigned_to %}{{ row.assigned_to.get_full_name|default:row.assigned_to.username }}{% endif %}"
+                    data-current-assignee-id="{% if row.assigned_to %}{{ row.assigned_to.pk }}{% endif %}">
+              Reassign…
+            </button>
+            {% endif %}
+          </div>
+        </details>
         <div class="wq-action-error" hidden></div>
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="9" class="wq-empty">{{ empty_message|default:"Nothing here right now." }}</td></tr>
+    <tr><td colspan="9">
+      {% include "components/_work_queue_empty_state.html" with title=empty_title copy=empty_copy how=empty_how personal_hub=personal_hub only %}
+    </td></tr>
     {% endfor %}
   </tbody>
 </table>

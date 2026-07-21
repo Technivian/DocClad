@@ -52,7 +52,16 @@ def work_queue_table(panel_key, rows, empty_message, is_active=False):
 
 
 @register.inclusion_tag('components/_approval_queue_table.html')
-def approval_queue_table(panel_key, rows, empty_message, is_active=False):
+def approval_queue_table(
+    panel_key,
+    rows,
+    empty_message,
+    is_active=False,
+    personal_hub=False,
+    empty_title='',
+    empty_copy='',
+    empty_how='',
+):
     """Approvals-inbox queue table — same StageDots/AssigneeChip/ActivityLine
     components and .wq-table styling as work_queue_table, with the extra
     Requested-by and Actions columns a decision inbox needs. A different
@@ -63,11 +72,24 @@ def approval_queue_table(panel_key, rows, empty_message, is_active=False):
         'rows': rows,
         'empty_message': empty_message,
         'is_active': is_active,
+        'personal_hub': personal_hub,
+        'empty_title': empty_title or empty_message,
+        'empty_copy': empty_copy or empty_message,
+        'empty_how': empty_how,
     }
 
 
 @register.inclusion_tag('components/_task_queue_table.html')
-def task_queue_table(panel_key, rows, empty_message, is_active=False):
+def task_queue_table(
+    panel_key,
+    rows,
+    empty_message,
+    is_active=False,
+    personal_hub=False,
+    empty_title='',
+    empty_copy='',
+    empty_how='',
+):
     """Tasks-inbox queue table — same visual system as work_queue_table/
     approval_queue_table, with a priority badge on the item cell and a
     single-action (Complete) Actions column instead of approve/reject."""
@@ -76,4 +98,8 @@ def task_queue_table(panel_key, rows, empty_message, is_active=False):
         'rows': rows,
         'empty_message': empty_message,
         'is_active': is_active,
+        'personal_hub': personal_hub,
+        'empty_title': empty_title or empty_message,
+        'empty_copy': empty_copy or empty_message,
+        'empty_how': empty_how,
     }

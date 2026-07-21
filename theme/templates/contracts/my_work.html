@@ -2,9 +2,15 @@
 {% load clmone_format %}
 {% block title %}My Work – CLM One{% endblock %}
 {% block authenticated_page_title %}My Work{% endblock %}
-{% block authenticated_page_subtitle %}Review and complete the work currently assigned to you.{% endblock %}
+{% block authenticated_page_subtitle %}{% if work_scope == 'team' %}Open work across your organization (admin triage).{% else %}Review and complete the work currently assigned to you.{% endif %}{% endblock %}
 {% block authenticated_page_actions %}
 <div class="my-work-header-actions" style="display:inline-flex;align-items:center;gap:10px;">
+  {% if can_view_team_queue %}
+  <nav class="my-work-scope-tabs" aria-label="Work scope" style="display:inline-flex;align-items:center;gap:6px;">
+    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope != 'team' %} is-active{% endif %}" href="?scope=personal"{% if work_scope != 'team' %} aria-current="page"{% endif %}>My work</a>
+    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope == 'team' %} is-active{% endif %}" href="?scope=team"{% if work_scope == 'team' %} aria-current="page"{% endif %}>Team queue</a>
+  </nav>
+  {% endif %}
   <span class="my-work-last-updated" id="my-work-last-updated" style="font:var(--text-meta);color:var(--ink-600);white-space:nowrap;">
     Updated {{ last_updated|date:"g:i A" }}
   </span>
@@ -13,6 +19,7 @@
 {% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
+{% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
   .my-work-page .clm-list-summary { --dc-ds-summary-columns: 6; }
   .my-work-page .my-work-summary-chip {
@@ -89,8 +96,17 @@
   .my-work-page #my-work-table td[data-col="type"] { width: 96px; }
   .my-work-page #my-work-table th[data-col="assigned"],
   .my-work-page #my-work-table td[data-col="assigned"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .my-work-page #my-work-table th[data-col="assignee"],
+  .my-work-page #my-work-table td[data-col="assignee"] { min-width: 120px; width: 12%; }
   .my-work-page #my-work-table th[data-col="due"],
   .my-work-page #my-work-table td[data-col="due"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .my-work-page .my-work-header-actions .dc-ds-button.is-active,
+  .my-work-page .my-work-scope-tabs .dc-ds-button[aria-current="page"] {
+    border-color: var(--seal);
+    background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
+    color: var(--seal-dark, var(--seal));
+    font-weight: 700;
+  }
   .my-work-page #my-work-table th[data-col="status"],
   .my-work-page #my-work-table td[data-col="status"] { min-width: 140px; width: 12%; }
   .my-work-page #my-work-table th[data-col="action"],
@@ -189,13 +205,23 @@
 <div id="my-work-root"
      class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page my-work-page"
      data-view="{{ view_mode }}"
-     data-initial-count="{{ my_work_rows|length }}">
+     data-initial-count="{{ my_work_rows|length }}"
+     data-row-signature="{{ my_work_row_signature }}"
+     data-saved-views-url="{% url 'contracts:my_work_saved_views_api' %}"
+     data-default-filters="{{ my_work_default_filters_json|escape }}">
+  {{ my_work_saved_views_json|json_script:"my-work-saved-views-data" }}
 
   {% if load_error %}
   <section aria-live="polite">
     {% include "design_system/empty_state.html" with title="Your work queue could not be loaded" copy="Your assignments have not been changed. Try refreshing the page." action_url=request.path action_label="Retry" action_tone="primary" only %}
   </section>
   {% else %}
+
+  {% if work_scope == 'team' and team_queue_truncated %}
+  <div class="dc-ds-banner" role="status" style="margin-bottom:var(--space-12);">
+    Showing the top {{ team_queue_limit }} of {{ team_queue_total }} team items (priority-sorted). Narrow with filters or open specialist queues for the rest.
+  </div>
+  {% endif %}
 
   <div class="my-work-update-banner" id="my-work-update-banner" role="status" aria-live="polite">
     <span>New work is available</span>
@@ -221,7 +247,25 @@
         <input type="search" id="my-work-search" class="dc-ds-control" placeholder="Search contract, counterparty, work item, or reference" aria-label="Search work queue">
       </div>
       <button type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" id="my-work-filters-toggle" aria-expanded="false" aria-controls="my-work-filters-drawer">Additional filters</button>
-      <div class="clm-list-actions-stack">
+      <div class="clm-list-actions-stack" style="display:inline-flex;align-items:center;gap:8px;">
+        <div class="relative" style="position:relative;">
+          <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-views-toggle" aria-expanded="false" aria-controls="my-work-views-panel">Saved views</button>
+          <div id="my-work-views-panel" class="clm-list-filter-drawer" hidden style="position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow-panel,0 8px 24px rgba(0,0,0,.08));">
+            <div style="font:var(--text-meta);font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Saved views</div>
+            <div id="my-work-views-list" style="display:grid;gap:4px;max-height:180px;overflow:auto;"></div>
+            <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;display:grid;gap:8px;">
+              <label style="display:grid;gap:4px;font:var(--text-meta);color:var(--ink-600);">
+                Save current filters
+                <input type="text" id="my-work-view-name" class="dc-ds-control" maxlength="120" placeholder="View name" />
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:6px;font:var(--text-meta);color:var(--ink-600);">
+                <input type="checkbox" id="my-work-view-default" />
+                Set as my default
+              </label>
+              <button type="button" class="dc-ds-button dc-ds-button--primary" id="my-work-save-view">Save view</button>
+            </div>
+          </div>
+        </div>
         <p id="my-work-result-count" class="clm-list-result-count" aria-live="polite">{{ my_work_rows|length }} item{{ my_work_rows|length|pluralize }}</p>
       </div>
     </div>
@@ -289,6 +333,16 @@
             {% endfor %}
           </select>
         </label>
+        {% if work_scope == 'team' %}
+        <label>Assignee
+          <select id="my-work-filter-assignee" class="dc-ds-control">
+            <option value="">Anyone</option>
+            {% for assignee in filter_options.assignees %}
+            <option value="{{ assignee.id }}">{{ assignee.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% endif %}
       </div>
     </div>
   </header>
@@ -332,6 +386,7 @@
             <th scope="col" data-col="contract">Contract</th>
             <th scope="col" data-col="counterparty">Counterparty</th>
             <th scope="col" data-col="type">Type</th>
+            {% if work_scope == 'team' %}<th scope="col" data-col="assignee">Assignee</th>{% endif %}
             <th scope="col" data-col="assigned">Assigned</th>
             <th scope="col" data-col="due">Due</th>
             <th scope="col" data-col="status">Status</th>
@@ -340,14 +395,17 @@
         </thead>
         <tbody class="my-work-skeleton" aria-hidden="true">
           {% for _ in "12345" %}
-          <tr><td colspan="9"><div class="my-work-skeleton__bar"></div></td></tr>
+          <tr><td colspan="{% if work_scope == 'team' %}10{% else %}9{% endif %}"><div class="my-work-skeleton__bar"></div></td></tr>
           {% endfor %}
         </tbody>
         <tbody id="my-work-active-body">
           {% for row in my_work_rows %}
           <tr class="my-work-row"
               tabindex="0"
+              role="link"
               data-row-id="{{ row.id }}"
+              data-action-href="{{ row.action_href }}"
+              data-work-kind="{{ row.work_kind }}"
               data-work-type="{{ row.work_type_key }}"
               data-summary-tags="{{ row.summary_tags|join:',' }}"
               data-priority="{{ row.priority_label }}"
@@ -355,13 +413,16 @@
               data-contract-type="{{ row.contract_type }}"
               data-counterparty="{{ row.counterparty }}"
               data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
+              data-assignee-id="{{ row.assignee_id|default:'' }}"
               data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
-              data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+              data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+              {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}{% endif %}
+              {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
+              {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% if row.deadline_id %} data-deadline-id="{{ row.deadline_id }}"{% endif %}{% endif %}
+              {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}" data-risk-item-id="{{ row.risk_item_id }}"{% endif %}
+              aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
-              <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}"
-                    {% if row.priority_reason %}title="{{ row.priority_reason }}"{% endif %}>
-                {{ row.priority_label }}
-              </span>
+              {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
             </td>
             <td data-col="title">
               <span class="wq-item-link">{{ row.title }}</span>
@@ -376,6 +437,9 @@
             </td>
             <td data-col="counterparty">{{ row.counterparty|default:"—" }}</td>
             <td data-col="type">{{ row.work_type_label }}</td>
+            {% if work_scope == 'team' %}
+            <td data-col="assignee">{{ row.assignee_label|default:"—" }}</td>
+            {% endif %}
             <td data-col="assigned">{% if row.assigned_date %}{{ row.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</td>
             <td data-col="due" class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">
               {% if row.due_context.due_date %}{{ row.due_context.due_date|date:"j M Y" }}{% else %}—{% endif %}
@@ -391,20 +455,45 @@
               {% endif %}
               <details class="wq-kebab" onclick="event.stopPropagation();">
                 <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
-                <div class="wq-kebab-menu">
-                  {% if row.action_href %}<a href="{{ row.action_href }}">{{ row.action_label }}</a>{% endif %}
-                  {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}">Open contract</a>{% endif %}
+                <div class="wq-kebab-menu" role="menu">
+                  <button type="button" class="wq-kebab-action" data-toggle-detail="{{ row.id }}" role="menuitem">View details</button>
+                  {% if row.can_decide %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="approve" role="menuitem">Approve</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
+                  {% endif %}
+                  {% if row.can_reassign %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="reassign" role="menuitem">Reassign…</button>
+                  {% endif %}
+                  {% if row.can_complete %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
+                  {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
+                  {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+                  {% endif %}
+                  {% if row.can_resolve_conflict %}
+                  <button type="button" class="wq-kebab-action" data-my-work-action="resolve-conflict" role="menuitem">Mark resolved</button>
+                  <button type="button" class="wq-kebab-action" data-my-work-action="false-positive" role="menuitem">Mark false positive</button>
+                  {% endif %}
+                  {% if row.risks_href %}<a href="{{ row.risks_href }}" role="menuitem">Resolve conflicts</a>{% endif %}
+                  {% if row.work_kind == 'returned' or row.work_kind == 'rejected' %}
+                  {% if row.action_href %}<a href="{{ row.action_href }}" role="menuitem">Correct on contract</a>{% endif %}
+                  {% endif %}
+                  {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
                 </div>
               </details>
+              <div class="wq-action-error" hidden></div>
             </td>
           </tr>
           <tr class="my-work-row-detail is-hidden" data-detail-for="{{ row.id }}">
-            <td colspan="9">
+            <td colspan="{% if work_scope == 'team' %}10{% else %}9{% endif %}">
               <div class="my-work-detail-panel">
                 <dl class="my-work-detail-grid">
                   <div><dt>Description</dt><dd>{{ row.description|default:"—" }}</dd></div>
                   <div><dt>Contract</dt><dd>{{ row.contract_title }}{% if row.reference %} · {{ row.reference }}{% endif %}</dd></div>
                   <div><dt>Counterparty</dt><dd>{{ row.counterparty|default:"—" }}</dd></div>
+                  {% if work_scope == 'team' %}
+                  <div><dt>Assignee</dt><dd>{{ row.assignee_label|default:"—" }}</dd></div>
+                  {% endif %}
                   <div><dt>Requestor</dt><dd>{% if row.requestor %}{{ row.requestor.get_full_name|default:row.requestor.username }}{% else %}—{% endif %}</dd></div>
                   <div><dt>Assigned by</dt><dd>{% if row.assigned_by %}{{ row.assigned_by.get_full_name|default:row.assigned_by.username }}{% else %}—{% endif %}</dd></div>
                   <div><dt>Assigned date</dt><dd>{% if row.assigned_date %}{{ row.assigned_date|date:"j M Y" }}{% else %}—{% endif %}</dd></div>
@@ -415,10 +504,12 @@
                   <div style="grid-column:1/-1;"><dt>Blocking dependencies</dt><dd>{{ row.blocking_issue }}{% if row.blocker_owner %} — waiting on {{ row.blocker_owner }}{% endif %}</dd></div>
                   {% endif %}
                   {% if row.delegation %}
-                  <div style="grid-column:1/-1;"><dt>Delegation</dt><dd>
+                  <div style="grid-column:1/-1;"><dt>Delegation / coverage</dt><dd>
                     {% if row.delegation.original_assignee %}{{ row.delegation.original_assignee.get_full_name|default:row.delegation.original_assignee.username }}{% endif %}
                     covered by {{ row.delegation.acting_assignee.get_full_name|default:row.delegation.acting_assignee.username }}
-                    {% if row.delegation.effective_from %}from {{ row.delegation.effective_from|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.effective_from %} from {{ row.delegation.effective_from|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.effective_until %} until {{ row.delegation.effective_until|date:"j M Y" }}{% endif %}
+                    {% if row.delegation.reason %} · {{ row.delegation.reason }}{% endif %}
                   </dd></div>
                   {% endif %}
                   {% if row.recent_activity %}
@@ -437,7 +528,10 @@
       {% for row in my_work_rows %}
       <article class="my-work-card my-work-row"
                tabindex="0"
+               role="link"
                data-row-id="{{ row.id }}"
+               data-action-href="{{ row.action_href }}"
+               data-work-kind="{{ row.work_kind }}"
                data-work-type="{{ row.work_type_key }}"
                data-summary-tags="{{ row.summary_tags|join:',' }}"
                data-priority="{{ row.priority_label }}"
@@ -445,21 +539,55 @@
                data-contract-type="{{ row.contract_type }}"
                data-counterparty="{{ row.counterparty }}"
                data-assigned-by="{% if row.assigned_by %}{{ row.assigned_by.pk }}{% endif %}"
+               data-assignee-id="{{ row.assignee_id|default:'' }}"
                data-search="{{ row.title }} {{ row.contract_title }} {{ row.counterparty }} {{ row.reference }}"
-               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}">
+               data-due-state="{% if row.due_context.due_overdue %}overdue{% elif row.due_context.due_today %}today{% elif row.due_context.due_soon %}soon{% endif %}"
+               {% if row.can_decide %}data-can-decide="1" data-approve-url="{{ row.approve_url }}" data-reject-url="{{ row.reject_url }}" data-return-url="{{ row.return_url }}"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}{% endif %}
+               {% if row.can_reassign %}data-can-reassign="1" data-reassign-url="{{ row.reassign_url }}" data-current-assignee="{{ row.current_assignee_label|default:''|escape }}" data-current-assignee-id="{{ row.current_assignee_id|default:'' }}"{% endif %}
+               {% if row.can_complete %}data-can-complete="1" data-complete-url="{{ row.complete_url }}"{% if row.defer_url %} data-defer-url="{{ row.defer_url }}"{% endif %}{% if row.escalate_url %} data-escalate-url="{{ row.escalate_url }}"{% endif %}{% if row.deadline_id %} data-deadline-id="{{ row.deadline_id }}"{% endif %}{% endif %}
+               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}" data-risk-item-id="{{ row.risk_item_id }}"{% endif %}
+               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
         <div class="my-work-card__header">
           <h3 class="my-work-card__title">{{ row.title }}</h3>
-          <span class="my-work-priority my-work-priority--{{ row.priority_label|lower }}">{{ row.priority_label }}</span>
+          {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=0 %}
         </div>
-        <p class="my-work-card__meta">{{ row.contract_title }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}</p>
+        <p class="my-work-card__meta">{{ row.contract_title }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}{% if work_scope == 'team' and row.assignee_label %} · {{ row.assignee_label }}{% endif %}</p>
         <div class="my-work-card__footer">
           <span class="my-work-status my-work-status--{{ row.status_tone }}">{{ row.status_label }}</span>
           {% if row.due_context.due_date %}
           <span class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">Due {{ row.due_context.due_date|date:"j M" }}</span>
           {% endif %}
           {% if row.action_href %}
-          <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet">{{ row.action_label }}</a>
+          <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet" onclick="event.stopPropagation();">{{ row.action_label }}</a>
           {% endif %}
+          <details class="wq-kebab" onclick="event.stopPropagation();">
+            <summary aria-label="More actions" class="wq-kebab-trigger">&#8942;</summary>
+            <div class="wq-kebab-menu" role="menu">
+              {% if row.can_decide %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="approve" role="menuitem">Approve</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="reject" role="menuitem">Reject</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="return" role="menuitem">Return</button>
+              {% endif %}
+              {% if row.can_reassign %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="reassign" role="menuitem">Reassign…</button>
+              {% endif %}
+              {% if row.can_complete %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="complete" role="menuitem">Mark complete</button>
+              {% if row.defer_url %}<button type="button" class="wq-kebab-action" data-my-work-action="defer" role="menuitem">Defer 7 days</button>{% endif %}
+              {% if row.escalate_url %}<button type="button" class="wq-kebab-action" data-my-work-action="escalate" role="menuitem">Escalate</button>{% endif %}
+              {% endif %}
+              {% if row.can_resolve_conflict %}
+              <button type="button" class="wq-kebab-action" data-my-work-action="resolve-conflict" role="menuitem">Mark resolved</button>
+              <button type="button" class="wq-kebab-action" data-my-work-action="false-positive" role="menuitem">Mark false positive</button>
+              {% endif %}
+              {% if row.risks_href %}<a href="{{ row.risks_href }}" role="menuitem">Resolve conflicts</a>{% endif %}
+              {% if row.work_kind == 'returned' or row.work_kind == 'rejected' %}
+              {% if row.action_href %}<a href="{{ row.action_href }}" role="menuitem">Correct on contract</a>{% endif %}
+              {% endif %}
+              {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
+            </div>
+          </details>
+          <div class="wq-action-error" hidden></div>
         </div>
       </article>
       {% endfor %}
@@ -504,6 +632,9 @@
   {% endif %}
 </div>
 
+{% include "components/_reassign_dialog.html" with dialog_id="my-work-reassign-dialog" reassign_members=reassign_members assignee_options_url=assignee_options_url %}
+{% include "components/_decision_comment_dialog.html" with dialog_id="my-work-decision-dialog" %}
+
 <script nonce="{{ csp_nonce }}">
 (function () {
   var root = document.getElementById('my-work-root');
@@ -511,6 +642,27 @@
 
   var STORAGE_KEY = 'clmone-my-work-filters-v1';
   var initialCount = Number(root.getAttribute('data-initial-count')) || 0;
+  var knownSignature = root.getAttribute('data-row-signature') || '';
+  var savedViewsUrl = root.getAttribute('data-saved-views-url') || '';
+  var assigneeOptionsUrl = "{{ assignee_options_url|default:''|escapejs }}";
+  var workSuggestCommentUrl = "{{ work_suggest_comment_url|default:''|escapejs }}";
+  var workEventsUrl = "{% url 'contracts:work_interaction_api' %}";
+
+  function recordEvidence(key, metadata) {
+    if (!workEventsUrl || !key) return;
+    try {
+      fetch(workEventsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({ evidence: key, surface: 'my_work', metadata: metadata || {} }),
+        keepalive: true,
+      }).catch(function () { /* ignore */ });
+    } catch (err) { /* ignore */ }
+  }
   var state = {
     view: 'active',
     workType: 'all',
@@ -522,9 +674,25 @@
     contractType: '',
     counterparty: '',
     assignedBy: '',
+    assignee: '',
   };
+  var savedViews = [];
+  try {
+    var svEl = document.getElementById('my-work-saved-views-data');
+    if (svEl) savedViews = JSON.parse(svEl.textContent || '[]');
+  } catch (err) { savedViews = []; }
+
+  function parseDefaultFilters() {
+    try {
+      return JSON.parse(root.getAttribute('data-default-filters') || '{}') || {};
+    } catch (err) { return {}; }
+  }
 
   function loadState() {
+    var defaults = parseDefaultFilters();
+    Object.keys(state).forEach(function (key) {
+      if (typeof defaults[key] === 'string') state[key] = defaults[key];
+    });
     try {
       var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
       Object.keys(state).forEach(function (key) {
@@ -535,6 +703,44 @@
 
   function saveState() {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (err) { /* ignore */ }
+  }
+
+  function filterSnapshot() {
+    return {
+      workType: state.workType,
+      summary: state.summary,
+      search: state.search,
+      due: state.due,
+      priority: state.priority,
+      status: state.status,
+      contractType: state.contractType,
+      counterparty: state.counterparty,
+      assignedBy: state.assignedBy,
+      assignee: state.assignee,
+    };
+  }
+
+  function applyFilterSnapshot(filters) {
+    if (!filters || typeof filters !== 'object') return;
+    Object.keys(filterSnapshot()).forEach(function (key) {
+      if (typeof filters[key] === 'string') state[key] = filters[key];
+    });
+    var search = document.getElementById('my-work-search');
+    if (search) search.value = state.search || '';
+    var map = {
+      due: 'my-work-filter-due',
+      priority: 'my-work-filter-priority',
+      status: 'my-work-filter-status',
+      contractType: 'my-work-filter-contract-type',
+      counterparty: 'my-work-filter-counterparty',
+      assignedBy: 'my-work-filter-assigned-by',
+      assignee: 'my-work-filter-assignee',
+    };
+    Object.keys(map).forEach(function (key) {
+      var el = document.getElementById(map[key]);
+      if (el) el.value = state[key] || '';
+    });
+    applyFilters();
   }
 
   function allRows() {
@@ -561,6 +767,7 @@
     if (state.contractType) labels.push(['contractType', state.contractType]);
     if (state.counterparty) labels.push(['counterparty', state.counterparty]);
     if (state.assignedBy) labels.push(['assignedBy', state.assignedBy]);
+    if (state.assignee) labels.push(['assignee', state.assignee]);
     labels.forEach(function (entry) {
       var chip = document.createElement('span');
       chip.className = 'my-work-filter-chip';
@@ -594,6 +801,7 @@
     if (state.contractType && row.getAttribute('data-contract-type') !== state.contractType) return false;
     if (state.counterparty && row.getAttribute('data-counterparty') !== state.counterparty) return false;
     if (state.assignedBy && row.getAttribute('data-assigned-by') !== state.assignedBy) return false;
+    if (state.assignee && row.getAttribute('data-assignee-id') !== state.assignee) return false;
     return true;
   }
 
@@ -638,13 +846,129 @@
     state.contractType = '';
     state.counterparty = '';
     state.assignedBy = '';
+    state.assignee = '';
     var search = document.getElementById('my-work-search');
     if (search) search.value = '';
-    ['my-work-filter-due', 'my-work-filter-priority', 'my-work-filter-status', 'my-work-filter-contract-type', 'my-work-filter-counterparty', 'my-work-filter-assigned-by'].forEach(function (id) {
+    ['my-work-filter-due', 'my-work-filter-priority', 'my-work-filter-status', 'my-work-filter-contract-type', 'my-work-filter-counterparty', 'my-work-filter-assigned-by', 'my-work-filter-assignee'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.value = '';
     });
     applyFilters();
+  }
+
+  function getCsrfToken() {
+    return document.cookie
+      .split('; ')
+      .find(function (row) { return row.startsWith('csrftoken='); })
+      ?.split('=')[1] || '';
+  }
+
+  function renderSavedViews() {
+    var list = document.getElementById('my-work-views-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!savedViews.length) {
+      var empty = document.createElement('p');
+      empty.className = 'profile-page__muted';
+      empty.style.margin = '0';
+      empty.style.font = 'var(--text-meta)';
+      empty.textContent = 'No saved views yet.';
+      list.appendChild(empty);
+      return;
+    }
+    savedViews.forEach(function (view) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+      var applyBtn = document.createElement('button');
+      applyBtn.type = 'button';
+      applyBtn.className = 'dc-ds-button dc-ds-button--ghost';
+      applyBtn.style.flex = '1';
+      applyBtn.style.justifyContent = 'flex-start';
+      applyBtn.textContent = view.name + (view.is_default ? ' (default)' : '');
+      applyBtn.addEventListener('click', function () {
+        applyFilterSnapshot(view.filters || {});
+        closeViewsPanel();
+      });
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'dc-ds-button dc-ds-button--quiet';
+      delBtn.setAttribute('aria-label', 'Delete ' + view.name);
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', function () {
+        fetch(savedViewsUrl.replace(/\/?$/, '/') + view.id + '/', {
+          method: 'DELETE',
+          headers: { 'X-CSRFToken': getCsrfToken() },
+        }).then(function (res) {
+          if (!res.ok) return;
+          savedViews = savedViews.filter(function (v) { return v.id !== view.id; });
+          renderSavedViews();
+        }).catch(function () { /* ignore */ });
+      });
+      row.appendChild(applyBtn);
+      row.appendChild(delBtn);
+      list.appendChild(row);
+    });
+  }
+
+  function closeViewsPanel() {
+    var panel = document.getElementById('my-work-views-panel');
+    var toggle = document.getElementById('my-work-views-toggle');
+    if (panel) panel.setAttribute('hidden', '');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function isInteracting() {
+    if (document.hidden) return true;
+    var drawer = document.getElementById('my-work-filters-drawer');
+    if (drawer && !drawer.hasAttribute('hidden')) return true;
+    var views = document.getElementById('my-work-views-panel');
+    if (views && !views.hasAttribute('hidden')) return true;
+    if (root.querySelector('details.wq-kebab[open]')) return true;
+    if (root.querySelector('.my-work-row.is-expanded')) return true;
+    return false;
+  }
+
+  function showUpdateBannerIfChanged(data) {
+    var nextSig = data.signature || '';
+    var nextCount = Number(data.count);
+    var changed = (nextSig && nextSig !== knownSignature) ||
+      (!nextSig && !Number.isNaN(nextCount) && nextCount !== initialCount);
+    if (!changed) return;
+    var banner = document.getElementById('my-work-update-banner');
+    if (banner) banner.classList.add('is-visible');
+  }
+
+  function recordWorkEvent(payload) {
+    try {
+      fetch('{% url "contracts:work_interaction_api" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(function () { /* telemetry must not block navigation */ });
+    } catch (err) { /* ignore */ }
+  }
+
+  function openActionContext(row) {
+    var href = row.getAttribute('data-action-href');
+    var workItemId = row.getAttribute('data-row-id') || '';
+    if (workItemId) {
+      recordWorkEvent({
+        event: 'opened',
+        work_item_id: workItemId,
+        work_kind: row.getAttribute('data-work-type') || '',
+        surface: 'my_work',
+        contract_type: row.getAttribute('data-contract-type') || '',
+        is_overdue: row.getAttribute('data-due-state') === 'overdue',
+        is_blocked: row.getAttribute('data-status') === 'Blocked',
+      });
+    }
+    if (href) {
+      var sep = href.indexOf('?') >= 0 ? '&' : '?';
+      window.location.href = href + sep + 'from=my_work';
+      return;
+    }
+    toggleDetail(row);
   }
 
   function toggleDetail(row) {
@@ -668,18 +992,25 @@
       tab.classList.toggle('is-active', active);
       tab.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    if (!window.history || !window.history.replaceState) return;
+    var params = new URLSearchParams(window.location.search);
+    var scope = params.get('scope');
     if (view === 'completed') {
-      if (window.history && window.history.replaceState) {
-        window.history.replaceState({}, '', '?view=completed');
-      }
-    } else if (window.history && window.history.replaceState) {
-      window.history.replaceState({}, '', window.location.pathname);
+      params.set('view', 'completed');
+    } else {
+      params.delete('view');
     }
+    if (scope === 'team' || scope === 'personal') {
+      params.set('scope', scope);
+    }
+    var qs = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : ''));
   }
 
   loadState();
   if (window.location.search.indexOf('view=completed') !== -1) setView('completed');
   applyFilters();
+  renderSavedViews();
 
   var search = document.getElementById('my-work-search');
   if (search) {
@@ -715,13 +1046,593 @@
   allRows().forEach(function (row) {
     row.addEventListener('click', function (event) {
       if (event.target.closest('a, button, summary, .wq-kebab')) return;
-      toggleDetail(row);
+      openActionContext(row);
     });
     row.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        toggleDetail(row);
+        openActionContext(row);
       }
+    });
+  });
+
+  root.querySelectorAll('[data-toggle-detail]').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var id = btn.getAttribute('data-toggle-detail');
+      var row = root.querySelector('.my-work-row[data-row-id="' + id + '"]');
+      var menu = btn.closest('details');
+      if (menu) menu.open = false;
+      if (row) toggleDetail(row);
+    });
+  });
+
+  function removeWorkRow(row) {
+    var id = row.getAttribute('data-row-id');
+    root.querySelectorAll('.my-work-row[data-row-id="' + id + '"]').forEach(function (el) {
+      el.remove();
+    });
+    var detail = root.querySelector('[data-detail-for="' + id + '"]');
+    if (detail) detail.remove();
+    applyFilters();
+  }
+
+  function loadReassignMembers() {
+    try {
+      var el = document.getElementById('reassign-members-data');
+      return el ? JSON.parse(el.textContent || '[]') : [];
+    } catch (err) { return []; }
+  }
+
+  function memberSearchHaystack(m) {
+    if (m && typeof m.search === 'string' && m.search) return m.search.toLowerCase();
+    return ((m.label || '') + ' ' + (m.username || '')).toLowerCase();
+  }
+
+  function approvalIdFromReassignUrl(url) {
+    if (!url) return '';
+    var match = String(url).match(/\/approvals\/(\d+)\/reassign\/?/);
+    return match ? match[1] : '';
+  }
+
+  function openReassignDialog(opts) {
+    var backdrop = document.getElementById('my-work-reassign-dialog');
+    if (!backdrop || !opts || !opts.url) return;
+    var hidden = backdrop.querySelector('[data-reassign-assignee]');
+    var searchEl = backdrop.querySelector('[data-reassign-search]');
+    var optionsEl = backdrop.querySelector('[data-reassign-options]');
+    var reasonEl = backdrop.querySelector('[data-reassign-reason]');
+    var meta = backdrop.querySelector('[data-reassign-current]');
+    var err = backdrop.querySelector('[data-reassign-error]');
+    var confirmBtn = backdrop.querySelector('[data-reassign-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-reassign-cancel]');
+    var suggestBtn = backdrop.querySelector('[data-reassign-suggest]');
+    var fallbackMembers = loadReassignMembers();
+    var members = fallbackMembers.slice();
+    var currentId = String(opts.currentId || '');
+    var selectedId = '';
+    var optionsUrl = backdrop.getAttribute('data-assignee-options-url') || assigneeOptionsUrl || '';
+    var approvalId = String(opts.approvalId || approvalIdFromReassignUrl(opts.url) || '');
+    var searchTimer = null;
+    var fetchSeq = 0;
+    var liveSearchActive = false;
+    if (meta) meta.textContent = 'Current owner: ' + (opts.currentLabel || 'unassigned');
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (reasonEl) reasonEl.value = '';
+    if (hidden) hidden.value = '';
+    if (searchEl) searchEl.value = '';
+
+    function eligibleMembers(query) {
+      var q = (query || '').trim().toLowerCase();
+      var list = members.filter(function (m) {
+        return String(m.id) !== currentId;
+      });
+      if (q && !liveSearchActive) {
+        list = list.filter(function (m) {
+          return memberSearchHaystack(m).indexOf(q) !== -1;
+        });
+      }
+      list.sort(function (a, b) {
+        var ac = Number(a.open_count || 0);
+        var bc = Number(b.open_count || 0);
+        if (ac !== bc) return ac - bc;
+        return String(a.label || '').localeCompare(String(b.label || ''), undefined, { sensitivity: 'base' });
+      });
+      return list;
+    }
+
+    function renderOptions() {
+      if (!optionsEl) return;
+      optionsEl.innerHTML = '';
+      var list = eligibleMembers(searchEl ? searchEl.value : '');
+      if (!list.length) {
+        var empty = document.createElement('p');
+        empty.className = 'reassign-combobox__empty';
+        empty.textContent = 'No teammates match.';
+        optionsEl.appendChild(empty);
+        return;
+      }
+      list.forEach(function (m) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'reassign-option' + (String(m.id) === selectedId ? ' is-selected' : '');
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('data-user-id', String(m.id));
+        btn.setAttribute('aria-selected', String(m.id) === selectedId ? 'true' : 'false');
+        var label = document.createElement('span');
+        label.className = 'reassign-option__label';
+        label.textContent = m.label || m.username || ('User ' + m.id);
+        var workload = document.createElement('span');
+        workload.className = 'reassign-option__meta';
+        var openCount = Number(m.open_count || 0);
+        workload.textContent = openCount + ' open';
+        btn.appendChild(label);
+        btn.appendChild(workload);
+        btn.addEventListener('click', function () {
+          selectedId = String(m.id);
+          if (hidden) hidden.value = selectedId;
+          renderOptions();
+          if (err) { err.hidden = true; err.textContent = ''; }
+        });
+        optionsEl.appendChild(btn);
+      });
+    }
+
+    function fetchAssigneeOptions(query) {
+      if (!optionsUrl) {
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+        return;
+      }
+      var seq = ++fetchSeq;
+      var params = new URLSearchParams();
+      params.set('q', query || '');
+      params.set('limit', '40');
+      if (currentId) params.set('exclude', currentId);
+      var sep = optionsUrl.indexOf('?') >= 0 ? '&' : '?';
+      fetch(optionsUrl + sep + params.toString(), {
+        headers: { 'Accept': 'application/json' },
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (seq !== fetchSeq) return;
+        if (result.ok && result.data && Array.isArray(result.data.members)) {
+          liveSearchActive = true;
+          members = result.data.members;
+          renderOptions();
+          return;
+        }
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      }).catch(function () {
+        if (seq !== fetchSeq) return;
+        liveSearchActive = false;
+        members = fallbackMembers.slice();
+        renderOptions();
+      });
+    }
+
+    if (searchEl) {
+      searchEl.oninput = function () {
+        var q = (searchEl.value || '').trim();
+        if (optionsUrl) {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () { fetchAssigneeOptions(q); }, 250);
+        } else {
+          liveSearchActive = false;
+          members = fallbackMembers.slice();
+          renderOptions();
+        }
+      };
+    }
+    if (optionsUrl) {
+      fetchAssigneeOptions('');
+    } else {
+      renderOptions();
+    }
+
+    if (suggestBtn) {
+      suggestBtn.hidden = !(workSuggestCommentUrl && approvalId);
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+      suggestBtn.onclick = function () {
+        if (!workSuggestCommentUrl || !approvalId) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        fetch(workSuggestCommentUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({ kind: 'reassign', approval_id: Number(approvalId) }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
+
+    function close() {
+      clearTimeout(searchTimer);
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var toUserId = hidden ? hidden.value : selectedId;
+        var reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!toUserId) {
+          if (err) { err.textContent = 'Select a teammate to reassign to.'; err.hidden = false; }
+          return;
+        }
+        if (!reason) {
+          if (err) { err.textContent = 'A reassignment reason is required.'; err.hidden = false; }
+          return;
+        }
+        confirmBtn.disabled = true;
+        fetch(opts.url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify({
+            to_user_id: Number(toUserId),
+            reason: reason,
+            surface: opts.surface || 'my_work',
+          }),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          confirmBtn.disabled = false;
+          if (result.ok) {
+            close();
+            if (opts.onSuccess) opts.onSuccess(result.data);
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Reassignment failed.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        }).catch(function () {
+          confirmBtn.disabled = false;
+          var msg = 'Network error — please try again.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+          if (opts.onError) opts.onError(msg);
+        });
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (searchEl) searchEl.focus();
+  }
+
+  function openDecisionCommentDialog(opts) {
+    var backdrop = document.getElementById('my-work-decision-dialog');
+    if (!backdrop || !opts) return;
+    var titleEl = backdrop.querySelector('[data-decision-title]');
+    var metaEl = backdrop.querySelector('[data-decision-meta]');
+    var reasonEl = backdrop.querySelector('[data-decision-reason]');
+    var err = backdrop.querySelector('[data-decision-error]');
+    var hint = backdrop.querySelector('[data-decision-hint]');
+    var suggestBtn = backdrop.querySelector('[data-decision-suggest]');
+    var confirmBtn = backdrop.querySelector('[data-decision-confirm]');
+    var cancelBtn = backdrop.querySelector('[data-decision-cancel]');
+    var decision = (opts.decision || 'return').toLowerCase();
+    var defaultTitle = decision === 'reject' ? 'Reject approval' : 'Return for changes';
+    var defaultMeta = decision === 'reject'
+      ? 'A rejection reason is required before confirming.'
+      : 'Describe the changes required before confirming.';
+    var defaultPlaceholder = decision === 'reject'
+      ? 'Reason for rejection'
+      : 'What changes are required?';
+    var defaultRequiredError = decision === 'reject'
+      ? 'A rejection reason is required.'
+      : 'A return reason is required.';
+    if (titleEl) titleEl.textContent = opts.title || defaultTitle;
+    if (metaEl) metaEl.textContent = opts.meta || defaultMeta;
+    if (err) { err.hidden = true; err.textContent = ''; }
+    if (hint) { hint.hidden = true; hint.textContent = ''; }
+    if (reasonEl) {
+      reasonEl.value = '';
+      reasonEl.placeholder = opts.placeholder || defaultPlaceholder;
+    }
+    var suggestionApplied = false;
+    if (suggestBtn) {
+      suggestBtn.hidden = !opts.suggestUrl;
+      suggestBtn.disabled = false;
+      suggestBtn.textContent = 'Suggest reason';
+    }
+
+    function close() {
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('hidden', '');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(event) {
+      if (event.key === 'Escape') close();
+    }
+    if (cancelBtn) cancelBtn.onclick = close;
+    backdrop.onclick = function (event) {
+      if (event.target === backdrop) close();
+    };
+    if (suggestBtn) {
+      suggestBtn.onclick = function () {
+        if (!opts.suggestUrl) return;
+        suggestBtn.disabled = true;
+        if (err) { err.hidden = true; err.textContent = ''; }
+        var suggestBody = opts.suggestPayload
+          ? Object.assign({}, opts.suggestPayload)
+          : { decision: decision };
+        fetch(opts.suggestUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+          },
+          body: JSON.stringify(suggestBody),
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          suggestBtn.disabled = false;
+          if (result.ok && result.data && result.data.suggestion) {
+            if (reasonEl) reasonEl.value = result.data.suggestion;
+            suggestionApplied = true;
+            if (hint) {
+              hint.textContent = result.data.source === 'ai'
+                ? 'Suggested with AI — edit before confirming.'
+                : 'Suggested from template — edit before confirming.';
+              hint.hidden = false;
+            }
+            return;
+          }
+          var msg = (result.data && result.data.error) || 'Could not suggest a reason.';
+          if (err) { err.textContent = msg; err.hidden = false; }
+        }).catch(function () {
+          suggestBtn.disabled = false;
+          if (err) { err.textContent = 'Network error — please try again.'; err.hidden = false; }
+        });
+      };
+    }
+    if (confirmBtn) {
+      confirmBtn.onclick = function () {
+        var comments = reasonEl ? reasonEl.value.trim() : '';
+        if (!comments) {
+          if (err) {
+            err.textContent = opts.requiredError || defaultRequiredError;
+            err.hidden = false;
+          }
+          return;
+        }
+        if (suggestionApplied) {
+          recordEvidence('suggest_applied', { decision: decision });
+        }
+        close();
+        if (opts.onConfirm) opts.onConfirm(comments);
+      };
+    }
+    backdrop.removeAttribute('hidden');
+    backdrop.classList.add('is-open');
+    document.addEventListener('keydown', onKey);
+    if (reasonEl) reasonEl.focus();
+  }
+
+  function actionErrorEl(btn) {
+    var host = btn.closest('td, .my-work-card__footer, .my-work-card') || btn.parentElement;
+    return host ? host.querySelector('.wq-action-error') : null;
+  }
+
+  function postMyWorkAction(url, body, isForm) {
+    if (isForm) {
+      var formUrl = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'from=my_work';
+      return fetch(formUrl, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csrfmiddlewaretoken=' + encodeURIComponent(getCsrfToken()) + '&from=my_work',
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; }).catch(function () {
+          return { ok: res.ok, data: {} };
+        });
+      });
+    }
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(body || { surface: 'my_work' }),
+    }).then(function (res) {
+      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+    });
+  }
+
+  function runMyWorkMutation(btn, url, body, isForm, removeOnSuccess, row, errorEl) {
+    if (!url) return;
+    btn.disabled = true;
+    if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+    postMyWorkAction(url, body, isForm)
+      .then(function (result) {
+        if (result.ok) {
+          if (removeOnSuccess) {
+            removeWorkRow(row);
+          } else {
+            window.location.reload();
+          }
+          return;
+        }
+        btn.disabled = false;
+        if (errorEl) {
+          errorEl.textContent = (result.data && result.data.error) || 'That action failed. Please try again.';
+          errorEl.hidden = false;
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        if (errorEl) {
+          errorEl.textContent = 'Network error — please try again.';
+          errorEl.hidden = false;
+        }
+      });
+  }
+
+  root.querySelectorAll('[data-my-work-action]').forEach(function (btn) {
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var action = btn.getAttribute('data-my-work-action');
+      var row = btn.closest('.my-work-row');
+      if (!row || !action) return;
+      var menu = btn.closest('details');
+      if (menu) menu.open = false;
+      var errorEl = actionErrorEl(btn);
+      var url = '';
+      var body = { surface: 'my_work' };
+      var isForm = false;
+      var removeOnSuccess = true;
+
+      if (action === 'approve') {
+        url = row.getAttribute('data-approve-url') || '';
+        runMyWorkMutation(btn, url, body, isForm, removeOnSuccess, row, errorEl);
+        return;
+      } else if (action === 'reject' || action === 'return') {
+        url = action === 'reject'
+          ? (row.getAttribute('data-reject-url') || '')
+          : (row.getAttribute('data-return-url') || '');
+        if (!url) return;
+        openDecisionCommentDialog({
+          url: url,
+          decision: action,
+          suggestUrl: row.getAttribute('data-suggest-decision-url') || '',
+          onConfirm: function (comments) {
+            body.comments = comments;
+            runMyWorkMutation(btn, url, body, false, true, row, errorEl);
+          },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
+      } else if (action === 'complete') {
+        url = row.getAttribute('data-complete-url') || '';
+        // Obligations use form POST endpoints; tasks use JSON.
+        isForm = (row.getAttribute('data-work-kind') === 'obligation');
+        if (!isForm) body = { surface: 'my_work' };
+      } else if (action === 'defer') {
+        url = row.getAttribute('data-defer-url') || '';
+        isForm = true;
+        removeOnSuccess = false;
+      } else if (action === 'escalate') {
+        url = row.getAttribute('data-escalate-url') || '';
+        if (!url) return;
+        var escalateDeadlineId = row.getAttribute('data-deadline-id') || '';
+        openDecisionCommentDialog({
+          decision: 'escalate',
+          title: 'Escalate obligation',
+          meta: 'An escalation reason is required before confirming.',
+          placeholder: 'Why is this being escalated?',
+          requiredError: 'An escalation reason is required.',
+          suggestUrl: workSuggestCommentUrl,
+          suggestPayload: escalateDeadlineId
+            ? { kind: 'escalate', deadline_id: Number(escalateDeadlineId) }
+            : { kind: 'escalate' },
+          onConfirm: function (comments) {
+            runMyWorkMutation(
+              btn,
+              url,
+              { reason: comments, surface: 'my_work' },
+              false,
+              false,
+              row,
+              errorEl
+            );
+          },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
+      } else if (action === 'reassign') {
+        var reassignUrl = row.getAttribute('data-reassign-url') || '';
+        openReassignDialog({
+          url: reassignUrl,
+          approvalId: approvalIdFromReassignUrl(reassignUrl),
+          currentLabel: row.getAttribute('data-current-assignee') || 'unassigned',
+          currentId: row.getAttribute('data-current-assignee-id') || '',
+          surface: 'my_work',
+          onSuccess: function () { removeWorkRow(row); },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
+      } else if (action === 'resolve-conflict' || action === 'false-positive') {
+        url = row.getAttribute('data-conflict-status-url') || '';
+        if (!url) return;
+        var riskItemId = row.getAttribute('data-risk-item-id') || '';
+        var isResolved = action === 'resolve-conflict';
+        var conflictStatus = isResolved ? 'RESOLVED' : 'FALSE_POSITIVE';
+        openDecisionCommentDialog({
+          decision: action,
+          title: isResolved ? 'Mark conflict resolved' : 'Mark false positive',
+          meta: 'A reason is required before confirming.',
+          placeholder: isResolved ? 'Why is this resolved?' : 'Why is this a false positive?',
+          requiredError: 'A reason is required.',
+          suggestUrl: workSuggestCommentUrl,
+          suggestPayload: riskItemId
+            ? {
+                kind: isResolved ? 'conflict_resolved' : 'conflict_false_positive',
+                risk_item_id: Number(riskItemId),
+              }
+            : { kind: isResolved ? 'conflict_resolved' : 'conflict_false_positive' },
+          onConfirm: function (comments) {
+            runMyWorkMutation(
+              btn,
+              url,
+              { status: conflictStatus, note: comments, surface: 'my_work' },
+              false,
+              true,
+              row,
+              errorEl
+            );
+          },
+          onError: function (msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+          },
+        });
+        return;
+      }
+      runMyWorkMutation(btn, url, body, isForm, removeOnSuccess, row, errorEl);
     });
   });
 
@@ -736,6 +1647,50 @@
     });
   }
 
+  var viewsToggle = document.getElementById('my-work-views-toggle');
+  var viewsPanel = document.getElementById('my-work-views-panel');
+  if (viewsToggle && viewsPanel) {
+    viewsToggle.addEventListener('click', function () {
+      var open = viewsPanel.hasAttribute('hidden');
+      if (open) viewsPanel.removeAttribute('hidden'); else viewsPanel.setAttribute('hidden', '');
+      viewsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  var saveViewBtn = document.getElementById('my-work-save-view');
+  if (saveViewBtn && savedViewsUrl) {
+    saveViewBtn.addEventListener('click', function () {
+      var nameEl = document.getElementById('my-work-view-name');
+      var defaultEl = document.getElementById('my-work-view-default');
+      var name = (nameEl && nameEl.value || '').trim();
+      if (!name) {
+        if (nameEl) nameEl.focus();
+        return;
+      }
+      fetch(savedViewsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({
+          name: name,
+          filters: filterSnapshot(),
+          is_default: !!(defaultEl && defaultEl.checked),
+        }),
+      }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data.view) return;
+          var view = result.data.view;
+          savedViews = savedViews.filter(function (v) { return v.id !== view.id && v.name !== view.name; });
+          if (view.is_default) {
+            savedViews.forEach(function (v) { v.is_default = false; });
+          }
+          savedViews.push(view);
+          savedViews.sort(function (a, b) { return a.name.localeCompare(b.name); });
+          if (nameEl) nameEl.value = '';
+          if (defaultEl) defaultEl.checked = false;
+          renderSavedViews();
+        }).catch(function () { /* ignore */ });
+    });
+  }
+
   var filterMap = {
     'my-work-filter-due': 'due',
     'my-work-filter-priority': 'priority',
@@ -743,6 +1698,7 @@
     'my-work-filter-contract-type': 'contractType',
     'my-work-filter-counterparty': 'counterparty',
     'my-work-filter-assigned-by': 'assignedBy',
+    'my-work-filter-assignee': 'assignee',
   };
   Object.keys(filterMap).forEach(function (id) {
     var el = document.getElementById(id);
@@ -759,26 +1715,20 @@
   if (clearBtn) clearBtn.addEventListener('click', clearFilters);
   if (emptyClear) emptyClear.addEventListener('click', clearFilters);
 
-  function refreshQueue() {
-    root.classList.add('is-loading');
+  function pollForUpdates() {
+    if (isInteracting()) return;
     fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        var banner = document.getElementById('my-work-update-banner');
-        if (banner) banner.classList.remove('is-visible');
         var updated = document.getElementById('my-work-last-updated');
         if (updated && data.last_updated) {
           var dt = new Date(data.last_updated);
           updated.textContent = 'Updated ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         }
-        if (Number(data.count) !== initialCount) {
-          if (banner) banner.classList.add('is-visible');
-        }
+        // Soft refresh only: banner, never reorder/replace rows mid-interaction.
+        showUpdateBannerIfChanged(data);
       })
-      .catch(function () { /* keep current queue */ })
-      .finally(function () {
-        root.classList.remove('is-loading');
-      });
+      .catch(function () { /* ignore */ });
   }
 
   var refreshBtn = document.getElementById('my-work-refresh');
@@ -786,17 +1736,7 @@
   if (refreshBtn) refreshBtn.addEventListener('click', function () { window.location.reload(); });
   if (updateRefresh) updateRefresh.addEventListener('click', function () { window.location.reload(); });
 
-  window.setInterval(function () {
-    fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (Number(data.count) !== initialCount) {
-          var banner = document.getElementById('my-work-update-banner');
-          if (banner) banner.classList.add('is-visible');
-        }
-      })
-      .catch(function () { /* ignore */ });
-  }, 120000);
+  window.setInterval(pollForUpdates, 120000);
 })();
 </script>
 {% endblock %}
