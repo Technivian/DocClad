@@ -241,7 +241,6 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             else []
         )
         ctx['reassign_members'] = members
-        ctx['reassign_members_json'] = json.dumps(members)
         return ctx
 
     def render_to_response(self, context, **response_kwargs):

@@ -728,7 +728,6 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         from contracts.view_support import reassign_member_options
         members = reassign_member_options(org) if can_manage_organization(self.request.user, org) else []
         context['reassign_members'] = members
-        context['reassign_members_json'] = json.dumps(members)
         return context
 
     def _build_queue_tabs(self):
