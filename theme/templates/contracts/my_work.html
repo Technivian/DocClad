@@ -189,7 +189,11 @@
 <div id="my-work-root"
      class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page my-work-page"
      data-view="{{ view_mode }}"
-     data-initial-count="{{ my_work_rows|length }}">
+     data-initial-count="{{ my_work_rows|length }}"
+     data-row-signature="{{ my_work_row_signature }}"
+     data-saved-views-url="{% url 'contracts:my_work_saved_views_api' %}"
+     data-default-filters="{{ my_work_default_filters_json|escape }}">
+  {{ my_work_saved_views_json|json_script:"my-work-saved-views-data" }}
 
   {% if load_error %}
   <section aria-live="polite">
@@ -221,7 +225,25 @@
         <input type="search" id="my-work-search" class="dc-ds-control" placeholder="Search contract, counterparty, work item, or reference" aria-label="Search work queue">
       </div>
       <button type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" id="my-work-filters-toggle" aria-expanded="false" aria-controls="my-work-filters-drawer">Additional filters</button>
-      <div class="clm-list-actions-stack">
+      <div class="clm-list-actions-stack" style="display:inline-flex;align-items:center;gap:8px;">
+        <div class="relative" style="position:relative;">
+          <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-views-toggle" aria-expanded="false" aria-controls="my-work-views-panel">Saved views</button>
+          <div id="my-work-views-panel" class="clm-list-filter-drawer" hidden style="position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow-panel,0 8px 24px rgba(0,0,0,.08));">
+            <div style="font:var(--text-meta);font-weight:700;color:var(--ink-500);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Saved views</div>
+            <div id="my-work-views-list" style="display:grid;gap:4px;max-height:180px;overflow:auto;"></div>
+            <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;display:grid;gap:8px;">
+              <label style="display:grid;gap:4px;font:var(--text-meta);color:var(--ink-600);">
+                Save current filters
+                <input type="text" id="my-work-view-name" class="dc-ds-control" maxlength="120" placeholder="View name" />
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:6px;font:var(--text-meta);color:var(--ink-600);">
+                <input type="checkbox" id="my-work-view-default" />
+                Set as my default
+              </label>
+              <button type="button" class="dc-ds-button dc-ds-button--primary" id="my-work-save-view">Save view</button>
+            </div>
+          </div>
+        </div>
         <p id="my-work-result-count" class="clm-list-result-count" aria-live="polite">{{ my_work_rows|length }} item{{ my_work_rows|length|pluralize }}</p>
       </div>
     </div>
@@ -519,6 +541,8 @@
 
   var STORAGE_KEY = 'clmone-my-work-filters-v1';
   var initialCount = Number(root.getAttribute('data-initial-count')) || 0;
+  var knownSignature = root.getAttribute('data-row-signature') || '';
+  var savedViewsUrl = root.getAttribute('data-saved-views-url') || '';
   var state = {
     view: 'active',
     workType: 'all',
@@ -531,8 +555,23 @@
     counterparty: '',
     assignedBy: '',
   };
+  var savedViews = [];
+  try {
+    var svEl = document.getElementById('my-work-saved-views-data');
+    if (svEl) savedViews = JSON.parse(svEl.textContent || '[]');
+  } catch (err) { savedViews = []; }
+
+  function parseDefaultFilters() {
+    try {
+      return JSON.parse(root.getAttribute('data-default-filters') || '{}') || {};
+    } catch (err) { return {}; }
+  }
 
   function loadState() {
+    var defaults = parseDefaultFilters();
+    Object.keys(state).forEach(function (key) {
+      if (typeof defaults[key] === 'string') state[key] = defaults[key];
+    });
     try {
       var saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
       Object.keys(state).forEach(function (key) {
@@ -543,6 +582,42 @@
 
   function saveState() {
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (err) { /* ignore */ }
+  }
+
+  function filterSnapshot() {
+    return {
+      workType: state.workType,
+      summary: state.summary,
+      search: state.search,
+      due: state.due,
+      priority: state.priority,
+      status: state.status,
+      contractType: state.contractType,
+      counterparty: state.counterparty,
+      assignedBy: state.assignedBy,
+    };
+  }
+
+  function applyFilterSnapshot(filters) {
+    if (!filters || typeof filters !== 'object') return;
+    Object.keys(filterSnapshot()).forEach(function (key) {
+      if (typeof filters[key] === 'string') state[key] = filters[key];
+    });
+    var search = document.getElementById('my-work-search');
+    if (search) search.value = state.search || '';
+    var map = {
+      due: 'my-work-filter-due',
+      priority: 'my-work-filter-priority',
+      status: 'my-work-filter-status',
+      contractType: 'my-work-filter-contract-type',
+      counterparty: 'my-work-filter-counterparty',
+      assignedBy: 'my-work-filter-assigned-by',
+    };
+    Object.keys(map).forEach(function (key) {
+      var el = document.getElementById(map[key]);
+      if (el) el.value = state[key] || '';
+    });
+    applyFilters();
   }
 
   function allRows() {
@@ -662,6 +737,81 @@
       ?.split('=')[1] || '';
   }
 
+  function renderSavedViews() {
+    var list = document.getElementById('my-work-views-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!savedViews.length) {
+      var empty = document.createElement('p');
+      empty.className = 'profile-page__muted';
+      empty.style.margin = '0';
+      empty.style.font = 'var(--text-meta)';
+      empty.textContent = 'No saved views yet.';
+      list.appendChild(empty);
+      return;
+    }
+    savedViews.forEach(function (view) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+      var applyBtn = document.createElement('button');
+      applyBtn.type = 'button';
+      applyBtn.className = 'dc-ds-button dc-ds-button--ghost';
+      applyBtn.style.flex = '1';
+      applyBtn.style.justifyContent = 'flex-start';
+      applyBtn.textContent = view.name + (view.is_default ? ' (default)' : '');
+      applyBtn.addEventListener('click', function () {
+        applyFilterSnapshot(view.filters || {});
+        closeViewsPanel();
+      });
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'dc-ds-button dc-ds-button--quiet';
+      delBtn.setAttribute('aria-label', 'Delete ' + view.name);
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', function () {
+        fetch(savedViewsUrl.replace(/\/?$/, '/') + view.id + '/', {
+          method: 'DELETE',
+          headers: { 'X-CSRFToken': getCsrfToken() },
+        }).then(function (res) {
+          if (!res.ok) return;
+          savedViews = savedViews.filter(function (v) { return v.id !== view.id; });
+          renderSavedViews();
+        }).catch(function () { /* ignore */ });
+      });
+      row.appendChild(applyBtn);
+      row.appendChild(delBtn);
+      list.appendChild(row);
+    });
+  }
+
+  function closeViewsPanel() {
+    var panel = document.getElementById('my-work-views-panel');
+    var toggle = document.getElementById('my-work-views-toggle');
+    if (panel) panel.setAttribute('hidden', '');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function isInteracting() {
+    if (document.hidden) return true;
+    var drawer = document.getElementById('my-work-filters-drawer');
+    if (drawer && !drawer.hasAttribute('hidden')) return true;
+    var views = document.getElementById('my-work-views-panel');
+    if (views && !views.hasAttribute('hidden')) return true;
+    if (root.querySelector('details.wq-kebab[open]')) return true;
+    if (root.querySelector('.my-work-row.is-expanded')) return true;
+    return false;
+  }
+
+  function showUpdateBannerIfChanged(data) {
+    var nextSig = data.signature || '';
+    var nextCount = Number(data.count);
+    var changed = (nextSig && nextSig !== knownSignature) ||
+      (!nextSig && !Number.isNaN(nextCount) && nextCount !== initialCount);
+    if (!changed) return;
+    var banner = document.getElementById('my-work-update-banner');
+    if (banner) banner.classList.add('is-visible');
+  }
+
   function recordWorkEvent(payload) {
     try {
       fetch('{% url "contracts:work_interaction_api" %}', {
@@ -728,6 +878,7 @@
   loadState();
   if (window.location.search.indexOf('view=completed') !== -1) setView('completed');
   applyFilters();
+  renderSavedViews();
 
   var search = document.getElementById('my-work-search');
   if (search) {
@@ -796,6 +947,50 @@
     });
   }
 
+  var viewsToggle = document.getElementById('my-work-views-toggle');
+  var viewsPanel = document.getElementById('my-work-views-panel');
+  if (viewsToggle && viewsPanel) {
+    viewsToggle.addEventListener('click', function () {
+      var open = viewsPanel.hasAttribute('hidden');
+      if (open) viewsPanel.removeAttribute('hidden'); else viewsPanel.setAttribute('hidden', '');
+      viewsToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+  var saveViewBtn = document.getElementById('my-work-save-view');
+  if (saveViewBtn && savedViewsUrl) {
+    saveViewBtn.addEventListener('click', function () {
+      var nameEl = document.getElementById('my-work-view-name');
+      var defaultEl = document.getElementById('my-work-view-default');
+      var name = (nameEl && nameEl.value || '').trim();
+      if (!name) {
+        if (nameEl) nameEl.focus();
+        return;
+      }
+      fetch(savedViewsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+        body: JSON.stringify({
+          name: name,
+          filters: filterSnapshot(),
+          is_default: !!(defaultEl && defaultEl.checked),
+        }),
+      }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data.view) return;
+          var view = result.data.view;
+          savedViews = savedViews.filter(function (v) { return v.id !== view.id && v.name !== view.name; });
+          if (view.is_default) {
+            savedViews.forEach(function (v) { v.is_default = false; });
+          }
+          savedViews.push(view);
+          savedViews.sort(function (a, b) { return a.name.localeCompare(b.name); });
+          if (nameEl) nameEl.value = '';
+          if (defaultEl) defaultEl.checked = false;
+          renderSavedViews();
+        }).catch(function () { /* ignore */ });
+    });
+  }
+
   var filterMap = {
     'my-work-filter-due': 'due',
     'my-work-filter-priority': 'priority',
@@ -819,26 +1014,20 @@
   if (clearBtn) clearBtn.addEventListener('click', clearFilters);
   if (emptyClear) emptyClear.addEventListener('click', clearFilters);
 
-  function refreshQueue() {
-    root.classList.add('is-loading');
+  function pollForUpdates() {
+    if (isInteracting()) return;
     fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        var banner = document.getElementById('my-work-update-banner');
-        if (banner) banner.classList.remove('is-visible');
         var updated = document.getElementById('my-work-last-updated');
         if (updated && data.last_updated) {
           var dt = new Date(data.last_updated);
           updated.textContent = 'Updated ' + dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         }
-        if (Number(data.count) !== initialCount) {
-          if (banner) banner.classList.add('is-visible');
-        }
+        // Soft refresh only: banner, never reorder/replace rows mid-interaction.
+        showUpdateBannerIfChanged(data);
       })
-      .catch(function () { /* keep current queue */ })
-      .finally(function () {
-        root.classList.remove('is-loading');
-      });
+      .catch(function () { /* ignore */ });
   }
 
   var refreshBtn = document.getElementById('my-work-refresh');
@@ -846,17 +1035,7 @@
   if (refreshBtn) refreshBtn.addEventListener('click', function () { window.location.reload(); });
   if (updateRefresh) updateRefresh.addEventListener('click', function () { window.location.reload(); });
 
-  window.setInterval(function () {
-    fetch(window.location.pathname + '?format=json', { headers: { 'Accept': 'application/json' } })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (Number(data.count) !== initialCount) {
-          var banner = document.getElementById('my-work-update-banner');
-          if (banner) banner.classList.add('is-visible');
-        }
-      })
-      .catch(function () { /* ignore */ });
-  }, 120000);
+  window.setInterval(pollForUpdates, 120000);
 })();
 </script>
 {% endblock %}

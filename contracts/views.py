@@ -273,6 +273,11 @@ from .views_domains.workspace_nav import (
     MyWorkView,
     TemplatesPlaybooksHubView,
 )
+from .views_domains.work_amplifiers import (
+    WorkHealthReportView,
+    my_work_saved_view_detail_api,
+    my_work_saved_views_api,
+)
 from .views_domains.activity import (
     AuditLogListView,
     mark_all_notifications_read,

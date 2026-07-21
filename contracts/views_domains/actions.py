@@ -654,6 +654,13 @@ def settings_hub(request):
             icon='archive',
             admin_only=True,
         ),
+        card(
+            label='Work health',
+            copy='Bottlenecks, SLA breaches, and whether My Work is completing the loop.',
+            href=reverse('contracts:work_health_report'),
+            icon='list',
+            admin_only=True,
+        ),
     ]
 
     def visible(cards):

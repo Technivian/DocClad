@@ -172,7 +172,7 @@ def record_outcome(
 
 def build_operating_metrics(organization, *, days: int = 30) -> dict:
     """Aggregate the five Phase 5 operating metrics for an organization."""
-    from contracts.models import ApprovalRequest, WorkInteractionEvent
+    from contracts.models import ApprovalRequest, AuditLog, WorkInteractionEvent
 
     if organization is None:
         return {'window_days': days, 'metrics': {}}
@@ -181,7 +181,6 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
     events = WorkInteractionEvent.objects.filter(organization=organization, occurred_at__gte=since)
 
     # Time to first action: opened/primary_action after first surfaced for same item.
-    # Approximate with average lag between earliest surfaced and earliest action.
     time_to_action_hours = None
     pairs = []
     surfaced = {
@@ -201,7 +200,6 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
     if pairs:
         time_to_action_hours = round(sum(pairs) / len(pairs), 2)
 
-    # Overdue rate by work type among surfaced items in window.
     surfaced_qs = events.filter(event='surfaced')
     by_kind = {}
     for row in surfaced_qs.values('work_kind').annotate(
@@ -216,7 +214,6 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             'overdue_rate': round((row['overdue'] or 0) / total, 3) if total else 0.0,
         }
 
-    # Return / reject rate by contract type (from outcome events).
     decision_qs = events.filter(event__in=['returned', 'rejected', 'completed'])
     by_contract_type = {}
     for row in decision_qs.values('contract_type').annotate(
@@ -235,7 +232,6 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             ) if total else 0.0,
         }
 
-    # % completed from My Work vs specialist.
     completed = events.filter(event='completed')
     completed_total = completed.count()
     completed_my_work = completed.filter(surface='my_work').count()
@@ -243,12 +239,10 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
         round(completed_my_work / completed_total, 3) if completed_total else None
     )
 
-    # Restricted / blocked frequency among surfaced.
     surfaced_total = surfaced_qs.count()
     restricted = surfaced_qs.filter(is_restricted=True).count()
     blocked = surfaced_qs.filter(is_blocked=True).count()
 
-    # Approval decision lag (fallback using Assignment timestamps when present).
     approval_lag_hours = None
     decided = (
         ApprovalRequest.objects
@@ -261,6 +255,38 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
             lags.append((ar.decided_at - ar.created_at).total_seconds() / 3600.0)
     if lags:
         approval_lag_hours = round(sum(lags) / len(lags), 2)
+
+    sla_breaches = list(
+        events.filter(event='sla_breached').order_by('-occurred_at')[:25].values(
+            'work_item_id', 'work_kind', 'contract_id', 'contract_type', 'occurred_at', 'surface',
+        )
+    )
+    for row in sla_breaches:
+        if row.get('occurred_at'):
+            row['occurred_at'] = row['occurred_at'].isoformat()
+
+    audit_breaches = list(
+        AuditLog.objects.filter(
+            organization_id=organization.id,
+            event_type='approval.sla_breached',
+            timestamp__gte=since,
+        ).order_by('-timestamp')[:25].values(
+            'object_id', 'object_repr', 'timestamp', 'changes',
+        )
+    )
+    for row in audit_breaches:
+        if row.get('timestamp'):
+            row['timestamp'] = row['timestamp'].isoformat()
+
+    # Bottleneck work kinds: highest overdue rate among kinds with enough volume.
+    bottlenecks = sorted(
+        (
+            {'work_kind': kind, **stats}
+            for kind, stats in by_kind.items()
+            if stats.get('total', 0) >= 1 and stats.get('overdue', 0) >= 1
+        ),
+        key=lambda item: (-item['overdue_rate'], -item['overdue'], item['work_kind']),
+    )[:8]
 
     return {
         'window_days': days,
@@ -284,5 +310,46 @@ def build_operating_metrics(organization, *, days: int = 30) -> dict:
                 row['event']: row['c']
                 for row in events.values('event').annotate(c=Count('id'))
             },
+            'bottlenecks': bottlenecks,
+            'sla_breaches': sla_breaches,
+            'audit_sla_breaches': audit_breaches,
         },
     }
+
+
+def overdue_rate_by_work_type(organization, *, days: int = 30) -> dict:
+    """Lightweight overdue rates for rule-based My Work prioritization."""
+    from contracts.models import WorkInteractionEvent
+
+    if organization is None:
+        return {}
+    since = timezone.now() - timedelta(days=max(1, min(int(days or 30), 180)))
+    by_kind = {}
+    for row in (
+        WorkInteractionEvent.objects
+        .filter(organization=organization, occurred_at__gte=since, event='surfaced')
+        .values('work_kind')
+        .annotate(total=Count('id'), overdue=Count('id', filter=Q(is_overdue=True)))
+    ):
+        kind = row['work_kind'] or 'unknown'
+        total = row['total'] or 0
+        by_kind[kind] = {
+            'total': total,
+            'overdue': row['overdue'] or 0,
+            'overdue_rate': round((row['overdue'] or 0) / total, 3) if total else 0.0,
+        }
+    return by_kind
+
+
+def measured_priority_boost(*, work_kind: str, org_overdue_rates: dict | None = None) -> int:
+    """Return sort-tier nudge (0–1) from measured overdue rate for a work kind.
+
+    Rule-based only — high measured overdue rate nudges the item earlier.
+    """
+    if not org_overdue_rates:
+        return 0
+    stats = org_overdue_rates.get(work_kind) or org_overdue_rates.get(work_kind or 'unknown') or {}
+    rate = float(stats.get('overdue_rate') or 0)
+    if rate >= 0.35:
+        return 1
+    return 0

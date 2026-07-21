@@ -4,7 +4,7 @@
 
 **North-star outcome:** A user opens CLM One and immediately knows what needs action, what is most urgent, why it matters, what to do next, and when it is due — without hunting across five screens.
 
-**Last updated:** 2026-07-21 (Phases 3–5 complete)  
+**Last updated:** 2026-07-21 (Phases 3–6 complete)  
 **Companion docs:** Engineering delivery waves live in [`ROADMAP.md`](../ROADMAP.md). Canonical boundaries live in [`PRODUCT_MAP.md`](PRODUCT_MAP.md). This document owns product boundaries, sequencing, and acceptance outcomes.
 
 ---
@@ -194,16 +194,24 @@ If a module does not serve one of these jobs clearly, demote, merge, or cut it f
 
 ---
 
-## Phase 6 — Amplifiers (only after the loop is trustworthy)
+## Phase 6 — Amplifiers (complete)
 
-Do **not** start these until Phases 1–3 are solid.
+**Goal:** Add reporting, persistent views, and measured prioritization only after the loop is trustworthy.
 
-- Cross-workspace reporting on bottlenecks and SLA breaches
-- Persistent saved views / filters where users live daily
-- Real-time refresh only where it improves trust (no silent reorder mid-interaction)
-- Predictive prioritization based on measured rules
-- AI assistance only where it changes a decision or next action
-- Charts / “insights” dashboards only after action completion is reliable
+### Shipped
+
+- [x] Cross-workspace **Work health** report for legal ops (`/contracts/ops/work-health/`) — bottlenecks by work type, return/reject by contract type, SLA breach list, My Work completion share
+- [x] Persistent **My Work saved views** (per-user filter presets + default) via `MyWorkSavedView` and `/contracts/my-work/saved-views/`
+- [x] Soft refresh on My Work: poll uses row `signature`; shows “New work is available” banner only; never silently reorders mid-interaction; pauses while filters/menus/details are open or the tab is hidden
+- [x] Rule-based priority: overdue / escalated / blocked elevation plus measured overdue-rate sort nudge (`measured_priority_boost`)
+
+### Explicitly deferred
+
+- AI assistance (only when it changes a decision or next action)
+- Charts / decorative “insights” dashboards
+- ML / predictive models beyond measured rules
+
+**Phase 6 exit:** ✅ Amplifiers sit on a trusted operating loop without fake urgency or silent queue churn.
 
 ---
 
@@ -217,7 +225,7 @@ Do **not** start these until Phases 1–3 are solid.
 | **3** | Governance visible | Trust and control are product features | ✅ Complete |
 | **4** | Nav / legacy cleanup | Smaller, complete IA | ✅ Complete |
 | **5** | Instrumentation | Operating metrics guide the roadmap | ✅ Complete |
-| **6** | Amplifiers | Reporting, prediction, AI on a trusted base | Planned |
+| **6** | Amplifiers | Reporting, saved views, measured priority | ✅ Complete |
 
 ---
 
@@ -235,11 +243,10 @@ Do **not** start these until Phases 1–3 are solid.
 
 ## Near-term backlog (recommended next builds)
 
-1. **Delegation + blocked-state UX** across queues (Phase 3)
-2. **SLA / priority reason tooltips** everywhere priority is shown
-3. **Manager reassignment** for authorized roles
-4. **Work-event instrumentation** and first operating dashboard for legal ops
-5. **Nav / legacy retirement** of parallel list routes (Phase 4)
+1. SLA / priority reason tooltips everywhere priority is shown
+2. Deeper specialist-workspace action parity where My Work still deep-links out
+3. Optional AI assistance only where it changes a decision or next action
+4. Charts / insights dashboards after measured completion rates stay healthy
 
 ---
 

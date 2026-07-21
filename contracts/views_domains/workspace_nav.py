@@ -1,5 +1,6 @@
 """Lightweight workspace destinations introduced for sidebar information architecture."""
 
+import json
 from datetime import date
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -207,7 +208,31 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             'recently_completed_days': RECENTLY_COMPLETED_DAYS,
             'recently_completed_copy': f'Completed items from the last {RECENTLY_COMPLETED_DAYS} days will appear here.',
             'hide_app_footer': True,
+            'my_work_saved_views': [],
+            'my_work_default_filters': {},
+            'my_work_default_filters_json': '{}',
+            'my_work_saved_views_json': '[]',
+            'my_work_row_signature': ','.join(sorted(r.get('id') or '' for r in active_rows)),
         })
+        if organization and not load_error:
+            from contracts.models import MyWorkSavedView
+            saved = list(
+                MyWorkSavedView.objects.filter(organization=organization, user=user).order_by('name')
+            )
+            ctx['my_work_saved_views'] = saved
+            default = next((v for v in saved if v.is_default), None)
+            if default:
+                ctx['my_work_default_filters'] = default.filters or {}
+            ctx['my_work_default_filters_json'] = json.dumps(ctx['my_work_default_filters'])
+            ctx['my_work_saved_views_json'] = json.dumps([
+                {
+                    'id': v.pk,
+                    'name': v.name,
+                    'filters': v.filters or {},
+                    'is_default': bool(v.is_default),
+                }
+                for v in saved
+            ])
         return ctx
 
     def render_to_response(self, context, **response_kwargs):
@@ -215,6 +240,7 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
             rows = context.get('my_work_rows') or []
             return JsonResponse({
                 'count': len(rows),
+                'signature': context.get('my_work_row_signature') or '',
                 'summary': context.get('summary_counts') or {},
                 'last_updated': context['last_updated'].isoformat(),
             })

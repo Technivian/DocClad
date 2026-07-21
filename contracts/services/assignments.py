@@ -272,7 +272,7 @@ def _summary_tags(*, work_kind, due_ctx, is_returned=False, is_rejected=False, i
     return tags
 
 
-def _sort_key(row, today):
+def _sort_key(row, today, org_overdue_rates=None):
     due_ctx = row.get('due_context') or {}
     tier = 5
     if due_ctx.get('due_overdue'):
@@ -285,6 +285,15 @@ def _sort_key(row, today):
         tier = 3
     elif due_ctx.get('due_soon'):
         tier = 4
+    # Measured overdue rate for this work kind can nudge one tier earlier.
+    if org_overdue_rates and tier > 0:
+        from contracts.services.work_instrumentation import measured_priority_boost
+        boost = measured_priority_boost(
+            work_kind=row.get('work_kind') or '',
+            org_overdue_rates=org_overdue_rates,
+        )
+        if boost:
+            tier = max(0, tier - boost)
     return (
         tier,
         due_ctx.get('due_date') or date.max,
@@ -391,6 +400,20 @@ def _base_row(
         is_rejected=is_rejected,
         is_question=is_question,
     )
+    # Phase 6: overdue / escalated / blocked work rises by rule — not decorative urgency.
+    priority_label = _priority_label(priority_value)
+    if due_ctx.get('due_overdue') and _priority_rank(priority_label) < 3:
+        priority_label = 'High'
+        if not priority_reason:
+            priority_reason = 'Overdue — elevated by SLA rule'
+    if source_status == 'ESCALATED' and _priority_rank(priority_label) < 4:
+        priority_label = 'Critical'
+        if not priority_reason:
+            priority_reason = 'Escalated past SLA / escalation threshold'
+    if is_blocked and _priority_rank(priority_label) < 3:
+        priority_label = 'High'
+        if not priority_reason:
+            priority_reason = blocking_issue or 'Blocked — waiting on a dependency'
     return {
         'id': row_id,
         'title': title,
@@ -406,7 +429,7 @@ def _base_row(
         'due_context': due_ctx,
         'status_label': status_label,
         'status_tone': _status_tone(status_label),
-        'priority_label': _priority_label(priority_value),
+        'priority_label': priority_label,
         'priority_reason': priority_reason,
         'action_label': action_label,
         'action_href': action_href,
@@ -835,8 +858,8 @@ def _dedupe_rows(rows):
     return result
 
 
-def _sort_rows(rows, today):
-    return sorted(rows, key=lambda row: _sort_key(row, today))
+def _sort_rows(rows, today, org_overdue_rates=None):
+    return sorted(rows, key=lambda row: _sort_key(row, today, org_overdue_rates=org_overdue_rates))
 
 
 def build_summary_counts(rows):
@@ -864,7 +887,13 @@ def get_active_work_items(organization, user, *, today=None):
     rows.extend(_collect_workflow_step_rows(organization, user, today))
     rows = _dedupe_rows(rows)
     _attach_activity(rows, organization)
-    return _sort_rows(rows, today)
+    org_overdue_rates = None
+    try:
+        from contracts.services.work_instrumentation import overdue_rate_by_work_type
+        org_overdue_rates = overdue_rate_by_work_type(organization, days=30)
+    except Exception:
+        org_overdue_rates = None
+    return _sort_rows(rows, today, org_overdue_rates=org_overdue_rates)
 
 
 def get_recently_completed_items(organization, user, *, today=None, days=RECENTLY_COMPLETED_DAYS):

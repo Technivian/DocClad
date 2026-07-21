@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load clmone_format %}
+
+{% block title %}Work health — CLM One{% endblock %}
+{% block authenticated_page_title %}Work health{% endblock %}
+{% block authenticated_page_subtitle %}Bottlenecks, SLA breaches, and hub completion across the operating loop.{% endblock %}
+
+{% block content %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow">
+  <header class="clm-list-shell dc-ds-filterbar" style="margin-bottom:var(--space-16);">
+    <div class="clm-list-view-header">
+      <p class="profile-page__muted" style="margin:0;">Last {{ window_days }} days · generated {{ report.generated_at|default:"—" }}</p>
+      <div class="clm-list-view-actions">
+        <a class="dc-ds-button dc-ds-button--ghost" href="?days=7"{% if window_days == 7 %} aria-current="page"{% endif %}>7d</a>
+        <a class="dc-ds-button dc-ds-button--ghost" href="?days=30"{% if window_days == 30 %} aria-current="page"{% endif %}>30d</a>
+        <a class="dc-ds-button dc-ds-button--ghost" href="?days=90"{% if window_days == 90 %} aria-current="page"{% endif %}>90d</a>
+        <a class="dc-ds-button dc-ds-button--link" href="{% url 'contracts:my_work' %}">Open My Work</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="dc-ds-summary clm-list-summary" aria-label="Operating metrics" style="--dc-ds-summary-columns:4;margin-bottom:var(--space-20);">
+    <div class="dc-ds-summary__item">
+      <span class="dc-ds-summary__label">Time to first action</span>
+      <strong class="dc-ds-summary__value">{% if metrics.time_to_first_action_hours != None %}{{ metrics.time_to_first_action_hours }}h{% else %}—{% endif %}</strong>
+    </div>
+    <div class="dc-ds-summary__item">
+      <span class="dc-ds-summary__label">Completed from My Work</span>
+      <strong class="dc-ds-summary__value">{% if completed_from_my_work_pct_display != None %}{{ completed_from_my_work_pct_display }}%{% else %}—{% endif %}</strong>
+      <span class="dc-ds-summary__meta">{{ metrics.completed_from_my_work|default:0 }} of {{ metrics.completed_total|default:0 }}</span>
+    </div>
+    <div class="dc-ds-summary__item">
+      <span class="dc-ds-summary__label">Blocked on surface</span>
+      <strong class="dc-ds-summary__value">{{ metrics.restricted_blocked_frequency.blocked|default:0 }}</strong>
+      <span class="dc-ds-summary__meta">{{ blocked_rate_pct }}% of surfaced</span>
+    </div>
+    <div class="dc-ds-summary__item">
+      <span class="dc-ds-summary__label">Approval decision lag</span>
+      <strong class="dc-ds-summary__value">{% if metrics.approval_decision_lag_hours != None %}{{ metrics.approval_decision_lag_hours }}h{% else %}—{% endif %}</strong>
+    </div>
+  </section>
+
+  <div style="display:grid;gap:var(--space-20);grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+    <section class="dc-ds-surface" style="padding:var(--space-16);">
+      <h2 style="margin:0 0 var(--space-12);font:var(--text-h3);">Bottlenecks by work type</h2>
+      {% if bottlenecks %}
+      <table class="dc-ds-table dc-ds-table--auto wq-table">
+        <thead><tr><th>Work type</th><th>Surfaced</th><th>Overdue</th><th>Rate</th></tr></thead>
+        <tbody>
+          {% for row in bottlenecks %}
+          <tr>
+            <td>{{ row.work_kind }}</td>
+            <td>{{ row.total }}</td>
+            <td>{{ row.overdue }}</td>
+            <td>{{ row.overdue_rate_pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="profile-page__muted">No overdue bottlenecks in this window.</p>
+      {% endif %}
+    </section>
+
+    <section class="dc-ds-surface" style="padding:var(--space-16);">
+      <h2 style="margin:0 0 var(--space-12);font:var(--text-h3)">Return / reject by contract type</h2>
+      {% if return_reject_by_type %}
+      <table class="dc-ds-table dc-ds-table--auto wq-table">
+        <thead><tr><th>Type</th><th>Decisions</th><th>Returned</th><th>Rejected</th><th>Rate</th></tr></thead>
+        <tbody>
+          {% for ctype, row in return_reject_by_type.items %}
+          <tr>
+            <td>{{ ctype }}</td>
+            <td>{{ row.total }}</td>
+            <td>{{ row.returned }}</td>
+            <td>{{ row.rejected }}</td>
+            <td>{{ row.return_reject_rate_pct }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="profile-page__muted">No return/reject outcomes in this window.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="dc-ds-surface" style="padding:var(--space-16);margin-top:var(--space-20);">
+    <h2 style="margin:0 0 var(--space-12);font:var(--text-h3);">Recent SLA breaches</h2>
+    {% if sla_breaches %}
+    <table class="dc-ds-table dc-ds-table--auto wq-table">
+      <thead><tr><th>Work item</th><th>Kind</th><th>Contract type</th><th>When</th></tr></thead>
+      <tbody>
+        {% for row in sla_breaches %}
+        <tr>
+          <td>{{ row.work_item_id }}</td>
+          <td>{{ row.work_kind|default:"—" }}</td>
+          <td>{{ row.contract_type|default:"—" }}</td>
+          <td>{{ row.occurred_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="profile-page__muted">No SLA breach events recorded in this window.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

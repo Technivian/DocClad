@@ -321,6 +321,9 @@ urlpatterns = [
     # Repository
     path('repository/', views.RepositoryView.as_view(), name='repository'),
     path('my-work/', views.MyWorkView.as_view(), name='my_work'),
+    path('my-work/saved-views/', views.my_work_saved_views_api, name='my_work_saved_views_api'),
+    path('my-work/saved-views/<int:view_id>/', views.my_work_saved_view_detail_api, name='my_work_saved_view_detail_api'),
+    path('ops/work-health/', views.WorkHealthReportView.as_view(), name='work_health_report'),
     path('templates-playbooks/', views.TemplatesPlaybooksHubView.as_view(), name='templates_playbooks_hub'),
 
     # Counterparties

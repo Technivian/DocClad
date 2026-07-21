@@ -624,6 +624,41 @@ class SearchPreset(models.Model):
         return f'{self.organization.slug}:{self.name}'
 
 
+class MyWorkSavedView(models.Model):
+    """Per-user My Work filter presets (Phase 6 persistent saved views)."""
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name='my_work_saved_views',
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='my_work_saved_views',
+    )
+    name = models.CharField(max_length=120)
+    filters = models.JSONField(default=dict, blank=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'user', 'name'],
+                name='my_work_view_org_user_name_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'user', 'is_default'], name='my_work_view_default_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id}:{self.name}'
+
+
 class Client(models.Model):
     class ClientType(models.TextChoices):
         INDIVIDUAL = 'INDIVIDUAL', 'Individual'
