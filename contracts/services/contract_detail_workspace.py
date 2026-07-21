@@ -189,10 +189,10 @@ def build_workflow_section_tabs(contract_pk: int, section: str) -> list[dict]:
 
 
 def contract_operations_hub_tabs(*, active: str = 'repository') -> list[dict]:
-    """Shared Contract operations hub links (Repository / My work / Approvals / Signatures)."""
+    """Shared Contract operations hub links (Repository / My Work / Approvals / Signatures)."""
     tabs = (
         ('repository', 'All contracts', 'contracts:repository'),
-        ('dashboard', 'My work', 'dashboard'),
+        ('my_work', 'My Work', 'contracts:my_work'),
         ('approvals', 'Approvals', 'contracts:approval_request_list'),
         ('signatures', 'Signatures', 'contracts:signature_request_list'),
     )

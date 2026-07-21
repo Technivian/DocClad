@@ -35,10 +35,10 @@ DEFAULT_SAVED_VIEWS = [
         'sort_order': 10,
     },
     {
-        'key': 'mine',
-        'name': 'My Queue',
-        'description': 'Work assigned to the current user',
-        'filters': {'owner': 'current_user'},
+        'key': 'blocked',
+        'name': 'Blocked work',
+        'description': 'Work blocked on approvals, input, or dependencies',
+        'filters': {'status': ['BLOCKED']},
         'sort_order': 20,
     },
     {
@@ -475,7 +475,7 @@ def command_center_work_item_to_row(item, current_user=None, today=None):
         'due_label': _format_due_label(due_date, today),
         'due_note': _format_due_note(due_date, today),
         'is_workflow': item.source_type == CommandCenterWorkItem.SourceType.WORKFLOW,
-        'filter_mine': bool(current_user and item.owner_id == current_user.id),
+        'filter_blocked': item.status == CommandCenterWorkItem.Status.BLOCKED or bool(flags.get('waiting_on_business')),
         'filter_dpa': item.source_type == CommandCenterWorkItem.SourceType.DPA_CONFLICT or (contract and contract.contract_type == 'DPA'),
         'filter_high_risk': item.risk_level in ('HIGH', 'CRITICAL'),
         'filter_renewals': item.source_type == CommandCenterWorkItem.SourceType.DEADLINE or bool(due_date),

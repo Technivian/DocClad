@@ -12,7 +12,7 @@ from django.views.generic import TemplateView
 
 from contracts.models import ApprovalRule, ClauseTemplate, DPAPlaybookPosition, WorkflowTemplate
 from contracts.permissions import can_manage_organization
-from contracts.services.my_work import (
+from contracts.services.assignments import (
     RECENTLY_COMPLETED_DAYS,
     SUMMARY_FILTERS,
     WORK_TYPE_CHOICES,
