@@ -54,3 +54,9 @@ class Phase1BoundaryTests(TestCase):
         self.assertTrue(my_work_tab['active'])
         self.assertEqual(my_work_tab['label'], 'My Work')
         self.assertEqual(my_work_tab['url'], reverse('contracts:my_work'))
+
+    def test_privacy_reviews_has_my_reviews_tab(self):
+        response = self.client.get(reverse('contracts:dpa_review_pack_list'), {'view': 'my_reviews'})
+        self.assertEqual(response.status_code, 200)
+        tab_keys = [tab['key'] for tab in response.context['view_tabs']]
+        self.assertIn('my_reviews', tab_keys)

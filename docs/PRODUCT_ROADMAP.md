@@ -92,13 +92,13 @@ Then:
 
 - [x] My Work becomes a **view** over that model (`contracts/services/assignments.py`)
 - [ ] Command Center becomes an **org-wide view** over the same model (saved views updated; full projection reuse is Phase 2)
-- [ ] Specialist inboxes keep depth, but read the same underlying assignments / events
+- [x] Specialist inboxes keep depth, but read the same underlying assignments / events (shared querysets for personal tabs; org-wide tabs unchanged)
 
 **Acceptance:** Adding a new work type does not require a new bespoke ETL per page.
 
 ### 1.3 Queue honesty baseline
 
-- [ ] Shared empty / error / loading patterns across My Work, Command Center, Approvals, Privacy, Obligations
+- [x] Shared empty / error / loading patterns across My Work, Command Center, Approvals, Privacy, Obligations (personal tabs link to My Work via `_work_queue_empty_state.html`)
 - [ ] No “coming soon” cards without a dated delivery path
 - [ ] No duplicate CTAs already present in the sidebar
 
@@ -106,7 +106,7 @@ Then:
 
 **Phase 1 exit:** Boundaries are clear, work is one model, and personal vs org-wide queues no longer overlap.
 
-**Phase 1 status (2026-07-21):** Boundary fixes shipped — canonical `assignments` service, My Work reads from it, Command Center “My Queue” replaced with org-wide “Blocked work”, dashboard “Waiting on Me” tab removed, contract hub tab links to My Work. Remaining: specialist inbox consolidation (1.2) and shared queue patterns (1.3).
+**Phase 1 status (2026-07-21):** Boundary fixes shipped — canonical `assignments` service, My Work reads from it, Command Center “My Queue” replaced with org-wide “Blocked work”, dashboard “Waiting on Me” tab removed, contract hub tab links to My Work. Specialist personal tabs (approvals, tasks, obligations, privacy) now use shared assignment querysets; personal empty states link to My Work. Remaining: Command Center projection reuse (Phase 2), “coming soon” retirement, duplicate CTA audit.
 
 ---
 

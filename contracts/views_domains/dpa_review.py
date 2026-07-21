@@ -32,6 +32,7 @@ from contracts.models import (
     DPARiskItemNote,
 )
 from contracts.permissions import ContractAction, can_access_contract_action, can_manage_organization
+from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, reviewer_privacy_packs_queryset
 from contracts.services.dpa_conflict import check_cross_document_conflicts
 from contracts.services.dpa_review import generate_review_memo, run_dpa_analysis
 from contracts.tenancy import get_user_organization
@@ -636,6 +637,9 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
             .order_by('-updated_at')
         )
         params = self.request.GET
+        selected_view = (params.get('view') or '').strip()
+        if selected_view == 'my_reviews':
+            qs = reviewer_privacy_packs_queryset(org, self.request.user)
         search = (params.get('q') or '').strip()
         if search:
             qs = qs.filter(
@@ -708,6 +712,7 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
         ctx['selected_role'] = (params.get('role') or '').strip()
         ctx['selected_severity'] = (params.get('severity') or '').strip()
         ctx['selected_owner'] = (params.get('owner') or '').strip()
+        ctx['selected_view'] = selected_view
         list_url = reverse('contracts:dpa_review_pack_list')
         selected_status = ctx['selected_status']
         selected_severity = ctx['selected_severity']
@@ -716,7 +721,13 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 'key': 'all',
                 'label': 'All reviews',
                 'url': list_url,
-                'active': not selected_status and not selected_severity,
+                'active': not selected_status and not selected_severity and selected_view != 'my_reviews',
+            },
+            {
+                'key': 'my_reviews',
+                'label': 'My reviews',
+                'url': f'{list_url}?view=my_reviews',
+                'active': selected_view == 'my_reviews',
             },
             {
                 'key': 'needs_decision',
@@ -775,6 +786,14 @@ class DPAReviewPackListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListV
                 'next_action': _next_action_for_pack(pack, unresolved_risks, critical_risk_count),
             })
         ctx['review_pack_rows'] = rows
+        if selected_view == 'my_reviews' and not rows:
+            title, copy, how = QUEUE_EMPTY_PERSONAL['privacy_mine']
+            ctx['privacy_empty_state'] = {
+                'title': title,
+                'copy': copy,
+                'how': how,
+                'personal_hub': True,
+            }
         return ctx
 
 

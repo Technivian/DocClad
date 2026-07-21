@@ -92,6 +92,7 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
     def _build_queue_tabs(self):
         from datetime import timedelta
 
+        from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, open_tasks_queryset
         from contracts.services.queue_rows import creator_map, latest_activity_map
         from contracts.templatetags.clmone_format import task_priority_badge_class, task_status_badge_class
 
@@ -168,7 +169,7 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
                 })
             return rows
 
-        assigned_qs = base_qs.filter(assigned_to=user, status__in=open_statuses)
+        assigned_qs = open_tasks_queryset(org, user, queryset=base_qs)
         due_soon_qs = base_qs.filter(
             status__in=open_statuses, due_date__gte=today, due_date__lte=today + timedelta(days=7),
         )
@@ -181,9 +182,11 @@ class LegalTaskKanbanView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListVie
         created_ids = [task_id for task_id, creator in creators.items() if creator and creator.id == user.id]
         created_qs = base_qs.filter(pk__in=created_ids)
 
+        assigned_title, assigned_copy, assigned_how = QUEUE_EMPTY_PERSONAL['tasks_assigned']
         return [
             {'key': 'assigned_to_me', 'label': 'Assigned to Me', 'rows': _to_rows(assigned_qs),
-             'empty_message': 'No tasks assigned to you.'},
+             'empty_message': 'No tasks assigned to you.', 'personal_hub': True,
+             'empty_title': assigned_title, 'empty_copy': assigned_copy, 'empty_how': assigned_how},
             {'key': 'created_by_me', 'label': 'Created by Me', 'rows': _to_rows(created_qs),
              'empty_message': 'No tasks created by you.'},
             {'key': 'due_soon', 'label': 'Due Soon', 'rows': _to_rows(due_soon_qs),

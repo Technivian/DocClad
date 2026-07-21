@@ -50,7 +50,7 @@
     </div>
     <div class="tasks-queue-body">
       {% for tab in queue_tabs %}
-        {% task_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+        {% task_queue_table tab.key tab.rows tab.empty_message forloop.first tab.personal_hub tab.empty_title tab.empty_copy tab.empty_how %}
       {% endfor %}
     </div>
   </div>

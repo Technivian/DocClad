@@ -54,6 +54,79 @@ SUMMARY_FILTERS = (
     ('upcoming_obligations', 'Upcoming obligations'),
 )
 
+# Standard empty-state copy for work queues (Phase 1.3 honesty baseline).
+QUEUE_EMPTY_PERSONAL = {
+    'approvals_waiting': (
+        'No approvals waiting on you',
+        'Nothing in this specialist inbox requires your decision right now.',
+        'Personal assignments also appear on My Work when they need action.',
+    ),
+    'tasks_assigned': (
+        'No tasks assigned to you',
+        'You have no open legal tasks in this workspace.',
+        'Assigned tasks also surface on My Work alongside approvals and obligations.',
+    ),
+    'obligations_mine': (
+        'No obligations assigned to you',
+        'You are not the owner of any open obligation in this workspace.',
+        'Your assigned obligations also appear on My Work.',
+    ),
+    'privacy_mine': (
+        'No privacy reviews assigned to you',
+        'You have no open DPA review packs assigned as reviewer.',
+        'Privacy assignments also appear on My Work when action is required.',
+    ),
+}
+
+
+def pending_approvals_queryset(organization, user, *, queryset=None):
+    """Approvals pending on the signed-in user (assignee or delegate)."""
+    qs = queryset or scope_queryset_for_organization(
+        ApprovalRequest.objects.select_related(
+            'contract', 'contract__created_by', 'assigned_to', 'delegated_to',
+        ),
+        organization,
+    )
+    return qs.filter(
+        Q(assigned_to=user) | Q(delegated_to=user),
+        status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
+    )
+
+
+def open_tasks_queryset(organization, user, *, queryset=None):
+    """Open legal tasks assigned to the signed-in user."""
+    if organization is None:
+        return LegalTask.objects.none()
+    qs = queryset or LegalTask.objects.select_related(
+        'contract', 'matter', 'assigned_to',
+    ).filter(Q(contract__organization=organization) | Q(matter__organization=organization))
+    return qs.filter(
+        assigned_to=user,
+        status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS],
+    )
+
+
+def open_obligations_queryset(organization, user):
+    """Incomplete obligations owned by the signed-in user."""
+    if organization is None:
+        return Deadline.objects.none()
+    return (
+        Deadline.objects.for_organization(organization)
+        .select_related('matter', 'contract', 'assigned_to', 'created_by')
+        .filter(assigned_to=user, is_completed=False)
+    )
+
+
+def reviewer_privacy_packs_queryset(organization, user):
+    """Non-approved DPA review packs assigned to the signed-in reviewer."""
+    if organization is None:
+        return DPAReviewPack.objects.none()
+    return (
+        DPAReviewPack.objects.filter(organization=organization, reviewer=user)
+        .exclude(approval_status__in=[DPAReviewPack.ApprovalStatus.APPROVED])
+        .select_related('contract', 'counterparty', 'reviewer')
+    )
+
 
 def _date_only(value):
     if value is None:
@@ -378,10 +451,7 @@ def _collect_approval_rows(org, user, today):
         ),
         org,
     )
-    pending = qs.filter(
-        Q(assigned_to=user) | Q(delegated_to=user),
-        status__in=[ApprovalRequest.Status.PENDING, ApprovalRequest.Status.ESCALATED],
-    )
+    pending = pending_approvals_queryset(org, user, queryset=qs)
     for approval in pending:
         contract = approval.contract
         due = _date_only(approval.due_date)
@@ -484,11 +554,7 @@ def _collect_approval_rows(org, user, today):
 
 def _collect_task_rows(org, user, today):
     rows = []
-    tasks = (
-        LegalTask.objects.for_organization(org)
-        .select_related('contract', 'matter', 'assigned_to')
-        .filter(assigned_to=user, status__in=[LegalTask.Status.PENDING, LegalTask.Status.IN_PROGRESS])
-    )
+    tasks = open_tasks_queryset(org, user)
     for task in tasks:
         contract = task.contract
         rows.append(_base_row(
@@ -516,11 +582,7 @@ def _collect_task_rows(org, user, today):
 
 def _collect_obligation_rows(org, user, today):
     rows = []
-    deadlines = (
-        Deadline.objects.for_organization(org)
-        .select_related('contract', 'matter', 'assigned_to', 'created_by')
-        .filter(assigned_to=user, is_completed=False)
-    )
+    deadlines = open_obligations_queryset(org, user)
     for deadline in deadlines:
         contract = deadline.contract
         title = deadline.title
@@ -552,12 +614,7 @@ def _collect_obligation_rows(org, user, today):
 
 def _collect_privacy_rows(org, user, today):
     rows = []
-    packs = (
-        DPAReviewPack.objects
-        .filter(organization=org, reviewer=user)
-        .exclude(approval_status__in=[DPAReviewPack.ApprovalStatus.APPROVED])
-        .select_related('contract', 'counterparty')
-    )
+    packs = reviewer_privacy_packs_queryset(org, user).prefetch_related('risk_items')
     for pack in packs:
         contract = pack.contract
         rows.append(_base_row(

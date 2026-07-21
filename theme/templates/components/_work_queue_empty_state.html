@@ -1,0 +1,10 @@
+{% comment %}
+Shared empty state for specialist work-queue tables.
+Optional personal_hub links users to My Work for cross-surface discovery.
+{% endcomment %}
+{% if personal_hub %}
+  {% url 'contracts:my_work' as my_work_url %}
+  {% include "design_system/empty_state.html" with title=title copy=copy how=how action_url=my_work_url action_label="Open My Work" action_tone="quiet" class_name="dc-ds-empty--compact" only %}
+{% else %}
+  {% include "design_system/empty_state.html" with title=title copy=copy how=how class_name="dc-ds-empty--compact" only %}
+{% endif %}

@@ -287,7 +287,11 @@
         {% empty %}
         <tr>
           <td colspan="7">
+            {% if privacy_empty_state %}
+              {% include "components/_work_queue_empty_state.html" with title=privacy_empty_state.title copy=privacy_empty_state.copy how=privacy_empty_state.how personal_hub=privacy_empty_state.personal_hub only %}
+            {% else %}
             {% include "design_system/empty_state.html" with icon="shield" title="No active Privacy Reviews" reason="No governed privacy review packs are open in this workspace." how="Start a DPA review to open a review pack, or upload an existing DPA into the repository." action_url=start_dpa_url action_label="Start DPA review" class_name="dc-ds-empty--compact" %}
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

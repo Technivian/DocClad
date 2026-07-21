@@ -728,6 +728,7 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
         from django.urls import reverse
 
         from contracts.services.approval_workflow import actor_can_decide
+        from contracts.services.assignments import QUEUE_EMPTY_PERSONAL, pending_approvals_queryset
         from contracts.services.queue_rows import latest_activity_map
         from contracts.templatetags.clmone_format import (
             approval_status_badge_class,
@@ -817,18 +818,18 @@ class ApprovalRequestListView(TenantScopedQuerysetMixin, LoginRequiredMixin, Lis
                 })
             return rows
 
-        waiting_qs = base_qs.filter(
-            Q(assigned_to=user) | Q(delegated_to=user), status__in=['PENDING', 'ESCALATED'],
-        )
+        waiting_qs = pending_approvals_queryset(org, user, queryset=base_qs)
         requested_qs = base_qs.filter(contract__created_by=user)
         all_open_qs = base_qs.filter(status__in=['PENDING', 'ESCALATED'])
         approved_qs = base_qs.filter(status='APPROVED')
         rejected_qs = base_qs.filter(status='REJECTED')
         escalated_overdue_qs = base_qs.filter(Q(status='ESCALATED') | Q(status='PENDING', due_date__lt=now))
 
+        waiting_title, waiting_copy, waiting_how = QUEUE_EMPTY_PERSONAL['approvals_waiting']
         return [
             {'key': 'waiting_on_me', 'label': 'Waiting on Me', 'rows': _to_rows(waiting_qs),
-             'empty_message': 'No approvals waiting on you.'},
+             'empty_message': 'No approvals waiting on you.', 'personal_hub': True,
+             'empty_title': waiting_title, 'empty_copy': waiting_copy, 'empty_how': waiting_how},
             {'key': 'requested_by_me', 'label': 'Requested by Me', 'rows': _to_rows(requested_qs),
              'empty_message': 'No approvals requested by you.'},
             {'key': 'all_open', 'label': 'All Open', 'rows': _to_rows(all_open_qs),

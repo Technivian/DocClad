@@ -14,6 +14,7 @@ from contracts.forms import DeadlineForm
 from contracts.middleware import log_action
 from contracts.models import Contract, Deadline, Matter
 from contracts.permissions import ContractAction, can_access_contract_action
+from contracts.services.assignments import open_obligations_queryset
 from contracts.templatetags.clmone_format import obligation_compliance_status
 from contracts.tenancy import get_user_organization
 from contracts.view_support import (
@@ -182,7 +183,10 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
 
         filtered = all_obligations
         if selected_view == 'mine':
-            filtered = [o for o in filtered if o.assigned_to_id == self.request.user.id]
+            mine_ids = set(
+                open_obligations_queryset(org, self.request.user).values_list('pk', flat=True)
+            )
+            filtered = [o for o in filtered if o.pk in mine_ids]
         elif selected_view == 'due_soon':
             filtered = [
                 o for o in filtered
@@ -281,6 +285,15 @@ class ObligationsWorkspaceView(LoginRequiredMixin, TemplateView):
             search_query or selected_status or selected_owner
             or selected_contract or selected_type or selected_due
         )
+        from contracts.services.assignments import QUEUE_EMPTY_PERSONAL
+        if selected_view == 'mine' and not filtered:
+            title, copy, how = QUEUE_EMPTY_PERSONAL['obligations_mine']
+            context['obligations_empty_state'] = {
+                'title': title,
+                'copy': copy,
+                'how': how,
+                'personal_hub': True,
+            }
         return context
 
 

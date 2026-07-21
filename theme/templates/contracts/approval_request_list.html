@@ -219,7 +219,7 @@
 
   <div class="dc-ds-table-wrap">
     {% for tab in queue_tabs %}
-      {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first %}
+      {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first tab.personal_hub tab.empty_title tab.empty_copy tab.empty_how %}
     {% endfor %}
   </div>
 </div>

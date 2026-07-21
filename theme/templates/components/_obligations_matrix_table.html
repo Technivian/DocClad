@@ -60,8 +60,12 @@
     {% empty %}
     <tr>
       <td colspan="7">
+        {% if obligations_empty_state %}
+          {% include "components/_work_queue_empty_state.html" with title=obligations_empty_state.title copy=obligations_empty_state.copy how=obligations_empty_state.how personal_hub=obligations_empty_state.personal_hub only %}
+        {% else %}
         {% url 'contracts:deadline_create' as create_obligation_url %}
         {% include "design_system/empty_state.html" with icon="calendar" title="No obligations are being tracked" reason="No renewal, notice, delivery, or compliance commitment has been added yet." how="Obligations appear here when they are created directly or extracted from governed contracts." action_url=create_obligation_url action_label="Add first obligation" class_name="dc-ds-empty--compact" %}
+        {% endif %}
       </td>
     </tr>
     {% endfor %}
