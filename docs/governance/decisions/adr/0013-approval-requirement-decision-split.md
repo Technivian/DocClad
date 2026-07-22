@@ -1,9 +1,21 @@
 # ADR-0013: Approval Requirement and Approval Decision split
 
-- Status: **Proposed**
+- Status: **Accepted**
 - Date: 2026-07-22
-- Deciders: Engineering / Product (proposed by PAR-APR-001)
-- Related: PAR-APR-001, PAR-DOC-001, CANONICAL_DOMAIN_MODEL §2.23–2.24, PDR-0001
+- Effective date: **2026-07-22**
+- Deciders: CLM One Platform Alignment Programme governance review (Product / Engineering)
+- Related: PAR-APR-001 (Closed), PAR-APR-002 (Planned), PAR-DOC-001, CANONICAL_DOMAIN_MODEL §2.23–2.24, PDR-0001
+- Meeting record: [`0013-governance-acceptance-meeting-record-2026-07-22.md`](0013-governance-acceptance-meeting-record-2026-07-22.md)
+
+## Approval metadata
+
+| Field | Value |
+|---|---|
+| **Approved by** | Product governance delegate · Engineering governance delegate |
+| **Advisory** | Security & privacy reviewer (approve with conditions — PAR-SEC-003) |
+| **Approved on** | **2026-07-22** |
+| **Acceptance scope** | Canonical foundation (additive schema, governed write path, vocabulary mapping, audit events). **Does not authorize** PAR-APR-002 implementation or legacy cutover. |
+| **Evidence** | `docs/audits/evidence/2026-07-22-par-apr-001/` |
 
 ## Context
 
@@ -16,7 +28,7 @@ CLM One previously collapsed both into mutable `ApprovalRequest` rows.
 
 PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked version binding (gap G-DOM / traceability row).
 
-## Decision (proposed — not Accepted)
+## Decision (Accepted)
 
 ### 1. Canonical entities (implemented additively)
 
@@ -25,7 +37,7 @@ PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked
 | `ApprovalRequirement` | Open need for approval; binds contract + document version at open |
 | `ApprovalDecision` | Immutable outcome (`APPROVED`, `REJECTED`, `RETURNED`, `REVOKED`, `ABSTAINED`) |
 
-`ApprovalRequest` remains as **legacy compatibility mirror** linked via `ApprovalRequirement.legacy_request` OneToOne.
+`ApprovalRequest` remains as **legacy compatibility mirror** linked via `ApprovalRequirement.legacy_request` OneToOne until PAR-APR-002 cutover completes.
 
 ### 2. Governed write path
 
@@ -59,12 +71,12 @@ PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked
 | `approval.decision.recorded` | Immutable decision appended |
 | Legacy `approval.approved` / `approval.rejected` / `approval.returned` | Retained on `ApprovalRequest` path |
 
-### 6. Explicit non-goals / residuals
+### 6. Explicit non-goals / residuals (PAR-APR-002)
 
-- `DPAReviewPack.approval_status` — separate model; not merged in this slice
+- `DPAReviewPack.approval_status` — separate model; not merged in foundation slice
 - `ApprovalRoute` template rows — configuration only; not runtime requirements
 - `ABSTAIN` / explicit `REVOKE` UI actions — outcome exists; UI wiring deferred
-- Removal of `ApprovalRequest` — deferred until dual-read period completes
+- Removal of `ApprovalRequest` — deferred to **PAR-APR-002** (Planned)
 
 ## Mandated by accepted documentation (no ADR needed)
 
@@ -73,6 +85,14 @@ PAR-DOC-001 delivered `DocumentVersion` binding for signatures; approvals lacked
 - Server-side authorization and tenant isolation (SECURITY_PRIVACY_ACCESS_AND_AUDIT)
 - Finance threshold single entry (PDR-0001 — unchanged)
 
+## Consequences
+
+- PAR-APR-001 is **Closed** — canonical foundation delivered on continuation branch `c9ae7305`.
+- PAR-APR-002 is **Planned** — cutover residuals; blocked pending owner, cutover plan, and implementation authorization.
+- ADR acceptance authorizes **planning** for PAR-APR-002 only; not implementation.
+- Tenant isolation remains **unproven** at programme level until PAR-SEC-003 resolves `ContractIsolationTest.test_list_shows_only_own_org`.
+- ADR-0010 remains **Proposed** and is not amended by this decision.
+
 ## Approval
 
-Proposed only. Acceptance gates removal of legacy `ApprovalRequest` write path.
+**Accepted** on 2026-07-22. Legacy `ApprovalRequest` write-path removal gates on PAR-APR-002 implementation authorization.
