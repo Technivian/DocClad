@@ -5,7 +5,7 @@
 **Prerequisite:** PR [#54](https://github.com/Technivian/CLMOne/pull/54) merged to `main` @ `58966de7`  
 **Request timestamp:** 2026-07-22T11:40:00Z  
 **Authorization complete timestamp:** 2026-07-22T13:15:23Z  
-**Status:** **Authorized** — Product, Engineering, and Security advisory votes recorded; merge still requires separate explicit authorization
+**Status:** **Authorized and merged** — Product, Engineering, and Security advisory implementation votes recorded; merge votes recorded; merge commit `bb881ac2`
 
 ---
 
@@ -19,7 +19,48 @@
 | Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Approve** | Recorded 2026-07-22T13:13:23Z (verbatim below) |
 | Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Approve with conditions** | Recorded 2026-07-22T13:15:23Z (verbatim below) |
 
-**Result:** **Authorized** for the requested non-authoritative shadow-sync slice only. **Does not authorize** PR #55 merge or resolver-parity implementation.
+**Result:** **Authorized** for the requested non-authoritative shadow-sync slice. Merge authorization recorded below. **Does not authorize** resolver-parity implementation or flag activation.
+
+---
+
+## Merge authorization (PR #55)
+
+**PR:** [#55](https://github.com/Technivian/CLMOne/pull/55)  
+**Reviewed HEAD:** `432a55b1c2c12af7ae6fedf17a8b4bcfda61f525`  
+**Merge commit:** `bb881ac233d2f499547d504bcd29f3d4d5e872db`  
+**Merged at:** `2026-07-22T13:35:32Z`
+
+| Approver | Vote | Timestamp |
+|---|---|---|
+| @haroonwahed Product | **Approve merge** | `2026-07-22T13:36:50Z` |
+| @Technivian Engineering | **Approve merge** | `2026-07-22T15:15:23Z` |
+
+### Verbatim Product merge authorization
+
+```text
+@haroonwahed Product: Approve merge
+Timestamp: 2026-07-22T13:36:50Z
+
+Merge authorization confirms:
+- Implementation authorization remains in force
+- Security conditions 1–9 remain binding
+- Slice remains non-authoritative
+- PROCESS_ROLE_SHADOW_WRITE_ENABLED remains default off after merge
+- PROCESS_ROLE_PARITY_REPORTING_ENABLED remains default off after merge
+- No production resolver cutover
+- No permission, privilege, membership-authority, or navigation changes
+- No PAR-ID-001 resolver-parity implementation in this merge
+- Staging flag enablement requires separate explicit activation authorization
+```
+
+### Verbatim Engineering merge authorization
+
+```text
+@Technivian Engineering: Approve merge
+Timestamp: 2026-07-22T15:15:23Z
+```
+
+**Post-merge constraints (binding):** flags remain default off; do not enable shadow/parity flags; do not start resolver-parity without new authorization.
 
 ---
 
@@ -151,7 +192,7 @@ This authorization does not approve:
 | Automatic parity repair | **No** |
 | PAR-ID-001 resolver-parity implementation | **No** |
 | PAR-APR-002 / PAR-WF-010 | **No** |
-| PR #55 merge (requires separate authorization) | **No** |
+| Staging flag activation (requires separate activation authorization) | **No** |
 
 ---
 

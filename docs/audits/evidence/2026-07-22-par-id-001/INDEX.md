@@ -1,12 +1,13 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — catalogue `0112` + adapter `0113` + feature-flagged shadow sync; production authority still legacy  
+**Status:** **In progress** — catalogue `0112` + adapter `0113` + feature-flagged shadow sync on `main`; production authority still legacy  
 **ADR:** ADR-0014 **Accepted**  
 **PR #51 merge:** `21e65f09`  
 **PR #53 merge:** `0bf7c9dc`  
 **PR #54 merge:** `58966de7`  
-**Branch:** `cursor/feat-par-id-001-shadow-role-sync`
+**PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
+**Branch:** `main` @ `bb881ac2`
 
 ---
 
@@ -17,7 +18,7 @@
 | [`../../../governance/decisions/adr/0014-role-definition-reconciliation.md`](../../../governance/decisions/adr/0014-role-definition-reconciliation.md) | Accepted ADR |
 | [`0112-implementation-authorization.md`](0112-implementation-authorization.md) | Catalogue authorization |
 | [`0113-process-role-adapter-implementation-authorization.md`](0113-process-role-adapter-implementation-authorization.md) | Adapter authorization |
-| [`SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md`](SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md) | Slice 3 authorization **request** (votes pending) |
+| [`SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md`](SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md) | Slice 3 implementation + merge authorization (recorded) |
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 
 ---
