@@ -71,4 +71,4 @@ Authorize implementation of dual-write adapters for:
 | @Technivian | Engineering | **Approve** | 2026-07-22T19:12:35Z |
 | @Technivian | Security advisory | **Approve with conditions** | 2026-07-22T19:12:39Z |
 
-**Result:** **Authorized** for default-off implementation. Activation remains **Requested** / not authorized.
+**Result:** **Authorized** for default-off implementation. Controlled-pilot activation (Motion 3) separately **Authorized** `2026-07-22T20:04:34Z` — see [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md).

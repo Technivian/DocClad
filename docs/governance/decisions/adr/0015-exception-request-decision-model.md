@@ -20,10 +20,10 @@
 | **Security & privacy** | **Approve with conditions** — @Technivian (`2026-07-22T19:12:39Z`) |
 | **Authority basis** | `.github/CODEOWNERS`; `GOVERNANCE_CHARTER.md` v2.0; PDR-0003 |
 | **Written consent** | Verbatim votes in meeting record §2 |
-| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). Motion 2 separately authorizes **default-off** six-path dual-write only. |
-| **Does not authorize** | Canonical read-path authority; legacy retirement; controlled-pilot flag enablement; automatic repair; retrospective historical invention |
+| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). Motion 2 authorizes **default-off** six-path dual-write. Motion 3 authorizes controlled-pilot activation (`controlled-pilot-org` only). |
+| **Does not authorize** | Canonical read-path authority; legacy retirement; automatic repair; retrospective historical invention; orgs beyond the Motion 3 allowlist; changing committed flag defaults |
 
-**Implementation boundary:** Foundation merge (PR #66) + default-off dual-write (PR #67) under Motion 2. Activation requires a separate authorization package and votes.
+**Implementation boundary:** Foundation merge (PR #66) + default-off dual-write (PR #69, from #67 rebase) under Motion 2. Controlled-pilot activation **Authorized** under Motion 3 (`2026-07-22T20:04:34Z`); committed defaults remain off.
 
 ## Context
 
@@ -137,4 +137,4 @@ Append-only decision history; material actions emit `exception.*` audit events o
 
 ## Approval
 
-**Accepted** 2026-07-22T19:12:39Z by @haroonwahed (Product), @Technivian (Engineering), and @Technivian (Security advisory, Approve with conditions) per meeting record. Motion 2 authorizes default-off dual-write only; controlled-pilot activation and canonical read authority require separate votes.
+**Accepted** 2026-07-22T19:12:39Z by @haroonwahed (Product), @Technivian (Engineering), and @Technivian (Security advisory, Approve with conditions) per meeting record. Motion 2 authorizes default-off dual-write; Motion 3 authorizes controlled-pilot activation (`controlled-pilot-org` only, `2026-07-22T20:04:34Z`). Canonical read authority still requires a separate vote.

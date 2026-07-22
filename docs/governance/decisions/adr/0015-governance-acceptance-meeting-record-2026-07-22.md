@@ -2,8 +2,9 @@
 
 **Meeting type:** Programme governance review (decision record)  
 **Date:** 2026-07-22 (UTC)  
-**Vote window:** 2026-07-22T19:12:31Z – 2026-07-22T19:12:39Z  
-**Status:** **Ratified**  
+**Vote window (Motions 1–2):** 2026-07-22T19:12:31Z – 2026-07-22T19:12:39Z  
+**Vote window (Motion 3):** 2026-07-22T20:04:13Z – 2026-07-22T20:04:34Z  
+**Status:** **Ratified** (Motions 1–3)  
 **Chair:** @haroonwahed (repository steward — Product governance)  
 **Quorum:** Product governance · Engineering governance · Security & privacy (advisory) — **met**  
 **Package under review:**
@@ -12,10 +13,11 @@
 - [`../../../audits/evidence/2026-07-22-par-exc-001/`](../../../audits/evidence/2026-07-22-par-exc-001/)
 - [`../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md`](../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md)
 - [`../../../audits/evidence/2026-07-22-par-exc-001/DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md`](../../../audits/evidence/2026-07-22-par-exc-001/DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md)
+- [`../../../audits/evidence/2026-07-22-par-exc-001/CONTROLLED_PILOT_DUAL_WRITE.md`](../../../audits/evidence/2026-07-22-par-exc-001/CONTROLLED_PILOT_DUAL_WRITE.md)
 
 **Foundation branch:** `cursor/feat-par-exc-001-exception-waiver-discovery-d7f1`  
 **Foundation PR:** [#66](https://github.com/Technivian/CLMOne/pull/66)  
-**Dual-write PR:** [#67](https://github.com/Technivian/CLMOne/pull/67)
+**Dual-write PR:** [#69](https://github.com/Technivian/CLMOne/pull/69) (from stacked [#67](https://github.com/Technivian/CLMOne/pull/67))
 
 ---
 
@@ -57,6 +59,28 @@
 | @Technivian | Security advisory | **Approve with conditions** | 2026-07-22T19:12:39Z |
 
 **Result:** **Carried** — implementation Authorized (flags remain default off; activation requires a separate vote)
+
+---
+
+### Motion 3 — Authorize controlled-pilot dual-write activation
+
+**Motion:** Authorize controlled-pilot dual-write activation for:
+
+- org allowlist: `controlled-pilot-org` only;
+- six approved source paths only (`KEEP_EXCEPTION`, `ACCEPTED_RISK`, `AI_EXCEPTION`, `CONFLICT_CHECK_WAIVER`, `DEADLINE_DEFER`, `DPA_APPROVE_WITH_BLOCKERS`);
+- legacy-authoritative dual-write;
+- monitoring and rollback plan in [`CONTROLLED_PILOT_DUAL_WRITE.md`](../../../audits/evidence/2026-07-22-par-exc-001/CONTROLLED_PILOT_DUAL_WRITE.md);
+- stop conditions binding.
+
+**Explicitly not authorized by this motion:** canonical read authority; legacy retirement; automatic repair; retrospective historical invention; any org beyond the allowlist; changing committed flag defaults.
+
+| Approver | Capacity | Vote | Consent |
+|---|---|---|---|
+| @haroonwahed | Product | **Approve** | 2026-07-22T20:04:13Z |
+| @Technivian | Engineering | **Approve** | 2026-07-22T20:04:15Z |
+| @Technivian | Security advisory | **Approve with conditions** | 2026-07-22T20:04:34Z |
+
+**Result:** **Carried** — controlled-pilot dual-write activation **Authorized** effective 2026-07-22T20:04:34Z (committed defaults remain off; operational env enablement permitted for `controlled-pilot-org` only)
 
 ---
 
@@ -161,6 +185,98 @@ Binding conditions:
 - controlled-pilot activation requires a separate Security vote.
 ```
 
+### Motion 3 — Product — @haroonwahed (accepted)
+
+```text
+ACTIVATE — PAR-EXC-001 Controlled-Pilot Dual-Write
+
+Approver: @haroonwahed
+Capacity: Product governance
+Timestamp: 2026-07-22T20:04:13Z
+
+Motion 3:
+Authorize controlled-pilot dual-write activation for:
+- org allowlist: controlled-pilot-org only;
+- six approved source paths only (KEEP_EXCEPTION, ACCEPTED_RISK, AI_EXCEPTION,
+  CONFLICT_CHECK_WAIVER, DEADLINE_DEFER, DPA_APPROVE_WITH_BLOCKERS);
+- legacy-authoritative dual-write;
+- monitoring and rollback plan in the activation package;
+- stop conditions binding.
+
+Vote: Approve
+
+Conditions acknowledged:
+- flags enabled only with EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org;
+- legacy behavior remains authoritative;
+- no canonical read cutover;
+- no automatic repair;
+- no historical invention;
+- Security conditions from ADR-0015 remain binding;
+- stop on any listed stop condition.
+```
+
+### Motion 3 — Engineering — @Technivian (accepted)
+
+```text
+ACTIVATE — PAR-EXC-001 Controlled-Pilot Dual-Write
+
+Approver: @Technivian
+Capacity: Engineering governance
+Timestamp: 2026-07-22T20:04:15Z
+
+Motion 3:
+Authorize controlled-pilot dual-write activation for:
+- org allowlist: controlled-pilot-org only;
+- six approved source paths only (KEEP_EXCEPTION, ACCEPTED_RISK, AI_EXCEPTION,
+  CONFLICT_CHECK_WAIVER, DEADLINE_DEFER, DPA_APPROVE_WITH_BLOCKERS);
+- legacy-authoritative dual-write;
+- monitoring and rollback plan in the activation package;
+- stop conditions binding.
+
+Vote: Approve
+
+Conditions acknowledged:
+- flags enabled only with EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org;
+- legacy behavior remains authoritative;
+- no canonical read cutover;
+- no automatic repair;
+- no historical invention;
+- Security conditions from ADR-0015 remain binding;
+- stop on any listed stop condition.
+```
+
+### Motion 3 — Security advisory — @Technivian (accepted with conditions)
+
+```text
+ACTIVATE — PAR-EXC-001 Controlled-Pilot Dual-Write
+
+Approver: @Technivian
+Capacity: Security advisory
+Timestamp: 2026-07-22T20:04:34Z
+
+Motion 3:
+Authorize controlled-pilot dual-write activation for:
+- org allowlist: controlled-pilot-org only;
+- six approved source paths only (KEEP_EXCEPTION, ACCEPTED_RISK, AI_EXCEPTION,
+  CONFLICT_CHECK_WAIVER, DEADLINE_DEFER, DPA_APPROVE_WITH_BLOCKERS);
+- legacy-authoritative dual-write;
+- monitoring and rollback plan in the activation package;
+- stop conditions binding.
+
+Vote: Approve with conditions
+
+Binding conditions:
+- activation is limited to controlled-pilot-org;
+- legacy remains authoritative;
+- no canonical read cutover;
+- no automatic repair or historical invention;
+- Critical bypasses require the existing Security controls;
+- cross-tenant anomalies fail closed;
+- restricted data must not appear in monitoring evidence;
+- rollback must remain immediately available;
+- stop on any listed stop condition.
+```
+
 ---
 
 ## 3. Implementation boundary
@@ -168,10 +284,10 @@ Binding conditions:
 | Authorized | Not authorized |
 |---|---|
 | Additive ExceptionRequest / ExceptionDecision foundation | Canonical read-path authority |
-| Default-off six-path dual-write (PR #67) | Enabling `EXCEPTION_DUAL_WRITE_ENABLED` |
+| Default-off six-path dual-write (PR #69 / from #67) | Changing committed flag defaults to on |
 | Migrations `0114` / `0115` | Legacy path retirement / field deletion |
 | Idempotent correlation + fail-closed Security/tenant gates | Retrospective bulk historical invention |
-| | Controlled-pilot activation (separate package) |
+| Controlled-pilot operational enablement (`controlled-pilot-org` only) per Motion 3 | Any org beyond `controlled-pilot-org` |
 
 ---
 
@@ -179,7 +295,8 @@ Binding conditions:
 
 | Field | Value |
 |---|---|
-| **Status** | Ratified |
+| **Status** | Ratified (Motions 1–3) |
 | **ADR-0015** | **Accepted** |
-| **Effective date** | 2026-07-22T19:12:39Z |
+| **Motion 1–2 effective** | 2026-07-22T19:12:39Z |
+| **Motion 3 effective** | 2026-07-22T20:04:34Z |
 | **Approved by** | @haroonwahed (Product) · @Technivian (Engineering) · @Technivian (Security advisory, with conditions) |

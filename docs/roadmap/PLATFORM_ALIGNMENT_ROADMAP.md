@@ -38,8 +38,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66 merged `982b0900`; dual-write PR #69 merged `f19eae42` default-off; controlled-pilot activation **Requested**; canonical read **unauthorized**)
-2. **PAR-ID-001** — Role Definition reconciliation — **In progress** (R0 **Completed**; R1 **Completed**; R2 **Not required on verified corpus**; R3 **Deferred**; R4 **Completed, PASS**; R5 **Blocked**, awaiting explicit canonical-authority cutover authorization — prep package ready; flags default off)3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; foundation PR #66 merged `982b0900`; dual-write PR #69 merged `f19eae42` default-off; Motion 3 controlled-pilot activation **Authorized** `20:04:34Z`; committed defaults remain off; canonical read **unauthorized**)
+2. **PAR-ID-001** — Role Definition reconciliation — **In progress** (R0 **Completed**; R1 **Completed**; R2 **Not required on verified corpus**; R3 **Deferred**; R4 **Completed, PASS**; R5 **Blocked**, awaiting explicit canonical-authority cutover authorization — prep package ready; flags default off)
+3. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 4. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 5. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
 
@@ -429,27 +430,27 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — ADR-0015 **Accepted**; canonical foundation PR #66 **merged** (`982b0900`); six-path dual-write PR #69 **merged** (`f19eae42`, default-off, Motion 2 Authorized; supersedes stacked #67); controlled-pilot activation **Requested** / **not** authorized; canonical read cutover **unauthorized**; break-glass / signature-provider residual paths inventoried |
+| Status | **In progress** (2026-07-22) — ADR-0015 **Accepted**; canonical foundation PR #66 **merged** (`982b0900`); six-path dual-write PR #69 **merged** (`f19eae42`, default-off, Motion 2 Authorized; supersedes stacked #67); Motion 3 controlled-pilot activation **Authorized** (`2026-07-22T20:04:34Z`); committed flag defaults remain **off**; operational enablement permitted for `controlled-pilot-org` only; canonical read cutover **unauthorized**; break-glass / signature-provider residual paths inventoried |
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
-| Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); activation votes pending |
-| Decision required | **ADR-0015 Accepted**; activation requires separate package |
+| Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized**) |
+| Decision required | **ADR-0015 Accepted**; Motion 3 **Authorized**; operational enablement + monitoring next |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
 | Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) |
-| Rollback strategy | Flags default off; reverse `0115` then `0114` |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; remaining paths inventoried; activation + read authority still open — **keep In progress** |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; Motion 3 rollback = flag-off + clear allowlist |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; Motion 3 activation authorized; remaining paths inventoried; operational enablement + read authority still open — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
 | PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42` (from #67 rebase) |
 | Last updated | 2026-07-22 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Separate controlled-pilot activation votes (Motion 3) → enable allowlist `controlled-pilot-org` only; do not enable before authorization |
+| Next cutover step | Operational enablement: set `EXCEPTION_DUAL_WRITE_ENABLED=true` and `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org` in the controlled-pilot environment only; capture monitoring; do not change committed defaults |
 
 ---
 
@@ -655,3 +656,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | 2026-07-22 | **ADR-0015 Accepted** (Product `19:12:31Z` / Engineering `19:12:35Z` / Security `19:12:39Z` Approve with conditions); Motion 2 authorizes default-off six-path dual-write; controlled-pilot activation **not** authorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PR #66 merged** to `main` @ `982b0900` (canonical ExceptionRequest/Decision + migration `0114`); dual-write retargeted as PR #69 onto main (migration `0115`; supersedes stacked #67); controlled-pilot activation package **Requested**; flags remain default off; PAR-EXC-001 remains **In progress** |
+| 2026-07-22 | **PR #69 merged** to `main` @ `f19eae42` (six-path dual-write default-off); PR #70 recorded merge SHA; activation still **Requested**; committed defaults remain off; PAR-EXC-001 remains **In progress** |
+| 2026-07-22 | **PAR-EXC-001 Motion 3 Authorized:** Product `20:04:13Z` / Engineering `20:04:15Z` / Security `20:04:34Z` (Approve with conditions); controlled-pilot dual-write activation for `controlled-pilot-org` only; committed defaults remain off; operational env enablement now permitted; canonical read still unauthorized; PAR-EXC-001 remains **In progress** |

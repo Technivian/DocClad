@@ -2,9 +2,11 @@
 
 ## Status: In progress
 
-**PAR-ID-001:** Closed (prior programme).  
-**This slice:** Discovery + canonical Exception/Waiver foundation.  
-**ADR-0015:** **Proposed** — do not treat as Accepted.  
+**ADR-0015:** **Accepted** (`2026-07-22T19:12:39Z`).  
+**Motion 2:** Default-off six-path dual-write **Authorized**; PR #69 merged (`f19eae42`).  
+**Motion 3:** Controlled-pilot dual-write activation **Authorized** (`2026-07-22T20:04:34Z`) for `controlled-pilot-org` only.  
+**Committed flag defaults:** remain **off**.  
+**Canonical read authority:** **Unauthorized**.  
 **Not started:** PAR-APR-002, PAR-WF-010, PAR-ID-002.
 
 ### Discovery
@@ -16,25 +18,15 @@
 - `ExceptionRequest` — temporary deviation with owner, expiry, scope, authority, compensating controls, risk classification, explicit `granted_privileges`.
 - `ExceptionDecision` — immutable decision history.
 - Service: `contracts/services/exception_canonical.py`.
-- Migration: `0114_exception_request_decision` (additive; **no** silent legacy backfill).
+- Migrations: `0114_exception_request_decision`, `0115_exception_correlation_id` (additive; **no** silent legacy backfill).
 
-### Invariants enforced in service
-- Temporary unless explicitly approved permanent (`is_permanent_approved`).
-- Owner + expiry required (expiry waived only when permanent approved).
-- Approval authority explicit; Critical security bypass requires `security_approval=True`.
-- Unknown privilege tokens rejected; decisions cannot invent privileges.
-- Expired exceptions stop applying (`exception_is_applicable` / `privilege_granted`).
-- Renewal creates a **new** ExceptionRequest; prior superseded via governed decision.
-- Decisions immutable after create.
-- Cross-tenant operations prohibited.
-- UI visibility is not authorization (server-side checks).
-
-### Explicit non-goals this slice
-- No production path cutover (keep/accept, DPA accepted risk, deadline defer, etc. still legacy).
-- No Acceptance of ADR-0015.
-- No PAR-APR-002 / PAR-WF-010 / PAR-ID-002 work.
+### Dual-write (legacy authoritative)
+- Service: `contracts/services/exception_dual_write.py`.
+- Six paths: `KEEP_EXCEPTION`, `ACCEPTED_RISK`, `AI_EXCEPTION`, `CONFLICT_CHECK_WAIVER`, `DEADLINE_DEFER`, `DPA_APPROVE_WITH_BLOCKERS`.
+- Flags: `EXCEPTION_DUAL_WRITE_ENABLED` / `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST` (committed defaults off).
+- Activation package: [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) — Motion 3 **Authorized**.
 
 ### Next
-1. Ratify ADR-0015.
-2. Authorize per-path cutover (dual-read → dual-write → canonical authority) starting with highest-risk product paths.
-3. Keep programme **In progress** until governed production paths are delivered.
+1. Operational enablement in the controlled-pilot environment only (`EXCEPTION_DUAL_WRITE_ENABLED=true`, `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org`).
+2. Capture monitoring counters; honour stop conditions / rollback.
+3. Keep programme **In progress** until pilot evidence + residual path decisions; do not cut over canonical read without a separate vote.
