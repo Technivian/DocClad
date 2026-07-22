@@ -1,0 +1,397 @@
+{
+  "rows": [
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "OWNER",
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_sourced_assignments": [],
+      "user_id": 1,
+      "username": "admin"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "partner_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "partner_reviewer",
+      "legacy_process_role": "PARTNER",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "ADMIN",
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_sourced_assignments": [
+        "partner_reviewer"
+      ],
+      "user_id": 2,
+      "username": "jsmith"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "senior_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "senior_reviewer",
+      "legacy_process_role": "SENIOR_ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "ADMIN",
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_sourced_assignments": [
+        "senior_reviewer"
+      ],
+      "user_id": 3,
+      "username": "sjones"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "paralegal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "paralegal_reviewer",
+      "legacy_process_role": "PARALEGAL",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_sourced_assignments": [
+        "paralegal_reviewer"
+      ],
+      "user_id": 4,
+      "username": "mwilson"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "OWNER",
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_sourced_assignments": [],
+      "user_id": 5,
+      "username": "demo_admin"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "partner_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "partner_reviewer",
+      "legacy_process_role": "PARTNER",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "ADMIN",
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_sourced_assignments": [
+        "partner_reviewer"
+      ],
+      "user_id": 6,
+      "username": "demo_partner"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "senior_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "senior_reviewer",
+      "legacy_process_role": "SENIOR_ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_sourced_assignments": [
+        "senior_reviewer"
+      ],
+      "user_id": 7,
+      "username": "demo_associate"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "paralegal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "paralegal_reviewer",
+      "legacy_process_role": "PARALEGAL",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_sourced_assignments": [
+        "paralegal_reviewer"
+      ],
+      "user_id": 8,
+      "username": "demo_paralegal"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "OWNER",
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_sourced_assignments": [],
+      "user_id": 9,
+      "username": "mvp_admin"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "legal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "legal_reviewer",
+      "legacy_process_role": "ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_sourced_assignments": [
+        "legal_reviewer"
+      ],
+      "user_id": 10,
+      "username": "mvp_owner"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "senior_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "senior_reviewer",
+      "legacy_process_role": "SENIOR_ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_sourced_assignments": [
+        "senior_reviewer"
+      ],
+      "user_id": 11,
+      "username": "mvp_reviewer"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "OWNER",
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_sourced_assignments": [],
+      "user_id": 12,
+      "username": "pilot_owner"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "ADMIN",
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_sourced_assignments": [],
+      "user_id": 13,
+      "username": "pilot_admin"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "paralegal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "paralegal_reviewer",
+      "legacy_process_role": "PARALEGAL",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_sourced_assignments": [
+        "paralegal_reviewer"
+      ],
+      "user_id": 14,
+      "username": "pilot_requester"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "legal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "legal_reviewer",
+      "legacy_process_role": "ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_sourced_assignments": [
+        "legal_reviewer"
+      ],
+      "user_id": 15,
+      "username": "pilot_legal"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "MEMBER",
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_sourced_assignments": [],
+      "user_id": 16,
+      "username": "pilot_finance"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "OWNER",
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_sourced_assignments": [],
+      "user_id": 17,
+      "username": "payrollminds_admin"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "senior_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "senior_reviewer",
+      "legacy_process_role": "SENIOR_ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_sourced_assignments": [
+        "senior_reviewer"
+      ],
+      "user_id": 18,
+      "username": "payrollminds_legal"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [
+        "legal_reviewer"
+      ],
+      "critical_drift": [],
+      "drift_classification": [],
+      "expected_canonical_code": "legal_reviewer",
+      "legacy_process_role": "ASSOCIATE",
+      "mapping_confidence": "CERTAIN",
+      "membership_role": "MEMBER",
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_sourced_assignments": [
+        "legal_reviewer"
+      ],
+      "user_id": 19,
+      "username": "payrollminds_procurement"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "canonical_assignments": [],
+      "critical_drift": [
+        "legacy_without_canonical"
+      ],
+      "drift_classification": [
+        "ambiguous_mapping",
+        "legacy_without_canonical"
+      ],
+      "expected_canonical_code": "legacy_process_admin",
+      "legacy_process_role": "ADMIN",
+      "mapping_confidence": "AMBIGUOUS",
+      "membership_role": "MEMBER",
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_sourced_assignments": [],
+      "user_id": 20,
+      "username": "payrollminds_finance"
+    }
+  ],
+  "summary": {
+    "authoritative_for_runtime": false,
+    "critical_drift_rows": 8,
+    "organizations_users": 20
+  }
+}

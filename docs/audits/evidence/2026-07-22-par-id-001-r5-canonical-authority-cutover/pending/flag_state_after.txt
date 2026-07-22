@@ -1,0 +1,16 @@
+phase=after_successful_observation
+SHADOW=false
+PARITY_REPORTING=false
+RESOLVER_PARITY=false
+CANONICAL=false
+ALLOWLIST=
+observation_end=2026-07-22T20:48:20Z
+runtime_authority=legacy
+note=Flags returned to false per Motion 1 after-observation state; sustainment of CANONICAL requires separate vote; committed defaults unchanged false
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+settings.PROCESS_ROLE_SHADOW_WRITE_ENABLED=False
+settings.PROCESS_ROLE_PARITY_REPORTING_ENABLED=False
+settings.PROCESS_ROLE_RESOLVER_PARITY_ENABLED=False
+settings.PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED=False
+settings.PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST=''
+POST_OBSERVATION_FLAG_OFF=PASS

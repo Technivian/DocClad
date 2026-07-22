@@ -1,0 +1,12 @@
+{
+  "map_patch": {
+    "caller_saw_exception": false,
+    "canonical_failure_audit_incremented": true,
+    "legacy_returned_unchanged": true
+  },
+  "select_patch": {
+    "canonical_failure_audit_incremented": true,
+    "legacy_returned_unchanged": true
+  },
+  "status": "PASS"
+}

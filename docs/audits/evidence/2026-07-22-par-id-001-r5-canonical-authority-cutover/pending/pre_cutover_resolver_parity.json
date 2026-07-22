@@ -1,0 +1,24 @@
+{
+  "CROSS_TENANT_ANOMALY_count": 0,
+  "DIFFERENT_USER_count": 0,
+  "RESOLUTION_ERROR_count": 0,
+  "authoritative_for_runtime": false,
+  "counts_per_classification": {
+    "AMBIGUOUS": 5,
+    "CANONICAL_ONLY": 0,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_ROLE": 0,
+    "DIFFERENT_USER": 0,
+    "INACTIVE_ASSIGNMENT": 0,
+    "LEGACY_ONLY": 0,
+    "MATCH": 89,
+    "RESOLUTION_ERROR": 0
+  },
+  "critical_classes": [
+    "CROSS_TENANT_ANOMALY",
+    "DIFFERENT_USER",
+    "RESOLUTION_ERROR"
+  ],
+  "critical_drift_count": 0,
+  "total_comparisons": 94
+}

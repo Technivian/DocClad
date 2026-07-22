@@ -1,9 +1,16 @@
-# PAR-ID-001 R5 — preparation summary
+# PAR-ID-001 R5 — summary
 
-**R5 status:** **Blocked**  
-**Authorization status:** **Draft / Authorization requested** (no votes recorded)  
-**Proposed environment:** `par-id-001-r5-staging-equivalent` (production **out of scope**)  
-**Proposed allowlist:** `controlled-pilot-org` only  
+**R5 status:** **Completed, PASS**  
+**Authorization:** Motions 1–4 carried `2026-07-22T20:38:18Z`  
+**Execution:** controlled cutover in `par-id-001-r5-staging-equivalent`  
+**Activation:** `2026-07-22T20:46:15Z` → end `2026-07-22T20:48:20Z`  
+**Deployed HEAD:** `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d`  
+**Package baseline:** `198ed13c93e56fdabb3d0e72246225284a619fc3`  
+**Allowlist (during only):** `controlled-pilot-org`  
+**Incident rollback:** not required  
+**PAR-ID-001:** **Completed**
+
+Exit report: [`R5_EXIT_REPORT.md`](R5_EXIT_REPORT.md)
 
 ## Gate map
 
@@ -14,18 +21,19 @@
 | R2 | Not required on verified corpus |
 | R3 | Deferred |
 | R4 | Completed, PASS |
-| R5 | **Blocked** — awaiting explicit canonical-authority cutover authorization |
+| R5 | **Completed, PASS** |
 
 ## Confirmations
 
-- Canonical authority remains **disabled**  
-- Legacy remains **authoritative**  
-- All committed `PROCESS_ROLE_*` defaults remain **false**  
-- No ADMIN authority introduced  
-- No automatic repair introduced  
-- No votes invented  
-- No cutover executed  
+- Committed `PROCESS_ROLE_*` defaults remain **false**  
+- After observation: CANONICAL false; allowlist empty; **legacy authoritative**  
+- Production activation and legacy retirement remain **separately blocked**  
+- ADMIN authority remains out of scope (PAR-ID-002 / P2 rejected)  
+- No abort conditions triggered  
 
-## Next human governance action
+## Separately governed residual work
 
-Product, Engineering, and Security must review this package and record Motions 1–4 votes with real UTC timestamps (`date -u +"%Y-%m-%dT%H:%M:%SZ"`) on [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md). Until that vote set is carried, R5 remains Blocked and no canonical flag may be enabled.
+- Production enablement (new package)  
+- Legacy retirement (new package)  
+- Sustainment of CANONICAL outside a voted window  
+- PAR-ID-002 ADMIN reconciliation  

@@ -1,0 +1,123 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+{
+  "clmone-demo": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 0,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 64,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 64
+  },
+  "clmone-mvp": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 0,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 8,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 8
+  },
+  "controlled-pilot-org": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 5,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 5,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 10
+  },
+  "demo-firm": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 0,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 12,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 12
+  },
+  "payrollminds-demo": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 0,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 0,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 0
+  }
+}

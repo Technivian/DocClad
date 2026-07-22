@@ -1,0 +1,5 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+MVP demo ready: workspace=clmone-mvp, template=Approved Mutual NDA, password=CLMOneMVP!2026
+  mvp_admin / CLMOneMVP!2026
+  mvp_owner / CLMOneMVP!2026
+  mvp_reviewer / CLMOneMVP!2026

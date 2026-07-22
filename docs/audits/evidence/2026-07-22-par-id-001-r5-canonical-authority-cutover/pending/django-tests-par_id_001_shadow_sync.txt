@@ -1,0 +1,24 @@
+DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_par_id_001_shadow_sync
+Creating test database for alias 'default'...
+........2026-07-22 20:44:52,887 ERROR contracts.services.process_role_shadow_sync request_id=- user_id=- org_id=- path=- process role shadow sync failed org=1 user=1
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/process_role_shadow_sync.py", line 205, in maybe_shadow_sync_profile_role
+    shadow_sync_profile_role_for_organization(
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: injected shadow failure
+..
+----------------------------------------------------------------------
+Ran 10 tests in 0.430s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 10 test(s).
+System check identified no issues (0 silenced).

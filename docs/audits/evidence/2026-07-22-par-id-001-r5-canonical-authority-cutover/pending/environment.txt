@@ -1,0 +1,7 @@
+named_environment=par-id-001-r5-staging-equivalent
+path=/Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/
+database=sqlite (ephemeral; gitignored)
+production=OUT_OF_SCOPE
+deployed_HEAD=058c5ed09cb79b9460cb875e80a9d5ad0cc9367d
+expected_HEAD=058c5ed09cb79b9460cb875e80a9d5ad0cc9367d
+HEAD_MATCH=yes

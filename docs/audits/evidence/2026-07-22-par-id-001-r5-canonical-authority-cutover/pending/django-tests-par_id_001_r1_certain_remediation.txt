@@ -1,0 +1,11 @@
+DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_par_id_001_r1_certain_remediation
+Creating test database for alias 'default'...
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 1.682s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 10 test(s).
+System check identified no issues (0 silenced).

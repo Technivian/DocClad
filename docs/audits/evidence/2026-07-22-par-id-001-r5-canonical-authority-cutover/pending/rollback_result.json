@@ -1,0 +1,12 @@
+{
+  "mode": "post_successful_observation_flag_off",
+  "abort_executed": false,
+  "Motion_3_procedure_applied_as_planned_end": true,
+  "CANONICAL": false,
+  "ALLOWLIST": "",
+  "RESOLVER_PARITY": false,
+  "SHADOW": false,
+  "PARITY_REPORTING": false,
+  "legacy_restored": true,
+  "status": "PASS"
+}

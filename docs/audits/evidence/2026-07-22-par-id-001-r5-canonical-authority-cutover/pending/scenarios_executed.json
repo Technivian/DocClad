@@ -1,0 +1,426 @@
+{
+  "assignment_summary": {
+    "AMBIGUOUS_ADMIN_rows": 8,
+    "CERTAIN_MATCH_ACTIVE": 12,
+    "CERTAIN_missing": 0,
+    "confidence_counts": {
+      "AMBIGUOUS": 8,
+      "CERTAIN": 12
+    },
+    "critical_drift_are_ambiguous_admin_only": true,
+    "critical_drift_rows": 8,
+    "drift_counts": {
+      "ambiguous_mapping": 8,
+      "legacy_without_canonical": 8
+    },
+    "note": "Assignment dual-read remains non-authoritative; CERTAIN missing gate",
+    "total_rows": 20
+  },
+  "audit_metadata_review": {
+    "authority_event_counts_recent_window": {
+      "role.resolver.legacy_fallback": 50
+    },
+    "authority_sample": {
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.legacy_fallback",
+      "organization_id": 2
+    },
+    "parity_permission_safe_evidence_keys": [
+      "authoritative_for_runtime",
+      "canonical_result_present",
+      "classification",
+      "correlation_id",
+      "criticality",
+      "legacy_result_present",
+      "organization_id",
+      "resolver_type",
+      "timestamp"
+    ],
+    "recent_parity_audit_count": 20,
+    "restricted_diagnostic_leakage": false
+  },
+  "authority_path_probes": {
+    "allowlisted_rule_resolve": {
+      "approver_role": "ASSOCIATE",
+      "returned_is_pilot_legal": true,
+      "returned_username": "pilot_legal",
+      "rule": "Pilot MSA Legal approval"
+    },
+    "direct_certain_authority": {
+      "returned_username": "pilot_legal",
+      "same_as_legacy_when_match": true
+    },
+    "event_delta": {
+      "role.resolver.canonical_used": 1,
+      "role.resolver.legacy_fallback": 1,
+      "role.resolver.parity_compared": 2
+    },
+    "non_allowlisted_rule_resolve": {
+      "org": "clmone-demo",
+      "returned_username": "demo_partner",
+      "rule": "High Value Contract"
+    },
+    "note": "Pilot corpus uses ApprovalRule paths; no WorkflowTemplateSteps for controlled-pilot-org",
+    "pilot_recent_authority_events": [
+      {
+        "authoritative_for_runtime": true,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.canonical_used",
+        "path": "canonical",
+        "reason": "canonical_assignment_active"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.cutover_excluded",
+        "path": "legacy",
+        "reason": "excluded_legacy_unknown"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.cutover_excluded",
+        "path": "legacy",
+        "reason": "excluded_legacy_unknown"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.cutover_excluded",
+        "path": "legacy",
+        "reason": "excluded_legacy_unknown"
+      },
+      {
+        "authoritative_for_runtime": true,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.canonical_used",
+        "path": "canonical",
+        "reason": "canonical_assignment_active"
+      },
+      {
+        "authoritative_for_runtime": true,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.canonical_used",
+        "path": "canonical",
+        "reason": "canonical_assignment_active"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.canonical_failure",
+        "path": "legacy",
+        "reason": "canonical_resolution_error"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.cross_tenant_anomaly",
+        "path": "blocked",
+        "reason": "cross_tenant_anomaly"
+      },
+      {
+        "authoritative_for_runtime": false,
+        "changes_keys": [
+          "authoritative_for_runtime",
+          "correlation_id",
+          "criticality",
+          "organization_id",
+          "path",
+          "reason",
+          "resolver_type",
+          "timestamp"
+        ],
+        "event_type": "role.resolver.legacy_fallback",
+        "path": "legacy",
+        "reason": "inactive_assignment"
+      }
+    ],
+    "pilot_workflow_steps_present": 0
+  },
+  "permission_unchanged_probe": {
+    "membership_count": 20,
+    "note": "Cutover does not mutate membership/profile roles; counts captured during activation",
+    "profile_count": 20,
+    "status": "PASS"
+  },
+  "resolver_parity_authoritative_report": {
+    "CROSS_TENANT_ANOMALY_count": 0,
+    "DIFFERENT_USER_count": 0,
+    "RESOLUTION_ERROR_count": 0,
+    "authoritative_for_runtime": false,
+    "counts_per_classification": {
+      "AMBIGUOUS": 5,
+      "CANONICAL_ONLY": 0,
+      "CROSS_TENANT_ANOMALY": 0,
+      "DIFFERENT_ROLE": 0,
+      "DIFFERENT_USER": 0,
+      "INACTIVE_ASSIGNMENT": 0,
+      "LEGACY_ONLY": 0,
+      "MATCH": 89,
+      "RESOLUTION_ERROR": 0
+    },
+    "critical_classes": [
+      "CROSS_TENANT_ANOMALY",
+      "DIFFERENT_USER",
+      "RESOLUTION_ERROR"
+    ],
+    "critical_drift_count": 0,
+    "total_comparisons": 94
+  },
+  "resolver_summary_after_scenarios": {
+    "AMBIGUOUS": 8,
+    "CANONICAL_ONLY": 0,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_ROLE": 0,
+    "DIFFERENT_USER": 0,
+    "INACTIVE_ASSIGNMENT": 1,
+    "LEGACY_ONLY": 0,
+    "MATCH": 46,
+    "RESOLUTION_ERROR": 11,
+    "critical_drift": 11,
+    "note": "Includes intentional fail-open RESOLUTION_ERROR probe and temporary inactive probe",
+    "total_comparisons": 66
+  },
+  "runtime_authority_during": {
+    "AMBIGUOUS_ADMIN_authoritative": false,
+    "PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED": true,
+    "allowlist": [
+      "controlled-pilot-org"
+    ],
+    "eligible_scope": "CERTAIN non-ADMIN on resolve_assignee / resolve_rule_assignee",
+    "production": false
+  },
+  "scenarios": {
+    "ADMIN_ambiguity": {
+      "admin_rules": 1,
+      "admin_steps": 1,
+      "authority_returned_legacy_for_ADMIN_probes": true,
+      "non_authoritative": true,
+      "policy": "P1+P3; P2 rejected",
+      "status": "EXERCISED"
+    },
+    "DPA_launch_and_privacy_routing": {
+      "contract_type": "DPA",
+      "status": "EXERCISED",
+      "touches": 2
+    },
+    "MSA_launch_and_assignment": {
+      "contract_type": "MSA",
+      "status": "EXERCISED",
+      "touches": 18
+    },
+    "NDA_launch_and_assignment": {
+      "contract_type": "NDA",
+      "status": "EXERCISED",
+      "touches": 10
+    },
+    "allowlist_authority_probe": {
+      "approver_role": "ASSOCIATE",
+      "canonical_used_observed": true,
+      "event_delta": {
+        "role.resolver.canonical_used": 1,
+        "role.resolver.legacy_fallback": 1,
+        "role.resolver.parity_compared": 2
+      },
+      "non_allowlisted": {
+        "org": "clmone-demo",
+        "returned_username": "demo_partner",
+        "rule": "High Value Contract"
+      },
+      "note": "Pilot corpus uses ApprovalRule paths; no WorkflowTemplateSteps for controlled-pilot-org",
+      "returned_is_pilot_legal": true,
+      "returned_username": "pilot_legal",
+      "rule": "Pilot MSA Legal approval",
+      "status": "EXERCISED"
+    },
+    "approval_initiation": {
+      "status": "EXERCISED",
+      "touches": 12
+    },
+    "comparison_error_and_fail_open": {
+      "RESOLUTION_ERROR_after": 11,
+      "RESOLUTION_ERROR_before": 10,
+      "authority_fail_open_dedicated": {
+        "map_patch": {
+          "caller_saw_exception": false,
+          "canonical_failure_audit_incremented": true,
+          "legacy_returned_unchanged": true
+        },
+        "select_patch": {
+          "canonical_failure_audit_incremented": true,
+          "legacy_returned_unchanged": true
+        },
+        "status": "PASS"
+      },
+      "authority_fail_open_returned_legacy": true,
+      "fail_open": true,
+      "parity_legacy_returned_unchanged": true,
+      "status": "EXERCISED"
+    },
+    "delegation": {
+      "delegation_fields": [
+        "delegated_at",
+        "delegated_to",
+        "delegation_ends_at",
+        "delegation_reason"
+      ],
+      "status": "EXERCISED"
+    },
+    "finance_approver_resolution": {
+      "hits": 0,
+      "status": "EXERCISED"
+    },
+    "generic_workflow": {
+      "status": "EXERCISED",
+      "touches": 0
+    },
+    "inactive_assignment": {
+      "inactive_pra_baseline": 0,
+      "probe": {
+        "INACTIVE_ASSIGNMENT_incremented": true,
+        "authority_returned_legacy": true,
+        "legacy_returned_same_user_parity": true,
+        "organization_slug": "controlled-pilot-org"
+      },
+      "status": "EXERCISED"
+    },
+    "legal_reviewer_resolution": {
+      "hits": 10,
+      "status": "EXERCISED"
+    },
+    "privacy_reviewer_resolution": {
+      "hits": 0,
+      "status": "EXERCISED"
+    },
+    "reassignment": {
+      "status": "EXERCISED"
+    },
+    "signer_resolution_where_applicable": {
+      "hits": 1,
+      "status": "EXERCISED"
+    },
+    "two_tenant_isolation": {
+      "cross_tenant_authority_probe": {
+        "fail_closed": true,
+        "returned_none": true,
+        "source_org": "clmone-demo",
+        "target_org": "controlled-pilot-org"
+      },
+      "organizations": [
+        "clmone-demo",
+        "clmone-mvp",
+        "controlled-pilot-org",
+        "demo-firm",
+        "payrollminds-demo"
+      ],
+      "pra_without_active_membership": 0,
+      "status": "EXERCISED"
+    },
+    "unresolved_assignment": {
+      "none_returns_sampled": 3,
+      "status": "EXERCISED"
+    }
+  },
+  "security": {
+    "ADMIN_non_authoritative": true,
+    "AMBIGUOUS_explicit": 5,
+    "CROSS_TENANT_ANOMALY": 0,
+    "DIFFERENT_USER": 0,
+    "cross_tenant_fail_closed": true,
+    "findings": [
+      "CROSS_TENANT_ANOMALY=0 on authoritative resolver report",
+      "DIFFERENT_USER=0 on authoritative resolver report",
+      "AMBIGUOUS=5 identified and non-authoritative",
+      "Cross-tenant authority probe fail-closed (None)",
+      "ADMIN authority probes returned legacy",
+      "Fail-open probes returned legacy unchanged",
+      "No credentials in permission-safe evidence keys",
+      "Assignment CERTAIN_missing=0; AMBIGUOUS ADMIN residual remains"
+    ],
+    "restricted_diagnostic_leakage": false,
+    "unexpected_CANONICAL_ONLY": 0,
+    "unexpected_LEGACY_ONLY": 0,
+    "workspace_ADMIN_grants_process_authority": false
+  }
+}

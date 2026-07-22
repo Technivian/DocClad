@@ -1,0 +1,7 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+Seed data created successfully!
+  Admin user: admin / admin123
+  Demo organization: Demo Firm
+  3 clients, 3 matters, 3 contracts
+  8 time entries, 2 invoices, 1 trust account
+  3 deadlines, 2 tasks, 1 risk, 2 conflict checks

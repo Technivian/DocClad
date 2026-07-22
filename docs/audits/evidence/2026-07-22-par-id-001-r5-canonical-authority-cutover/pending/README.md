@@ -1,4 +1,5 @@
-PENDING — not executed
+# R5 execution outputs
 
-This file is a placeholder for a future authorized R5 run.
-Do not treat this directory's pending/*.txt/*.json results as cutover evidence until populated during an authorized execution.
+Artifacts in this directory are from the authorized controlled cutover in `par-id-001-r5-staging-equivalent`.
+
+SQLite DB files under `../staging_env/` are gitignored and must not be committed.

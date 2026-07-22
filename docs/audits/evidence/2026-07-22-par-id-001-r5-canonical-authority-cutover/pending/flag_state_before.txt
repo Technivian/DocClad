@@ -1,0 +1,12 @@
+=== FLAG STATE BEFORE ===
+SHADOW=false
+PARITY_REPORTING=false
+RESOLVER_PARITY=false
+CANONICAL=false
+ALLOWLIST=''
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+settings.PROCESS_ROLE_SHADOW_WRITE_ENABLED=False
+settings.PROCESS_ROLE_PARITY_REPORTING_ENABLED=False
+settings.PROCESS_ROLE_RESOLVER_PARITY_ENABLED=False
+settings.PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED=False
+settings.PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST=''

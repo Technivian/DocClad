@@ -1,0 +1,11 @@
+timestamp=2026-07-22T20:46:01Z
+phase=pre_cutover
+procedure=Motion_3_flag_off
+SHADOW=false
+PARITY_REPORTING=false
+RESOLVER_PARITY=false
+CANONICAL=false
+ALLOWLIST=
+rollback_operator=Engineering (@Technivian) under Motion 3 carried
+dry_validate=PASS
+note=Environment starts and ends at flag-off; rollback procedure is env export only; no code change required

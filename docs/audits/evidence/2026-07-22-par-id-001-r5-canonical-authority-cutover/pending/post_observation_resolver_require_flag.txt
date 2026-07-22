@@ -1,0 +1,2 @@
+PROCESS_ROLE_RESOLVER_PARITY_ENABLED is false
+require_flag_exit=2

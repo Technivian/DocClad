@@ -1,0 +1,5 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+pra_without_active_membership=0
+cross_tenant_anomaly_audit_count=1
+cross_tenant_fail_closed_probe=PASS
+status=PASS

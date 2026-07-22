@@ -1,0 +1,3 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+Payrollminds demo ready: payrollminds-demo (6 contracts, 5 documents, 3 approvals)
+  payrollminds_admin / CLMOneMVP!2026

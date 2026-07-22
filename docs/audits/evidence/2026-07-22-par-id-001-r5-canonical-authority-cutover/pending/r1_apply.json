@@ -1,0 +1,275 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+{
+  "created": [
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 1,
+      "mapped_code": "partner_reviewer",
+      "membership_id": 2,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "PARTNER",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "PARTNER",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-01"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-01",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 2,
+      "username": "jsmith"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 2,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 3,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "SENIOR_ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-02"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-02",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 3,
+      "username": "sjones"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 3,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 4,
+      "organization_id": 1,
+      "organization_slug": "demo-firm",
+      "profile_role": "PARALEGAL",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "PARALEGAL",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-04"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-04",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 4,
+      "username": "mwilson"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 4,
+      "mapped_code": "partner_reviewer",
+      "membership_id": 6,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "PARTNER",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "PARTNER",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-01"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-01",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 6,
+      "username": "demo_partner"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 5,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 7,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "SENIOR_ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-02"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-02",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 7,
+      "username": "demo_associate"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 6,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 8,
+      "organization_id": 2,
+      "organization_slug": "clmone-demo",
+      "profile_role": "PARALEGAL",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "PARALEGAL",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-04"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-04",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 8,
+      "username": "demo_paralegal"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 7,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 10,
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_role": "ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-03"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-03",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 10,
+      "username": "mvp_owner"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 8,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 11,
+      "organization_id": 3,
+      "organization_slug": "clmone-mvp",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "SENIOR_ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-02"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-02",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 11,
+      "username": "mvp_reviewer"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 9,
+      "mapped_code": "paralegal_reviewer",
+      "membership_id": 14,
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_role": "PARALEGAL",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "PARALEGAL",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-04"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-04",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 14,
+      "username": "pilot_requester"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 10,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 15,
+      "organization_id": 4,
+      "organization_slug": "controlled-pilot-org",
+      "profile_role": "ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-03"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-03",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 15,
+      "username": "pilot_legal"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 11,
+      "mapped_code": "senior_reviewer",
+      "membership_id": 18,
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_role": "SENIOR_ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "SENIOR_ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-02"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-02",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 18,
+      "username": "payrollminds_legal"
+    },
+    {
+      "actor_id": null,
+      "already_active": false,
+      "assignment_id": 12,
+      "mapped_code": "legal_reviewer",
+      "membership_id": 19,
+      "organization_id": 5,
+      "organization_slug": "payrollminds-demo",
+      "profile_role": "ASSOCIATE",
+      "provenance": {
+        "assignment_source": "LEGACY_BACKFILL",
+        "legacy_source_field": "profile_role",
+        "legacy_source_value": "ASSOCIATE",
+        "mapping_confidence": "CERTAIN",
+        "mapping_rule": "R1-MAP-03"
+      },
+      "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+      "rule_id": "R1-MAP-03",
+      "timestamp": "2026-07-22T20:43:31.508095+00:00",
+      "user_id": 19,
+      "username": "payrollminds_procurement"
+    }
+  ],
+  "created_count": 12,
+  "mode": "apply",
+  "remediation_run_id": "cff741ee-f82b-4894-b3a3-9c42b1260178",
+  "skipped": [],
+  "skipped_count": 0,
+  "timestamp": "2026-07-22T20:43:31.508095+00:00"
+}

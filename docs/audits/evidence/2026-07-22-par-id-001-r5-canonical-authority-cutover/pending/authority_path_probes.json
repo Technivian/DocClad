@@ -1,0 +1,170 @@
+{
+  "allowlisted_rule_resolve": {
+    "approver_role": "ASSOCIATE",
+    "returned_is_pilot_legal": true,
+    "returned_username": "pilot_legal",
+    "rule": "Pilot MSA Legal approval"
+  },
+  "direct_certain_authority": {
+    "returned_username": "pilot_legal",
+    "same_as_legacy_when_match": true
+  },
+  "event_delta": {
+    "role.resolver.canonical_used": 1,
+    "role.resolver.legacy_fallback": 1,
+    "role.resolver.parity_compared": 2
+  },
+  "non_allowlisted_rule_resolve": {
+    "org": "clmone-demo",
+    "returned_username": "demo_partner",
+    "rule": "High Value Contract"
+  },
+  "note": "Pilot corpus uses ApprovalRule paths; no WorkflowTemplateSteps for controlled-pilot-org",
+  "pilot_recent_authority_events": [
+    {
+      "authoritative_for_runtime": true,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.canonical_used",
+      "path": "canonical",
+      "reason": "canonical_assignment_active"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.cutover_excluded",
+      "path": "legacy",
+      "reason": "excluded_legacy_unknown"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.cutover_excluded",
+      "path": "legacy",
+      "reason": "excluded_legacy_unknown"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.cutover_excluded",
+      "path": "legacy",
+      "reason": "excluded_legacy_unknown"
+    },
+    {
+      "authoritative_for_runtime": true,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.canonical_used",
+      "path": "canonical",
+      "reason": "canonical_assignment_active"
+    },
+    {
+      "authoritative_for_runtime": true,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.canonical_used",
+      "path": "canonical",
+      "reason": "canonical_assignment_active"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.canonical_failure",
+      "path": "legacy",
+      "reason": "canonical_resolution_error"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.cross_tenant_anomaly",
+      "path": "blocked",
+      "reason": "cross_tenant_anomaly"
+    },
+    {
+      "authoritative_for_runtime": false,
+      "changes_keys": [
+        "authoritative_for_runtime",
+        "correlation_id",
+        "criticality",
+        "organization_id",
+        "path",
+        "reason",
+        "resolver_type",
+        "timestamp"
+      ],
+      "event_type": "role.resolver.legacy_fallback",
+      "path": "legacy",
+      "reason": "inactive_assignment"
+    }
+  ],
+  "pilot_workflow_steps_present": 0
+}

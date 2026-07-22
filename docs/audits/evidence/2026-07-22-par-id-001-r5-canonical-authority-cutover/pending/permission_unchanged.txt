@@ -1,0 +1,7 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+membership_rows=20
+profile_rows=20
+cutover_mutates_membership_roles=false
+cutover_mutates_profile_roles=false
+privilege_expansion_observed=false
+status=PASS

@@ -1,0 +1,6 @@
+PROCESS_ROLE_SHADOW_WRITE_ENABLED default=False expected=False ok=True
+PROCESS_ROLE_PARITY_REPORTING_ENABLED default=False expected=False ok=True
+PROCESS_ROLE_RESOLVER_PARITY_ENABLED default=False expected=False ok=True
+PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED default=False expected=False ok=True
+ALLOWLIST_DEFAULT='' empty_ok=True
+COMMITTED_DEFAULTS_OK=True

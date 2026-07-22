@@ -1,0 +1,9 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+authority_event_totals_in_env_db:
+  role.resolver.canonical_used=4
+  role.resolver.legacy_fallback=264
+  role.resolver.cutover_excluded=3
+  role.resolver.canonical_failure=3
+  role.resolver.cross_tenant_anomaly=1
+abort_during_window=false
+monitoring_owner=Engineering (@Technivian)

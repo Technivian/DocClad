@@ -1,0 +1,3 @@
+[CLM One] Database: //Users/haroonwahed/Documents/Projects/CLMOne/docs/audits/evidence/2026-07-22-par-id-001-r5-canonical-authority-cutover/staging_env/db.sqlite3 (local, env=production)
+Seeded "CLM One Demo Firm" (org id 2): 4 users, 5 counterparties, 16 contracts.
+Log in with any of: demo_admin, demo_partner, demo_associate, demo_paralegal (password: value of DEMO_SEED_PASSWORD env var, or the command’s documented local-only default).
