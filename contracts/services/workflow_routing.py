@@ -158,7 +158,7 @@ def select_approval_rules_for_contract(contract):
 
 
 def resolve_rule_assignee(rule, contract):
-    # Legacy resolution remains authoritative (PAR-ID-001 resolver parity).
+    # Legacy resolution by default; optional canonical authority when authorized flag is on.
     if rule.specific_approver_id:
         legacy_user = rule.specific_approver
     elif not contract or not contract.organization_id:
@@ -179,8 +179,16 @@ def resolve_rule_assignee(rule, contract):
                 break
     try:
         from contracts.services.process_role_resolver_parity import after_resolve_rule_assignee
+        from contracts.services.process_role_resolver_authority import (
+            after_resolve_rule_assignee as apply_authority_after_resolve_rule_assignee,
+        )
 
-        return after_resolve_rule_assignee(legacy_user=legacy_user, rule=rule, contract=contract)
+        # Parity is diagnostic-only (always returns legacy). Authority may
+        # replace the return value when separately authorized and enabled.
+        compared = after_resolve_rule_assignee(legacy_user=legacy_user, rule=rule, contract=contract)
+        return apply_authority_after_resolve_rule_assignee(
+            legacy_user=compared, rule=rule, contract=contract,
+        )
     except Exception:
         return legacy_user
 

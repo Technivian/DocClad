@@ -2901,7 +2901,7 @@ class WorkflowTemplateStep(models.Model):
             return False
 
     def resolve_assignee(self, contract=None):
-        # Legacy resolution remains authoritative (PAR-ID-001 resolver parity).
+        # Legacy resolution by default; optional canonical authority when authorized flag is on.
         if self.specific_assignee_id:
             legacy_user = self.specific_assignee
         else:
@@ -2920,8 +2920,16 @@ class WorkflowTemplateStep(models.Model):
                         break
         try:
             from contracts.services.process_role_resolver_parity import after_resolve_assignee
+            from contracts.services.process_role_resolver_authority import (
+                after_resolve_assignee as apply_authority_after_resolve_assignee,
+            )
 
-            return after_resolve_assignee(legacy_user=legacy_user, step=self, contract=contract)
+            # Parity is diagnostic-only (always returns legacy). Authority may
+            # replace the return value when separately authorized and enabled.
+            compared = after_resolve_assignee(legacy_user=legacy_user, step=self, contract=contract)
+            return apply_authority_after_resolve_assignee(
+                legacy_user=compared, step=self, contract=contract,
+            )
         except Exception:
             return legacy_user
 

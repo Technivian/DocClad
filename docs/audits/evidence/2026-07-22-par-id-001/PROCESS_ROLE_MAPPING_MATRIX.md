@@ -43,6 +43,17 @@ Dual-read may **report** workspace membership for drift awareness; it does **not
 | `UserProfile.Role.ADMIN` | `legacy_process_admin` | LEGACY_UNKNOWN |
 | Workflow / approval “administrator” labels | Remain distinct; no silent merge | — |
 
+### First cutover exclusion (2026-07-22)
+
+Formal disposition for the **first** canonical resolver cutover scope (votes for remediation/cutover packages remain Requested where noted):
+
+1. `profile_role` / `ADMIN` remains mapped to `legacy_process_admin` with confidence **AMBIGUOUS**.
+2. ADMIN is **excluded** from canonical resolver authority in the first cutover.
+3. Workspace `OWNER`, `ADMIN`, and `MEMBER` remain outside process-role resolution.
+4. Legacy resolution **continues** for excluded ADMIN cases after any future authority flag is enabled for in-scope CERTAIN roles.
+5. A later dedicated reconciliation is required before ADMIN cutover.
+6. Parity must **not** reclassify `AMBIGUOUS` as `MATCH`; treat as **accepted exclusion**.
+
 ---
 
 ## Dual-read policy

@@ -24,6 +24,12 @@ os.environ.setdefault('STRIPE_WEBHOOK_SECRET', '')
 os.environ['ESIGN_PROVIDER'] = 'null'
 os.environ['ESIGN_DOCUMENSO_API_KEY'] = ''
 os.environ['ESIGN_DOCUMENSO_WEBHOOK_SECRET'] = ''
+# PAR-ID-001 flags must not leak from a staging-equivalent .env into hermetic tests.
+os.environ['PROCESS_ROLE_SHADOW_WRITE_ENABLED'] = 'false'
+os.environ['PROCESS_ROLE_PARITY_REPORTING_ENABLED'] = 'false'
+os.environ['PROCESS_ROLE_RESOLVER_PARITY_ENABLED'] = 'false'
+os.environ['PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED'] = 'false'
+os.environ['PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST'] = ''
 
 from .settings_development import *  # noqa: E402,F401,F403
 
@@ -49,6 +55,12 @@ GEMINI_AI_ENABLED = False
 CONTROLLED_PILOT_ENABLED = False
 BILLING_SELF_SERVE_ENABLED = True
 TRUST_ACCOUNTING_ENABLED = True
+# Re-assert PAR-ID-001 defaults after .env load (setdefault cannot override existing .env).
+PROCESS_ROLE_SHADOW_WRITE_ENABLED = False
+PROCESS_ROLE_PARITY_REPORTING_ENABLED = False
+PROCESS_ROLE_RESOLVER_PARITY_ENABLED = False
+PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED = False
+PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST = ''
 
 # Run RQ jobs synchronously in tests (no Redis required).
 RQ_QUEUES = {

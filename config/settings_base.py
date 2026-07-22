@@ -550,6 +550,18 @@ PROCESS_ROLE_PARITY_REPORTING_ENABLED = _bool_env('PROCESS_ROLE_PARITY_REPORTING
 # When enabled, selected legacy assignee resolvers also run canonical comparison
 # diagnostics. Legacy return values remain authoritative for all callers.
 PROCESS_ROLE_RESOLVER_PARITY_ENABLED = _bool_env('PROCESS_ROLE_RESOLVER_PARITY_ENABLED', default=False)
+# PAR-ID-001 — canonical resolver authority (default OFF). Independent of the
+# diagnostic flags above. When on, eligible CERTAIN non-ADMIN process roles on
+# approved resolver paths may return canonical ProcessRoleAssignment users for
+# organizations listed in PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST
+# (comma-separated slugs). Empty allowlist = no organizations (fail-safe).
+# Activation requires a separate governance vote; do not enable by default.
+PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED = _bool_env(
+    'PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED', default=False,
+)
+PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST = os.getenv(
+    'PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST', '',
+).strip()
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
