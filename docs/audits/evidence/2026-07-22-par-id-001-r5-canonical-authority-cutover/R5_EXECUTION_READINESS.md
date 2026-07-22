@@ -15,10 +15,10 @@
 | Abort conditions defined | Yes | Authorization § Immediate abort conditions |
 | Rollback procedure defined | Yes | Flag-based; non-destructive |
 | Evidence locations created | Yes | This directory + `pending/` |
-| Motions 1–4 drafted | Yes | Votes **Requested** (not carried) |
-| Operator identities filled | No | **PENDING** |
-| Reviewed deployment HEAD for execution | No | **PENDING** at vote time |
-| Staging-equivalent env recreate run for R5 | No | **PENDING** — do not run as part of prep claim |
+| Motions 1–4 drafted | Yes | **Carried** `2026-07-22T20:38:18Z` |
+| Operator identities filled | No | **PENDING** (operational execution) |
+| Reviewed deployment HEAD for execution | Yes | `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d` |
+| Staging-equivalent env recreate run for R5 | No | **PENDING** — operational enablement not performed by vote record |
 | Votes carried | **Yes** — Motions 1–4 carried `2026-07-22T20:38:18Z` |
 | Canonical flag enabled | **No** — must remain false until separate operational enablement |
 
