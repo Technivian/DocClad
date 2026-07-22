@@ -1,0 +1,352 @@
+Creating test database for alias 'default'...
+..............2026-07-22 14:23:12,391 ERROR contracts.services.process_role_resolver_parity request_id=- user_id=- org_id=- path=- resolver parity comparison failed
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/process_role_resolver_parity.py", line 222, in compare_assignee_resolution
+    canonical_ids, mapped_code, confidence, inactive_exists = _canonical_users_for_role(
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: canonical boom
+.......................2026-07-22 14:23:12,554 INFO contracts.middleware request_id=bf394af9-9db3-45ba-95cd-9e8c8d130ec6 user_id=2 org_id=1 path=/contracts/api/approvals/1/approve/ request_completed
+.2026-07-22 14:23:12,568 INFO contracts.middleware request_id=05a598a8-6c9d-4697-ab54-a9e9fb084d52 user_id=1 org_id=1 path=/contracts/api/approvals/1/approve/ request_completed
+2026-07-22 14:23:12,569 WARNING django.request request_id=- user_id=- org_id=- path=- Forbidden: /contracts/api/approvals/1/approve/
+.2026-07-22 14:23:12,583 INFO contracts.middleware request_id=469a4f51-f8a9-4dcc-85e5-8fb21b258794 user_id=4 org_id=2 path=/contracts/api/approvals/1/approve/ request_completed
+2026-07-22 14:23:12,583 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/api/approvals/1/approve/
+.2026-07-22 14:23:12,607 INFO contracts.middleware request_id=6137039a-0179-4ff2-a9f6-39ebd9965f13 user_id=4 org_id=2 path=/contracts/api/contracts/1/approvals/ request_completed
+2026-07-22 14:23:12,608 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/api/contracts/1/approvals/
+.2026-07-22 14:23:12,621 INFO contracts.middleware request_id=3beaf2bc-d652-4cee-91dc-bb7ffa34a05e user_id=4 org_id=2 path=/contracts/api/approvals/1/delegate/ request_completed
+2026-07-22 14:23:12,621 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/api/approvals/1/delegate/
+.2026-07-22 14:23:12,640 INFO contracts.middleware request_id=b31312e0-e633-457d-805c-9587879d1329 user_id=4 org_id=2 path=/contracts/api/contracts/1/approvals/initiate/ request_completed
+2026-07-22 14:23:12,640 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/api/contracts/1/approvals/initiate/
+.2026-07-22 14:23:12,702 INFO contracts.middleware request_id=d277a1b6-7375-4bd8-8263-596257bbf316 user_id=4 org_id=2 path=/contracts/api/approvals/1/reject/ request_completed
+2026-07-22 14:23:12,702 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/api/approvals/1/reject/
+.2026-07-22 14:23:12,716 INFO contracts.middleware request_id=a5f6d204-2dc0-48e6-bbd3-f6f1ab61dade user_id=3 org_id=1 path=/contracts/api/approvals/1/approve/ request_completed
+2026-07-22 14:23:12,716 WARNING django.request request_id=- user_id=- org_id=- path=- Forbidden: /contracts/api/approvals/1/approve/
+...............2026-07-22 14:23:12,968 INFO contracts.middleware request_id=803cd1de-4eb6-4065-840b-7088b5a88e7c user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:12,991 INFO contracts.middleware request_id=5e2251a7-76dd-4775-90b2-e0bc736bd884 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:13,014 INFO contracts.middleware request_id=2c48030e-f9e9-4105-9363-18c64a5a8841 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:13,037 INFO contracts.middleware request_id=f7a0223d-b471-4857-b18b-89ae7a321f0d user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:13,082 INFO contracts.middleware request_id=7d661a31-c051-4921-b710-cc082ce04e0a user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:13,108 INFO contracts.middleware request_id=7df38565-2bbd-4fae-9b2e-cb2f85b6b85b user_id=2 org_id=2 path=/contracts/budgets/1/ request_completed
+2026-07-22 14:23:13,108 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/budgets/1/
+.2026-07-22 14:23:13,141 INFO contracts.middleware request_id=f743d76c-3b60-4fd5-9737-54dd553cdfb6 user_id=2 org_id=2 path=/contracts/budgets/ request_completed
+.2026-07-22 14:23:13,167 INFO contracts.middleware request_id=79893ee8-c635-4fc5-81e3-22e1c2f25f95 user_id=2 org_id=2 path=/contracts/budgets/1/edit/ request_completed
+2026-07-22 14:23:13,167 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/budgets/1/edit/
+.2026-07-22 14:23:13,192 INFO contracts.middleware request_id=db84acf5-eb64-4004-b81c-a759ec9302ef user_id=2 org_id=2 path=/contracts/clause-library/9/ request_completed
+2026-07-22 14:23:13,193 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clause-library/9/
+.2026-07-22 14:23:13,223 INFO contracts.middleware request_id=00a2cd1c-d4b1-47bd-802d-d4553482ff6b user_id=2 org_id=2 path=/contracts/clause-library/ request_completed
+.2026-07-22 14:23:13,248 INFO contracts.middleware request_id=98cb143f-555b-459b-89ab-4b3be2dbb532 user_id=2 org_id=2 path=/contracts/clients/2/ request_completed
+2026-07-22 14:23:13,248 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clients/2/
+.2026-07-22 14:23:13,279 INFO contracts.middleware request_id=5a2e77ed-c1a0-40a0-a4d6-3ef3742bdfc1 user_id=2 org_id=2 path=/contracts/clients/ request_completed
+.2026-07-22 14:23:13,305 INFO contracts.middleware request_id=1699f649-20c5-4a27-9301-894a6a0c26fb user_id=2 org_id=2 path=/contracts/clients/2/edit/ request_completed
+2026-07-22 14:23:13,305 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clients/2/edit/
+.2026-07-22 14:23:13,330 INFO contracts.middleware request_id=e7f38af2-0557-4f9a-a015-fe2a6a4005a1 user_id=2 org_id=2 path=/contracts/1/ request_completed
+2026-07-22 14:23:13,330 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/1/
+.2026-07-22 14:23:13,349 INFO contracts.middleware request_id=e104df75-b05c-4348-b6a5-c9bb70a8c2cc user_id=2 org_id=2 path=/contracts/ request_completed
+2026-07-22 14:23:13,367 INFO contracts.middleware request_id=48cc364b-8c8f-4a61-ac4f-69d55a4f2b16 user_id=2 org_id=2 path=/contracts/repository/ request_completed
+.2026-07-22 14:23:13,394 INFO contracts.middleware request_id=6162b06c-6207-4d8f-acff-b912f34c4837 user_id=2 org_id=2 path=/contracts/1/edit/ request_completed
+2026-07-22 14:23:13,394 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/1/edit/
+.2026-07-22 14:23:13,419 INFO contracts.middleware request_id=28a0a0c7-0adc-4efa-a8c9-7eadd2f41a81 user_id=2 org_id=2 path=/contracts/counterparties/1/ request_completed
+2026-07-22 14:23:13,420 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/counterparties/1/
+.2026-07-22 14:23:13,450 INFO contracts.middleware request_id=154b4a55-228e-43b6-b384-23a5f6cb8150 user_id=2 org_id=2 path=/contracts/counterparties/ request_completed
+.2026-07-22 14:23:13,475 INFO contracts.middleware request_id=138ece12-3cfd-41c0-a914-1050346796a1 user_id=2 org_id=2 path=/contracts/deadlines/1/complete/ request_completed
+2026-07-22 14:23:13,475 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/deadlines/1/complete/
+.2026-07-22 14:23:13,512 INFO contracts.middleware request_id=8e536b35-ef32-4c2a-9d7a-7ce6e46c422f user_id=2 org_id=2 path=/contracts/obligations/ request_completed
+.2026-07-22 14:23:13,537 INFO contracts.middleware request_id=52dad684-1706-4a57-8618-7fd5fb9edeef user_id=2 org_id=2 path=/contracts/deadlines/1/edit/ request_completed
+2026-07-22 14:23:13,537 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/deadlines/1/edit/
+.2026-07-22 14:23:13,562 INFO contracts.middleware request_id=99045575-da3d-4e6d-8845-853026945280 user_id=2 org_id=2 path=/contracts/documents/1/ request_completed
+2026-07-22 14:23:13,562 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/
+.2026-07-22 14:23:13,597 INFO contracts.middleware request_id=e94e43b7-ba23-4fb7-86fa-347fdf83acc2 user_id=2 org_id=2 path=/contracts/documents/ request_completed
+.2026-07-22 14:23:13,622 INFO contracts.middleware request_id=02ac786a-75af-4d0c-b113-97b08629ee4e user_id=2 org_id=2 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 14:23:13,623 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/edit/
+.2026-07-22 14:23:13,648 INFO contracts.middleware request_id=3fcd3f4c-ffe8-43af-aa1e-e8742967f964 user_id=2 org_id=2 path=/contracts/dd-item/1/toggle/ request_completed
+2026-07-22 14:23:13,648 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/dd-item/1/toggle/
+.2026-07-22 14:23:13,673 INFO contracts.middleware request_id=8c34bac0-d602-49d0-aa67-3d2f43338645 user_id=2 org_id=2 path=/contracts/due-diligence/1/ request_completed
+2026-07-22 14:23:13,674 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/due-diligence/1/
+.2026-07-22 14:23:13,703 INFO contracts.middleware request_id=4d120e7a-cf24-4c1f-a9f9-984156d83e86 user_id=2 org_id=2 path=/contracts/due-diligence/ request_completed
+.2026-07-22 14:23:13,729 INFO contracts.middleware request_id=e0920c11-e8ef-40ff-a59e-a351590d3ba4 user_id=2 org_id=2 path=/contracts/due-diligence/1/edit/ request_completed
+2026-07-22 14:23:13,729 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/due-diligence/1/edit/
+....2026-07-22 14:23:13,754 INFO contracts.middleware request_id=efaed45e-ed71-4852-b11b-6c8f82afdc1f user_id=2 org_id=2 path=/contracts/trust-accounts/1/ request_completed
+2026-07-22 14:23:13,754 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trust-accounts/1/
+.2026-07-22 14:23:13,778 INFO contracts.middleware request_id=3309525a-fc2a-40fe-9d5f-983d21749775 user_id=2 org_id=2 path=/contracts/trust-accounts/ request_completed
+.2026-07-22 14:23:13,800 INFO contracts.middleware request_id=ba2abd99-e7bb-45b7-9d61-0cfaf8176f85 user_id=2 org_id=2 path=/contracts/trust-accounts/ request_completed
+.2026-07-22 14:23:13,843 INFO contracts.middleware request_id=40d18a98-b119-4988-9bc0-9d0bc6d75f07 user_id=2 org_id=2 path=/contracts/legal-tasks/ request_completed
+.2026-07-22 14:23:13,869 INFO contracts.middleware request_id=52e274fd-487d-4240-8d2f-c5937f58b196 user_id=2 org_id=2 path=/contracts/legal-tasks/1/edit/ request_completed
+2026-07-22 14:23:13,869 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/legal-tasks/1/edit/
+.2026-07-22 14:23:13,894 INFO contracts.middleware request_id=214ddc81-65e8-49c6-99e0-7d6b6fb07fbd user_id=2 org_id=2 path=/contracts/matters/1/ request_completed
+2026-07-22 14:23:13,895 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/matters/1/
+.2026-07-22 14:23:13,927 INFO contracts.middleware request_id=b96004f5-d4bf-4f5e-8384-e1be4c97379e user_id=2 org_id=2 path=/contracts/matters/ request_completed
+.2026-07-22 14:23:13,952 INFO contracts.middleware request_id=b5f3a218-9492-4099-9161-d3da5f399c01 user_id=2 org_id=2 path=/contracts/matters/1/edit/ request_completed
+2026-07-22 14:23:13,953 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/matters/1/edit/
+....2026-07-22 14:23:14,009 INFO contracts.middleware request_id=257bb116-45a6-48fa-b9f2-72810ae1c8fe user_id=2 org_id=2 path=/contracts/search/ request_completed
+.2026-07-22 14:23:14,045 INFO contracts.middleware request_id=252e6c46-684c-4a6f-a662-fda399cf55d5 user_id=2 org_id=2 path=/contracts/search/ request_completed
+.2026-07-22 14:23:14,082 INFO contracts.middleware request_id=35ea6dc7-f5a3-41d9-8790-a531591cc7e2 user_id=2 org_id=2 path=/contracts/privacy/ request_completed
+.2026-07-22 14:23:14,132 INFO contracts.middleware request_id=d65dc86d-8cd4-4a9b-98ee-50557e78de6c user_id=2 org_id=2 path=/contracts/approvals/ request_completed
+.2026-07-22 14:23:14,164 INFO contracts.middleware request_id=b4483cd6-0290-45d0-8fd4-fed57249ecfc user_id=2 org_id=2 path=/contracts/approval-rules/ request_completed
+.2026-07-22 14:23:14,194 INFO contracts.middleware request_id=912a36d8-267e-4d27-9c00-a8d5283a170f user_id=2 org_id=2 path=/contracts/privacy/data-inventory/ request_completed
+.2026-07-22 14:23:14,285 INFO contracts.middleware request_id=b0753c2f-d9eb-499a-a134-0565d881206e user_id=2 org_id=2 path=/contracts/privacy/dsar/ request_completed
+.2026-07-22 14:23:14,316 INFO contracts.middleware request_id=f512ebf1-3a75-46bf-825e-1228fe42416e user_id=2 org_id=2 path=/contracts/ethical-walls/ request_completed
+.2026-07-22 14:23:14,342 INFO contracts.middleware request_id=a8f457c9-3739-4d20-ab67-3c86c99256ff user_id=2 org_id=2 path=/contracts/privacy/legal-holds/1/ request_completed
+2026-07-22 14:23:14,342 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/privacy/legal-holds/1/
+.2026-07-22 14:23:14,372 INFO contracts.middleware request_id=8702d26f-babe-48d3-acc8-0bc70c88f570 user_id=2 org_id=2 path=/contracts/privacy/retention/ request_completed
+.2026-07-22 14:23:14,402 INFO contracts.middleware request_id=b582de1b-04e2-4fc8-b3d1-38e839f77e84 user_id=2 org_id=2 path=/contracts/privacy/subprocessors/ request_completed
+.2026-07-22 14:23:14,432 INFO contracts.middleware request_id=ce62e708-53a1-4227-8858-0d7fddf8f8de user_id=2 org_id=2 path=/contracts/privacy/transfers/ request_completed
+.2026-07-22 14:23:14,466 INFO contracts.middleware request_id=0d0fa153-23ff-49ca-9a03-e585ab8d015c user_id=2 org_id=2 path=/contracts/risks/ request_completed
+.2026-07-22 14:23:14,491 INFO contracts.middleware request_id=86ccffaf-9b97-4278-b05b-adacc358eb11 user_id=2 org_id=2 path=/contracts/risks/1/edit/ request_completed
+2026-07-22 14:23:14,492 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/risks/1/edit/
+.2026-07-22 14:23:14,531 INFO contracts.middleware request_id=f07a8b99-4732-4b73-b7fe-49b0aade02f2 user_id=2 org_id=2 path=/contracts/workflows/create/ request_completed
+2026-07-22 14:23:14,550 INFO contracts.middleware request_id=c3c6ea0a-d939-4875-9055-54d1f3281c8a user_id=2 org_id=2 path=/contracts/clause-library/new/ request_completed
+2026-07-22 14:23:14,569 INFO contracts.middleware request_id=cffe839d-38d5-4981-9ee0-48d1ed6ed58b user_id=2 org_id=2 path=/contracts/ethical-walls/new/ request_completed
+2026-07-22 14:23:14,606 INFO contracts.middleware request_id=625262d1-f5ed-4218-9831-688d3d3ecb56 user_id=2 org_id=2 path=/contracts/signatures/new/ request_completed
+2026-07-22 14:23:14,630 INFO contracts.middleware request_id=6f18a859-222b-4a5c-a15f-a814c211ce49 user_id=2 org_id=2 path=/contracts/privacy/data-inventory/new/ request_completed
+2026-07-22 14:23:14,653 INFO contracts.middleware request_id=6946d6c4-4559-4689-a832-93ea77b05b3a user_id=2 org_id=2 path=/contracts/privacy/dsar/new/ request_completed
+2026-07-22 14:23:14,674 INFO contracts.middleware request_id=e4288dee-8f53-45c5-bc2b-bc1fede2137e user_id=2 org_id=2 path=/contracts/privacy/transfers/new/ request_completed
+2026-07-22 14:23:14,732 INFO contracts.middleware request_id=6e24dc70-7148-473e-9af7-9059df3e50b3 user_id=2 org_id=2 path=/contracts/privacy/legal-holds/new/ request_completed
+2026-07-22 14:23:14,766 INFO contracts.middleware request_id=92befeba-e32b-41d7-89ba-224d9433bfac user_id=2 org_id=2 path=/contracts/approval-rules/new/ request_completed
+2026-07-22 14:23:14,788 INFO contracts.middleware request_id=86f12c08-33b9-4af8-9024-6239fa71a504 user_id=2 org_id=2 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:14,826 INFO contracts.middleware request_id=3b3c3b42-2928-4530-9057-5838841f2346 user_id=2 org_id=2 path=/contracts/clause-library/10/edit/ request_completed
+2026-07-22 14:23:14,847 INFO contracts.middleware request_id=b5bb0c19-38fb-4baa-a0bb-6a0815d5163d user_id=2 org_id=2 path=/contracts/ethical-walls/2/edit/ request_completed
+2026-07-22 14:23:14,866 INFO contracts.middleware request_id=8fbaca28-8352-40c6-ba6f-e5031728864a user_id=2 org_id=2 path=/contracts/signatures/2/edit/ request_completed
+2026-07-22 14:23:14,887 INFO contracts.middleware request_id=b9533dc6-f5da-43bf-beef-9f46ad422b12 user_id=2 org_id=2 path=/contracts/privacy/data-inventory/2/edit/ request_completed
+2026-07-22 14:23:14,908 INFO contracts.middleware request_id=db4af982-f7e9-4a4c-825a-49d5425d059c user_id=2 org_id=2 path=/contracts/privacy/dsar/2/edit/ request_completed
+2026-07-22 14:23:14,927 INFO contracts.middleware request_id=7efe993b-ab8a-4bce-86c2-7665aeb0c88d user_id=2 org_id=2 path=/contracts/privacy/transfers/2/edit/ request_completed
+2026-07-22 14:23:14,948 INFO contracts.middleware request_id=0b997f66-56f4-4afd-a128-4401555a3d05 user_id=2 org_id=2 path=/contracts/privacy/legal-holds/2/edit/ request_completed
+2026-07-22 14:23:14,967 INFO contracts.middleware request_id=33b9aeaa-2b29-40f1-8b56-72b0cad69bd7 user_id=2 org_id=2 path=/contracts/approval-rules/2/edit/ request_completed
+2026-07-22 14:23:14,986 INFO contracts.middleware request_id=b78f28ed-bdad-4310-b569-db6ba4cbdaa8 user_id=2 org_id=2 path=/contracts/approvals/2/edit/ request_completed
+.2026-07-22 14:23:15,012 INFO contracts.middleware request_id=22873392-6866-452d-ba93-a01ce9452cd7 user_id=2 org_id=2 path=/contracts/signatures/1/ request_completed
+2026-07-22 14:23:15,013 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/signatures/1/
+.2026-07-22 14:23:15,043 INFO contracts.middleware request_id=f166d187-9dfe-45a8-ac5d-57ec4e070880 user_id=2 org_id=2 path=/contracts/signatures/ request_completed
+.2026-07-22 14:23:15,069 INFO contracts.middleware request_id=bf6358fc-28de-4865-87ef-256ace0f5a3c user_id=2 org_id=2 path=/contracts/signatures/1/packet/ request_completed
+2026-07-22 14:23:15,070 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/signatures/1/packet/
+.2026-07-22 14:23:15,125 INFO contracts.middleware request_id=9722d962-2793-431a-aed9-c7c3a4c6def1 user_id=2 org_id=2 path=/contracts/new/ request_completed
+2026-07-22 14:23:15,146 INFO contracts.middleware request_id=f4e23524-9e3e-44f7-8b2b-8af607d3302b user_id=2 org_id=2 path=/contracts/clients/new/ request_completed
+2026-07-22 14:23:15,168 INFO contracts.middleware request_id=b8a539d1-35d5-4e12-a1a5-2ac084253552 user_id=2 org_id=2 path=/contracts/matters/new/ request_completed
+2026-07-22 14:23:15,189 INFO contracts.middleware request_id=4aafa13b-41ba-4ce1-a5a7-5b814a9ef2bd user_id=2 org_id=2 path=/contracts/documents/new/ request_completed
+2026-07-22 14:23:15,207 INFO contracts.middleware request_id=e4bbe958-9e85-4f25-9c25-f4fca10fb443 user_id=2 org_id=2 path=/contracts/time/new/ request_completed
+2026-07-22 14:23:15,226 INFO contracts.middleware request_id=14537dec-9f71-4dfe-b300-2c22afa9e6f4 user_id=2 org_id=2 path=/contracts/invoices/new/ request_completed
+2026-07-22 14:23:15,243 INFO contracts.middleware request_id=a626f7e7-19e9-47c3-a112-7bf9d70504a0 user_id=2 org_id=2 path=/contracts/trust-accounts/new/ request_completed
+2026-07-22 14:23:15,262 INFO contracts.middleware request_id=69aad0c5-7222-4c24-9f0a-a3cc5c0f31b1 user_id=2 org_id=2 path=/contracts/conflicts/new/ request_completed
+2026-07-22 14:23:15,282 INFO contracts.middleware request_id=1c65dd42-869c-4217-8971-75e4b435cd40 user_id=2 org_id=2 path=/contracts/deadlines/new/ request_completed
+2026-07-22 14:23:15,301 INFO contracts.middleware request_id=5f7d1308-5cd1-478d-a95d-890923955be4 user_id=2 org_id=2 path=/contracts/approvals/new/ request_completed
+.2026-07-22 14:23:15,340 INFO contracts.middleware request_id=1ce3f2f9-f129-48bd-924d-cda7958b7bc4 user_id=2 org_id=2 path=/contracts/clients/3/edit/ request_completed
+2026-07-22 14:23:15,360 INFO contracts.middleware request_id=1e4946b3-41ce-4698-8209-e66cbef6913b user_id=2 org_id=2 path=/contracts/matters/2/edit/ request_completed
+2026-07-22 14:23:15,380 INFO contracts.middleware request_id=ab0f1860-d629-4a8d-83b6-0175f330be63 user_id=2 org_id=2 path=/contracts/documents/2/edit/ request_completed
+2026-07-22 14:23:15,399 INFO contracts.middleware request_id=1a2baaf7-d177-4e0f-b6d1-645243f22f53 user_id=2 org_id=2 path=/contracts/time/1/edit/ request_completed
+2026-07-22 14:23:15,417 INFO contracts.middleware request_id=0f26796c-28a3-4105-bb84-ac62eaa24acc user_id=2 org_id=2 path=/contracts/invoices/1/edit/ request_completed
+2026-07-22 14:23:15,435 INFO contracts.middleware request_id=4ef3e991-ffea-44b7-b92f-3f40faa2abb2 user_id=2 org_id=2 path=/contracts/conflicts/1/edit/ request_completed
+2026-07-22 14:23:15,455 INFO contracts.middleware request_id=6542a495-a973-4541-bbdb-33c241cab507 user_id=2 org_id=2 path=/contracts/deadlines/2/edit/ request_completed
+2026-07-22 14:23:15,475 INFO contracts.middleware request_id=c2d5ee9f-2774-4cee-a811-ba509d24179f user_id=2 org_id=2 path=/contracts/approvals/2/edit/ request_completed
+.2026-07-22 14:23:15,501 INFO contracts.middleware request_id=9e355e6a-1995-4a35-a95d-9a8e05862e06 user_id=2 org_id=2 path=/contracts/trademarks/1/ request_completed
+2026-07-22 14:23:15,502 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trademarks/1/
+.2026-07-22 14:23:15,534 INFO contracts.middleware request_id=df4ab2d8-1a4c-460c-aa26-b7acde73059e user_id=2 org_id=2 path=/contracts/trademarks/ request_completed
+.2026-07-22 14:23:15,560 INFO contracts.middleware request_id=74649878-1065-446b-9784-1fde510e2270 user_id=2 org_id=2 path=/contracts/trademarks/1/edit/ request_completed
+2026-07-22 14:23:15,560 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trademarks/1/edit/
+.2026-07-22 14:23:15,566 INFO contracts.middleware request_id=a3eb3e11-9238-47cf-b1d8-8621866413e3 user_id=- org_id=- path=/contracts/ request_completed
+2026-07-22 14:23:15,566 INFO contracts.middleware request_id=89adb95a-b442-4619-b0c9-08fbc6a8d2ec user_id=- org_id=- path=/contracts/documents/ request_completed
+2026-07-22 14:23:15,567 INFO contracts.middleware request_id=1c7d05eb-84b2-48c3-bc63-5702adf474fb user_id=- org_id=- path=/contracts/clients/ request_completed
+2026-07-22 14:23:15,567 INFO contracts.middleware request_id=b29f191d-60c5-44e2-8c2b-64101fa6ef09 user_id=- org_id=- path=/contracts/matters/ request_completed
+2026-07-22 14:23:15,568 INFO contracts.middleware request_id=3560f6cd-7195-4f87-abc0-9231a8270879 user_id=- org_id=- path=/contracts/legal-tasks/ request_completed
+2026-07-22 14:23:15,568 INFO contracts.middleware request_id=ecbb428b-c553-43a1-a226-0f5183543eca user_id=- org_id=- path=/contracts/risks/ request_completed
+2026-07-22 14:23:15,568 INFO contracts.middleware request_id=c3bb9d14-6711-41d2-9513-acd814344af7 user_id=- org_id=- path=/contracts/deadlines/ request_completed
+2026-07-22 14:23:15,569 INFO contracts.middleware request_id=5260f6c8-481e-48e2-a08a-3ac7fdfbfea9 user_id=- org_id=- path=/contracts/trademarks/ request_completed
+2026-07-22 14:23:15,569 INFO contracts.middleware request_id=e513ec85-312e-4a91-a79c-d2d7483fe12d user_id=- org_id=- path=/contracts/budgets/ request_completed
+2026-07-22 14:23:15,570 INFO contracts.middleware request_id=f4b85044-df43-4a63-aae9-8559f7c3bbdf user_id=- org_id=- path=/contracts/due-diligence/ request_completed
+2026-07-22 14:23:15,570 INFO contracts.middleware request_id=7f155645-9672-4dd0-9776-80d070c0e188 user_id=- org_id=- path=/dashboard/ request_completed
+.2026-07-22 14:23:15,595 INFO contracts.middleware request_id=3f2c29ab-a8a2-4381-b809-a9e883349538 user_id=2 org_id=2 path=/contracts/workflows/1/activity/ request_completed
+2026-07-22 14:23:15,595 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/1/activity/
+.2026-07-22 14:23:15,634 INFO contracts.middleware request_id=adcca9ed-ccc3-421e-80eb-a24cd5a1a348 user_id=2 org_id=2 path=/contracts/workflows/ request_completed
+.2026-07-22 14:23:15,659 INFO contracts.middleware request_id=0061060d-8a47-49ca-a5d4-d47909e1f44d user_id=2 org_id=2 path=/contracts/workflows/1/ request_completed
+2026-07-22 14:23:15,660 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/1/
+.2026-07-22 14:23:15,686 INFO contracts.middleware request_id=6976d4dd-0411-4ee0-8bf4-a65bb261b67e user_id=2 org_id=2 path=/contracts/workflows/step/1/update/ request_completed
+2026-07-22 14:23:15,686 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/step/1/update/
+.2026-07-22 14:23:15,711 INFO contracts.middleware request_id=33475e93-e156-48f9-b767-85d95a53d2c3 user_id=2 org_id=2 path=/contracts/workflows/templates/4/activity/ request_completed
+2026-07-22 14:23:15,711 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/activity/
+.2026-07-22 14:23:15,735 INFO contracts.middleware request_id=0a96c4c3-3ceb-429c-b06f-829bb8f20239 user_id=2 org_id=2 path=/contracts/workflows/templates/4/ request_completed
+2026-07-22 14:23:15,736 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/
+.2026-07-22 14:23:15,780 INFO contracts.middleware request_id=a4a034f1-3395-4973-a095-ed3c37e5aaf3 user_id=2 org_id=2 path=/contracts/workflows/templates/ request_completed
+.2026-07-22 14:23:15,806 INFO contracts.middleware request_id=acf53a0d-853c-40f8-82b0-ce911010ed4d user_id=2 org_id=2 path=/contracts/workflows/templates/4/steps/12/delete/ request_completed
+2026-07-22 14:23:15,806 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/steps/12/delete/
+....2026-07-22 14:23:15,812 ERROR contracts.middleware request_id=- user_id=- org_id=- path=- audit append failed action=UPDATE model=ApprovalRequest
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2128, in get_prep_value
+    return int(value)
+           ^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/middleware.py", line 577, in log_action
+    return append_audit(
+           ^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/audit.py", line 212, in append_audit
+    tail = _chain_tail(org_id)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/audit.py", line 157, in _chain_tail
+    .filter(organization_id=organization_id, seq__isnull=False)
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1495, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1513, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1523, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1648, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1680, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1590, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1417, in build_lookup
+    lookup = lookup_class(lhs, rhs)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/lookups.py", line 38, in __init__
+    self.rhs = self.get_prep_lookup()
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/related_lookups.py", line 112, in get_prep_lookup
+    self.rhs = target_field.get_prep_value(self.rhs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2130, in get_prep_value
+    raise e.__class__(
+TypeError: Field 'id' expected a number but got [].
+...2026-07-22 14:23:15,824 ERROR contracts.middleware request_id=- user_id=- org_id=- path=- audit append failed action=UPDATE model=ApprovalRequest
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2128, in get_prep_value
+    return int(value)
+           ^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/middleware.py", line 577, in log_action
+    return append_audit(
+           ^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/audit.py", line 212, in append_audit
+    tail = _chain_tail(org_id)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/audit.py", line 157, in _chain_tail
+    .filter(organization_id=organization_id, seq__isnull=False)
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1495, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1513, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1523, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1648, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1680, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1590, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1417, in build_lookup
+    lookup = lookup_class(lhs, rhs)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/lookups.py", line 38, in __init__
+    self.rhs = self.get_prep_lookup()
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/related_lookups.py", line 112, in get_prep_lookup
+    self.rhs = target_field.get_prep_value(self.rhs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2130, in get_prep_value
+    raise e.__class__(
+TypeError: Field 'id' expected a number but got [].
+2026-07-22 14:23:15,829 ERROR contracts.services.approval_workflow request_id=- user_id=- org_id=- path=- Failed to audit SLA breach for approval 1
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2128, in get_prep_value
+    return int(value)
+           ^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/approval_workflow.py", line 743, in escalate
+    org = Organization.objects.filter(pk=effective_org_id).first()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1495, in filter
+    return self._filter_or_exclude(False, args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1513, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1523, in _filter_or_exclude_inplace
+    self._query.add_q(Q(*args, **kwargs))
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1648, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1680, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1590, in build_filter
+    condition = self.build_lookup(lookups, col, value)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 1417, in build_lookup
+    lookup = lookup_class(lhs, rhs)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/lookups.py", line 38, in __init__
+    self.rhs = self.get_prep_lookup()
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/lookups.py", line 410, in get_prep_lookup
+    return super().get_prep_lookup()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/lookups.py", line 96, in get_prep_lookup
+    return self.lhs.output_field.get_prep_value(self.rhs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/.venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py", line 2130, in get_prep_value
+    raise e.__class__(
+TypeError: Field 'id' expected a number but got [].
+.........
+----------------------------------------------------------------------
+Ran 149 tests in 3.847s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 149 test(s).
+System check identified no issues (0 silenced).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).
+Processed 0 OCR review(s).

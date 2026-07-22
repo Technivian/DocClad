@@ -116,6 +116,30 @@ class ResolverParityTests(TestCase):
         self.assertEqual(get_staging_counters()['total_comparisons'], 0)
         self.assertFalse(AuditLog.objects.filter(event_type=EVENT_RESOLVER_PARITY).exists())
 
+    def test_flag_defaults_false_in_settings(self):
+        from django.conf import settings
+
+        self.assertFalse(getattr(settings, 'PROCESS_ROLE_RESOLVER_PARITY_ENABLED', True))
+
+    @override_settings(PROCESS_ROLE_RESOLVER_PARITY_ENABLED=True)
+    def test_specific_assignee_short_circuit_returns_legacy(self):
+        self.step.specific_assignee = self.user_b
+        self.step.assignee_role = UserProfile.Role.ASSOCIATE
+        self.step.save(update_fields=['specific_assignee', 'assignee_role'])
+        self._profile(self.user_a, UserProfile.Role.ASSOCIATE)
+        self._assign(self.user_a, 'legal_reviewer')
+        result = self.step.resolve_assignee(self.contract)
+        self.assertEqual(result.pk if result else None, self.user_b.pk)
+
+    @override_settings(PROCESS_ROLE_RESOLVER_PARITY_ENABLED=True)
+    def test_specific_approver_short_circuit_returns_legacy(self):
+        self.rule.specific_approver = self.user_b
+        self.rule.save(update_fields=['specific_approver'])
+        self._profile(self.user_a, UserProfile.Role.ASSOCIATE)
+        self._assign(self.user_a, 'legal_reviewer')
+        result = resolve_rule_assignee(self.rule, self.contract)
+        self.assertEqual(result.pk if result else None, self.user_b.pk)
+
     @override_settings(PROCESS_ROLE_RESOLVER_PARITY_ENABLED=True)
     def test_match_returns_legacy(self):
         self._profile(self.user_a, UserProfile.Role.ASSOCIATE)

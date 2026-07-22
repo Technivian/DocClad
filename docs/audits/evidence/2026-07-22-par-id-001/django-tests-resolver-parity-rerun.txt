@@ -1,0 +1,37 @@
+Creating test database for alias 'default'...
+.............2026-07-22 14:22:35,788 ERROR contracts.services.process_role_resolver_parity request_id=- user_id=- org_id=- path=- resolver parity comparison failed
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/process_role_resolver_parity.py", line 222, in compare_assignee_resolution
+    canonical_ids, mapped_code, confidence, inactive_exists = _canonical_users_for_role(
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: canonical boom
+..........2026-07-22 14:22:36,203 ERROR contracts.services.process_role_shadow_sync request_id=- user_id=- org_id=- path=- process role shadow sync failed org=1 user=1
+Traceback (most recent call last):
+  File "/Users/haroonwahed/Documents/Projects/CLMOne/contracts/services/process_role_shadow_sync.py", line 205, in maybe_shadow_sync_profile_role
+    shadow_sync_profile_role_for_organization(
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/haroonwahed/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: injected shadow failure
+....................................
+----------------------------------------------------------------------
+Ran 59 tests in 2.037s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 59 test(s).
+System check identified no issues (0 silenced).

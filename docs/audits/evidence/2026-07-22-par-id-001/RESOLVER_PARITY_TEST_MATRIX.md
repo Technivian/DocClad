@@ -1,49 +1,50 @@
 # PAR-ID-001 Slice 4 — Resolver parity test matrix
 
-**Status:** Planned — implement only after [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) is **Authorized**.  
+**Status:** **Implemented** under [`RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`](RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md) (**Authorized**).  
 **Flag:** `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` (default false)  
-**Hard rule:** Canonical comparison must never change the value returned to production callers.
+**Hard rule:** Canonical comparison must never change the value returned to production callers.  
+**Suite:** `tests.test_par_id_001_resolver_parity`
 
 ---
 
 ## Behavioural invariants
 
-| # | Assertion |
-|---|---|
-| I1 | Flag off → legacy resolvers behave identically (no extra failures; return unchanged) |
-| I2 | Flag on → returned actor/role is **byte-for-byte / identity-equal** to legacy-only run |
-| I3 | Canonical exception → legacy result still returned; `RESOLUTION_ERROR` recorded |
-| I4 | Drift never writes `UserProfile`, `OrganizationMembership`, or auto-repairs PRA |
-| I5 | Cross-tenant anomaly never “fixes” by adopting canonical user |
-| I6 | No contract content / credentials in report or audit payload |
+| # | Assertion | Coverage |
+|---|---|---|
+| I1 | Flag off → legacy resolvers behave identically (no extra failures; return unchanged) | `test_flag_off_leaves_behavior_unchanged`, `test_flag_defaults_false_in_settings` |
+| I2 | Flag on → returned actor/role is **identity-equal** to legacy-only run | All classification tests assert legacy return |
+| I3 | Canonical exception → legacy result still returned; `RESOLUTION_ERROR` recorded | `test_resolution_error_returns_legacy` |
+| I4 | Drift never writes `UserProfile`, `OrganizationMembership`, or auto-repairs PRA | `test_no_automatic_repair` |
+| I5 | Cross-tenant anomaly never “fixes” by adopting canonical user | `test_cross_tenant_anomaly_returns_legacy_and_escalates` |
+| I6 | No contract content / credentials in report or audit payload | `test_evidence_hygiene` |
 
 ---
 
 ## Classification cases
 
-| Classification | Test intent |
+| Classification | Test |
 |---|---|
-| MATCH | Legacy user equals sole/primary canonical candidate for mapped role |
-| LEGACY_ONLY | Legacy returns user; canonical has no active matching assignment |
-| CANONICAL_ONLY | Canonical has candidate(s); legacy returns None (or empty) |
-| DIFFERENT_USER | Both resolve; different user ids |
-| DIFFERENT_ROLE | Role code mismatch for resolved actors |
-| AMBIGUOUS | ADMIN / multi-candidate / ambiguous mapping surfaced explicitly |
-| INACTIVE_ASSIGNMENT | Expected canonical code exists only inactive |
-| CROSS_TENANT_ANOMALY | Canonical or comparison path would cross org boundary |
-| RESOLUTION_ERROR | Canonical side throws / times out |
+| MATCH | `test_match_returns_legacy` |
+| LEGACY_ONLY | `test_legacy_only_returns_legacy` |
+| CANONICAL_ONLY | `test_canonical_only_returns_legacy_none` |
+| DIFFERENT_USER | `test_different_user_returns_legacy` |
+| DIFFERENT_ROLE | `test_different_role_returns_legacy` |
+| AMBIGUOUS | `test_ambiguous_admin_returns_legacy` |
+| INACTIVE_ASSIGNMENT | `test_inactive_assignment_returns_legacy` |
+| CROSS_TENANT_ANOMALY | `test_cross_tenant_anomaly_returns_legacy_and_escalates` |
+| RESOLUTION_ERROR | `test_resolution_error_returns_legacy` |
 
 ---
 
 ## Resolver coverage
 
-| Area | Required tests |
+| Area | Tests |
 |---|---|
-| A1 `resolve_assignee` | specific_assignee short-circuit; role match; None; flag on/off identity |
-| A2 `resolve_rule_assignee` | specific_approver; role match; None; flag on/off identity |
-| Delegation fields | Comparison of delegated vs assigned if in scope of report (not changing gates) |
-| Report command | org filter; resolver-type filter; JSON; exit non-zero on CROSS_TENANT_ANOMALY / critical |
-| Audit | `role.resolver.parity_checked` / `drift_detected` / `security_anomaly` / `comparison_failed` |
+| A1 `resolve_assignee` | specific_assignee short-circuit; role match; None; flag on/off |
+| A2 `resolve_rule_assignee` | specific_approver short-circuit; role match; None; flag on/off |
+| Delegation fields | `test_delegation_does_not_change_resolver_result` (gates unchanged) |
+| Report command | `test_json_reporting_and_critical_drift_counts` |
+| Audit | permission-safe `role.resolver.parity_compared` / `cross_tenant_anomaly` / `parity_resolution_error` |
 
 ---
 
