@@ -402,11 +402,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + feature-flagged shadow sync delivered; production authority still legacy; Completion deferred |
+| Status | **In progress** (2026-07-22) — catalogue `0112` + adapter `0113` + feature-flagged shadow sync **merged** (`bb881ac2`); production authority still legacy; flags default off; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, 0112/0113 auth + Slice 3 auth request |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, PROCESS_ROLE_MAPPING_MATRIX, SHADOW_WRITE_PATH_MATRIX, 0112/0113 auth + Slice 3 implementation/merge authorization |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -419,7 +419,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); additive catalogue (**met**); org-scoped adapter + dual-read (**met**); feature-flagged shadow sync + parity (**met**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
 | Accepted ADR | **ADR-0014** + 0112/0113 implementation authorizations; Slice 3 auth **Authorized** (non-authoritative; merge recorded separately) |
-| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 shadow sync; evidence PR #57 `2f14c034` |
+| PR/commits | PR #51 `21e65f09`; PR #53 `0bf7c9dc`; PR #54 `58966de7`; PR #52 `3c5e628b`; PR #55 `bb881ac2` (shadow sync); evidence PR #57 `2f14c034` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -626,3 +626,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #54 merged** to `main` @ `58966de7` |
 | 2026-07-22 | **PR #52 merged** to `main` @ `3c5e628b` — PR #50 visual + E2E remediation closed; evidence `docs/audits/evidence/2026-07-22-pr52-merge/` |
 | 2026-07-22 | **PAR-ID-001 Slice 3:** feature-flagged shadow sync (`PROCESS_ROLE_SHADOW_WRITE_ENABLED`) + `process_role_parity_report`; parity evidence; production resolvers still legacy; next cutover slice needs separate authorization |
+| 2026-07-22 | **PR #55 merged** to `main` @ `bb881ac2` (reviewed HEAD `432a55b1`, 2026-07-22T13:35:32Z); flags remain default off; merge auth Product `13:36:50Z` / Engineering `15:15:23Z`; resolver-parity **not** started |
