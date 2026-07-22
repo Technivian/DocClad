@@ -1,6 +1,6 @@
 # PAR-EXC-001 — controlled-pilot monitoring extension
 
-**Status:** Implementation validated on `agent/par-exc-001-pilot-monitoring` @ `6f49abb5` (+ follow-up validation commits)  
+**Status:** Implementation validated; CI green on `agent/par-exc-001-pilot-monitoring` @ `8156b017` (reviewed head for merge)  
 **Authority prerequisite:** Motion 3 **Authorized**; controlled-pilot activation **PASS**  
 **Programme status:** PAR-EXC-001 remains **In progress**  
 **PR:** [#78](https://github.com/Technivian/CLMOne/pull/78) (draft until bundled authorization)
