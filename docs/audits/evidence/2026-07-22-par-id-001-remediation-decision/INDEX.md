@@ -3,8 +3,9 @@
 **Baseline `main`:** `8316a756`  
 **Status:** **In progress** — remediation decision package pending votes (PR #63)  
 **Branch:** `cursor/docs-par-id-001-remediation-decision-package`  
-**Package vote status:** **Requested** — see [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md)  
-**R0 authorization status:** **Not authorized** — see [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md)
+**Package vote status:** **Requested** — see [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md) (no Approve votes with real timestamps recorded yet; votes not invented)  
+**PR #63 merge authorization:** **Requested / blocked** — separate from package approval  
+**R0 authorization status:** **Not authorized** — blocked until package Approved + PR #63 merged + separate R0 votes  
 
 | Artifact | Purpose |
 |---|---|
