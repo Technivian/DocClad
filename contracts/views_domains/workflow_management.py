@@ -288,6 +288,17 @@ class WorkflowTemplateUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
     def get_queryset(self):
         return _workflow_template_queryset_for_organization(self.get_organization())
 
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        organization = self.get_organization()
+        if not can_mutate_workflow_template(request.user, organization, self.object):
+            messages.error(
+                request,
+                'Published workflow templates are immutable. Create a new version or unpublish to a draft before editing.',
+            )
+            return redirect('contracts:workflow_template_detail', pk=self.object.pk)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['template_queryset'] = self.get_queryset()
@@ -315,6 +326,13 @@ class WorkflowTemplateUpdateView(TenantScopedQuerysetMixin, LoginRequiredMixin, 
         return reverse_lazy('contracts:workflow_template_detail', kwargs={'pk': self.object.pk})
 
     def form_valid(self, form):
+        organization = self.get_organization()
+        if not can_mutate_workflow_template(self.request.user, organization, self.get_object()):
+            messages.error(
+                self.request,
+                'Published workflow templates are immutable. Create a new version or unpublish to a draft before editing.',
+            )
+            return redirect('contracts:workflow_template_detail', pk=self.get_object().pk)
         original_template = WorkflowTemplate.objects.filter(pk=self.get_object().pk).first()
         response = super().form_valid(form)
         changes = build_field_changes(original_template, self.object, ['name', 'description', 'category'])
@@ -995,9 +1013,12 @@ def workflow_template_delete(request, pk):
 
 
 @login_required
+@login_required
 def workflow_template_activity(request, pk):
-    """Legacy activity URL — redirect into the Audit trail workspace tab."""
-    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': pk})}?tab=audit")
+    """Legacy activity URL — redirect into the Activity workspace tab after tenant check."""
+    organization = get_user_organization(request.user)
+    get_object_or_404(_workflow_template_queryset_for_organization(organization), pk=pk)
+    return redirect(f"{reverse('contracts:workflow_template_detail', kwargs={'pk': pk})}?tab=activity")
 
 
 @login_required

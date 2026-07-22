@@ -191,7 +191,7 @@ class TransitionHTMLPathTests(TestCase):
         c.refresh_from_db()
         self.assertEqual(c.status, 'IN_PROGRESS')
 
-    def test_create_forces_draft(self):
+    def test_create_forces_in_progress(self):
         resp = self.client.post(reverse('contracts:contract_create'), data={
             'title': 'New', 'contract_type': 'OTHER', 'content': '',
             'status': 'ACTIVE', 'counterparty': 'X', 'value': '0', 'currency': 'USD',

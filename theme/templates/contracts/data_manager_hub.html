@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Data Manager – CLM One{% endblock %}
+{% block authenticated_page_title %}Data Manager{% endblock %}
+{% block authenticated_page_subtitle %}Governed field definitions used by workflow intake. Canonical Property Definitions remain a planned core capability.{% endblock %}
+{% block content %}
+{% include "components/_list_page_shell_styles.html" %}
+<div class="dc-ds-page dc-ds-page--wide dc-ds-page-flow dc-ds-list-page clm-list-page">
+  <section class="dc-ds-surface" style="padding: var(--space-20);">
+    <h2 class="dc-ds-workspace__surface-title" style="margin:0 0 var(--space-8);">Workspace field catalog</h2>
+    <p class="profile-page__muted" style="margin:0 0 var(--space-16); color: var(--ink-500); font: var(--text-small); max-width: 52rem;">
+      This hub lists template-scoped intake fields (<code>FieldDefinition</code>).
+      Platform-wide Property Definitions with ownership, sensitivity, and analytics controls are tracked as roadmap item PAR-DATA-001 and require an approved decision before schema expansion.
+    </p>
+    {% if hub_unavailable %}
+      <p class="c-danger">No active workspace is available for Data Manager.</p>
+    {% else %}
+      <p style="margin:0 0 var(--space-12); font: var(--text-small); color: var(--ink-700);">
+        {{ field_definition_count }} field definition{{ field_definition_count|pluralize }} in scope
+        (showing up to 200).
+      </p>
+      {% if field_definitions %}
+      <div class="table-wrap">
+        <table class="dc-ds-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Label</th>
+              <th scope="col">Section</th>
+              <th scope="col">Type</th>
+              <th scope="col">Workflow template</th>
+              <th scope="col">Required</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for field in field_definitions %}
+            <tr>
+              <td><code>{{ field.key }}</code></td>
+              <td>{{ field.label }}</td>
+              <td>{{ field.section }}</td>
+              <td>{{ field.get_field_type_display|default:field.field_type }}</td>
+              <td>{{ field.workflow_template.name }}</td>
+              <td>{% if field.is_required %}Yes{% else %}No{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        {% include "design_system/empty_state.html" with icon="workflow" title="No field definitions yet" reason="Intake fields appear here when workflow templates define them." how="Open Workflow Designer, configure a template’s intake fields, then return to Data Manager." %}
+      {% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

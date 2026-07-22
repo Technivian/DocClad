@@ -227,6 +227,9 @@ class Command(BaseCommand):
                     'notice_period_days': 30 if auto_renew else None,
                     'created_by': creator,
                     'lifecycle_stage': self._lifecycle_stage_for(title, status),
+                    'origin_kind': Contract.OriginKind.SEED,
+                    'origin_channel': 'seed_demo',
+                    'origin_reason': 'Demo seed data',
                 },
             )
             contracts.append(contract)

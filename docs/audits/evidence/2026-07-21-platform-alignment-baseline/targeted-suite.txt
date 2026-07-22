@@ -1,0 +1,250 @@
+Creating test database for alias 'default'...
+E/workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-21 21:06:24,128 INFO contracts.middleware request_id=4668326f-793a-4e65-aa03-1adcfbffb8c8 user_id=1 org_id=1 path=/contracts/workflows/templates/6/publish-toggle/ request_completed
+...2026-07-21 21:06:24,148 INFO contracts.middleware request_id=456cc3b5-7f90-4519-a771-15c8890dd52e user_id=1 org_id=1 path=/contracts/workflows/templates/6/publish-toggle/ request_completed
+.2026-07-21 21:06:24,163 INFO contracts.middleware request_id=adfdf302-d26a-4fa3-ae8e-9e59740da51a user_id=1 org_id=1 path=/contracts/workflows/templates/create/ request_completed
+.2026-07-21 21:06:24,220 INFO contracts.middleware request_id=36c985be-ba2c-454d-ab24-75ea10482cb4 user_id=1 org_id=1 path=/contracts/workflows/templates/ request_completed
+...2026-07-21 21:06:24,245 INFO contracts.middleware request_id=500d5e19-0a41-4d8b-bb14-9a1ad07d5926 user_id=1 org_id=1 path=/contracts/workflows/templates/create/ request_completed
+.2026-07-21 21:06:24,258 INFO contracts.middleware request_id=eb872e0a-1039-4c20-b690-49904d061f79 user_id=1 org_id=1 path=/contracts/workflows/templates/6/publish-toggle/ request_completed
+.2026-07-21 21:06:24,283 INFO contracts.middleware request_id=efe7a8b7-5e79-482d-b193-5544c54d5b7c user_id=1 org_id=1 path=/contracts/workflows/templates/4/compare/6/ request_completed
+.2026-07-21 21:06:24,307 INFO contracts.middleware request_id=b0d46870-e020-4a3f-8d90-7351c3583e12 user_id=1 org_id=1 path=/contracts/workflows/templates/4/compare/6/ request_completed
+.2026-07-21 21:06:24,322 INFO contracts.middleware request_id=9167f71e-7478-469c-865c-70dc8f472dbf user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/add/ request_completed
+.2026-07-21 21:06:24,337 INFO contracts.middleware request_id=8b433dc9-6768-4111-9acc-352176d06d16 user_id=1 org_id=1 path=/contracts/workflows/templates/4/clone-version/ request_completed
+.2026-07-21 21:06:24,348 WARNING django.request request_id=89ef630a-8fe4-4492-891f-e3f3fbb44426 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/12/delete/ Method Not Allowed (GET): /contracts/workflows/templates/4/steps/12/delete/
+2026-07-21 21:06:24,348 INFO contracts.middleware request_id=89ef630a-8fe4-4492-891f-e3f3fbb44426 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/12/delete/ request_completed
+2026-07-21 21:06:24,358 INFO contracts.middleware request_id=45d3603d-1992-4714-9a3f-de75393ee3b2 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/12/delete/ request_completed
+.2026-07-21 21:06:24,373 INFO contracts.middleware request_id=38d413f1-60ba-49cb-990c-ab9ab5387e5f user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/reorder/ request_completed
+.2026-07-21 21:06:24,409 INFO contracts.middleware request_id=fb45bd8d-f2c1-4cb5-9696-f62721b76837 user_id=1 org_id=1 path=/contracts/workflows/templates/ request_completed
+.2026-07-21 21:06:24,420 INFO contracts.middleware request_id=761b3a63-29b2-48e2-bbe6-d4e15e01dff4 user_id=1 org_id=1 path=/contracts/workflows/templates/6/publish-toggle/ request_completed
+2026-07-21 21:06:24,428 INFO contracts.middleware request_id=6e533181-391d-4a07-b40a-ebadb36d2bcc user_id=1 org_id=1 path=/contracts/workflows/templates/4/publish-toggle/ request_completed
+2026-07-21 21:06:24,451 INFO contracts.middleware request_id=4f0972a4-0713-4437-8094-24611b4b5468 user_id=1 org_id=1 path=/contracts/workflows/create/ request_completed
+2026-07-21 21:06:24,459 INFO contracts.middleware request_id=a8943e86-b28d-46d5-91b1-fb01cea5a5c5 user_id=1 org_id=1 path=/contracts/workflows/templates/4/publish-toggle/ request_completed
+.2026-07-21 21:06:24,475 INFO contracts.middleware request_id=fceca28f-271e-4379-b444-3b60debec91a user_id=1 org_id=1 path=/contracts/workflows/templates/4/restore-version/ request_completed
+.2026-07-21 21:06:24,509 INFO contracts.middleware request_id=594e30fc-1022-4d9a-81aa-689e9e994322 user_id=1 org_id=1 path=/contracts/workflows/templates/ request_completed
+2026-07-21 21:06:24,544 INFO contracts.middleware request_id=77be87e7-3eff-42dc-926a-dc2878b254f2 user_id=1 org_id=1 path=/contracts/workflows/templates/4/ request_completed
+2026-07-21 21:06:24,570 INFO contracts.middleware request_id=4c10702f-4bf4-41b7-a698-ea61f5836e55 user_id=1 org_id=1 path=/contracts/workflows/templates/4/ request_completed
+.2026-07-21 21:06:24,600 INFO contracts.middleware request_id=b57c02f1-4b9c-4487-85f6-ac8d4884c306 user_id=1 org_id=1 path=/contracts/workflows/create/ request_completed
+..2026-07-21 21:06:24,625 INFO contracts.middleware request_id=17ddcfc5-3e00-4189-8f57-85a00e367861 user_id=3 org_id=2 path=/contracts/workflows/templates/4/ request_completed
+2026-07-21 21:06:24,626 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/
+2026-07-21 21:06:24,638 INFO contracts.middleware request_id=0bcdada5-b71b-41c5-aba9-ff67dbd7980e user_id=3 org_id=2 path=/contracts/workflows/templates/4/preview/ request_completed
+2026-07-21 21:06:24,638 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/preview/
+.....2026-07-21 21:06:24,698 INFO contracts.middleware request_id=e1651f9d-bb3d-4cf8-9cba-fce21f2b7950 user_id=1 org_id=1 path=/contracts/workflows/templates/4/preview/ request_completed
+.2026-07-21 21:06:24,739 INFO contracts.middleware request_id=fbbcdaa7-a606-431b-847c-0f188dd0fc69 user_id=1 org_id=1 path=/contracts/workflows/templates/4/preview/ request_completed
+......2026-07-21 21:06:24,792 INFO contracts.middleware request_id=678029d3-2523-465a-8ce0-85bac43de5c8 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:24,815 INFO contracts.middleware request_id=1c159956-7c4e-4fc6-8223-702976854d71 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:24,837 INFO contracts.middleware request_id=fa688662-22c6-4850-beb6-924a106ccfe5 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:24,860 INFO contracts.middleware request_id=181c40aa-0057-458f-882f-bcf8b0dfe5e7 user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:24,896 INFO contracts.middleware request_id=bdf272b4-fd16-453c-b159-6b7b5812385d user_id=1 org_id=1 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:24,923 INFO contracts.middleware request_id=005a7494-dd54-46cf-8b4b-b97be4fbf5d0 user_id=2 org_id=2 path=/contracts/budgets/1/ request_completed
+2026-07-21 21:06:24,923 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/budgets/1/
+.2026-07-21 21:06:24,957 INFO contracts.middleware request_id=bfd63784-8c8f-4c78-b3a8-d31bf860d7d6 user_id=2 org_id=2 path=/contracts/budgets/ request_completed
+.2026-07-21 21:06:24,983 INFO contracts.middleware request_id=8fa68f05-ee63-4aee-bd24-55095a1fba3a user_id=2 org_id=2 path=/contracts/budgets/1/edit/ request_completed
+2026-07-21 21:06:24,983 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/budgets/1/edit/
+.2026-07-21 21:06:25,009 INFO contracts.middleware request_id=87bd1ff7-b45b-4a4e-ba9b-2857273a582a user_id=2 org_id=2 path=/contracts/clause-library/9/ request_completed
+2026-07-21 21:06:25,009 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clause-library/9/
+.2026-07-21 21:06:25,039 INFO contracts.middleware request_id=fcc7a003-cc96-4ac4-901b-73b6a0156681 user_id=2 org_id=2 path=/contracts/clause-library/ request_completed
+.2026-07-21 21:06:25,066 INFO contracts.middleware request_id=8d613075-e4be-400e-828a-6c6b93492463 user_id=2 org_id=2 path=/contracts/clients/2/ request_completed
+2026-07-21 21:06:25,067 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clients/2/
+.2026-07-21 21:06:25,099 INFO contracts.middleware request_id=602ab005-ad30-4535-b5d0-abcbb3bdd587 user_id=2 org_id=2 path=/contracts/clients/ request_completed
+.2026-07-21 21:06:25,125 INFO contracts.middleware request_id=40fe24a8-4ed5-45ae-9c18-b07685404b9c user_id=2 org_id=2 path=/contracts/clients/2/edit/ request_completed
+2026-07-21 21:06:25,126 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/clients/2/edit/
+.2026-07-21 21:06:25,151 INFO contracts.middleware request_id=ac2c440f-a597-4b89-aad3-d2a5db8bd6fb user_id=2 org_id=2 path=/contracts/1/ request_completed
+2026-07-21 21:06:25,152 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/1/
+.2026-07-21 21:06:25,171 INFO contracts.middleware request_id=88d460a6-e926-45f0-9501-d2bd8f2a3930 user_id=2 org_id=2 path=/contracts/ request_completed
+F2026-07-21 21:06:25,197 INFO contracts.middleware request_id=31013915-0ff1-455b-be67-74d91ebf6038 user_id=2 org_id=2 path=/contracts/1/edit/ request_completed
+2026-07-21 21:06:25,198 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/1/edit/
+.2026-07-21 21:06:25,223 INFO contracts.middleware request_id=df0093e9-5147-41fa-85bd-81fe96cf17cb user_id=2 org_id=2 path=/contracts/counterparties/1/ request_completed
+2026-07-21 21:06:25,223 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/counterparties/1/
+.2026-07-21 21:06:25,253 INFO contracts.middleware request_id=cffb67d2-c18f-439b-bc7e-c1c023627cf8 user_id=2 org_id=2 path=/contracts/counterparties/ request_completed
+.2026-07-21 21:06:25,279 INFO contracts.middleware request_id=a84f2127-d246-4142-ac83-1588a4f0c196 user_id=2 org_id=2 path=/contracts/deadlines/1/complete/ request_completed
+2026-07-21 21:06:25,280 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/deadlines/1/complete/
+.2026-07-21 21:06:25,298 INFO contracts.middleware request_id=5c011c6d-6365-4af9-9d39-8848bc4a596f user_id=2 org_id=2 path=/contracts/deadlines/ request_completed
+F2026-07-21 21:06:25,324 INFO contracts.middleware request_id=9201c548-1d13-4953-bd39-d3d08ce91032 user_id=2 org_id=2 path=/contracts/deadlines/1/edit/ request_completed
+2026-07-21 21:06:25,325 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/deadlines/1/edit/
+.2026-07-21 21:06:25,350 INFO contracts.middleware request_id=c65ee685-a088-4931-ae48-e10fb57eb8bb user_id=2 org_id=2 path=/contracts/documents/1/ request_completed
+2026-07-21 21:06:25,351 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/
+.2026-07-21 21:06:25,384 INFO contracts.middleware request_id=00d02881-7734-4e3b-8c97-03aabc7b7f55 user_id=2 org_id=2 path=/contracts/documents/ request_completed
+.2026-07-21 21:06:25,410 INFO contracts.middleware request_id=cbe693cd-48b9-45d2-bd45-7e7eb6665210 user_id=2 org_id=2 path=/contracts/documents/1/edit/ request_completed
+2026-07-21 21:06:25,410 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/edit/
+.2026-07-21 21:06:25,436 INFO contracts.middleware request_id=f2675318-bed7-407c-b612-87be7db09d09 user_id=2 org_id=2 path=/contracts/dd-item/1/toggle/ request_completed
+2026-07-21 21:06:25,437 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/dd-item/1/toggle/
+.2026-07-21 21:06:25,463 INFO contracts.middleware request_id=c5a9605b-54a9-40d0-af71-c4d6a372a750 user_id=2 org_id=2 path=/contracts/due-diligence/1/ request_completed
+2026-07-21 21:06:25,463 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/due-diligence/1/
+.2026-07-21 21:06:25,493 INFO contracts.middleware request_id=c5d507ad-145e-467a-8c81-e9338a2c1990 user_id=2 org_id=2 path=/contracts/due-diligence/ request_completed
+.2026-07-21 21:06:25,519 INFO contracts.middleware request_id=0bc44403-9058-4c15-b6cc-d3219bbeb61d user_id=2 org_id=2 path=/contracts/due-diligence/1/edit/ request_completed
+2026-07-21 21:06:25,520 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/due-diligence/1/edit/
+....2026-07-21 21:06:25,548 INFO contracts.middleware request_id=d79df425-e117-4a56-b325-0562b711b070 user_id=2 org_id=2 path=/contracts/trust-accounts/1/ request_completed
+2026-07-21 21:06:25,548 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trust-accounts/1/
+.2026-07-21 21:06:25,571 INFO contracts.middleware request_id=917cf819-e9eb-47d6-b575-9f77d7ae6ec8 user_id=2 org_id=2 path=/contracts/trust-accounts/ request_completed
+.2026-07-21 21:06:25,594 INFO contracts.middleware request_id=250ec077-2697-476b-8630-d88e41c1959b user_id=2 org_id=2 path=/contracts/trust-accounts/ request_completed
+.2026-07-21 21:06:25,644 INFO contracts.middleware request_id=e51fb8cc-86c0-4dcc-adf6-ef5aa1f2c1b8 user_id=2 org_id=2 path=/contracts/legal-tasks/ request_completed
+.2026-07-21 21:06:25,672 INFO contracts.middleware request_id=adb7003f-4c40-4266-a226-f507f1f461c5 user_id=2 org_id=2 path=/contracts/legal-tasks/1/edit/ request_completed
+2026-07-21 21:06:25,672 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/legal-tasks/1/edit/
+.2026-07-21 21:06:25,698 INFO contracts.middleware request_id=69066856-f8b7-4588-a21d-603d6e4d2d6e user_id=2 org_id=2 path=/contracts/matters/1/ request_completed
+2026-07-21 21:06:25,698 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/matters/1/
+.2026-07-21 21:06:25,729 INFO contracts.middleware request_id=ca523cea-342e-4af4-a865-82132bb2b325 user_id=2 org_id=2 path=/contracts/matters/ request_completed
+.2026-07-21 21:06:25,756 INFO contracts.middleware request_id=e350e23b-4e6f-4e2e-9234-d8123c04d5c5 user_id=2 org_id=2 path=/contracts/matters/1/edit/ request_completed
+2026-07-21 21:06:25,756 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/matters/1/edit/
+....2026-07-21 21:06:25,821 INFO contracts.middleware request_id=86ef922d-6229-4825-b0e0-1aacfb7a77a4 user_id=2 org_id=2 path=/contracts/search/ request_completed
+.2026-07-21 21:06:25,855 INFO contracts.middleware request_id=125f2d4c-6ee1-45e0-b7f9-d157a2fee85d user_id=2 org_id=2 path=/contracts/search/ request_completed
+.2026-07-21 21:06:25,888 INFO contracts.middleware request_id=0998269a-f0bb-4950-9d30-3397b922251f user_id=2 org_id=2 path=/contracts/privacy/ request_completed
+.2026-07-21 21:06:26,015 INFO contracts.middleware request_id=d3fe8f62-5e3f-4c8b-b5af-deaa3931ba8b user_id=2 org_id=2 path=/contracts/approvals/ request_completed
+.2026-07-21 21:06:26,047 INFO contracts.middleware request_id=118d52a2-ab63-4054-89b8-96486f344fd0 user_id=2 org_id=2 path=/contracts/approval-rules/ request_completed
+.2026-07-21 21:06:26,078 INFO contracts.middleware request_id=8f158c6e-2c27-4c0e-9244-558a64d584bb user_id=2 org_id=2 path=/contracts/privacy/data-inventory/ request_completed
+.2026-07-21 21:06:26,109 INFO contracts.middleware request_id=54e66cd9-07e3-422d-8ed8-e2679d9fc3fc user_id=2 org_id=2 path=/contracts/privacy/dsar/ request_completed
+.2026-07-21 21:06:26,141 INFO contracts.middleware request_id=0c41b8c3-33f9-4ea8-bb0c-a93cda2218ea user_id=2 org_id=2 path=/contracts/ethical-walls/ request_completed
+.2026-07-21 21:06:26,167 INFO contracts.middleware request_id=c9c9cb82-d92e-400a-a7d7-aa4508ce9bfd user_id=2 org_id=2 path=/contracts/privacy/legal-holds/1/ request_completed
+2026-07-21 21:06:26,168 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/privacy/legal-holds/1/
+.2026-07-21 21:06:26,197 INFO contracts.middleware request_id=35c57ec1-7081-4c31-8818-51a20e29c486 user_id=2 org_id=2 path=/contracts/privacy/retention/ request_completed
+.2026-07-21 21:06:26,227 INFO contracts.middleware request_id=e34f65af-9b47-4833-84ff-741bf2493e82 user_id=2 org_id=2 path=/contracts/privacy/subprocessors/ request_completed
+.2026-07-21 21:06:26,258 INFO contracts.middleware request_id=66b651b1-962f-47c1-b77e-0ca5fe1ed5bb user_id=2 org_id=2 path=/contracts/privacy/transfers/ request_completed
+.2026-07-21 21:06:26,294 INFO contracts.middleware request_id=b923cc77-eb99-4905-bd2b-0fa48dfa4bf6 user_id=2 org_id=2 path=/contracts/risks/ request_completed
+.2026-07-21 21:06:26,320 INFO contracts.middleware request_id=cf0c2398-fe42-4339-b3fd-3abda2b1c010 user_id=2 org_id=2 path=/contracts/risks/1/edit/ request_completed
+2026-07-21 21:06:26,320 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/risks/1/edit/
+.2026-07-21 21:06:26,357 INFO contracts.middleware request_id=84d84978-4c33-4928-9790-9b4c917353ef user_id=2 org_id=2 path=/contracts/workflows/create/ request_completed
+2026-07-21 21:06:26,379 INFO contracts.middleware request_id=c75c4471-449d-4bb7-a95b-8b870c18d1a5 user_id=2 org_id=2 path=/contracts/clause-library/new/ request_completed
+2026-07-21 21:06:26,402 INFO contracts.middleware request_id=6bb9d888-2dd5-4b68-9608-604beb927ebf user_id=2 org_id=2 path=/contracts/ethical-walls/new/ request_completed
+2026-07-21 21:06:26,444 INFO contracts.middleware request_id=b78f82c5-f1c1-467b-8ddf-ca0ddc83ae18 user_id=2 org_id=2 path=/contracts/signatures/new/ request_completed
+2026-07-21 21:06:26,468 INFO contracts.middleware request_id=4acdbaba-6d99-4e82-a4c6-550b8f3cd476 user_id=2 org_id=2 path=/contracts/privacy/data-inventory/new/ request_completed
+2026-07-21 21:06:26,496 INFO contracts.middleware request_id=b87448ce-04cc-4225-89cb-3c4ff6155130 user_id=2 org_id=2 path=/contracts/privacy/dsar/new/ request_completed
+2026-07-21 21:06:26,522 INFO contracts.middleware request_id=c4a23c50-b511-4a4f-a8ea-4c25ea6886dd user_id=2 org_id=2 path=/contracts/privacy/transfers/new/ request_completed
+2026-07-21 21:06:26,546 INFO contracts.middleware request_id=0858d6ed-f374-4f88-a91e-d5577f0617cb user_id=2 org_id=2 path=/contracts/privacy/legal-holds/new/ request_completed
+2026-07-21 21:06:26,569 INFO contracts.middleware request_id=bf899ff5-d36b-4fba-b3b0-b88912d38e6a user_id=2 org_id=2 path=/contracts/approval-rules/new/ request_completed
+2026-07-21 21:06:26,592 INFO contracts.middleware request_id=25b27834-607f-4989-a6c0-67eddb1d0c62 user_id=2 org_id=2 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:26,627 INFO contracts.middleware request_id=70ae9b47-a6a5-49c5-9575-a781a82db908 user_id=2 org_id=2 path=/contracts/clause-library/10/edit/ request_completed
+2026-07-21 21:06:26,649 INFO contracts.middleware request_id=c59eacdf-a6f8-4db9-a6e4-8ba1f5066587 user_id=2 org_id=2 path=/contracts/ethical-walls/2/edit/ request_completed
+2026-07-21 21:06:26,672 INFO contracts.middleware request_id=9def1565-9b1e-47c9-84ee-5a9e720060af user_id=2 org_id=2 path=/contracts/signatures/2/edit/ request_completed
+2026-07-21 21:06:26,697 INFO contracts.middleware request_id=c67bcaca-9301-4233-8fb7-092413c7ffb9 user_id=2 org_id=2 path=/contracts/privacy/data-inventory/2/edit/ request_completed
+2026-07-21 21:06:26,722 INFO contracts.middleware request_id=52b6ddad-dc30-480a-8be5-872e9b858d8f user_id=2 org_id=2 path=/contracts/privacy/dsar/2/edit/ request_completed
+2026-07-21 21:06:26,746 INFO contracts.middleware request_id=fd7ceb89-082c-42ea-a092-fce068152277 user_id=2 org_id=2 path=/contracts/privacy/transfers/2/edit/ request_completed
+2026-07-21 21:06:26,770 INFO contracts.middleware request_id=0662f408-8c24-4cb1-b7f9-675d5c9c15af user_id=2 org_id=2 path=/contracts/privacy/legal-holds/2/edit/ request_completed
+2026-07-21 21:06:26,793 INFO contracts.middleware request_id=058fa6dc-5e93-49d0-a525-c93331014f65 user_id=2 org_id=2 path=/contracts/approval-rules/2/edit/ request_completed
+2026-07-21 21:06:26,815 INFO contracts.middleware request_id=3d497e39-559f-4e8b-81ce-fa5e4c8681af user_id=2 org_id=2 path=/contracts/approvals/2/edit/ request_completed
+.2026-07-21 21:06:26,842 INFO contracts.middleware request_id=42ed065f-74fd-49c9-8d64-c11dd8dc37bc user_id=2 org_id=2 path=/contracts/signatures/1/ request_completed
+2026-07-21 21:06:26,842 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/signatures/1/
+.2026-07-21 21:06:26,873 INFO contracts.middleware request_id=ac41873f-e2c3-4992-805d-81b30acd9e14 user_id=2 org_id=2 path=/contracts/signatures/ request_completed
+.2026-07-21 21:06:26,901 INFO contracts.middleware request_id=91d5571b-9abf-4e59-8ecd-b68c7eb8332f user_id=2 org_id=2 path=/contracts/signatures/1/packet/ request_completed
+2026-07-21 21:06:26,902 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/signatures/1/packet/
+.2026-07-21 21:06:26,966 INFO contracts.middleware request_id=fa887f6f-bc6e-4d45-a505-247d7067fb34 user_id=2 org_id=2 path=/contracts/new/ request_completed
+2026-07-21 21:06:26,993 INFO contracts.middleware request_id=e8e2c3e5-c758-47ac-b551-c6a1f1f59194 user_id=2 org_id=2 path=/contracts/clients/new/ request_completed
+2026-07-21 21:06:27,018 INFO contracts.middleware request_id=2f38b06b-7fa8-4148-804d-d7e5a5a3e3f2 user_id=2 org_id=2 path=/contracts/matters/new/ request_completed
+2026-07-21 21:06:27,043 INFO contracts.middleware request_id=fc6f4144-1274-4447-a8f0-b263377f7985 user_id=2 org_id=2 path=/contracts/documents/new/ request_completed
+2026-07-21 21:06:27,065 INFO contracts.middleware request_id=33f9d02e-06e4-4a80-a027-b30e286db04f user_id=2 org_id=2 path=/contracts/time/new/ request_completed
+2026-07-21 21:06:27,087 INFO contracts.middleware request_id=b7f27725-58d6-4e60-b46b-162afc54374a user_id=2 org_id=2 path=/contracts/invoices/new/ request_completed
+2026-07-21 21:06:27,107 INFO contracts.middleware request_id=785937fb-38dd-4432-b9eb-816828db434e user_id=2 org_id=2 path=/contracts/trust-accounts/new/ request_completed
+2026-07-21 21:06:27,127 INFO contracts.middleware request_id=148ee925-1ca7-4e1a-a873-2a90d25d4fe8 user_id=2 org_id=2 path=/contracts/conflicts/new/ request_completed
+2026-07-21 21:06:27,152 INFO contracts.middleware request_id=95297b21-0ec8-4e3e-83dd-b4976633f4dc user_id=2 org_id=2 path=/contracts/deadlines/new/ request_completed
+2026-07-21 21:06:27,174 INFO contracts.middleware request_id=df8635c3-43be-4eed-bb33-7ac7760b5d87 user_id=2 org_id=2 path=/contracts/approvals/new/ request_completed
+.2026-07-21 21:06:27,214 INFO contracts.middleware request_id=e1177a18-546f-4625-9029-34c6e2845a21 user_id=2 org_id=2 path=/contracts/clients/3/edit/ request_completed
+2026-07-21 21:06:27,240 INFO contracts.middleware request_id=de948bd0-8488-4e93-a77e-2b7c309c58ca user_id=2 org_id=2 path=/contracts/matters/2/edit/ request_completed
+2026-07-21 21:06:27,266 INFO contracts.middleware request_id=6e762928-9f3a-4b81-82b2-cbe9d68dafa7 user_id=2 org_id=2 path=/contracts/documents/2/edit/ request_completed
+2026-07-21 21:06:27,287 INFO contracts.middleware request_id=8a250334-eba6-481b-a469-db310c661188 user_id=2 org_id=2 path=/contracts/time/1/edit/ request_completed
+2026-07-21 21:06:27,308 INFO contracts.middleware request_id=f36a6981-150c-495c-8b2e-a0b5d0b44fda user_id=2 org_id=2 path=/contracts/invoices/1/edit/ request_completed
+2026-07-21 21:06:27,329 INFO contracts.middleware request_id=2f320220-960f-4279-941f-1b7a7da8ec54 user_id=2 org_id=2 path=/contracts/conflicts/1/edit/ request_completed
+2026-07-21 21:06:27,355 INFO contracts.middleware request_id=b6a93de2-074b-48f2-b145-2f3e893104f2 user_id=2 org_id=2 path=/contracts/deadlines/2/edit/ request_completed
+2026-07-21 21:06:27,378 INFO contracts.middleware request_id=7528b0df-e047-4e0f-8b62-1a5e25311788 user_id=2 org_id=2 path=/contracts/approvals/2/edit/ request_completed
+.2026-07-21 21:06:27,405 INFO contracts.middleware request_id=234aecd5-3e3e-420c-90fa-520d9fc06b77 user_id=2 org_id=2 path=/contracts/trademarks/1/ request_completed
+2026-07-21 21:06:27,406 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trademarks/1/
+.2026-07-21 21:06:27,438 INFO contracts.middleware request_id=060835e2-82d1-4b6d-8892-e46f434fc99a user_id=2 org_id=2 path=/contracts/trademarks/ request_completed
+.2026-07-21 21:06:27,464 INFO contracts.middleware request_id=ff4acb2a-4239-41f1-982c-ff4f5b3ebc19 user_id=2 org_id=2 path=/contracts/trademarks/1/edit/ request_completed
+2026-07-21 21:06:27,465 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/trademarks/1/edit/
+.2026-07-21 21:06:27,467 INFO contracts.middleware request_id=a47f88eb-6194-4790-97b0-2ef2de8527e6 user_id=- org_id=- path=/contracts/ request_completed
+F2026-07-21 21:06:27,467 INFO contracts.middleware request_id=de3cebab-e143-4e52-a736-968a17d30e24 user_id=- org_id=- path=/contracts/documents/ request_completed
+2026-07-21 21:06:27,468 INFO contracts.middleware request_id=8a3fc086-eae7-4fc0-bac8-c7d92501abd2 user_id=- org_id=- path=/contracts/clients/ request_completed
+2026-07-21 21:06:27,468 INFO contracts.middleware request_id=076330a2-cd1e-47d9-95af-d621801bd2d1 user_id=- org_id=- path=/contracts/matters/ request_completed
+2026-07-21 21:06:27,469 INFO contracts.middleware request_id=c3d42710-1389-4f5c-9216-a00bb96720c7 user_id=- org_id=- path=/contracts/legal-tasks/ request_completed
+2026-07-21 21:06:27,469 INFO contracts.middleware request_id=72493b76-d3f5-4942-b8f4-bec4614e2ff4 user_id=- org_id=- path=/contracts/risks/ request_completed
+2026-07-21 21:06:27,470 INFO contracts.middleware request_id=2a46894a-be77-4c35-99e4-ad5017466add user_id=- org_id=- path=/contracts/deadlines/ request_completed
+F2026-07-21 21:06:27,471 INFO contracts.middleware request_id=f058742b-9aac-4762-a60a-a46d807181af user_id=- org_id=- path=/contracts/trademarks/ request_completed
+2026-07-21 21:06:27,472 INFO contracts.middleware request_id=31993f43-0e6b-4f42-80c7-f0295c38a123 user_id=- org_id=- path=/contracts/budgets/ request_completed
+2026-07-21 21:06:27,473 INFO contracts.middleware request_id=cd7198e9-bd76-4be4-a256-e6e0de605a17 user_id=- org_id=- path=/contracts/due-diligence/ request_completed
+2026-07-21 21:06:27,473 INFO contracts.middleware request_id=d26902e1-91ae-4ab3-bb94-fdf2a3720030 user_id=- org_id=- path=/dashboard/ request_completed
+2026-07-21 21:06:27,499 INFO contracts.middleware request_id=e60246c0-42f8-4e60-926e-6538e62c97a8 user_id=2 org_id=2 path=/contracts/workflows/1/activity/ request_completed
+2026-07-21 21:06:27,499 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/1/activity/
+.2026-07-21 21:06:27,534 INFO contracts.middleware request_id=c7b17197-d848-4be8-a965-3a4ea4bf566f user_id=2 org_id=2 path=/contracts/workflows/ request_completed
+.2026-07-21 21:06:27,562 INFO contracts.middleware request_id=3bcb169d-d323-4354-a5aa-274f4603bd99 user_id=2 org_id=2 path=/contracts/workflows/1/ request_completed
+2026-07-21 21:06:27,563 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/1/
+.2026-07-21 21:06:27,589 INFO contracts.middleware request_id=28da1582-4bae-4e35-a01a-d3c704ac7bc7 user_id=2 org_id=2 path=/contracts/workflows/step/1/update/ request_completed
+2026-07-21 21:06:27,589 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/step/1/update/
+.2026-07-21 21:06:27,608 INFO contracts.middleware request_id=f32d60a3-1497-4333-b725-7a79a0a8ed66 user_id=2 org_id=2 path=/contracts/workflows/templates/4/activity/ request_completed
+F2026-07-21 21:06:27,635 INFO contracts.middleware request_id=8c103eed-2c09-4acc-9912-b3ed8447b770 user_id=2 org_id=2 path=/contracts/workflows/templates/4/ request_completed
+2026-07-21 21:06:27,635 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/
+.2026-07-21 21:06:27,678 INFO contracts.middleware request_id=bfb6adef-d044-4852-ae2c-474345afb63d user_id=2 org_id=2 path=/contracts/workflows/templates/ request_completed
+.2026-07-21 21:06:27,705 INFO contracts.middleware request_id=422c8766-c275-4e34-897e-3d060502fd93 user_id=2 org_id=2 path=/contracts/workflows/templates/4/steps/12/delete/ request_completed
+2026-07-21 21:06:27,705 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/workflows/templates/4/steps/12/delete/
+.2026-07-21 21:06:27,718 INFO contracts.middleware request_id=ee834868-f1ae-423b-8360-42c57d7b6e8b user_id=1 org_id=1 path=/contracts/workflows/templates/4/publish-toggle/ request_completed
+2026-07-21 21:06:27,726 INFO contracts.middleware request_id=ba7279dd-ed36-497a-885e-df54c3ed5f93 user_id=1 org_id=1 path=/contracts/workflows/templates/4/publish-toggle/ request_completed
+.2026-07-21 21:06:27,741 INFO contracts.middleware request_id=198f591c-6681-4926-adfe-d99f2ecb38d8 user_id=1 org_id=1 path=/contracts/workflows/templates/4/clone-version/ request_completed
+.2026-07-21 21:06:27,778 INFO contracts.middleware request_id=a176cad9-69d1-4c45-bf45-f9e6adb7eda3 user_id=1 org_id=1 path=/contracts/workflows/templates/4/ request_completed
+.2026-07-21 21:06:27,794 INFO contracts.middleware request_id=8d03533f-09bb-421c-9e86-099684177e28 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/reorder/ request_completed
+.2026-07-21 21:06:27,809 INFO contracts.middleware request_id=2d672eb3-92f3-4792-9daf-9a646921e21b user_id=1 org_id=1 path=/contracts/workflows/templates/4/restore-version/ request_completed
+.2026-07-21 21:06:27,823 INFO contracts.middleware request_id=3ae0ec82-5914-4093-a7c6-1c0b0cb99fc7 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/add/ request_completed
+.2026-07-21 21:06:27,839 INFO contracts.middleware request_id=4cad5bb5-d7f7-489f-be10-b0095623bf65 user_id=1 org_id=1 path=/contracts/workflows/templates/4/steps/12/delete/ request_completed
+.2026-07-21 21:06:27,854 INFO contracts.middleware request_id=b01202e0-b93d-4314-b652-43df953f9ca1 user_id=1 org_id=1 path=/contracts/workflows/templates/4/edit/ request_completed
+.2026-07-21 21:06:27,871 INFO contracts.middleware request_id=b8b4973f-a2ab-4f86-8d88-445f5bca94c0 user_id=1 org_id=1 path=/contracts/workflows/create/ request_completed
+.2026-07-21 21:06:27,906 INFO contracts.middleware request_id=dd1cdf99-99e5-46a6-bc16-a2f91cf296ae user_id=1 org_id=1 path=/contracts/workflows/1/ request_completed
+.2026-07-21 21:06:27,922 INFO contracts.middleware request_id=f74923e3-f356-49f6-b49d-a10f393a67d4 user_id=1 org_id=1 path=/contracts/workflows/step/1/complete/ request_completed
+.2026-07-21 21:06:27,936 INFO contracts.middleware request_id=81b2a863-fe59-4e3b-a3a0-de04346e0590 user_id=1 org_id=1 path=/contracts/workflows/step/1/update/ request_completed
+.
+======================================================================
+ERROR: test_contract_lifecycle_pdr0002 (unittest.loader._FailedTest.test_contract_lifecycle_pdr0002)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_contract_lifecycle_pdr0002
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/unittest/loader.py", line 137, in loadTestsFromName
+    module = __import__(module_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tests.test_contract_lifecycle_pdr0002'
+
+
+======================================================================
+FAIL: test_list_shows_only_own_org (tests.test_cross_tenant_isolation.ContractIsolationTest.test_list_shows_only_own_org)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tests/test_cross_tenant_isolation.py", line 468, in test_list_shows_only_own_org
+    self.assertEqual(response.status_code, 200)
+AssertionError: 302 != 200
+
+======================================================================
+FAIL: test_list_excludes_other_org (tests.test_cross_tenant_isolation.DeadlineIsolationTest.test_list_excludes_other_org)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tests/test_cross_tenant_isolation.py", line 570, in test_list_excludes_other_org
+    self.assertEqual(response.status_code, 200)
+AssertionError: 302 != 200
+
+======================================================================
+FAIL: test_all_list_endpoints_redirect_anonymous (tests.test_cross_tenant_isolation.UnauthenticatedAccessTest.test_all_list_endpoints_redirect_anonymous) (url_name='contracts:contract_list')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tests/test_cross_tenant_isolation.py", line 683, in test_all_list_endpoints_redirect_anonymous
+    self.assertIn(
+AssertionError: '/login/' not found in '/contracts/repository/' : contracts:contract_list must redirect to login page
+
+======================================================================
+FAIL: test_all_list_endpoints_redirect_anonymous (tests.test_cross_tenant_isolation.UnauthenticatedAccessTest.test_all_list_endpoints_redirect_anonymous) (url_name='contracts:deadline_list')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tests/test_cross_tenant_isolation.py", line 683, in test_all_list_endpoints_redirect_anonymous
+    self.assertIn(
+AssertionError: '/login/' not found in '/contracts/obligations/' : contracts:deadline_list must redirect to login page
+
+======================================================================
+FAIL: test_workflow_template_activity_cross_org_returns_404 (tests.test_cross_tenant_isolation.WorkflowIsolationTest.test_workflow_template_activity_cross_org_returns_404)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tests/test_cross_tenant_isolation.py", line 794, in test_workflow_template_activity_cross_org_returns_404
+    self.assertEqual(self.client.get(url).status_code, 404)
+AssertionError: 302 != 404
+
+----------------------------------------------------------------------
+Ran 122 tests in 3.870s
+
+FAILED (failures=5, errors=1)
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 122 test(s).
+System check identified no issues (0 silenced).
+Created template version 2 (id=6) from template 4; migrated 1 workflow(s).
+exit=1 duration_sec=26

@@ -145,6 +145,8 @@ def map_netsuite_record(record: dict, field_map: dict | None = None) -> dict:
 
 
 def upsert_contract_from_netsuite(organization, mapped: dict):
+    from contracts.services.contract_import_lifecycle import persist_contract_with_imported_lifecycle
+
     source_id = str(mapped.get('source_system_id', '') or '').strip()
     title = str(mapped.get('contract_title', '') or '').strip()
     if not source_id or not title:
@@ -166,7 +168,6 @@ def upsert_contract_from_netsuite(organization, mapped: dict):
     contract.title = title
     contract.counterparty = str(mapped.get('counterparty_name', '') or '').strip()
     contract.contract_type = _normalize_choice(mapped.get('contract_type'), Contract.ContractType.choices, Contract.ContractType.OTHER)
-    contract.status = _normalize_choice(mapped.get('status'), Contract.Status.choices, Contract.Status.IN_PROGRESS)
     contract.risk_level = _normalize_choice(mapped.get('risk_level'), Contract.RiskLevel.choices, Contract.RiskLevel.LOW)
     contract.value = _to_decimal(mapped.get('contract_value'))
     contract.currency = _normalize_choice(mapped.get('currency'), Contract.Currency.choices, Contract.Currency.OTHER)
@@ -175,7 +176,21 @@ def upsert_contract_from_netsuite(organization, mapped: dict):
     contract.renewal_date = _to_date(mapped.get('renewal_date'))
     contract.source_system_url = str(mapped.get('source_system_url', '') or '').strip()
     contract.source_last_modified_at = parse_datetime(str(mapped.get('updated_at', '') or '')) if mapped.get('updated_at') else None
-    contract.save()
+
+    non_lifecycle_fields = [
+        'title', 'counterparty', 'contract_type', 'risk_level', 'value', 'currency',
+        'start_date', 'end_date', 'renewal_date', 'source_system_url',
+        'source_last_modified_at', 'source_system', 'source_system_id', 'organization',
+    ]
+    desired_status = _normalize_choice(mapped.get('status'), Contract.Status.choices, Contract.Status.IN_PROGRESS)
+    contract, created = persist_contract_with_imported_lifecycle(
+        contract,
+        desired_status=desired_status,
+        actor=None,
+        reason='netsuite sync',
+        source='netsuite',
+        non_lifecycle_update_fields=None if created else non_lifecycle_fields,
+    )
     return contract, 'created' if created else 'updated'
 
 

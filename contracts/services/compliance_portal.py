@@ -111,8 +111,16 @@ class CompliancePortalService:
     def _contract_stats(self, org: Organization) -> dict:
         qs = Contract.objects.filter(organization=org)
         total = qs.count()
+        # PDR-0002 record statuses only (no Draft/APPROVED as record status).
         by_status = {}
-        for status in ['DRAFT', 'ACTIVE', 'EXPIRED', 'TERMINATED', 'APPROVED']:
+        for status in [
+            'IN_PROGRESS',
+            'ACTIVE',
+            'EXPIRED',
+            'TERMINATED',
+            'CANCELLED',
+            'ARCHIVED',
+        ]:
             by_status[status.lower()] = qs.filter(status=status).count()
         data_transfer = qs.filter(data_transfer_flag=True).count()
         dpa_attached = qs.filter(dpa_attached=True).count()

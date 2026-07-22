@@ -1,0 +1,6 @@
+[CLM One] Database: //workspace/e2e.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0105_workflowtemplate_is_active_default_false, from contracts
+Running migrations:
+  Rendering model states... DONE
+  Unapplying contracts.0106_contract_record_provenance... OK

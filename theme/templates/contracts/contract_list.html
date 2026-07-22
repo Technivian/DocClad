@@ -370,7 +370,7 @@
                 </td>
                 <td>
                   <span class="c-primary">{{ contract.updated_at|date:"d M Y" }}</span>
-                  <div class="cw-row-meta">{{ contract.status|default:"DRAFT"|event_label }}</div>
+                  <div class="cw-row-meta">{{ contract.get_status_display }} · {{ contract.get_lifecycle_stage_display }}</div>
                 </td>
                 <td>
                   {% if contract.end_date %}
@@ -385,7 +385,7 @@
                 </td>
                 <td class="text-right">
                   <a href="{% url 'contracts:contract_detail' contract.pk %}" class="cw-action">
-                    {% if contract.lifecycle_stage == 'APPROVAL' %}Approve{% elif contract.lifecycle_stage == 'SIGNATURE' %}Track{% elif contract.status == 'DRAFT' %}Review{% else %}Open{% endif %}
+                    {% if contract.lifecycle_stage == 'APPROVAL' %}Approve{% elif contract.lifecycle_stage == 'SIGNATURE' %}Track{% elif contract.lifecycle_stage == 'INTAKE' or contract.lifecycle_stage == 'DRAFTING' %}Review{% else %}Open{% endif %}
                   </a>
                 </td>
               </tr>

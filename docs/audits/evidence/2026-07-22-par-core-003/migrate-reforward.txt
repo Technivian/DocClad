@@ -1,0 +1,5 @@
+[CLM One] Database: //workspace/e2e.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0106_contract_record_provenance, from contracts
+Running migrations:
+  Applying contracts.0106_contract_record_provenance... OK

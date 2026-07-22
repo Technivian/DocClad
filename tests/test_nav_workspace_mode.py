@@ -30,6 +30,8 @@ STANDARD_NAV_LABELS = [
     'Obligations',
     'Templates & Playbooks',
     'Workflow Designer',
+    'Data Manager',
+    'Entities',
 ]
 
 STANDARD_NAV_LABELS_HTML = [
@@ -42,6 +44,8 @@ STANDARD_NAV_LABELS_HTML = [
     'Obligations',
     'Templates &amp; Playbooks',
     'Workflow Designer',
+    'Data Manager',
+    'Entities',
 ]
 
 STANDARD_SECTION_LABELS = [
@@ -216,7 +220,8 @@ class StandardNavTests(TestCase):
         body = response.content.decode()
         content = sidebar_html(response)
         self.assertNotIn('>Settings<', content)
-        self.assertNotIn(reverse('settings_hub'), content)
+        # Exact hub href only — profile links under /settings/… must not trip this.
+        self.assertNotIn(f'href="{reverse("settings_hub")}"', content)
         self.assertIn('role="menuitem">Settings</a>', body)
         self.assertIn(reverse('settings_hub'), body)
 
@@ -228,6 +233,8 @@ class StandardNavTests(TestCase):
             self.assertIn(label, content)
         self.assertNotIn('Templates &amp; Playbooks', content)
         self.assertNotIn('Workflow Designer', content)
+        self.assertNotIn('Data Manager', content)
+        self.assertNotIn('Entities', content)
 
     def test_command_center_links_to_dashboard(self):
         response = self.owner_client.get(reverse('dashboard'))

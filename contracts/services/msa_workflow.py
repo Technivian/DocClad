@@ -183,23 +183,26 @@ def create_msa_document_artifact(*, workflow: Workflow, user, artifact_type: str
     payload = BytesIO()
     word_document.save(payload)
     suffix = 'summary' if artifact_type == 'summary' else 'draft'
-    document = Document(
+    from contracts.services.document_version_service import create_document_version
+
+    document, _version = create_document_version(
         organization=workflow.organization,
-        contract=workflow.contract,
         title=f'{workflow.contract.title} — {suffix.title()}',
         document_type=Document.DocType.MEMO if artifact_type == 'summary' else Document.DocType.CONTRACT,
         status=Document.Status.DRAFT,
         description=f'Generated from MSA workflow {workflow.pk}.',
+        contract=workflow.contract,
         uploaded_by=user,
+        actor=user,
+        source='generated',
         tags=f'msa-workflow:{workflow.pk},{artifact_type}',
+        file=ContentFile(
+            payload.getvalue(),
+            name=_docx_download_filename(contract=workflow.contract, artifact_type=artifact_type),
+        ),
+        request=request,
+        supersede_prior=False,
     )
-    document.file.save(
-        _docx_download_filename(contract=workflow.contract, artifact_type=artifact_type),
-        ContentFile(payload.getvalue()),
-        save=False,
-    )
-    document.mime_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    document.save()
     log_action(
         user,
         AuditLog.Action.EXPORT,
@@ -504,6 +507,17 @@ def create_msa_workflow_instance(*, organization, user, cleaned_values: dict, re
         if field.maps_to_contract_field and field.key in cleaned_values:
             setattr(contract, field.maps_to_contract_field, cleaned_values[field.key])
     contract.auto_renew = bool(cleaned_values.get('auto_renewal_included')) or str(cleaned_values.get('renewal_type', '')).lower() == 'auto-renew'
+    from contracts.services.contract_provenance import OriginKind, apply_provenance_fields, pin_workflow_provenance
+    apply_provenance_fields(
+        contract,
+        origin_kind=OriginKind.WORKFLOW,
+        origin_channel='msa_workflow',
+        actor=user,
+        lock=False,
+        validate=False,
+        source_system=cleaned_values.get('source_system'),
+        source_system_id=cleaned_values.get('source_system_id'),
+    )
     contract.save()
 
     workflow = Workflow.objects.create(
@@ -515,6 +529,7 @@ def create_msa_workflow_instance(*, organization, user, cleaned_values: dict, re
         status=Workflow.Status.ACTIVE,
         created_by=user,
     )
+    pin_workflow_provenance(contract, workflow, actor=user, request=request, channel='msa_workflow')
     materialize_workflow_from_template(workflow)
 
     FieldValue.objects.bulk_create([

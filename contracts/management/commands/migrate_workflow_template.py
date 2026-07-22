@@ -5,7 +5,7 @@ from contracts.services.workflow_templates import clone_template_version, migrat
 
 
 class Command(BaseCommand):
-    help = 'Clone a workflow template version and optionally migrate workflows to it.'
+    help = 'Clone a workflow template version and optionally migrate workflows to it (governed).'
 
     def add_arguments(self, parser):
         parser.add_argument('--source-template-id', type=int, required=True, help='Template to version.')
@@ -14,6 +14,12 @@ class Command(BaseCommand):
         parser.add_argument('--category', type=str, default='', help='Override the cloned template category.')
         parser.add_argument('--workflow-ids', type=str, default='', help='Comma-separated workflow ids to migrate.')
         parser.add_argument('--migrate-workflows', action='store_true', help='Move matching workflows to the new version.')
+        parser.add_argument(
+            '--migration-reason',
+            type=str,
+            default='',
+            help='Required when --migrate-workflows is set. Recorded in AuditLog.',
+        )
         parser.add_argument('--deactivate-source', action='store_true', help='Deactivate the source template after cloning.')
 
     def handle(self, *args, **options):
@@ -30,6 +36,9 @@ class Command(BaseCommand):
 
         migration_result = None
         if options['migrate_workflows']:
+            reason = (options.get('migration_reason') or '').strip()
+            if not reason:
+                raise CommandError('--migration-reason is required when migrating live workflows.')
             try:
                 workflow_ids = [
                     int(value.strip())
@@ -45,6 +54,7 @@ class Command(BaseCommand):
                 source_template,
                 cloned_template,
                 workflows=workflows,
+                reason=reason,
             )
 
         if options['deactivate_source']:

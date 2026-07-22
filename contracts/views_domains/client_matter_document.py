@@ -424,24 +424,34 @@ class DocumentCreateView(TenantScopedFormMixin, TenantAssignCreateMixin, LoginRe
         set_organization_on_instance(form.instance, get_user_organization(self.request.user))
         if form.instance.contract and not can_access_contract_action(self.request.user, form.instance.contract, ContractAction.EDIT):
             return HttpResponseForbidden('You do not have permission to upload documents for this contract.')
-        form.instance.uploaded_by = self.request.user
-        response = super().form_valid(form)
-        queue_document_ocr_review(self.object)
-        log_action(
-            self.request.user,
-            'CREATE',
-            'Document',
-            self.object.id,
-            str(self.object),
-            changes={
-                'event': 'document_uploaded',
-                'version': self.object.version,
-                'file_hash': self.object.file_hash,
-            },
+        from contracts.services.document_version_service import create_document_version
+
+        staged = form.save(commit=False)
+        organization = get_user_organization(self.request.user)
+        document, _version = create_document_version(
+            organization=organization,
+            title=staged.title,
+            document_type=staged.document_type,
+            status=staged.status,
+            description=staged.description,
+            file=staged.file,
+            contract=staged.contract,
+            matter=staged.matter,
+            client=staged.client,
+            uploaded_by=self.request.user,
+            actor=self.request.user,
+            source='manual_upload',
+            tags=staged.tags,
+            is_privileged=staged.is_privileged,
+            is_confidential=staged.is_confidential,
+            share_with_counterparty=staged.share_with_counterparty,
             request=self.request,
+            supersede_prior=False,
         )
+        self.object = document
+        queue_document_ocr_review(self.object)
         messages.success(self.request, f'Document "{self.object.title}" uploaded.')
-        return response
+        return redirect(self.get_success_url())
 
 
 class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, LoginRequiredMixin, UpdateView):
@@ -465,7 +475,9 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
     def form_valid(self, form):
         original_document = getattr(self, 'original_document', None) or self.get_object()
         staged_document = form.save(commit=False)
-        self.object = Document(
+        from contracts.services.document_version_service import create_document_version
+
+        document, _version = create_document_version(
             organization=original_document.organization,
             title=staged_document.title,
             document_type=staged_document.document_type,
@@ -476,31 +488,18 @@ class DocumentUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, Login
             matter=staged_document.matter,
             client=staged_document.client,
             uploaded_by=self.request.user,
+            actor=self.request.user,
+            source='document_edit',
+            derived_from_document=original_document,
+            parent_document=original_document,
             tags=staged_document.tags,
             is_privileged=staged_document.is_privileged,
             is_confidential=staged_document.is_confidential,
-            version=(original_document.version or 1) + 1,
-            parent_document=original_document,
-        )
-        self.object.save()
-        if original_document.status in {Document.Status.FINAL, Document.Status.EXECUTED}:
-            original_document.status = Document.Status.SUPERSEDED
-            original_document.save(update_fields=['status', 'updated_at'])
-        queue_document_ocr_review(self.object)
-        log_action(
-            self.request.user,
-            'CREATE',
-            'Document',
-            self.object.id,
-            str(self.object),
-            changes={
-                'event': 'document_version_created',
-                'parent_document_id': original_document.id,
-                'version': self.object.version,
-                'file_hash': self.object.file_hash,
-            },
             request=self.request,
+            supersede_prior=True,
         )
+        self.object = document
+        queue_document_ocr_review(self.object)
         messages.success(self.request, f'Document "{self.object.title}" updated as version {self.object.version}.')
         return redirect('contracts:document_detail', pk=self.object.pk)
 

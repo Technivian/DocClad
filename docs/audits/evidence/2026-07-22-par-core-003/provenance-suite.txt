@@ -1,0 +1,10 @@
+Creating test database for alias 'default'...
+...................
+----------------------------------------------------------------------
+Ran 19 tests in 11.106s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 19 test(s).
+System check identified no issues (0 silenced).

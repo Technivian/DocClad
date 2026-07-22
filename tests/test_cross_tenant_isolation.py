@@ -566,12 +566,13 @@ class DeadlineIsolationTest(CrossTenantFixtureMixin, TestCase):
 
     def test_list_excludes_other_org(self):
         self.client.login(username='user_b', password='passB1234!')
-        response = self.client.get(reverse('contracts:deadline_list') + '?show=all')
+        # Legacy deadline_list aliases to Obligations workspace (auth required).
+        response = self.client.get(reverse('contracts:obligations_workspace') + '?view=all')
         self.assertEqual(response.status_code, 200)
-        ids = [d.id for d in response.context.get('deadlines', [])]
-        self.assertNotIn(self.deadline_a.id, ids,
-                         'deadline_a (via contract_a of Org A) must not appear for Org B')
-        self.assertIn(self.deadline_b.id, ids)
+        # Obligations workspace may expose rows via context keys other than `deadlines`.
+        body = response.content.decode()
+        self.assertNotIn(str(self.deadline_a.title), body)
+        self.assertIn(str(self.deadline_b.title), body)
 
     def test_update_cross_org_returns_404(self):
         self.client.login(username='user_b', password='passB1234!')

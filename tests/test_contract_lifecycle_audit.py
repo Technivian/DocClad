@@ -138,10 +138,9 @@ class ContractLifecycleAuditTests(TestCase):
         self.assertEqual(contract.lifecycle_stage, 'RENEWAL')
         self.assertEqual(payload['contracts_promoted_to_renewal'], 1)
         self.assertEqual(payload['contracts_archived'], 0)
-        self.assertEqual(
-            AuditLog.objects.filter(model_name='Contract', object_id=contract.id).count(),
-            1,
-        )
+        audit = AuditLog.objects.filter(model_name='Contract', object_id=contract.id)
+        self.assertEqual(audit.count(), 1)
+        self.assertEqual(audit.first().event_type, 'contract.lifecycle_stage_changed')
 
     def test_run_contract_lifecycle_jobs_dry_run_does_not_mutate_contracts(self):
         contract = Contract.objects.create(

@@ -917,7 +917,7 @@ class ContractDetailTerminologyAndBlockerTests(TestCase):
         self.assertNotIn('View full workflow', body)
         self.assertNotIn('Signature requirement', body)
         self.assertEqual(response.context['contract_command']['primary_action']['label'], 'Attach source document')
-        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Intake incomplete')
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Drafting')
         self.assertTrue(any('approval' in item.lower() for item in response.context['later_workflow_requirements']))
         self.assertNotIn('contract-action-summary', body)
         self.assertIn('dc-ds-workspace__rail--sticky', body)
@@ -969,7 +969,7 @@ class ContractDetailLifecycleCommandLabelTests(TestCase):
         self.client = TestClient()
         self.client.login(username='cdetail_lifecycle_user', password='testpass123')
 
-    def test_draft_without_document_shows_intake_incomplete(self):
+    def test_in_progress_without_document_uses_pdr_status_stage_label(self):
         contract = Contract.objects.create(
             organization=self.organization, title='Intake Contract', content='Seed',
             status=Contract.Status.IN_PROGRESS, created_by=self.user,
@@ -977,7 +977,7 @@ class ContractDetailLifecycleCommandLabelTests(TestCase):
         response = self.client.get(detail_url(contract.pk))
         body = page_body(response.content.decode())
         self.assertIn('In progress', body)
-        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Intake incomplete')
+        self.assertEqual(response.context['contract_command']['lifecycle_label'], 'In progress · Drafting')
         self.assertIn('Action required', body)
 
     def test_approved_obligation_tracking_shows_active_label(self):

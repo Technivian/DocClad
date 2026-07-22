@@ -6,6 +6,10 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils.dateparse import parse_date
 
 from contracts.models import Contract, Organization
+from contracts.services.contract_import_lifecycle import (
+    ImportLifecycleError,
+    persist_contract_with_imported_lifecycle,
+)
 
 
 DEFAULT_FIELD_MAPPING = {
@@ -13,6 +17,7 @@ DEFAULT_FIELD_MAPPING = {
     'counterparty': 'counterparty',
     'contract_type': 'contract_type',
     'status': 'status',
+    'lifecycle_stage': 'lifecycle_stage',
     'value': 'value',
     'currency': 'currency',
     'governing_law': 'governing_law',
@@ -54,6 +59,7 @@ class Command(BaseCommand):
 
         created = 0
         updated = 0
+        skipped = 0
         for row in rows:
             data = {}
             for source_field, target_field in mapping.items():
@@ -65,31 +71,19 @@ class Command(BaseCommand):
             title = data.get('title')
             counterparty = data.get('counterparty', '')
             if not title:
+                skipped += 1
                 continue
 
-            contract = Contract.objects.filter(organization=organization, title__iexact=title, counterparty__iexact=counterparty).first()
-            if contract is None:
+            contract = Contract.objects.filter(
+                organization=organization, title__iexact=title, counterparty__iexact=counterparty
+            ).first()
+            is_new = contract is None
+            if is_new:
                 contract = Contract(organization=organization)
-                created += 1
-            else:
-                updated += 1
 
             contract.title = title
             contract.counterparty = counterparty
             contract.contract_type = data.get('contract_type', contract.contract_type)
-            raw_status = data.get('status', contract.status)
-            status_aliases = {
-                'DRAFT': Contract.Status.IN_PROGRESS,
-                'PENDING': Contract.Status.IN_PROGRESS,
-                'IN_REVIEW': Contract.Status.IN_PROGRESS,
-                'APPROVED': Contract.Status.IN_PROGRESS,
-                'COMPLETED': Contract.Status.ACTIVE,
-            }
-            allowed = {choice for choice, _ in Contract.Status.choices}
-            if raw_status:
-                mapped = status_aliases.get(str(raw_status).strip().upper(), str(raw_status).strip().upper())
-                if mapped in allowed:
-                    contract.status = mapped
             contract.currency = data.get('currency', contract.currency)
             contract.governing_law = data.get('governing_law', contract.governing_law)
             contract.jurisdiction = data.get('jurisdiction', contract.jurisdiction)
@@ -104,6 +98,36 @@ class Command(BaseCommand):
                 contract.start_date = parse_date(str(data['start_date']))
             if data.get('end_date'):
                 contract.end_date = parse_date(str(data['end_date']))
-            contract.save()
 
-        self.stdout.write(self.style.SUCCESS(f'Imported {len(rows)} row(s): {created} created, {updated} updated.'))
+            raw_status = data.get('status', Contract.Status.IN_PROGRESS if is_new else contract.status)
+            raw_stage = data.get('lifecycle_stage')
+            non_lifecycle_fields = [
+                'title', 'counterparty', 'contract_type', 'currency', 'governing_law',
+                'jurisdiction', 'risk_level', 'content', 'value', 'start_date', 'end_date',
+                'organization',
+            ]
+            try:
+                contract, was_created = persist_contract_with_imported_lifecycle(
+                    contract,
+                    desired_status=raw_status,
+                    desired_lifecycle_stage=raw_stage,
+                    actor=None,
+                    reason='csv import',
+                    source='csv_import',
+                    non_lifecycle_update_fields=None if is_new else non_lifecycle_fields,
+                )
+            except ImportLifecycleError as exc:
+                skipped += 1
+                self.stderr.write(f'Skipped "{title}": {exc}')
+                continue
+
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Imported {len(rows)} row(s): {created} created, {updated} updated, {skipped} skipped.'
+            )
+        )

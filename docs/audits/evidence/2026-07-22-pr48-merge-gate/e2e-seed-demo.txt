@@ -1,0 +1,2 @@
+CommandError: Organization 'e2e-command-center' was not found.
+[CLM One] Database: //workspace/e2e.sqlite3 (local, env=development)

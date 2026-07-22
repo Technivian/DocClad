@@ -301,3 +301,41 @@ class TemplatesPlaybooksHubView(LoginRequiredMixin, TemplateView):
         ctx['hub_cards'] = _build_templates_playbooks_hub_cards(organization)
         ctx['hub_unavailable'] = organization is None
         return ctx
+
+
+class DataManagerHubView(LoginRequiredMixin, TemplateView):
+    """
+    Interim Data Manager surface (PAR-NAV-001).
+
+    Lists template-scoped FieldDefinition rows. Canonical Property Definition CRUD
+    remains Future (PAR-DATA-001) and requires an approved PDR/ADR before schema expansion.
+    """
+
+    template_name = 'contracts/data_manager_hub.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        organization = getattr(request, 'organization', None) or get_user_organization(request.user)
+        if not can_manage_organization(request.user, organization):
+            return HttpResponseForbidden('You do not have permission to manage data definitions.')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from contracts.models import FieldDefinition
+
+        ctx = super().get_context_data(**kwargs)
+        organization = getattr(self.request, 'organization', None) or get_user_organization(self.request.user)
+        fields = FieldDefinition.objects.none()
+        if organization is not None:
+            fields = (
+                FieldDefinition.objects.filter(
+                    Q(workflow_template__organization=organization)
+                    | Q(workflow_template__organization__isnull=True)
+                )
+                .select_related('workflow_template')
+                .order_by('workflow_template__name', 'section', 'order', 'key')
+            )
+        ctx['hub_organization'] = organization
+        ctx['hub_unavailable'] = organization is None
+        ctx['field_definitions'] = fields[:200]
+        ctx['field_definition_count'] = fields.count() if organization is not None else 0
+        return ctx

@@ -109,7 +109,10 @@ class Command(BaseCommand):
             lifecycle_stage='OBLIGATION_TRACKING',
             counterparty='TechStart Inc', value=Decimal('500000'),
             start_date=today - timedelta(days=90), end_date=today + timedelta(days=275),
-            client=client1, matter=matter1, created_by=attorney1
+            client=client1, matter=matter1, created_by=attorney1,
+            origin_kind=Contract.OriginKind.SEED,
+            origin_channel='seed_data',
+            origin_reason='Development seed data',
         )
         contract2 = Contract.objects.create(
             organization=organization,
@@ -118,7 +121,10 @@ class Command(BaseCommand):
             lifecycle_stage='OBLIGATION_TRACKING',
             counterparty='Global Industries LLC', value=Decimal('0'),
             start_date=today - timedelta(days=60), end_date=today + timedelta(days=305),
-            client=client2, matter=matter3, created_by=attorney2
+            client=client2, matter=matter3, created_by=attorney2,
+            origin_kind=Contract.OriginKind.SEED,
+            origin_channel='seed_data',
+            origin_reason='Development seed data',
         )
         contract3 = Contract.objects.create(
             organization=organization,
@@ -126,7 +132,10 @@ class Command(BaseCommand):
             content='Settlement terms...', status='IN_PROGRESS',
             lifecycle_stage='DRAFTING',
             counterparty='Former Employer Inc', value=Decimal('75000'),
-            client=client3, matter=matter2, created_by=attorney2
+            client=client3, matter=matter2, created_by=attorney2,
+            origin_kind=Contract.OriginKind.SEED,
+            origin_channel='seed_data',
+            origin_reason='Development seed data',
         )
 
         for i in range(5):

@@ -1,0 +1,128 @@
+Creating test database for alias 'default'...
+....../workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-22 06:47:34,334 INFO contracts.middleware request_id=2cdc0ffd-783d-43c4-bf6e-6f514d1c5375 user_id=1 org_id=1 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 06:47:34,387 INFO contracts.middleware request_id=899ff705-17d4-43ea-846e-85abd7c57c84 user_id=1 org_id=1 path=/contracts/documents/3/ request_completed
+............2026-07-22 06:47:37,248 INFO contracts.middleware request_id=887118b1-d1b4-4cda-81d3-1104c3d32c76 user_id=1 org_id=1 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 06:47:37,294 INFO contracts.middleware request_id=c0c15071-3fbe-48f9-8083-a678df7942fb user_id=1 org_id=1 path=/contracts/documents/2/ request_completed
+2026-07-22 06:47:37,406 INFO contracts.middleware request_id=dba1aa02-4cf4-4c05-a842-a4df807dc6a4 user_id=1 org_id=1 path=/contracts/documents/1/compare/2/ request_completed
+.2026-07-22 06:47:37,857 INFO contracts.middleware request_id=7ac0e91a-1f8c-4c90-a0a7-6a5e330434d2 user_id=1 org_id=1 path=/contracts/documents/ocr-queue/ request_completed
+.2026-07-22 06:47:38,278 INFO contracts.middleware request_id=1c3134f1-a729-41e0-b7b3-954d31acdd65 user_id=1 org_id=1 path=/contracts/documents/ocr-queue/1/ request_completed
+2026-07-22 06:47:38,320 INFO contracts.middleware request_id=f124269f-0278-4448-95a6-1741dad29ca0 user_id=1 org_id=1 path=/contracts/documents/ocr-queue/ request_completed
+..2026-07-22 06:47:38,950 INFO contracts.middleware request_id=71f7cee3-ad81-4c7e-9896-03452e1cf8ab user_id=1 org_id=1 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 06:47:38,996 INFO contracts.middleware request_id=87d362c0-b777-433f-bd73-713d1ca59ee8 user_id=1 org_id=1 path=/contracts/documents/2/ request_completed
+..2026-07-22 06:47:39,410 INFO contracts.middleware request_id=23b3e783-e3ba-42af-af10-012cbe1d0d18 user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+2026-07-22 06:47:39,411 WARNING django.request request_id=- user_id=- org_id=- path=- Bad Request: /contracts/api/contracts/bulk-update/
+...2026-07-22 06:47:40,325 INFO contracts.middleware request_id=a85ea3cc-89b8-4f04-b53b-65b9bc206b41 user_id=1 org_id=1 path=/contracts/1/ request_completed
+....2026-07-22 06:47:41,705 INFO contracts.middleware request_id=2fcb6ead-9f76-445c-89b6-8ba24d09f5ff user_id=1 org_id=1 path=/contracts/1/ request_completed
+.......2026-07-22 06:47:43,554 INFO contracts.middleware request_id=615540ec-fe13-413b-b55d-2d8c35d72c6f user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+2026-07-22 06:47:43,555 WARNING django.request request_id=- user_id=- org_id=- path=- Bad Request: /contracts/api/contracts/bulk-update/
+.2026-07-22 06:47:43,770 INFO contracts.middleware request_id=eff159eb-a5fd-4d9c-ab85-bed81632bc95 user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+..........2026-07-22 06:47:45,873 INFO contracts.middleware request_id=1576c912-9392-4a19-bbe2-6e83720350ac user_id=1 org_id=1 path=/contracts/new/ request_completed
+.2026-07-22 06:47:46,098 INFO contracts.middleware request_id=5d73c5f5-420d-4b25-b627-9c4666e16176 user_id=1 org_id=1 path=/contracts/1/edit/ request_completed
+.2026-07-22 06:47:46,312 INFO contracts.middleware request_id=0a9c88b4-8b11-493f-b3ce-1123d9723dfb user_id=1 org_id=1 path=/contracts/1/edit/ request_completed
+..2026-07-22 06:47:47,172 INFO contracts.middleware request_id=657ac65b-06be-40e4-8e6f-3be8cadd7b7a user_id=2 org_id=2 path=/contracts/documents/1/ request_completed
+2026-07-22 06:47:47,173 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/
+.2026-07-22 06:47:47,838 INFO contracts.middleware request_id=371d0908-f9af-4c9b-9075-3ac3078e8907 user_id=2 org_id=2 path=/contracts/documents/ request_completed
+.2026-07-22 06:47:48,463 INFO contracts.middleware request_id=183052f9-9096-45fd-877f-64f2b21b109b user_id=2 org_id=2 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 06:47:48,464 WARNING django.request request_id=- user_id=- org_id=- path=- Not Found: /contracts/documents/1/edit/
+...2026-07-22 06:47:49,697 INFO contracts.middleware request_id=867e2bee-d3ef-4d70-8b53-7062c04b3888 user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/ingest-preview/ request_completed
+...2026-07-22 06:47:50,916 INFO contracts.middleware request_id=684e55aa-e3ed-47e5-a226-492339bde3c6 user_id=1 org_id=1 path=/contracts/api/integrations/netsuite/sync/ request_completed
+.2026-07-22 06:47:51,333 INFO contracts.middleware request_id=1a748333-b442-43d9-be5d-b314a18b4109 user_id=1 org_id=1 path=/contracts/api/integrations/netsuite/sync/ request_completed
+.2026-07-22 06:47:51,749 INFO contracts.middleware request_id=0ac7a539-b6bb-4302-97ec-ac3e85c41ca2 user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/oauth/start/ request_completed
+2026-07-22 06:47:51,756 INFO contracts.middleware request_id=94bbc407-8d5b-4aff-b30b-853580907d95 user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/oauth/callback/ request_completed
+...2026-07-22 06:47:52,989 INFO contracts.middleware request_id=330fd1ce-17c9-4964-ac4a-1d13e64da1cc user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/sync/ request_completed
+2026-07-22 06:47:52,989 WARNING django.request request_id=- user_id=- org_id=- path=- Conflict: /contracts/api/integrations/salesforce/sync/
+.2026-07-22 06:47:53,405 INFO contracts.middleware request_id=21d6b436-6fa9-425b-93e3-8866294a4dc3 user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/sync/ request_completed
+...2026-07-22 06:47:54,626 INFO contracts.middleware request_id=44b9666e-93de-4cfa-9ed5-f8771e3d806f user_id=1 org_id=1 path=/contracts/api/integrations/salesforce/sync-runs/ request_completed
+..................
+----------------------------------------------------------------------
+Ran 88 tests in 23.398s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 88 test(s).
+System check identified no issues (0 silenced).
+Dispatched 1 webhook delivery item(s).
+Dispatched 1 webhook delivery item(s).
+Encrypted Salesforce tokens for 1 connection(s); prefix=enc:v1:
+{
+  "created": 1,
+  "errors": [],
+  "skipped": 0,
+  "total_records": 1,
+  "updated": 0
+}
+{
+  "created": 1,
+  "errors": [],
+  "skipped": 0,
+  "total_records": 1,
+  "updated": 0
+}
+Queued 4 background job(s).
+{
+  "created": 1,
+  "dry_run": false,
+  "errors": [],
+  "fetched_records": 1,
+  "skipped": 0,
+  "source": "netsuite_api",
+  "total_records": 1,
+  "updated": 0
+}
+{
+  "created": 1,
+  "dry_run": true,
+  "errors": [],
+  "fetched_records": 3,
+  "skipped": 1,
+  "source": "netsuite_api",
+  "total_records": 3,
+  "updated": 1
+}
+{
+  "created": 1,
+  "errors": [],
+  "fetched_records": 1,
+  "skipped": 0,
+  "soql": "SELECT Name, Account.Name, Type, Amount, CurrencyIsoCode, Owner.Email, Owner.Name, Id, Record_URL__c, CreatedDate, LastModifiedDate FROM Opportunity ORDER BY LastModifiedDate DESC LIMIT 25",
+  "source_object": "Opportunity",
+  "total_records": 1,
+  "updated": 0
+}
+{
+  "captured_at": "2026-07-22T06:47:55.438212+00:00",
+  "cutover_ready": false,
+  "database": {
+    "connectivity_latency_ms": 0.36,
+    "engine": "django.db.backends.sqlite3",
+    "name": "db.sqlite3",
+    "user": "n/a",
+    "version": "SQLite 3.45.1"
+  },
+  "environment": "unknown",
+  "migrations": {
+    "status": "clean",
+    "unapplied_count": 0
+  },
+  "simulation": false
+}
+{
+  "captured_at": "2026-07-22T06:47:55.848004+00:00",
+  "cutover_ready": true,
+  "database": {
+    "connectivity_latency_ms": 0.34,
+    "engine": "django.db.backends.postgresql",
+    "name": "cms_aegis",
+    "user": "postgres",
+    "version": "PostgreSQL 16.4"
+  },
+  "environment": "unknown",
+  "migrations": {
+    "status": "clean",
+    "unapplied_count": 0
+  },
+  "simulation": false
+}

@@ -331,6 +331,7 @@ urlpatterns = [
     path('my-work/saved-views/<int:view_id>/', views.my_work_saved_view_detail_api, name='my_work_saved_view_detail_api'),
     path('ops/work-health/', views.WorkHealthReportView.as_view(), name='work_health_report'),
     path('templates-playbooks/', views.TemplatesPlaybooksHubView.as_view(), name='templates_playbooks_hub'),
+    path('data-manager/', views.DataManagerHubView.as_view(), name='data_manager_hub'),
 
     # Counterparties
     path('counterparties/', views.CounterpartyListView.as_view(), name='counterparty_list'),

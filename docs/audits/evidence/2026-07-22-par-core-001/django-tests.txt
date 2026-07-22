@@ -1,0 +1,24 @@
+Creating test database for alias 'default'...
+./workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-22 06:33:49,286 INFO contracts.middleware request_id=67194227-a320-4647-bf58-0ec8fb2ec5db user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+2026-07-22 06:33:49,287 WARNING django.request request_id=- user_id=- org_id=- path=- Bad Request: /contracts/api/contracts/bulk-update/
+...2026-07-22 06:33:50,207 INFO contracts.middleware request_id=2cdd4689-a5b5-44ad-ad3a-efce0427c5b1 user_id=1 org_id=1 path=/contracts/1/ request_completed
+.....2026-07-22 06:33:51,841 INFO contracts.middleware request_id=18570756-b54d-48d2-bb37-6180575bd109 user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+2026-07-22 06:33:51,842 WARNING django.request request_id=- user_id=- org_id=- path=- Bad Request: /contracts/api/contracts/bulk-update/
+.2026-07-22 06:33:52,057 INFO contracts.middleware request_id=ff5f8288-83f0-41e4-8c9d-23c2142c460d user_id=1 org_id=1 path=/contracts/api/contracts/bulk-update/ request_completed
+..........2026-07-22 06:33:54,246 INFO contracts.middleware request_id=7cca17f4-cf70-4826-abf9-0fe03c876965 user_id=1 org_id=1 path=/contracts/new/ request_completed
+.2026-07-22 06:33:54,466 INFO contracts.middleware request_id=2bdbb94b-1357-405d-9e24-4d9372430658 user_id=1 org_id=1 path=/contracts/1/edit/ request_completed
+.2026-07-22 06:33:54,684 INFO contracts.middleware request_id=ce4d688a-b663-4fd1-8993-060e1c233584 user_id=1 org_id=1 path=/contracts/1/edit/ request_completed
+...2026-07-22 06:33:55,561 INFO contracts.middleware request_id=8178b06f-ab6b-46a3-9fef-c5c738b32c32 user_id=1 org_id=1 path=/contracts/1/ request_completed
+.....2026-07-22 06:33:56,868 INFO contracts.middleware request_id=6c23552b-1d38-429f-aa57-9beb98e2f890 user_id=1 org_id=1 path=/contracts/1/ request_completed
+.2026-07-22 06:33:57,345 INFO contracts.middleware request_id=28cc42d9-9cfe-42c3-b159-c7148894c270 user_id=1 org_id=1 path=/contracts/1/ request_completed
+.........
+----------------------------------------------------------------------
+Ran 40 tests in 8.545s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 40 test(s).
+System check identified no issues (0 silenced).

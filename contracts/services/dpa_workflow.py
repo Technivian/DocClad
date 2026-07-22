@@ -240,7 +240,9 @@ def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values)
             else f'{evidence_key.replace("_document", "").replace("_", " ").title()} proposed wording'
         )
         with default_storage.open(storage_name, 'rb') as source:
-            document = Document(
+            from contracts.services.document_version_service import create_document_version
+
+            create_document_version(
                 organization=organization,
                 contract=workflow.contract,
                 title=title,
@@ -248,8 +250,11 @@ def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values)
                 status=Document.Status.DRAFT,
                 description='Evidence captured during DPA Step 4 operational intake.',
                 uploaded_by=user,
+                actor=user,
+                source='generated',
+                file=File(source, name=evidence.get('original_name') or 'evidence'),
+                supersede_prior=False,
             )
-            document.file.save(evidence.get('original_name') or 'evidence', File(source), save=True)
         default_storage.delete(storage_name)
 
 
@@ -349,6 +354,17 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
     for field in field_defs:
         if field.maps_to_contract_field and field.key in cleaned_values:
             setattr(contract, field.maps_to_contract_field, cleaned_values[field.key])
+    from contracts.services.contract_provenance import OriginKind, apply_provenance_fields, pin_workflow_provenance
+    apply_provenance_fields(
+        contract,
+        origin_kind=OriginKind.WORKFLOW,
+        origin_channel='dpa_workflow',
+        actor=user,
+        lock=False,
+        validate=False,
+        source_system=cleaned_values.get('source_system'),
+        source_system_id=cleaned_values.get('source_system_id'),
+    )
     contract.save()
 
     related_msa_id = cleaned_values.get('related_msa_id')
@@ -369,6 +385,7 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
         status=Workflow.Status.ACTIVE,
         created_by=user,
     )
+    pin_workflow_provenance(contract, workflow, actor=user, request=request, channel='dpa_workflow')
     materialize_workflow_from_template(workflow)
 
     FieldValue.objects.bulk_create([

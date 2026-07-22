@@ -8,7 +8,7 @@ from .models import (
     TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist,
     Workflow, WorkflowTemplate, WorkflowTemplateStep, WorkflowStep, ChecklistItem,
     DueDiligenceProcess, DueDiligenceTask, DueDiligenceRisk, Budget, BudgetExpense, Contract,
-    ContractTemplate,
+    ContractTemplate, ContractType,
     Counterparty, ClauseCategory, ClauseTemplate, SignatureRequest, DataInventoryRecord,
     DSARRequest, Subprocessor, TransferRecord, RetentionPolicy, LegalHold,
     ApprovalRule, ApprovalRequest, EthicalWall, SalesforceOrganizationConnection,
@@ -300,6 +300,37 @@ class WorkflowTemplateAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     readonly_fields = ('created_at',)
 
+    _PUBLISHED_LOCKED_FIELDS = (
+        'name',
+        'description',
+        'organization',
+        'category',
+        'version',
+        'parent_template',
+        'contract_type',
+        'fallback_signer',
+    )
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.is_active:
+            readonly = list(dict.fromkeys([*readonly, *self._PUBLISHED_LOCKED_FIELDS, 'is_active']))
+        return readonly
+
+    def save_model(self, request, obj, form, change):
+        if change and obj.pk:
+            prior = WorkflowTemplate.objects.filter(pk=obj.pk).first()
+            if prior and prior.is_active:
+                # Published rows are immutable in Admin. Unpublish via the product UI.
+                from django.contrib import messages
+                messages.error(
+                    request,
+                    'Published workflow templates are immutable in Admin. '
+                    'Use Workflow Designer to create a new version or unpublish to draft.',
+                )
+                return
+        super().save_model(request, obj, form, change)
+
 @admin.register(WorkflowTemplateStep)
 class WorkflowTemplateStepAdmin(admin.ModelAdmin):
     list_display = ['template', 'name', 'order']
@@ -313,12 +344,109 @@ class WorkflowStepAdmin(admin.ModelAdmin):
     list_filter = ['status', 'due_date']
     search_fields = ['workflow__title', 'name']
 
+@admin.register(ContractType)
+class ContractTypeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name', 'description']
+    ordering = ['name']
+    readonly_fields = ['created_at']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['code', 'created_at']
+        return ['created_at']
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        from contracts.services.contract_type_catalogue import audit_catalogue_mutation, valid_codes
+        from django.core.exceptions import ValidationError
+
+        if not change and obj.code not in valid_codes():
+            raise ValidationError('New catalogue rows must use an approved enum code.')
+        super().save_model(request, obj, form, change)
+        audit_catalogue_mutation(
+            actor=request.user,
+            catalogue=obj,
+            action='update' if change else 'create',
+            changes={'code': obj.code, 'name': obj.name, 'is_active': obj.is_active},
+            request=request,
+        )
+
+
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
-    list_display = ['title', 'organization', 'status', 'counterparty', 'value', 'start_date', 'end_date', 'created_at', 'is_expiring_soon']
-    list_filter = ['organization', 'status', 'created_at', 'start_date', ExpiringContractFilter]
-    search_fields = ['title', 'content', 'counterparty']
+    list_display = [
+        'title', 'organization', 'status', 'origin_kind', 'counterparty',
+        'value', 'start_date', 'end_date', 'created_at', 'is_expiring_soon',
+    ]
+    list_filter = ['organization', 'status', 'origin_kind', 'created_at', 'start_date', ExpiringContractFilter]
+    search_fields = ['title', 'content', 'counterparty', 'source_system_id', 'provenance_correlation_id']
     ordering = ['-created_at']
+    readonly_fields = [
+        'origin_kind',
+        'origin_channel',
+        'origin_workflow',
+        'origin_workflow_template',
+        'origin_workflow_template_version',
+        'origin_reason',
+        'provenance_correlation_id',
+        'provenance_locked_at',
+        'source_system',
+        'source_system_id',
+        'created_by',
+        'created_at',
+        'updated_at',
+    ]
+
+    def save_model(self, request, obj, form, change):
+        from contracts.services.contract_provenance import (
+            EVENT_PROVENANCE_ASSIGNED,
+            EVENT_RECORD_CREATED,
+            OriginKind,
+            apply_provenance_fields,
+            provenance_snapshot,
+        )
+        from contracts.middleware import log_action
+        from contracts.models import AuditLog
+
+        if not change:
+            apply_provenance_fields(
+                obj,
+                origin_kind=OriginKind.ADMIN,
+                origin_channel='django_admin',
+                origin_reason='Created via Django admin',
+                actor=request.user,
+                lock=True,
+                validate=True,
+            )
+        super().save_model(request, obj, form, change)
+        if not change:
+            snap = provenance_snapshot(obj)
+            log_action(
+                request.user,
+                AuditLog.Action.CREATE,
+                'Contract',
+                obj.pk,
+                str(obj),
+                organization=obj.organization,
+                request=request,
+                event_type=EVENT_RECORD_CREATED,
+                changes={'event': EVENT_RECORD_CREATED, 'provenance': snap},
+            )
+            log_action(
+                request.user,
+                AuditLog.Action.CREATE,
+                'Contract',
+                obj.pk,
+                str(obj),
+                organization=obj.organization,
+                request=request,
+                event_type=EVENT_PROVENANCE_ASSIGNED,
+                changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snap},
+            )
 
     @admin.display(boolean=True, description='Expiring <=30d')
     def is_expiring_soon(self, obj):

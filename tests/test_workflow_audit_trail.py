@@ -106,6 +106,9 @@ class WorkflowAuditTrailTests(TestCase):
 
     def test_template_updated_writes_audit_log(self):
         self.client.force_login(self.user)
+        # Published templates are immutable — edit only as draft.
+        self.template.is_active = False
+        self.template.save(update_fields=['is_active'])
         response = self.client.post(
             reverse('contracts:workflow_template_update', args=[self.template.pk]),
             data={

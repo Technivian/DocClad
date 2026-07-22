@@ -101,6 +101,7 @@ class WorkflowTemplateVersioningTests(TestCase):
             'migrate_workflow_template',
             source_template_id=self.template.id,
             migrate_workflows=True,
+            migration_reason='Test governed cutover',
             deactivate_source=True,
         )
 

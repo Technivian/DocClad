@@ -53,14 +53,12 @@ _TOKEN_RE = re.compile(r'\{\{\s*(\w+)\s*\}\}')
 
 def _ensure_nda_seed_data() -> None:
     seed = import_module('contracts.migrations.0077_seed_nda_workflow')
+    from contracts.services.contract_type_catalogue import ensure_catalogue_row
 
-    contract_type, _ = ContractType.objects.get_or_create(
-        code='NDA',
-        defaults={
-            'name': 'Non-Disclosure Agreement',
-            'description': 'Self-serve NDA workflow with governed fallback and conditional legal review.',
-            'is_active': True,
-        },
+    contract_type = ensure_catalogue_row(
+        Contract.ContractType.NDA,
+        name='Non-Disclosure Agreement',
+        description='Self-serve NDA workflow with governed fallback and conditional legal review.',
     )
 
     workflow_template, created = WorkflowTemplate.objects.get_or_create(
@@ -380,6 +378,17 @@ def create_nda_workflow_instance(*, organization, user, cleaned_values: dict, re
     for field in field_defs:
         if field.maps_to_contract_field and field.key in cleaned_values:
             setattr(contract, field.maps_to_contract_field, cleaned_values[field.key])
+    from contracts.services.contract_provenance import OriginKind, apply_provenance_fields, pin_workflow_provenance
+    apply_provenance_fields(
+        contract,
+        origin_kind=OriginKind.WORKFLOW,
+        origin_channel='nda_workflow',
+        actor=user,
+        lock=False,
+        validate=False,
+        source_system=cleaned_values.get('source_system'),
+        source_system_id=cleaned_values.get('source_system_id'),
+    )
     contract.save()
 
     workflow = Workflow.objects.create(
@@ -391,6 +400,7 @@ def create_nda_workflow_instance(*, organization, user, cleaned_values: dict, re
         status=Workflow.Status.ACTIVE,
         created_by=user,
     )
+    pin_workflow_provenance(contract, workflow, actor=user, request=request, channel='nda_workflow')
     materialize_workflow_from_template(workflow)
 
     FieldValue.objects.bulk_create([

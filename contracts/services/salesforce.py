@@ -415,6 +415,7 @@ def map_salesforce_record_to_contract_data(record: dict[str, Any], field_map: li
 
 def upsert_contract_from_salesforce(organization, mapped: dict[str, Any]):
     from contracts.models import Contract
+    from contracts.services.contract_import_lifecycle import persist_contract_with_imported_lifecycle
 
     source_system_id = str(mapped.get('source_system_id', '') or '').strip()
     title = str(mapped.get('contract_title', '') or '').strip()
@@ -435,7 +436,6 @@ def upsert_contract_from_salesforce(organization, mapped: dict[str, Any]):
     contract.title = title
     contract.counterparty = counterparty
     contract.contract_type = _to_contract_type(mapped.get('contract_type'))
-    contract.status = _to_contract_status(mapped.get('status'))
     contract.value = _to_decimal(mapped.get('contract_value'))
     if mapped.get('currency') not in {None, ''}:
         contract.currency = _to_currency(mapped.get('currency'))
@@ -448,7 +448,22 @@ def upsert_contract_from_salesforce(organization, mapped: dict[str, Any]):
         contract.risk_level = _to_risk_level(mapped.get('risk_level'))
     contract.source_system_url = str(mapped.get('source_system_url', '') or '').strip()
     contract.source_last_modified_at = _to_datetime(mapped.get('updated_at'))
-    contract.save()
+
+    non_lifecycle_fields = [
+        'title', 'counterparty', 'contract_type', 'value', 'currency',
+        'governing_law', 'jurisdiction', 'start_date', 'end_date', 'renewal_date',
+        'risk_level', 'source_system_url', 'source_last_modified_at',
+        'source_system', 'source_system_id', 'organization',
+    ]
+    desired_status = _to_contract_status(mapped.get('status'))
+    contract, created = persist_contract_with_imported_lifecycle(
+        contract,
+        desired_status=desired_status,
+        actor=None,
+        reason='salesforce sync',
+        source='salesforce',
+        non_lifecycle_update_fields=None if created else non_lifecycle_fields,
+    )
     return contract, 'created' if created else 'updated'
 
 

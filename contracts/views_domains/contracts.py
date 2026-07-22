@@ -127,6 +127,9 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
 
     def dispatch(self, request, *args, **kwargs):
         # Canonical Contracts destination is the repository workspace.
+        # Auth first — never alias-redirect anonymous users past login.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         target = reverse('contracts:repository')
         query = request.META.get('QUERY_STRING')
         if query:
@@ -260,10 +263,12 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         context['search_query'] = self.request.GET.get('q', '')
         context['sort'] = self.request.GET.get('sort', '-created_at')
         context['current_status'] = self.request.GET.get('status', '')
+        # Legacy list aliases stage-oriented filters; labels must not say "Draft"
+        # as a record status (PDR-0002). Values remain stage-filter keys.
         context['status_tabs'] = [
             ('All', ''),
-            ('Draft', 'DRAFT'),
-            ('Legal Review', 'IN_REVIEW'),
+            ('Drafting', 'DRAFT'),
+            ('Internal review', 'IN_REVIEW'),
             ('Approval', 'PENDING'),
             ('Signature', 'APPROVED'),
             ('Blocked', 'BLOCKED'),
@@ -342,10 +347,29 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 attach_document_dialog_open=True,
             ))
 
-        document = form.save(commit=False)
-        set_organization_on_instance(document, get_user_organization(request.user))
-        document.uploaded_by = request.user
-        document.save()
+        from contracts.services.document_version_service import create_document_version
+
+        staged = form.save(commit=False)
+        organization = get_user_organization(request.user)
+        document, _version = create_document_version(
+            organization=organization,
+            title=staged.title,
+            document_type=staged.document_type,
+            status=staged.status,
+            description=staged.description,
+            file=staged.file,
+            contract=self.object,
+            matter=staged.matter,
+            client=staged.client,
+            uploaded_by=request.user,
+            actor=request.user,
+            source='contract_attachment',
+            tags=staged.tags,
+            is_privileged=staged.is_privileged,
+            is_confidential=staged.is_confidential,
+            request=request,
+            supersede_prior=False,
+        )
         form.save_m2m()
         queue_document_ocr_review(document)
         log_action(
@@ -355,7 +379,8 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             document.id,
             str(document),
             changes={
-                'event': 'document_uploaded',
+                'event': 'document.uploaded',
+                'equivalent_event': 'document.version.created',
                 'version': document.version,
                 'file_hash': document.file_hash,
                 'source': 'contract_detail_attachment',
@@ -1345,10 +1370,26 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
         # cleaned field values — harmless no-op if the content has none,
         # so this runs whether or not a template was used to start the draft.
         form.instance.content = render_merge_fields(form.instance.content, form.instance)
+        from contracts.services.contract_provenance import (
+            EVENT_PROVENANCE_ASSIGNED,
+            OriginKind,
+            apply_provenance_fields,
+            provenance_snapshot,
+        )
+        apply_provenance_fields(
+            form.instance,
+            origin_kind=OriginKind.MANUAL,
+            origin_channel='contract_create_ui',
+            origin_reason='Created via contract form',
+            actor=self.request.user,
+            lock=True,
+            validate=True,
+        )
         response = super().form_valid(form)
         if self.object.dpa_attached:
             from contracts.services.dpa_activation import ensure_dpa_review_pack
             ensure_dpa_review_pack(self.object, self.request.user, request=self.request)
+        snap = provenance_snapshot(self.object)
         log_action(
             self.request.user,
             'CREATE',
@@ -1357,6 +1398,7 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
             str(self.object),
             changes={
                 'event': 'contract_created',
+                'equivalent_event': 'contract.record.created',
                 'status': self.object.status,
                 'lifecycle_stage': self.object.lifecycle_stage,
                 'contract_type': self.object.contract_type,
@@ -1378,8 +1420,19 @@ class ContractCreateView(TenantAssignCreateMixin, LoginRequiredMixin, CreateView
                 'playbook_applied': assessment.playbook_applied,
                 'review_route': route_decision.reviewers,
                 'approval_route': route_decision.approvers,
+                'provenance': snap,
             },
             request=self.request,
+        )
+        log_action(
+            self.request.user,
+            'CREATE',
+            'Contract',
+            self.object.id,
+            str(self.object),
+            changes={'event': EVENT_PROVENANCE_ASSIGNED, 'provenance': snap},
+            request=self.request,
+            event_type=EVENT_PROVENANCE_ASSIGNED,
         )
         messages.success(self.request, f'Contract "{self.object.title}" created.')
         return response
@@ -2174,10 +2227,12 @@ def dashboard(request):
     # lifecycle_stage via the same simplified vocabulary as the queue table's
     # Stage chip (RENEWAL/ARCHIVED fold into Active — this overview tracks
     # the 7 headline stages, not the full 9-stage detail).
-    _LIFECYCLE_BUCKET_ORDER = ['Draft', 'Legal Review', 'Approval', 'Signature', 'Active', 'Expired', 'Terminated']
+    # Bucket labels use workflow-stage language (Drafting), never record-status "Draft".
+    _LIFECYCLE_BUCKET_ORDER = ['Intake', 'Drafting', 'Internal review', 'Approval', 'Signature', 'Active', 'Expired', 'Terminated']
     _LIFECYCLE_BUCKET_COLORS = {
-        'Draft': '#0B1330',
-        'Legal Review': '#0A7264',
+        'Intake': '#4A5568',
+        'Drafting': '#0B1330',
+        'Internal review': '#0A7264',
         'Approval': '#3F569B',
         'Signature': '#6D4E8E',
         'Active': '#17A76B',
@@ -2185,9 +2240,10 @@ def dashboard(request):
         'Terminated': '#AAB2C2',
     }
     _STAGE_TO_BUCKET = {
-        'DRAFTING': 'Draft',
-        'INTERNAL_REVIEW': 'Legal Review',
-        'NEGOTIATION': 'Legal Review',
+        'INTAKE': 'Intake',
+        'DRAFTING': 'Drafting',
+        'INTERNAL_REVIEW': 'Internal review',
+        'NEGOTIATION': 'Internal review',
         'APPROVAL': 'Approval',
         'SIGNATURE': 'Signature',
         'EXECUTED': 'Active',
@@ -2203,7 +2259,7 @@ def dashboard(request):
         elif row['status'] == 'ARCHIVED':
             bucket = 'Active'  # archived records fold into Active for the overview chart
         else:
-            bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Draft')
+            bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Drafting')
         lifecycle_buckets[bucket] += row['count']
     lifecycle_chart = [
         {'label': label, 'count': lifecycle_buckets[label], 'color': _LIFECYCLE_BUCKET_COLORS[label]}
@@ -2741,9 +2797,9 @@ def dashboard(request):
     })
 
     lifecycle_counts = {
-        'Draft': 0,
-        'Legal Review': 0,
-        'DPA Review': 0,
+        'Drafting': 0,
+        'Internal review': 0,
+        'Privacy review': 0,
         'Approval': 0,
         'Signature': 0,
         'Renewal': 0,
@@ -2752,7 +2808,7 @@ def dashboard(request):
     for row in workflow_rows:
         stage_text = (row.get('current_stage') or row.get('stage') or '').lower()
         if 'privacy' in stage_text or 'dpo' in stage_text or row.get('contract_type') == 'DPA':
-            lifecycle_counts['DPA Review'] += 1
+            lifecycle_counts['Privacy review'] += 1
         elif 'approval' in stage_text:
             lifecycle_counts['Approval'] += 1
         elif 'signature' in stage_text:
@@ -2760,21 +2816,21 @@ def dashboard(request):
         elif 'renewal' in stage_text:
             lifecycle_counts['Renewal'] += 1
         elif 'draft' in stage_text or 'intake' in stage_text or 'ai draft' in stage_text:
-            lifecycle_counts['Draft'] += 1
+            lifecycle_counts['Drafting'] += 1
         elif stage_text:
-            lifecycle_counts['Legal Review'] += 1
+            lifecycle_counts['Internal review'] += 1
     clm_lifecycle_overview = [
         {
             'label': label,
             'count': lifecycle_counts[label],
             'tone': (
-                'navy' if label == 'Draft'
-                else 'teal' if label in ('Legal Review', 'DPA Review', 'Active')
+                'navy' if label == 'Drafting'
+                else 'teal' if label in ('Internal review', 'Privacy review', 'Active')
                 else 'amber' if label in ('Approval', 'Renewal')
                 else 'gray'
             ),
         }
-        for label in ('Draft', 'Legal Review', 'DPA Review', 'Approval', 'Signature', 'Renewal', 'Active')
+        for label in ('Drafting', 'Internal review', 'Privacy review', 'Approval', 'Signature', 'Renewal', 'Active')
     ]
 
     blocker_map = {}

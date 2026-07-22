@@ -107,6 +107,10 @@ class DeadlineListView(LoginRequiredMixin, ListView):
     def dispatch(self, request, *args, **kwargs):
         from urllib.parse import urlencode
 
+        # Auth first — never alias-redirect anonymous users past login.
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+
         params = {}
         show = request.GET.get('show')
         if show == 'overdue':

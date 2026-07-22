@@ -58,6 +58,14 @@ _ICON_WORKFLOWS = _nav_icon(
     'workflows',
     '<path d="M6 4h5v5H6zM13 4h5v5h-5zM6 15h5v5H6z"/><path d="M8.5 9v3h7V9"/><path d="M15.5 9v6"/>'
 )
+_ICON_DATA_MANAGER = _nav_icon(
+    'data-manager',
+    '<path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v5c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12v5c0 1.7 3.6 3 8 3s8-1.3 8-3v-5"/>'
+)
+_ICON_ENTITIES = _nav_icon(
+    'entities',
+    '<circle cx="9" cy="8" r="2.5"/><circle cx="16" cy="9" r="2"/><path d="M4.5 18c.6-2.4 2.7-4 5.5-4s4.9 1.6 5.5 4"/><path d="M14 18c.3-1.5 1.4-2.6 3-2.6 1.2 0 2.2.6 2.7 1.6"/>'
+)
 
 
 def _always(user, organization):
@@ -221,6 +229,11 @@ _STANDARD_NAV = [
      'active': _templates_active, 'visible': _configuration_visible},
     {'kind': 'item', 'label': 'Workflow Designer', 'url_name': 'contracts:workflow_dashboard', 'icon': _ICON_WORKFLOWS,
      'active': lambda n: n in _WORKFLOW_DESIGNER_ACTIVE, 'visible': _configuration_visible},
+    {'kind': 'item', 'label': 'Data Manager', 'url_name': 'contracts:data_manager_hub', 'icon': _ICON_DATA_MANAGER,
+     'active': lambda n: n == 'data_manager_hub', 'visible': _configuration_visible},
+    {'kind': 'item', 'label': 'Entities', 'url_name': 'contracts:counterparty_list', 'icon': _ICON_ENTITIES,
+     'active': lambda n: n in {'counterparty_list', 'counterparty_detail', 'counterparty_create', 'counterparty_update'},
+     'visible': _configuration_visible},
 ]
 
 

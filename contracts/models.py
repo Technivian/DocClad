@@ -806,6 +806,39 @@ class Matter(models.Model):
         return total
 
 
+class ContractQuerySet(models.QuerySet):
+    """Block QuerySet.update / bulk_create from bypassing provenance immutability."""
+
+    def update(self, **kwargs):
+        from contracts.services.contract_provenance import PROVENANCE_UPDATE_BLOCKLIST, ProvenanceError
+
+        blocked = sorted(set(kwargs) & PROVENANCE_UPDATE_BLOCKLIST)
+        if blocked:
+            raise ProvenanceError(
+                f'QuerySet.update cannot mutate provenance fields {blocked}. '
+                f'Use repair_contract_provenance() for governed repairs.'
+            )
+        return super().update(**kwargs)
+
+    def bulk_create(self, objs, *args, **kwargs):
+        from django.utils import timezone
+        from contracts.services.contract_provenance import OriginKind, ensure_create_provenance
+        from contracts.services.contract_type_catalogue import sync_contract_type_catalogue_fields
+
+        for obj in objs:
+            if not (getattr(obj, 'origin_kind', '') or '').strip():
+                obj.origin_kind = OriginKind.LEGACY_UNKNOWN
+            ensure_create_provenance(obj)
+            sync_contract_type_catalogue_fields(obj)
+            if obj.provenance_locked_at is None:
+                obj.provenance_locked_at = timezone.now()
+        return super().bulk_create(objs, *args, **kwargs)
+
+
+class ContractManager(models.Manager.from_queryset(ContractQuerySet)):
+    pass
+
+
 class Contract(models.Model):
     class Status(models.TextChoices):
         """Record status — business state of the contract record (not workflow stage)."""
@@ -870,9 +903,36 @@ class Contract(models.Model):
         OUR_PAPER = 'OUR_PAPER', 'Our paper'
         COUNTERPARTY_PAPER = 'COUNTERPARTY_PAPER', 'Counterparty paper'
 
+    class OriginKind(models.TextChoices):
+        WORKFLOW = 'WORKFLOW', 'Workflow instance'
+        MANUAL = 'MANUAL', 'Manual creation'
+        UPLOAD = 'UPLOAD', 'Document upload'
+        IMPORT_CSV = 'IMPORT_CSV', 'CSV import'
+        IMPORT_INBOUND = 'IMPORT_INBOUND', 'Inbound import'
+        INTEGRATION = 'INTEGRATION', 'External integration'
+        MIGRATION = 'MIGRATION', 'Data migration'
+        SEED = 'SEED', 'Seed / demo data'
+        ADMIN = 'ADMIN', 'Admin console'
+        LEGACY_UNKNOWN = 'LEGACY_UNKNOWN', 'Legacy / unknown'
+
+    objects = ContractManager()
+
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='contracts')
     title = models.CharField(max_length=200)
-    contract_type = models.CharField(max_length=20, choices=ContractType.choices, default=ContractType.OTHER)
+    contract_type = models.CharField(
+        max_length=20,
+        choices=ContractType.choices,
+        default=ContractType.OTHER,
+        help_text='Transitional denormalized code; canonical type is contract_type_catalogue.',
+    )
+    contract_type_catalogue = models.ForeignKey(
+        'ContractType',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='contract_records',
+        help_text='Canonical governed Contract Type catalogue row (PAR-CORE-002).',
+    )
     content = models.TextField(blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.IN_PROGRESS)
     case_phase = models.CharField(
@@ -943,6 +1003,58 @@ class Contract(models.Model):
     source_system_id = models.CharField(max_length=255, blank=True, default='')
     source_system_url = models.URLField(blank=True)
     source_last_modified_at = models.DateTimeField(null=True, blank=True)
+    # PAR-CORE-003 — Contract Record provenance (immutable once locked).
+    origin_kind = models.CharField(
+        max_length=32,
+        choices=OriginKind.choices,
+        blank=True,
+        default='',
+        help_text='How this Contract Record entered CLM One. Blank only until first save.',
+    )
+    origin_channel = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Narrower channel within origin_kind (e.g. salesforce, dpa_workflow, ui).',
+    )
+    origin_workflow = models.ForeignKey(
+        'Workflow',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='originated_contracts',
+        help_text='Originating Workflow Instance when created via workflow.',
+    )
+    origin_workflow_template = models.ForeignKey(
+        'WorkflowTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='originated_contracts',
+        help_text='Immutable Workflow Version (template row) pinned at creation.',
+    )
+    origin_workflow_template_version = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Denormalized template.version at creation for durable lineage.',
+    )
+    origin_reason = models.CharField(
+        max_length=500,
+        blank=True,
+        default='',
+        help_text='Reason for manual creation or governed provenance repair.',
+    )
+    provenance_correlation_id = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Import batch or correlation identifier.',
+    )
+    provenance_locked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When provenance was finalized; fields are immutable afterwards.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -981,6 +1093,92 @@ class Contract(models.Model):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs):
+        """Enforce PDR-0002 status/stage pairing and PAR-CORE-003 provenance lock.
+
+        Validation runs when status or lifecycle_stage is written (including
+        creates). Partial updates that omit both fields leave historical pairs
+        untouched so migrations/jobs can update unrelated columns safely.
+
+        On create, if status is set with the model-default ``DRAFTING`` stage and
+        the pair is illegal (common test/factory pattern for ``ACTIVE``), coerce
+        the stage to the canonical resting stage for that status. Explicit
+        updates that write an illegal pair still raise.
+
+        Pass ``skip_lifecycle_validation=True`` only for proven migration or
+        repair paths — never for product writers.
+
+        Provenance fields are immutable once ``provenance_locked_at`` is set.
+        Pass ``allow_provenance_mutation=True`` only from
+        ``assign_and_lock_provenance`` / ``repair_contract_provenance`` /
+        ``pin_workflow_provenance``.
+        """
+        skip_lifecycle_validation = kwargs.pop('skip_lifecycle_validation', False)
+        allow_provenance_mutation = kwargs.pop('allow_provenance_mutation', False)
+        update_fields = kwargs.get('update_fields')
+
+        previous_provenance = None
+        if self.pk and not allow_provenance_mutation:
+            previous_provenance = (
+                type(self).objects.filter(pk=self.pk)
+                .values(
+                    'origin_kind',
+                    'origin_channel',
+                    'origin_workflow_id',
+                    'origin_workflow_template_id',
+                    'origin_workflow_template_version',
+                    'origin_reason',
+                    'provenance_correlation_id',
+                    'provenance_locked_at',
+                    'source_system',
+                    'source_system_id',
+                    'created_by_id',
+                )
+                .first()
+            )
+            if previous_provenance and previous_provenance.get('provenance_locked_at'):
+                from contracts.services.contract_provenance import assert_provenance_immutable
+                assert_provenance_immutable(self, previous=previous_provenance)
+
+        if self.pk is None and not allow_provenance_mutation:
+            from contracts.services.contract_provenance import ensure_create_provenance
+            ensure_create_provenance(self)
+            if update_fields is not None:
+                extra = {'origin_kind', 'provenance_locked_at'}
+                kwargs['update_fields'] = list(dict.fromkeys(list(update_fields) + list(extra)))
+
+        from contracts.services.contract_type_catalogue import sync_contract_type_catalogue_fields
+        sync_contract_type_catalogue_fields(self)
+        if update_fields is not None:
+            extra_type = {'contract_type', 'contract_type_catalogue'}
+            kwargs['update_fields'] = list(dict.fromkeys(list(kwargs.get('update_fields', update_fields)) + list(extra_type)))
+
+        should_validate = not skip_lifecycle_validation
+        if should_validate and update_fields is not None:
+            fields = set(update_fields)
+            should_validate = ('status' in fields) or ('lifecycle_stage' in fields)
+        if should_validate:
+            from django.core.exceptions import ValidationError
+            from .services.lifecycle_dimensions import (
+                is_valid_status_stage_pair,
+                validate_status_stage_pair,
+            )
+
+            if (
+                self.pk is None
+                and not is_valid_status_stage_pair(self.status, self.lifecycle_stage)
+                and self.lifecycle_stage == self.LifecycleStage.DRAFTING
+            ):
+                from .services.contract_import_lifecycle import default_stage_for_status
+                self.lifecycle_stage = default_stage_for_status(self.status)
+                if update_fields is not None and 'lifecycle_stage' not in update_fields:
+                    kwargs['update_fields'] = list(kwargs.get('update_fields', update_fields)) + ['lifecycle_stage']
+            try:
+                validate_status_stage_pair(self.status, self.lifecycle_stage)
+            except ValidationError:
+                raise
+        super().save(*args, **kwargs)
+
     class Meta:
         indexes = [
             models.Index(fields=['organization', 'status', '-updated_at'], name='ctr_org_stat_upd_ix'),
@@ -989,6 +1187,9 @@ class Contract(models.Model):
             models.Index(fields=['organization', 'renewal_date'], name='ctr_org_renew_ix'),
             models.Index(fields=['organization', 'created_at'], name='ctr_org_created_ix'),
             models.Index(fields=['organization', 'source_system', 'source_system_id'], name='ctr_org_src_ref_ix'),
+            models.Index(fields=['organization', 'origin_kind'], name='ctr_org_origin_ix'),
+            models.Index(fields=['organization', 'provenance_correlation_id'], name='ctr_org_prov_corr_ix'),
+            models.Index(fields=['organization', 'contract_type_catalogue'], name='ctr_org_type_cat_ix'),
         ]
 
 
@@ -1013,6 +1214,25 @@ class ContractTemplate(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.get_contract_type_display()})'
+
+
+class DocumentQuerySet(models.QuerySet):
+    """Block QuerySet.update from bypassing document version immutability."""
+
+    def update(self, **kwargs):
+        from contracts.services.document_version_service import IMMUTABLE_DOCUMENT_FIELDS, DocumentVersionError
+
+        blocked = sorted(set(kwargs) & IMMUTABLE_DOCUMENT_FIELDS)
+        if blocked:
+            raise DocumentVersionError(
+                f'QuerySet.update cannot mutate immutable document version fields {blocked}. '
+                f'Create a new document version instead.'
+            )
+        return super().update(**kwargs)
+
+
+class DocumentManager(models.Manager.from_queryset(DocumentQuerySet)):
+    pass
 
 
 class Document(models.Model):
@@ -1048,6 +1268,25 @@ class Document(models.Model):
     file_hash = models.CharField(max_length=64, blank=True)
     version = models.PositiveIntegerField(default=1)
     parent_document = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='versions')
+    logical_document = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='logical_versions',
+        help_text='Logical document identity root; null until first version is saved.',
+    )
+    version_source = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='How this version entered CLM One (manual_upload, ai_upload, …).',
+    )
+    version_locked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When file/content metadata became immutable for this version row.',
+    )
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
     matter = models.ForeignKey(Matter, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True, related_name='documents')
@@ -1065,8 +1304,13 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = DocumentManager()
+
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['organization', 'logical_document', '-version'], name='doc_org_logical_ver_ix'),
+        ]
 
     def __str__(self):
         return f'{self.title} (v{self.version})'
@@ -1089,24 +1333,48 @@ class Document(models.Model):
             raise ValidationError({'status': exc.messages}) from exc
 
     def save(self, *args, **kwargs):
+        skip_version_immutability = kwargs.pop('skip_version_immutability', False)
+        update_fields = kwargs.get('update_fields')
+        previous = None
+        if self.pk and not skip_version_immutability:
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values(
+                    'file', 'file_hash', 'file_size', 'mime_type', 'version',
+                    'parent_document_id', 'logical_document_id', 'uploaded_by_id',
+                    'version_locked_at', 'version_source',
+                )
+                .first()
+            )
+            if previous and previous.get('version_locked_at'):
+                from contracts.services.document_version_service import assert_document_version_immutable
+                assert_document_version_immutable(self, previous=previous)
+
         if self.file:
             self.file_size = self.file.size
             self.mime_type = getattr(self.file, 'content_type', '')
-            try:
-                hasher = hashlib.sha256()
-                for chunk in self.file.chunks():
-                    hasher.update(chunk)
-                if hasattr(self.file, 'seek'):
-                    self.file.seek(0)
-                self.file_hash = hasher.hexdigest()
-            except Exception:
-                pass
+            if not skip_version_immutability or not self.file_hash:
+                try:
+                    hasher = hashlib.sha256()
+                    for chunk in self.file.chunks():
+                        hasher.update(chunk)
+                    if hasattr(self.file, 'seek'):
+                        self.file.seek(0)
+                    self.file_hash = hasher.hexdigest()
+                except Exception:
+                    pass
         super().save(*args, **kwargs)
         if self.file:
             try:
                 from .services.document_ocr import queue_document_ocr_review
 
                 queue_document_ocr_review(self)
+            except Exception:
+                pass
+        if not skip_version_immutability:
+            try:
+                from .services.document_version_service import ensure_canonical_version_for_document
+                ensure_canonical_version_for_document(self)
             except Exception:
                 pass
 
@@ -1181,6 +1449,117 @@ class Document(models.Model):
         self._check_retention_hold()
         self._check_evidentiary()
         super().delete(*args, **kwargs)
+
+
+class DocumentVersionQuerySet(models.QuerySet):
+    """Block QuerySet.update from bypassing DocumentVersion immutability."""
+
+    def update(self, **kwargs):
+        from contracts.services.document_version_service import IMMUTABLE_VERSION_FIELDS, DocumentVersionError
+
+        blocked = sorted(set(kwargs) & IMMUTABLE_VERSION_FIELDS)
+        if blocked:
+            raise DocumentVersionError(
+                f'QuerySet.update cannot mutate immutable DocumentVersion fields {blocked}.'
+            )
+        return super().update(**kwargs)
+
+
+class DocumentVersionManager(models.Manager.from_queryset(DocumentVersionQuerySet)):
+    pass
+
+
+class DocumentVersion(models.Model):
+    """Immutable Document Version — one file/content state (CANONICAL_DOMAIN_MODEL §2.16)."""
+
+    class Source(models.TextChoices):
+        MANUAL_UPLOAD = 'manual_upload', 'Manual upload'
+        AI_UPLOAD = 'ai_upload', 'AI-assisted upload'
+        CONTRACT_ATTACHMENT = 'contract_attachment', 'Contract attachment'
+        DOCUMENT_EDIT = 'document_edit', 'Document edit / new version'
+        COUNTERPARTY_REVISION = 'counterparty_revision', 'Counterparty revision'
+        GENERATED = 'generated', 'Generated document'
+        IMPORT = 'import', 'Import'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Legacy / unknown'
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='document_versions')
+    logical_document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name='version_records',
+    )
+    document_row = models.OneToOneField(
+        Document,
+        on_delete=models.CASCADE,
+        related_name='canonical_version',
+    )
+    version_number = models.PositiveIntegerField()
+    title = models.CharField(max_length=300)
+    document_type = models.CharField(max_length=20, choices=Document.DocType.choices)
+    status = models.CharField(max_length=20, choices=Document.Status.choices)
+    description = models.TextField(blank=True, default='')
+    file = models.FileField(upload_to=document_upload_path, blank=True, null=True)
+    file_size = models.PositiveIntegerField(null=True, blank=True)
+    mime_type = models.CharField(max_length=100, blank=True, default='')
+    file_hash = models.CharField(max_length=64, blank=True, default='')
+    original_filename = models.CharField(max_length=255, blank=True, default='')
+    source = models.CharField(max_length=64, choices=Source.choices, default=Source.LEGACY_UNKNOWN)
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    derived_from = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='derived_versions',
+    )
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, null=True, blank=True)
+    matter = models.ForeignKey(Matter, on_delete=models.CASCADE, null=True, blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    checksum_missing = models.BooleanField(
+        default=False,
+        help_text='True when checksum could not be computed from available bytes.',
+    )
+    version_locked_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = DocumentVersionManager()
+
+    class Meta:
+        ordering = ['logical_document_id', '-version_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['logical_document', 'version_number'],
+                name='docver_logical_version_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'logical_document'], name='docver_org_logical_ix'),
+            models.Index(fields=['contract', '-version_number'], name='docver_contract_ver_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.title} v{self.version_number}'
+
+    def save(self, *args, **kwargs):
+        skip_immutability = kwargs.pop('skip_version_immutability', False)
+        previous = None
+        if self.pk and not skip_immutability:
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values(*[
+                    'file', 'file_hash', 'file_size', 'mime_type', 'original_filename',
+                    'version_number', 'source', 'uploaded_by_id', 'derived_from_id',
+                    'logical_document_id', 'version_locked_at', 'checksum_missing',
+                    'organization_id', 'contract_id',
+                ])
+                .first()
+            )
+            if previous and previous.get('version_locked_at'):
+                from contracts.services.document_version_service import assert_document_version_row_immutable
+                assert_document_version_row_immutable(self, previous=previous)
+        if not self.version_locked_at:
+            self.version_locked_at = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class DocumentOCRReview(models.Model):
@@ -2351,7 +2730,8 @@ class WorkflowTemplate(models.Model):
         blank=True,
         related_name='workflow_templates',
     )
-    is_active = models.BooleanField(default=True)
+    # Unpublished (draft) by default — publication is an explicit governed action.
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         User,
@@ -2573,11 +2953,13 @@ class WorkflowStep(models.Model):
 # (not AI) risk signals detected while drafting.
 
 class ContractType(models.Model):
-    """Lookup/config row per contract type, e.g. DPA. Does not replace
-    Contract.ContractType (still the canonical choices field on Contract
-    itself) — this is the FK target that lets a WorkflowTemplate bind
-    directly to a type instead of only being matched heuristically."""
-    code = models.CharField(max_length=20, unique=True, help_text='Matches a Contract.ContractType value, e.g. DPA')
+    """Governed Contract Type catalogue (CANONICAL_DOMAIN_MODEL §2.6).
+
+    ``code`` is the stable identifier shared with integrations and the
+    transitional ``Contract.contract_type`` denormalized field. Workflow
+    templates bind to catalogue rows via ``WorkflowTemplate.contract_type``.
+    """
+    code = models.CharField(max_length=20, unique=True, help_text='Stable type code, e.g. DPA')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
@@ -3195,6 +3577,14 @@ class SignatureRequest(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True, blank=True, related_name='signature_requests')
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='signature_requests')
     document = models.ForeignKey(Document, on_delete=models.SET_NULL, null=True, blank=True, related_name='signature_requests')
+    document_version = models.ForeignKey(
+        'DocumentVersion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='signature_requests',
+        help_text='Exact immutable Document Version bound when the packet was created.',
+    )
     signer_name = models.CharField(max_length=200)
     signer_email = models.EmailField()
     signer_role = models.CharField(max_length=100, blank=True, help_text='e.g. CEO, Legal Counsel')
@@ -3218,6 +3608,13 @@ class SignatureRequest(models.Model):
 
     def __str__(self):
         return f'{self.contract.title} - {self.signer_name} ({self.get_status_display()})'
+
+    def save(self, *args, **kwargs):
+        if self.document_id and not self.document_version_id:
+            from contracts.services.document_version_service import bind_signature_document_version
+
+            bind_signature_document_version(self)
+        super().save(*args, **kwargs)
 
     def can_transition_to(self, new_status):
         if not new_status:

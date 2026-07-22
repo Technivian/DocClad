@@ -330,13 +330,19 @@ class DjangoRepositoryService:
                         f'Contract {contract.id}: {exc}'
                     )
             if 'lifecycle_stage' in updates and contract.lifecycle_stage != updates['lifecycle_stage']:
-                if not contract.can_transition_lifecycle_stage(updates['lifecycle_stage']):
-                    raise BulkUpdateValidationError(
-                        f'Contract {contract.id} cannot transition from {contract.lifecycle_stage} to {updates["lifecycle_stage"]}'
+                # Stage changes must use the lifecycle service (PDR-0002 ownership).
+                try:
+                    lifecycle.transition_lifecycle_stage(
+                        contract,
+                        updates['lifecycle_stage'],
+                        self.user,
+                        reason='bulk_update',
                     )
-                contract.lifecycle_stage = updates['lifecycle_stage']
-                contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                changed = True
+                    changed = True
+                except ContractTransitionError as exc:
+                    raise BulkUpdateValidationError(
+                        f'Contract {contract.id}: {exc}'
+                    )
             if changed:
                 updated_count += 1
 

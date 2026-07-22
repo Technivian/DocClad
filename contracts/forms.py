@@ -8,11 +8,12 @@ from .permissions import can_manage_organization
 from .services.clause_policy import validate_clause_policy
 from .services.clause_variants import resolve_clause_variant
 from .services.contract_policies import get_required_fields_for_contract_type
+from .services.contract_type_catalogue import form_choices
 from .services.contract_lifecycle import can_transition_lifecycle_stage, get_signature_routing_blockers
 from .services.intake_risk import assess_intake_risk
 from .services.intake_routing import derive_intake_route
 from .tenancy import scope_queryset_for_organization
-from .models import (
+from contracts.models import (
     Contract, NegotiationThread, TrademarkRequest, LegalTask, RiskLog, ComplianceChecklist, ChecklistItem,
     Workflow, WorkflowTemplate, WorkflowTemplateStep, WorkflowStep,
     DueDiligenceProcess, DueDiligenceTask, DueDiligenceRisk, Budget, BudgetExpense,
@@ -524,7 +525,7 @@ class ContractForm(forms.ModelForm):
         # create arriving with ?type=/?template= already has a real value
         # in self.initial (set by the view's get_initial()), which still
         # wins over this field-level fallback when the form renders.
-        self.fields['contract_type'].choices = [('', 'Select contract type')] + list(Contract.ContractType.choices)
+        self.fields['contract_type'].choices = form_choices(include_blank=not self.instance.pk)
         if not self.instance.pk:
             self.fields['contract_type'].initial = ''
         clause_queryset = scope_queryset_for_organization(ClauseTemplate.objects.select_related('category'), organization).order_by('title')

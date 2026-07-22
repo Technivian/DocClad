@@ -1,0 +1,5 @@
+[CLM One] Database: //workspace/e2e.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0107_contract_type_catalogue_fk, from contracts
+Running migrations:
+  Applying contracts.0107_contract_type_catalogue_fk... OK

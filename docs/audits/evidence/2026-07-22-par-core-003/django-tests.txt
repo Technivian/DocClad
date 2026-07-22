@@ -1,0 +1,14 @@
+Creating test database for alias 'default'...
+......................../workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-22 07:01:16,931 INFO contracts.middleware request_id=95493382-a3c2-4cd7-a5c7-ef94a98de3b3 user_id=1 org_id=1 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 07:01:17,046 INFO contracts.middleware request_id=9b2448c1-1a33-4f8c-8d85-fd9676b4aada user_id=1 org_id=1 path=/contracts/documents/3/ request_completed
+..........
+----------------------------------------------------------------------
+Ran 34 tests in 14.509s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 34 test(s).
+System check identified no issues (0 silenced).

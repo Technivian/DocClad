@@ -278,6 +278,9 @@ class Command(BaseCommand):
                     'end_date': record['end'],
                     'risk_level': record['risk'],
                     'content': record['content'],
+                    'origin_kind': Contract.OriginKind.SEED,
+                    'origin_channel': 'seed_payrollminds_demo',
+                    'origin_reason': 'Payrollminds demo seed data',
                     **record['extra'],
                 },
             )

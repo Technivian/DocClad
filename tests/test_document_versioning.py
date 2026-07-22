@@ -33,6 +33,7 @@ class DocumentVersioningTests(TestCase):
             contract_type=Contract.ContractType.MSA,
             content='Contract content',
             status=Contract.Status.ACTIVE,
+            lifecycle_stage=Contract.LifecycleStage.OBLIGATION_TRACKING,
             counterparty='Acme Corp',
             governing_law='State of Delaware',
             jurisdiction='New York',

@@ -1,0 +1,38 @@
+[WebServer] Traceback (most recent call last):
+[WebServer]   File "/workspace/manage.py", line 22, in <module>
+[WebServer]     main()
+[WebServer]   File "/workspace/manage.py", line 18, in main
+[WebServer]     execute_from_command_line(sys.argv)
+[WebServer]   File "/workspace/.venv/lib/python3.12/site-packages/django/core/management/__init__.py", line 442, in execute_from_command_line
+[WebServer]     utility.execute()
+[WebServer]   File "/workspace/.venv/lib/python3.12/site-packages/django/core/management/__init__.py", line 436, in execute
+[WebServer]     self.fetch_command(subcommand).run_from_argv(self.argv)
+[WebServer]   File "/workspace/.venv/lib/python3.12/site-packages/django/core/management/base.py", line 420, in run_from_argv
+[WebServer]     self.execute(*args, **cmd_options)
+[WebServer]   File "/workspace/.venv/lib/python3.12/site-packages/django/core/management/base.py", line 464, in execute
+[WebServer]     output = self.handle(*args, **options)
+[WebServer]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/workspace/contracts/management/commands/seed_demo_command_center.py", line 25, in handle
+[WebServer]     seeded = seed_demo_command_center_workflows(organization=organization, user=user)
+[WebServer]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/usr/lib/python3.12/contextlib.py", line 81, in inner
+[WebServer]     return func(*args, **kwds)
+[WebServer]            ^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/workspace/contracts/services/demo_command_center.py", line 75, in seed_demo_command_center_workflows
+[WebServer]     dpa_workflow = create_dpa_workflow_instance(
+[WebServer]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/usr/lib/python3.12/contextlib.py", line 81, in inner
+[WebServer]     return func(*args, **kwds)
+[WebServer]            ^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/workspace/contracts/services/dpa_workflow.py", line 372, in create_dpa_workflow_instance
+[WebServer]     materialize_workflow_from_template(workflow)
+[WebServer]   File "/usr/lib/python3.12/contextlib.py", line 81, in inner
+[WebServer]     return func(*args, **kwds)
+[WebServer]            ^^^^^^^^^^^^^^^^^^^
+[WebServer]   File "/workspace/contracts/services/workflow_execution.py", line 398, in materialize_workflow_from_template
+[WebServer]     assert_template_safe_to_launch(workflow.template)
+[WebServer]   File "/workspace/contracts/services/workflow_designer.py", line 176, in assert_template_safe_to_launch
+[WebServer]     raise WorkflowLaunchBlocked(reason, template=template)
+[WebServer] contracts.services.workflow_designer.WorkflowLaunchBlocked: New launches are blocked for “DPA Privacy Review Workflow” because required steps have no assignee: Legal Review, DPO / Privacy Review, Approval. Create a corrected version before launching.
+Error: Process from config.webServer was not able to start. Exit code: 1
+

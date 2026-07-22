@@ -5,9 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from contracts.models import Workflow, WorkflowTemplate, WorkflowTemplateStep
+from contracts.models import AuditLog, Workflow, WorkflowTemplate, WorkflowTemplateStep
+from contracts.middleware import log_action
 
 
 @dataclass(frozen=True)
@@ -15,6 +17,8 @@ class WorkflowTemplateMigrationResult:
     source_template_id: int
     new_template_id: int
     migrated_workflow_count: int
+    reason: str = ''
+    actor_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -116,16 +120,60 @@ def migrate_workflows_to_template(
     source_template: WorkflowTemplate,
     target_template: WorkflowTemplate,
     workflows: Optional[Iterable[Workflow]] = None,
+    *,
+    actor=None,
+    reason: str = '',
+    request=None,
 ) -> WorkflowTemplateMigrationResult:
+    """
+    Governed retarget of live Workflow instances from one template version row to another.
+
+    Canonical long-term model pins instances to an immutable Workflow Version. Until the
+    Definition/Version split (ADR pending), the pin is the ``Workflow.template`` FK to a
+    ``WorkflowTemplate`` row. This helper must not be used as a silent background rewrite:
+    a non-empty ``reason`` is required, and each migration emits an AuditLog event.
+    """
+    reason_text = (reason or '').strip()
+    if not reason_text:
+        raise ValidationError('A migration reason is required to retarget live workflow instances.')
+    if source_template.pk == target_template.pk:
+        raise ValidationError('Source and target workflow template versions must differ.')
+
     queryset = Workflow.objects.filter(template=source_template)
     if workflows is not None:
         workflow_ids = [workflow.pk for workflow in workflows if workflow and workflow.pk]
         queryset = queryset.filter(pk__in=workflow_ids)
-    migrated_count = queryset.update(template=target_template)
+
+    with transaction.atomic():
+        migrated_ids = list(queryset.values_list('pk', flat=True))
+        migrated_count = queryset.update(template=target_template)
+        log_action(
+            actor,
+            AuditLog.Action.UPDATE,
+            'WorkflowTemplateMigration',
+            object_id=target_template.pk,
+            object_repr=target_template.name,
+            changes={
+                'event': 'workflow_instance_template_migrated',
+                'organization_id': target_template.organization_id or source_template.organization_id,
+                'source_template_id': source_template.pk,
+                'source_template_version': source_template.version,
+                'target_template_id': target_template.pk,
+                'target_template_version': target_template.version,
+                'migrated_workflow_ids': migrated_ids,
+                'migrated_workflow_count': migrated_count,
+                'reason': reason_text,
+                'actor_id': getattr(actor, 'pk', None),
+            },
+            request=request,
+        )
+
     return WorkflowTemplateMigrationResult(
         source_template_id=source_template.pk,
         new_template_id=target_template.pk,
         migrated_workflow_count=migrated_count,
+        reason=reason_text,
+        actor_id=getattr(actor, 'pk', None),
     )
 
 
