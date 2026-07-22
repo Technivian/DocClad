@@ -1,0 +1,13 @@
+[CLM One] Database: /tmp/clmone-par-exc-motion3/docs/audits/evidence/2026-07-22-par-exc-001/activation_env/db.sqlite3 (local, env=production)
+user=pilot_owner created=True role=OWNER
+user=pilot_admin created=True role=ADMIN
+user=pilot_requester created=True role=MEMBER
+user=pilot_legal created=True role=MEMBER
+user=pilot_finance created=True role=MEMBER
+contract=Pilot Sample MSA Below Threshold created=True value=99999
+contract=Pilot Sample MSA At Threshold created=True value=100000
+contract=Pilot Sample MSA Above Threshold created=True value=100001
+contract=Pilot Sample NDA Mutual created=True value=None
+contract=Pilot Sample DPA Processor created=True value=None
+controlled_pilot_seed_ok org=controlled-pilot-org finance_threshold=100000 ai_org_policy=disabled password_shared=PilotPass123!
+roles: pilot_owner(OWNER), pilot_admin(ADMIN), pilot_requester(MEMBER), pilot_legal(Legal), pilot_finance(Finance)

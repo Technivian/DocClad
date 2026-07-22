@@ -4,7 +4,8 @@
 
 **ADR-0015:** **Accepted** (`2026-07-22T19:12:39Z`).  
 **Motion 2:** Default-off six-path dual-write **Authorized**; PR #69 merged (`f19eae42`).  
-**Motion 3:** Controlled-pilot dual-write activation **Authorized** (`2026-07-22T20:04:34Z`) for `controlled-pilot-org` only.  
+**Motion 3:** Controlled-pilot dual-write activation **Authorized** (`2026-07-22T20:04:34Z`; PR #74 @ `058c5ed0`).  
+**Operational activation:** **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md).  
 **Committed flag defaults:** remain **off**.  
 **Canonical read authority:** **Unauthorized**.  
 **Not started:** PAR-APR-002, PAR-WF-010, PAR-ID-002.
@@ -24,9 +25,9 @@
 - Service: `contracts/services/exception_dual_write.py`.
 - Six paths: `KEEP_EXCEPTION`, `ACCEPTED_RISK`, `AI_EXCEPTION`, `CONFLICT_CHECK_WAIVER`, `DEADLINE_DEFER`, `DPA_APPROVE_WITH_BLOCKERS`.
 - Flags: `EXCEPTION_DUAL_WRITE_ENABLED` / `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST` (committed defaults off).
-- Activation package: [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) — Motion 3 **Authorized**.
+- Activation package: [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) — Motion 3 **Authorized**; operational evidence **PASS**.
 
-### Next
-1. Operational enablement in the controlled-pilot environment only (`EXCEPTION_DUAL_WRITE_ENABLED=true`, `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org`).
-2. Capture monitoring counters; honour stop conditions / rollback.
-3. Keep programme **In progress** until pilot evidence + residual path decisions; do not cut over canonical read without a separate vote.
+### Next (from evidence)
+1. Keep monitoring `controlled-pilot-org` dual-write; honour stop conditions / immediate rollback.
+2. Do **not** authorize canonical read cutover without a separate vote.
+3. Keep programme **In progress**; do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 from this slice.

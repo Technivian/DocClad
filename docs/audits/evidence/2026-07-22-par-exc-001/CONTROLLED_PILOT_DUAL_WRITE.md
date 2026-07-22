@@ -1,9 +1,11 @@
 # Controlled-pilot dual-write — PAR-EXC-001 activation package
 
-**Status:** **Authorized** (Motion 3 carried) — operational flag enablement permitted for `controlled-pilot-org` only; committed defaults remain **off**  
+**Status:** **Authorized** (Motion 3 carried) — operational enablement **executed** in `par-exc-001-controlled-pilot-activation`; evidence **PASS** — see [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md)  
 **Package type:** Separate activation authorization (Motion 3)  
 **Vote window:** 2026-07-22T20:04:13Z – 2026-07-22T20:04:34Z  
-**Effective authorization:** 2026-07-22T20:04:34Z
+**Effective authorization:** 2026-07-22T20:04:34Z  
+**Authorization merge:** PR [#74](https://github.com/Technivian/CLMOne/pull/74) @ `058c5ed0`  
+**Operational evidence:** **PASS** (after auth merge)
 
 | Field | Value |
 |---|---|
@@ -142,19 +144,19 @@ Binding conditions:
 
 ## Monitoring
 
-Baseline counters (pre–operational enablement). Update after flags are enabled in the controlled-pilot environment.
+Baseline counters updated from operational activation evidence ([`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) / [`activation_results.json`](activation_results.json)).
 
 | Metric | Count (post-activation) |
 |---|---:|
-| Actions per KEEP_EXCEPTION | 0 |
-| Actions per ACCEPTED_RISK | 0 |
-| Actions per AI_EXCEPTION | 0 |
-| Actions per CONFLICT_CHECK_WAIVER | 0 |
-| Actions per DEADLINE_DEFER | 0 |
-| Actions per DPA_APPROVE_WITH_BLOCKERS | 0 |
-| Canonical requests created | 0 |
-| Canonical decisions created | 0 |
-| Duplicate prevention hits | 0 |
+| Actions per KEEP_EXCEPTION | 1 |
+| Actions per ACCEPTED_RISK | 1 |
+| Actions per AI_EXCEPTION | 1 |
+| Actions per CONFLICT_CHECK_WAIVER | 1 |
+| Actions per DEADLINE_DEFER | 1 |
+| Actions per DPA_APPROVE_WITH_BLOCKERS | 1 |
+| Canonical requests created | 6 |
+| Canonical decisions created | 5 |
+| Duplicate prevention hits | 1 |
 | Dual-write failures (`exception.dual_write_failed`) | 0 |
 | Security gate blocks | 0 |
 | Expired exceptions recorded | 0 |
@@ -198,7 +200,7 @@ Inventoried; **not** activated here:
 |---|---|
 | Package prepared | **Yes** |
 | Votes | **Recorded** — Motion 3 **Carried** (`2026-07-22T20:04:34Z`) |
-| Authorization | **Authorized** |
+| Authorization | **Authorized** (PR #74 @ `058c5ed0`) |
 | Flags enabled (committed defaults) | **No** (remain `false` / empty) |
-| Operational enablement | **Authorized** — set env `EXCEPTION_DUAL_WRITE_ENABLED=true` and `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org` only; do not change committed defaults |
+| Operational enablement | **Executed** in `par-exc-001-controlled-pilot-activation` — evidence **PASS** |
 | Canonical read authority | **Unauthorized** |

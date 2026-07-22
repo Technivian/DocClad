@@ -1,0 +1,228 @@
+2026-07-22 20:39:54,514 INFO contracts.middleware request_id=e90dbc75-e480-4cc2-9a25-9d3a0418381f user_id=1 org_id=1 path=/contracts/deadlines/2/defer/ request_completed
+2026-07-22 20:39:55,305 INFO contracts.middleware request_id=61142f9a-3391-4dcf-b9c6-17fa3d07c3f5 user_id=1 org_id=1 path=/contracts/deadlines/3/defer/ request_completed
+[CLM One] Database: /tmp/clmone-par-exc-motion3/docs/audits/evidence/2026-07-22-par-exc-001/activation_env/db.sqlite3 (local, env=production)
+110 objects imported automatically (use -v 2 for details).
+
+{
+  "programme": "PAR-EXC-001",
+  "motion": 3,
+  "environment": "par-exc-001-controlled-pilot-activation",
+  "db": "/tmp/clmone-par-exc-motion3/docs/audits/evidence/2026-07-22-par-exc-001/activation_env/db.sqlite3",
+  "deployed_revision_note": "worktree at Motion 3 merge 058c5ed0 (contains PR #66 foundation, PR #69 dual-write, PR #74 Motion 3 auth)",
+  "preflight": {
+    "org_slugs": [
+      "controlled-pilot-org",
+      "demo-firm"
+    ],
+    "controlled_pilot_org_count": 1,
+    "exactly_one_controlled_pilot_org": true,
+    "allowlist_exact": true,
+    "flag_enabled": true,
+    "migration_0114_applied": true,
+    "migration_0115_applied": true,
+    "dual_write_enabled_for_pilot": true,
+    "dual_write_enabled_for_other": false,
+    "legacy_authoritative": true,
+    "committed_defaults_unchanged": true,
+    "pass": true
+  },
+  "paths": {
+    "KEEP_EXCEPTION": {
+      "legacy_action_result": "keep_exception_mirrored",
+      "canonical_request_created": true,
+      "canonical_request_id": 6,
+      "canonical_request_status": "ACTIVE",
+      "canonical_decision_created": true,
+      "canonical_decision_id": 5,
+      "canonical_decision_outcome": "APPROVED",
+      "owner_username": "pilot_owner",
+      "expiry": "2026-10-20T20:39:53.552398+00:00",
+      "correlation_id": "KEEP_EXCEPTION:RiskSignal:9001:kept",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted",
+        "exception.activated",
+        "exception.decision.recorded"
+      ],
+      "idempotency_result": "hit",
+      "idempotency_same_request": true,
+      "idempotency_same_decision": true
+    },
+    "ACCEPTED_RISK": {
+      "legacy_action_result": "accepted_risk_mirrored",
+      "canonical_request_created": true,
+      "canonical_request_id": 7,
+      "canonical_request_status": "ACTIVE",
+      "canonical_decision_created": true,
+      "canonical_decision_id": 6,
+      "canonical_decision_outcome": "APPROVED",
+      "owner_username": "pilot_owner",
+      "expiry": "2026-10-20T20:39:53.552398+00:00",
+      "correlation_id": "ACCEPTED_RISK:DPARiskItem:9002:accepted",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted",
+        "exception.activated",
+        "exception.decision.recorded"
+      ]
+    },
+    "AI_EXCEPTION": {
+      "legacy_action_result": "ai_exception_requested",
+      "canonical_request_created": true,
+      "canonical_request_id": 8,
+      "canonical_request_status": "SUBMITTED",
+      "canonical_decision_created": false,
+      "canonical_decision_id": null,
+      "canonical_decision_outcome": null,
+      "owner_username": "pilot_owner",
+      "expiry": "2026-08-21T20:39:53.552398+00:00",
+      "correlation_id": "AI_EXCEPTION:ContractReviewFinding:9003:requested",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.request.created",
+        "exception.request.submitted",
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted"
+      ],
+      "note": "decision_none_submitted_only"
+    },
+    "CONFLICT_CHECK_WAIVER": {
+      "legacy_action_result": "conflict_waived_previous=CLEAR",
+      "canonical_request_created": true,
+      "canonical_request_id": 9,
+      "canonical_request_status": "ACTIVE",
+      "canonical_decision_created": true,
+      "canonical_decision_id": 7,
+      "canonical_decision_outcome": "APPROVED",
+      "owner_username": "pilot_owner",
+      "expiry": "2027-01-18T20:39:53.552398+00:00",
+      "correlation_id": "CONFLICT_CHECK_WAIVER:ConflictCheck:2:waived",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted",
+        "exception.request.created",
+        "exception.request.submitted"
+      ]
+    },
+    "DEADLINE_DEFER": {
+      "legacy_action_result": {
+        "http_status": 302,
+        "previous_due": "2026-07-22",
+        "new_due": "2026-07-29",
+        "deferred_days": 7
+      },
+      "canonical_request_created": true,
+      "canonical_request_id": 10,
+      "canonical_request_status": "ACTIVE",
+      "canonical_decision_created": true,
+      "canonical_decision_id": 8,
+      "canonical_decision_outcome": "APPROVED",
+      "owner_username": "pilot_owner",
+      "expiry": "2026-07-29T20:39:53.731169+00:00",
+      "correlation_id": "DEADLINE_DEFER:Deadline:2:2026-07-29",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted",
+        "deadline.deferred",
+        "auth.login_succeeded"
+      ]
+    },
+    "DPA_APPROVE_WITH_BLOCKERS": {
+      "legacy_action_result": "dpa_approve_with_blockers_security_ok",
+      "canonical_request_created": true,
+      "canonical_request_id": 11,
+      "canonical_request_status": "ACTIVE",
+      "canonical_decision_created": true,
+      "canonical_decision_id": 9,
+      "canonical_decision_outcome": "APPROVED",
+      "owner_username": "pilot_owner",
+      "expiry": "2026-08-21T20:39:53.552398+00:00",
+      "correlation_id": "DPA_APPROVE_WITH_BLOCKERS:DPAReviewPack:9006:PENDING->APPROVED",
+      "user_visible_result": "legacy_success_unchanged",
+      "audit_events": [
+        "exception.activated",
+        "exception.decision.recorded",
+        "exception.request.submitted",
+        "exception.activated",
+        "exception.decision.recorded"
+      ]
+    }
+  },
+  "monitoring": {
+    "actions_per_KEEP_EXCEPTION": 1,
+    "actions_per_ACCEPTED_RISK": 1,
+    "actions_per_AI_EXCEPTION": 1,
+    "actions_per_CONFLICT_CHECK_WAIVER": 1,
+    "actions_per_DEADLINE_DEFER": 1,
+    "actions_per_DPA_APPROVE_WITH_BLOCKERS": 1,
+    "canonical_requests_created": 6,
+    "canonical_decisions_created": 5,
+    "duplicate_prevention_hits": 1,
+    "dual_write_failures": 0,
+    "security_gate_blocks": 0,
+    "expired_exceptions": 0,
+    "cross_tenant_anomalies": 0,
+    "missing_owners_or_expiry": 0,
+    "user_visible_regressions": 0
+  },
+  "negatives": {
+    "non_allowlisted_no_dual_write": {
+      "pass": true,
+      "request_created": false
+    },
+    "cross_tenant_fail_closed": {
+      "pass": true
+    },
+    "critical_without_security_fail_closed": {
+      "pass": true
+    },
+    "duplicate_correlation_idempotent": {
+      "pass": true,
+      "count": 1
+    },
+    "missing_owner_fail_closed": {
+      "pass": true
+    },
+    "malformed_privilege_fail_closed": {
+      "pass": true
+    }
+  },
+  "rollback": {
+    "flag_off": true,
+    "allowlist_cleared": true,
+    "legacy_deadline_still_works": true,
+    "no_new_canonical_rows": true,
+    "canonical_rows_not_deleted": true,
+    "http_status": 302
+  },
+  "stop_conditions": {
+    "cross_tenant_anomaly": false,
+    "unauthorized_critical_bypass": false,
+    "duplicate_canonical_decision": false,
+    "missing_owner_or_expiry_on_active": false,
+    "lost_legacy_action": false,
+    "user_visible_regression": false
+  },
+  "verdict": {
+    "preflight_pass": true,
+    "paths_pass": true,
+    "negatives_pass": true,
+    "rollback_pass": true,
+    "stop_conditions_clear": true,
+    "overall": "PASS"
+  },
+  "restore_authorized_config": {
+    "EXCEPTION_DUAL_WRITE_ENABLED": true,
+    "EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST": "controlled-pilot-org",
+    "note": "restored in activation env only; committed defaults remain false"
+  }
+}

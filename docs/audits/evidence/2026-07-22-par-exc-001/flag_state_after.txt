@@ -1,0 +1,4 @@
+=== POST-ROLLBACK-THEN-RESTORE FLAG STATE (activation env only) ===
+EXCEPTION_DUAL_WRITE_ENABLED=true
+EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org
+Committed defaults in config/settings_base.py remain false / empty.

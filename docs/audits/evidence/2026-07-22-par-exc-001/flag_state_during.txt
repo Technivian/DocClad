@@ -1,0 +1,4 @@
+=== DURING ACTIVATION FLAG STATE ===
+EXCEPTION_DUAL_WRITE_ENABLED=true
+EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=controlled-pilot-org
+(env-only in par-exc-001-controlled-pilot-activation; committed defaults remain false)
