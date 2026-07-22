@@ -236,31 +236,17 @@ def derive_contract_review_status(
 
 
 def build_lifecycle_command_label(contract, *, has_documents: bool) -> tuple[str, str]:
-    """Composite lifecycle label for the contract command header.
+    """PDR-0002 compact header label: ``Record status · Workflow stage``.
 
-    Returns (label, legacy badge class). Special cases keep status/stage
-    language consistent across repository and detail surfaces.
+    ``has_documents`` is retained for call-site compatibility; incompleteness is
+    communicated via action cards, not invented status vocabulary.
     """
     from contracts.models import Contract
 
+    del has_documents  # action cards own incompleteness messaging
     status = contract.status
-    stage = contract.lifecycle_stage
-
-    if status == Contract.Status.IN_PROGRESS and not has_documents:
-        return 'In progress · Intake incomplete', 'badge-yellow'
-
-    if status == Contract.Status.ACTIVE and stage in (
-        Contract.LifecycleStage.EXECUTED,
-        Contract.LifecycleStage.OBLIGATION_TRACKING,
-        'EXECUTED',
-        'OBLIGATION_TRACKING',
-    ):
-        return 'Active · Obligation tracking', 'badge-green'
-
     status_label = contract.get_status_display()
     stage_label = contract.get_lifecycle_stage_display()
-    if stage == 'OBLIGATION_TRACKING':
-        stage_label = 'Obligation tracking'
     badge_class = {
         Contract.Status.IN_PROGRESS: 'badge-blue',
         Contract.Status.ACTIVE: 'badge-green',
@@ -269,7 +255,7 @@ def build_lifecycle_command_label(contract, *, has_documents: bool) -> tuple[str
         Contract.Status.CANCELLED: 'badge-gray',
         Contract.Status.ARCHIVED: 'badge-gray',
     }.get(status, 'badge-gray')
-    return f'{status_label} · Currently in {stage_label}', badge_class
+    return f'{status_label} · {stage_label}', badge_class
 
 
 def format_contract_audit_activity_detail(changes, *, event_type: str | None = None) -> str:

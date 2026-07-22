@@ -263,10 +263,12 @@ class ContractListView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
         context['search_query'] = self.request.GET.get('q', '')
         context['sort'] = self.request.GET.get('sort', '-created_at')
         context['current_status'] = self.request.GET.get('status', '')
+        # Legacy list aliases stage-oriented filters; labels must not say "Draft"
+        # as a record status (PDR-0002). Values remain stage-filter keys.
         context['status_tabs'] = [
             ('All', ''),
-            ('Draft', 'DRAFT'),
-            ('Legal Review', 'IN_REVIEW'),
+            ('Drafting', 'DRAFT'),
+            ('Internal review', 'IN_REVIEW'),
             ('Approval', 'PENDING'),
             ('Signature', 'APPROVED'),
             ('Blocked', 'BLOCKED'),
@@ -2177,10 +2179,12 @@ def dashboard(request):
     # lifecycle_stage via the same simplified vocabulary as the queue table's
     # Stage chip (RENEWAL/ARCHIVED fold into Active — this overview tracks
     # the 7 headline stages, not the full 9-stage detail).
-    _LIFECYCLE_BUCKET_ORDER = ['Draft', 'Legal Review', 'Approval', 'Signature', 'Active', 'Expired', 'Terminated']
+    # Bucket labels use workflow-stage language (Drafting), never record-status "Draft".
+    _LIFECYCLE_BUCKET_ORDER = ['Intake', 'Drafting', 'Internal review', 'Approval', 'Signature', 'Active', 'Expired', 'Terminated']
     _LIFECYCLE_BUCKET_COLORS = {
-        'Draft': '#0B1330',
-        'Legal Review': '#0A7264',
+        'Intake': '#4A5568',
+        'Drafting': '#0B1330',
+        'Internal review': '#0A7264',
         'Approval': '#3F569B',
         'Signature': '#6D4E8E',
         'Active': '#17A76B',
@@ -2188,9 +2192,10 @@ def dashboard(request):
         'Terminated': '#AAB2C2',
     }
     _STAGE_TO_BUCKET = {
-        'DRAFTING': 'Draft',
-        'INTERNAL_REVIEW': 'Legal Review',
-        'NEGOTIATION': 'Legal Review',
+        'INTAKE': 'Intake',
+        'DRAFTING': 'Drafting',
+        'INTERNAL_REVIEW': 'Internal review',
+        'NEGOTIATION': 'Internal review',
         'APPROVAL': 'Approval',
         'SIGNATURE': 'Signature',
         'EXECUTED': 'Active',
@@ -2206,7 +2211,7 @@ def dashboard(request):
         elif row['status'] == 'ARCHIVED':
             bucket = 'Active'  # archived records fold into Active for the overview chart
         else:
-            bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Draft')
+            bucket = _STAGE_TO_BUCKET.get(row['lifecycle_stage'], 'Drafting')
         lifecycle_buckets[bucket] += row['count']
     lifecycle_chart = [
         {'label': label, 'count': lifecycle_buckets[label], 'color': _LIFECYCLE_BUCKET_COLORS[label]}
@@ -2744,9 +2749,9 @@ def dashboard(request):
     })
 
     lifecycle_counts = {
-        'Draft': 0,
-        'Legal Review': 0,
-        'DPA Review': 0,
+        'Drafting': 0,
+        'Internal review': 0,
+        'Privacy review': 0,
         'Approval': 0,
         'Signature': 0,
         'Renewal': 0,
@@ -2755,7 +2760,7 @@ def dashboard(request):
     for row in workflow_rows:
         stage_text = (row.get('current_stage') or row.get('stage') or '').lower()
         if 'privacy' in stage_text or 'dpo' in stage_text or row.get('contract_type') == 'DPA':
-            lifecycle_counts['DPA Review'] += 1
+            lifecycle_counts['Privacy review'] += 1
         elif 'approval' in stage_text:
             lifecycle_counts['Approval'] += 1
         elif 'signature' in stage_text:
@@ -2763,21 +2768,21 @@ def dashboard(request):
         elif 'renewal' in stage_text:
             lifecycle_counts['Renewal'] += 1
         elif 'draft' in stage_text or 'intake' in stage_text or 'ai draft' in stage_text:
-            lifecycle_counts['Draft'] += 1
+            lifecycle_counts['Drafting'] += 1
         elif stage_text:
-            lifecycle_counts['Legal Review'] += 1
+            lifecycle_counts['Internal review'] += 1
     clm_lifecycle_overview = [
         {
             'label': label,
             'count': lifecycle_counts[label],
             'tone': (
-                'navy' if label == 'Draft'
-                else 'teal' if label in ('Legal Review', 'DPA Review', 'Active')
+                'navy' if label == 'Drafting'
+                else 'teal' if label in ('Internal review', 'Privacy review', 'Active')
                 else 'amber' if label in ('Approval', 'Renewal')
                 else 'gray'
             ),
         }
-        for label in ('Draft', 'Legal Review', 'DPA Review', 'Approval', 'Signature', 'Renewal', 'Active')
+        for label in ('Drafting', 'Internal review', 'Privacy review', 'Approval', 'Signature', 'Renewal', 'Active')
     ]
 
     blocker_map = {}

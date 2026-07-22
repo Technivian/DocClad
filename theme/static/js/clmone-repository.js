@@ -1043,16 +1043,24 @@ class CLMOneRepository {
             return;
         }
 
+        // PDR-0002 record statuses only — never Draft/IN_REVIEW/APPROVED as record status.
         const nextStatus = window.prompt(
-            'Enter the new status (DRAFT, PENDING, IN_REVIEW, APPROVED, ACTIVE, EXPIRED, TERMINATED, COMPLETED, CANCELLED)',
+            'Enter the new record status (IN_PROGRESS, ACTIVE, EXPIRED, TERMINATED, CANCELLED, ARCHIVED)',
             'ACTIVE'
         );
         if (!nextStatus) return;
 
         const normalizedStatus = nextStatus.trim().toUpperCase();
-        const allowedStatuses = new Set(['DRAFT', 'PENDING', 'IN_REVIEW', 'APPROVED', 'ACTIVE', 'EXPIRED', 'TERMINATED', 'COMPLETED', 'CANCELLED']);
+        const allowedStatuses = new Set([
+            'IN_PROGRESS',
+            'ACTIVE',
+            'EXPIRED',
+            'TERMINATED',
+            'CANCELLED',
+            'ARCHIVED',
+        ]);
         if (!allowedStatuses.has(normalizedStatus)) {
-            window.alert('That is not a valid contract status.');
+            window.alert('That is not a valid contract record status (PDR-0002).');
             return;
         }
 

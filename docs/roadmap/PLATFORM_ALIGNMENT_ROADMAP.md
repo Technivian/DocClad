@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-22  
+**Last refined:** 2026-07-22 (reconciliation + PAR-CORE-001 start)  
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `cursor/feat-platform-documentation-alignment-d7f1`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -14,41 +14,39 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 | Rollup | Count | Notes |
 |---|---:|---|
-| **Unique PAR IDs in this roadmap** | **21** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 8 | Includes `PAR-AUD-001` |
-| Future unique PAR IDs | 13 | Milestone 1–5 catalogue items |
-| Non-PAR Milestone 1 follow-ups | 2 | Playwright DPA bootstrap; stale `PAR-SEC-001` isolation assertion |
+| **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
+| Completed unique PAR IDs | 8 | Includes `PAR-AUD-001`; `PAR-SEC-001` security behaviour remains Completed |
+| In progress | 1 | `PAR-CORE-001` |
+| Future / residual unique PAR IDs | 15 | Includes new `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002` |
+| Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
 
-`PAR-AUD-001` (Admin published immutability / material Admin mutate audit) was **intentionally bundled** with `PAR-WF-001` for delivery and evidence. It remains a **distinct catalogue ID** and is **included** in the unique total of **21**.
-
-If a rollup prefers one line per delivery bundle:
-
-- Completed **delivery bundles** = **7** (`PAR-AUD-001` folded under `PAR-WF-001`) + Future **13** = **20 delivery lines**
-- Completed **unique PAR IDs** = **8**; catalogue total remains **21**
-
-Do **not** drop `PAR-AUD-001` from the catalogue; state the bundling explicitly when summarizing.
+`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **24**.
 
 ### Unique PAR ID inventory
 
 **Completed (8):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`
 
-**Future (13):** `PAR-CORE-001`, `PAR-CORE-003`, `PAR-DOC-001`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**In progress (1):** `PAR-CORE-001`
+
+**Future / residual (15):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-CORE-002`, `PAR-CORE-003`, `PAR-DOC-001`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 ---
 
 ## Immediate next items
 
-1. **PAR-CORE-001** — Finish remaining PDR-0002 UI/test drift (Milestone 1)
+1. **Finish PAR-CORE-001** — Remaining PDR-0002 ownership gaps (imports, document supersede audit, raw-save validation)
 2. **PAR-CORE-003** — Contract Record provenance completeness (Milestone 2)
-3. **PAR-DOC-001** — Document Version entity harden (Milestone 2)
-4. **PAR-WF-010** — Workflow Definition aggregate (Milestone 2; requires Accepted ADR before cutover)
+3. **PAR-CORE-002** — Dual ContractType reconciliation (Milestone 2; before WF-010 cutover)
+4. **PAR-DOC-001** — Document Version entity harden (Milestone 2)
+5. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
 
-Parallel Milestone 1 hygiene (not ahead of `PAR-CORE-001` in product priority, but may ship alongside):
+Parallel Milestone 1 hygiene:
 
-- Fix Playwright DPA bootstrap (`seed_demo_command_center` / assignee launch block)
-- Close stale `PAR-SEC-001` isolation expectation (`ContractIsolationTest.test_list_shows_only_own_org`)
+- `M1-E2E-001` Fix Playwright DPA bootstrap
+- `PAR-SEC-003` Close stale ContractIsolationTest assertion (separate from Completed `PAR-SEC-001`)
+- `PAR-SEC-002` Uniform authz / client-hide ≠ authorization
 
 ---
 
@@ -62,7 +60,7 @@ Parallel Milestone 1 hygiene (not ahead of `PAR-CORE-001` in product priority, b
 | PAR-WF-003 | Default new templates unpublished | Foundation | Model + migration 0105 |
 | PAR-WF-005 | Workflow invariant tests | Foundation | `tests/test_platform_workflow_invariants.py` |
 | PAR-NAV-001 | Data Manager + Entities nav | Pilot hardening | Hub + Counterparty as Entities |
-| PAR-SEC-001 | Auth redirect / isolation defects | Pilot hardening | Auth bypass fixed; **residual stale list assertion** tracked in Milestone 1 |
+| PAR-SEC-001 | Auth redirect / isolation defects | Pilot hardening | **Completed** — auth bypass + tenant activity check. Residual list assertion is **PAR-SEC-003** (not attached here). |
 | PAR-WORK-001 | My Work vs Command Center boundaries | Pilot hardening | `docs/product/MY_WORK_AND_COMMAND_CENTER_BOUNDARIES.md` |
 
 ---
@@ -90,19 +88,21 @@ Parallel Milestone 1 hygiene (not ahead of `PAR-CORE-001` in product priority, b
 
 ### Milestone 1 — Finish pilot hardening
 
-| ID / work | Title | Priority |
-|---|---|---|
-| **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 — **next** |
-| M1-E2E-001 | Fix Playwright DPA bootstrap | P1 |
-| M1-SEC-001 | Close stale PAR-SEC-001 isolation expectation | P1 |
+| ID / work | Title | Priority | Status |
+|---|---|---|---|
+| **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **In progress** |
+| **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | Future |
+| **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | Future residual |
+| M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
 ### Milestone 2 — Canonical contract core
 
-| ID | Title | Priority |
-|---|---|---|
-| **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) |
-| **PAR-DOC-001** | Document Version entity harden | P0 (after CORE-003) |
-| **PAR-WF-010** | Workflow Definition aggregate | P0 (after DOC-001; ADR gate) |
+| ID | Title | Priority | Status |
+|---|---|---|---|
+| **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) | Future |
+| **PAR-CORE-002** | Dual ContractType enum vs model (G-DOM-02) | P0 (before WF-010 cutover) | Future |
+| **PAR-DOC-001** | Document Version entity harden | P0 | Future |
+| **PAR-WF-010** | Workflow Definition aggregate | P0 (Accepted ADR required for cutover) | Future |
 
 ### Milestone 3 — Authority and decision models
 
@@ -165,9 +165,9 @@ Nav: Data Manager → `/contracts/data-manager/`; Entities → counterparties li
 
 - Last updated: 2026-07-21
 
-### PAR-SEC-001 — Completed (with Milestone 1 residual)
+### PAR-SEC-001 — Completed
 
-`ContractListView` / `DeadlineListView` authenticate before alias redirect; `workflow_template_activity` tenant-checks before redirect. Isolation suite improved from 5 failures → 1 residual stale assertion (see M1-SEC-001).
+`ContractListView` / `DeadlineListView` authenticate before alias redirect; `workflow_template_activity` tenant-checks before redirect. Isolation suite improved from 5 failures → 1 residual stale assertion, now tracked only under **PAR-SEC-003** (not unfinished work on this Completed item).
 
 - Last updated: 2026-07-22
 
@@ -186,23 +186,27 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 1) — **not Completed** |
-| Priority | P0 — immediate next |
-| Problem | PDR-0002 stage/status vocabulary is partially enforced; residual UI labels, transitions, and tests still drift from binding enums. |
-| Governance source | Accepted **PDR-0002**; Canonical Domain Model §5 deferred to PDR-0002 until reconciling PDR; gap audit matrix row for PDR-0002 |
-| Current evidence | Lifecycle service exists; gap audit marks Partially compliant; baseline targeted suite previously referenced missing `test_contract_lifecycle_pdr0002` module import error |
-| Target outcome | UI, APIs, and tests consistently use PDR-0002 stage/status vocabulary; no conflicting free-text lifecycle claims |
-| Dependencies | None blocking; coordinate with repository/list UX |
-| Decision required | None if staying within Accepted PDR-0002; reconciling Domain Model §5 needs a separate PDR if reopened |
-| Migration impact | Prefer none; data backfill only if persisted illegal values found |
-| Security and permissions impact | No new roles; preserve tenant scoping on lifecycle mutations |
-| Audit requirements | Material stage/status transitions continue to emit AuditLog events; add coverage where gaps appear |
-| UX requirements | Labels and filters match PDR-0002 terms; no dual vocabulary in first-line pilot surfaces |
-| Tests | Expand/repair PDR-0002 lifecycle tests; repository/bulk-update rejection paths; no regressions in controlled-pilot flows |
-| Rollback strategy | Revert PR; no schema change expected — feature-flag UI copy if needed |
-| Acceptance criteria | All targeted PDR-0002 surfaces pass automated tests; audit matrix row moves to Compliant for in-scope surfaces; no new conflicting enums |
-| Evidence | TBD at implementation (tests + audit note) |
-| PR/commits | TBD |
+| Status **before** | Future roadmap |
+| Status **after** | **In progress** — not Completed (acceptance criteria not fully met) |
+| Priority | P0 — active |
+| Problem | PDR-0002 stage/status vocabulary partially enforced; residual UI labels, transitions, and tests drifted from binding enums. |
+| Governance source | Accepted **PDR-0002** |
+| Work completed (2026-07-22) | Bulk JS record-status whitelist; repository bulk stage via `transition_lifecycle_stage`; lifecycle renewal job via service + `contract.lifecycle_stage_changed`; command label = status · stage; list/dashboard/compliance vocabulary; new guards in `tests/test_pdr0002_core001.py` |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-core-001/` (traceability + 40 Django tests OK) |
+| Target outcome | UI, APIs, jobs, and tests consistently use PDR-0002; no Draft-as-record-status; lifecycle service owns transitions |
+| Dependencies | None blocking |
+| Decision impact | None — stayed within Accepted PDR-0002; no new ADR/PDR |
+| Remaining limitations | Import/CRM bypasses; document supersede audit; raw `Model.save()` pair validation; legacy list query keys as stage aliases |
+| Migration impact | None this slice |
+| Security and permissions impact | Bulk stage still requires edit permission via lifecycle service |
+| Audit requirements | Stage bulk/job emit `contract.lifecycle_stage_changed` |
+| UX requirements | Compact header and overview buckets use stage language (Drafting), not Draft record status |
+| Tests | `tests/test_pdr0002_core001.py` + updated lifecycle/shell/audit suites (40 OK in evidence run) |
+| Rollback strategy | Revert commits for this slice; no schema migration |
+| Acceptance criteria | All checklist rows Compliant for in-scope surfaces; import ownership closed; supersede audit closed — **not yet met** |
+| Evidence | `docs/audits/evidence/2026-07-22-par-core-001/PDR-0002-TRACEABILITY.md` |
+| PR/commits | Branch `cursor/feat-platform-documentation-alignment-d7f1` (this programme) |
+| Next roadmap item after CORE-001 closes | **PAR-CORE-003** |
 | Last updated | 2026-07-22 |
 
 ### M1-E2E-001 — Fix Playwright DPA bootstrap
@@ -228,11 +232,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | PR/commits | TBD |
 | Last updated | 2026-07-22 |
 
-### M1-SEC-001 — Close stale PAR-SEC-001 isolation expectation
+### PAR-SEC-003 — Close stale ContractIsolationTest assertion
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 1 residual of completed PAR-SEC-001) — **not Completed** |
+| Status | Future roadmap (Milestone 1 residual) — **not Completed**; separate from Completed `PAR-SEC-001` |
 | Priority | P1 |
 | Problem | `ContractIsolationTest.test_list_shows_only_own_org` expects HTTP 200 on legacy `contract_list`; product intentionally 302-redirects authenticated users to repository. |
 | Governance source | ENGINEERING_GUARDRAILS tenant isolation; gap G-SEC-01 / PAR-SEC-001 follow-up |
@@ -247,6 +251,30 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Tests | Updated isolation test(s); full `test_cross_tenant_isolation` green |
 | Rollback strategy | Revert test-only change |
 | Acceptance criteria | Isolation suite 0 failures; no anonymous alias bypass regressions |
+| Evidence | TBD |
+| PR/commits | TBD |
+| Last updated | 2026-07-22 |
+
+### PAR-SEC-002 — Uniform authz for search / analytics / AI
+
+| Field | Content |
+|---|---|
+| Status | Future roadmap (Milestone 1) — **not Completed** |
+| Priority | P1 |
+| Milestone | 1 — Finish pilot hardening |
+| Problem | Gap audit rows: same access rules for search/analytics/AI are mixed; client-side hide is not authorization (GUARDRAILS §6). |
+| Governance source | `docs/architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`; ENGINEERING_GUARDRAILS; gap audit matrix → PAR-SEC-002 |
+| Current evidence | Tenancy helpers mixed; AI kill switch in pilot middleware; gap audit Partially compliant |
+| Target outcome | Search, analytics, and AI endpoints enforce the same tenant + permission rules as primary contract APIs; UI hide never substitutes for server checks |
+| Dependencies | Inventory of search/AI/analytics routes; may touch `PAR-AI-001` surfaces without claiming AI provenance complete |
+| Decision required | None for enforcement parity; ADR only if new permission model introduced |
+| Migration impact | None expected |
+| Security and permissions impact | **High** — close authz gaps; regression tests mandatory |
+| Audit requirements | Denied cross-tenant access attempts remain free of contract content in logs |
+| UX requirements | Forbidden/empty states honest; no “hidden but callable” controls |
+| Tests | Cross-tenant + unauthenticated tests for search/AI/analytics; permission matrix |
+| Rollback strategy | Revert authz harden commits behind flags if needed |
+| Acceptance criteria | Matrix rows for uniform authz and client-hide≠authz move to Compliant for in-scope routes; tests green |
 | Evidence | TBD |
 | PR/commits | TBD |
 | Last updated | 2026-07-22 |
@@ -278,6 +306,32 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | PR/commits | TBD |
 | Last updated | 2026-07-22 |
 
+
+### PAR-CORE-002 — Dual ContractType enum vs ContractType model (G-DOM-02)
+
+| Field | Content |
+|---|---|
+| Status | Future roadmap (Milestone 2) — **not Completed** |
+| Priority | P0 after PAR-CORE-003; **before any Workflow Definition production cutover (`PAR-WF-010`)** |
+| Problem | Two type systems coexist: `Contract.ContractType` TextChoices on the contract row and a separate `ContractType` model used by workflow templates / builders — duplicate source of truth (gap **G-DOM-02**). |
+| Governance source | CANONICAL_DOMAIN_MODEL; gap audit G-DOM-02 / dual ContractType row |
+| Current conflict | CharField enum drives many filters/forms; model rows drive DPA/MSA/NDA template binding (`contract_type` FK on `WorkflowTemplate`). Values can drift. |
+| Target canonical model | Single governed Contract Type catalogue (model) with stable codes; contract rows reference the catalogue; enum retained only as a transitional read-alias if required |
+| Current evidence | `contracts.models.Contract.ContractType` and `contracts.models.ContractType`; workflow seeds bind model rows |
+| Dependencies | PAR-CORE-003 provenance helpful; must complete **before** PAR-WF-010 production cutover so Definition/Version work does not encode the dual type trap |
+| Decision required | **ADR** (or PDR if product vocabulary changes) defining canonical type store + migration mapping |
+| Migration risk | **High** — backfill FK/code mapping; risk of breaking builders and filters if codes diverge |
+| Migration impact | Expand-contract: add FK/code, dual-read, backfill, switch writers, remove enum later |
+| Security and permissions impact | Type catalogue mutations are configuration-scoped; tenant isolation unchanged |
+| Audit requirements | Type catalogue changes audited; contract type rebinds audited |
+| UX requirements | Single type picker vocabulary across repository, builders, and filters |
+| Tests | Mapping matrix enum↔model; builder launch; repository filters; migration forward/rollback/re-forward |
+| Rollback strategy | Dual-read period; reverse migrate FK; keep enum until cutover proven |
+| Acceptance criteria | Accepted decision record; one write-path for types; dualism removed or explicitly deprecated with tests; **no WF-010 production cutover beforehand** |
+| Evidence | TBD |
+| PR/commits | TBD |
+| Last updated | 2026-07-22 |
+
 ### PAR-DOC-001 — Document Version entity harden
 
 | Field | Content |
@@ -305,7 +359,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 2) — **not Completed**; **Blocked** on Accepted ADR before production cutover |
+| Status | Future roadmap (Milestone 2) — **not Completed**; discovery/design allowed; **production Definition/Version cutover Blocked** until an appropriate ADR is Accepted (ADR-0010 remains Proposed/non-authorizing) |
 | Priority | P0 after PAR-DOC-001 |
 | Problem | No first-class Workflow Definition; versions are `WorkflowTemplate` rows — conflicts with Definition → Version → Instance chain. |
 | Governance source | CANONICAL_DOMAIN_MODEL; WORKFLOW_ENGINE_AND_DESIGNER; Proposed ADR-0010 interim only |
@@ -547,10 +601,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 ## Unresolved ambiguities
 
-1. **`PAR-SEC-002`** appears in the gap-audit traceability matrix (uniform authz for search/analytics/AI; client-hide ≠ authorization) but was **never assigned a roadmap PAR slot** in the original future table. It is **not** in the Milestone 1–5 list above. Disposition TBD: fold into Milestone 1/5, or add an explicit future ID later — **do not silently mark complete**.
-2. **Dual `Contract.ContractType` enum vs `ContractType` model (G-DOM-02)** remains a High gap without a dedicated `PAR-*` ID in this catalogue. Tracked narratively under domain fidelity; assign a PAR ID before implementation.
-3. **`PAR-SEC-001` Completed vs M1-SEC-001 residual:** primary auth-bypass work is Completed; the stale list assertion is residual hygiene, not a reopen of the whole item.
-4. **ADR-0010** remains Proposed and non-authorizing for `PAR-WF-010` cutover.
+1. ~~PAR-SEC-002 unassigned~~ → **Resolved:** added as Milestone 1 `PAR-SEC-002`.
+2. ~~G-DOM-02 without PAR~~ → **Resolved:** `PAR-CORE-002` in Milestone 2 before WF-010 cutover.
+3. ~~SEC-001 residual attached to Completed~~ → **Resolved:** residual is `PAR-SEC-003` only.
+4. **ADR-0010** remains Proposed and non-authorizing; WF-010 cutover still needs an **Accepted** ADR (may be a successor ADR, not ADR-0010).
+5. **PAR-CORE-001** remaining import/supersede/raw-save gaps — keep In progress until closed.
 
 ---
 
@@ -561,3 +616,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-21 | Audit + roadmap authored; foundation + pilot slices implemented and verified (74 tests OK) |
 | 2026-07-22 | PR #48 final merge gate recorded (`APPROVE WITH NAMED CONDITIONS`); migration 0105 proof; isolation residual + Playwright bootstrap catalogued |
 | 2026-07-22 | **Roadmap refinement (docs only):** reconciled unique PAR count (21; `PAR-AUD-001` bundled with `PAR-WF-001` but retained in catalogue); corrected Charter v3 blocker (PDR-0003 does not approve v3); reordered Future into Milestones 1–5; expanded all future items + M1 follow-ups with full field schema; set immediate next to PAR-CORE-001 → PAR-CORE-003 → PAR-DOC-001 → PAR-WF-010 |
+| 2026-07-22 | **Ambiguity reconciliation:** added `PAR-SEC-002`, `PAR-CORE-002` (G-DOM-02), `PAR-SEC-003` (isolation residual); unique PAR count → **24**; ADR-0010 remains Proposed/non-authorizing; started **PAR-CORE-001** (In progress) with PDR-0002 slices + evidence — not Completed |

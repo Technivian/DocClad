@@ -4,9 +4,11 @@ import uuid
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from contracts.middleware import log_action
-from contracts.models import AuditLog, Contract, Organization
-from contracts.services.contract_lifecycle import build_contract_audit_changes, build_contract_lifecycle_guidance
+from contracts.models import Contract, Organization
+from contracts.services.contract_lifecycle import (
+    build_contract_lifecycle_guidance,
+    get_contract_lifecycle_service,
+)
 from contracts.services.job_runs import record_job_run
 
 JOB_NAME = 'run_contract_lifecycle_jobs'
@@ -77,22 +79,14 @@ class Command(BaseCommand):
                     should_promote_to_renewal = guidance['next_stage'] == 'RENEWAL' and contract.lifecycle_stage in {'EXECUTED', 'OBLIGATION_TRACKING'}
 
                     if not dry_run and should_promote_to_renewal and contract.can_transition_lifecycle_stage('RENEWAL'):
-                        before_contract = Contract.objects.get(pk=contract.pk)
-                        contract.lifecycle_stage = 'RENEWAL'
-                        contract.save(update_fields=['lifecycle_stage', 'updated_at'])
-                        log_action(
-                            None, AuditLog.Action.UPDATE, 'Contract',
-                            object_id=contract.id, object_repr=contract.title[:300],
-                            organization=organization, actor_type='scheduled_job',
-                            event_type='contract.renewal_promoted', job_run_id=run.run_id,
-                            changes={
-                                'event': 'contract.renewal_promoted',
-                                'changed_fields': ['lifecycle_stage'],
-                                'field_changes': build_contract_audit_changes(before_contract, contract),
-                                'trace_id': trace_id,
-                                'automated': True,
-                                'reason': guidance['action'],
-                            },
+                        # PDR-0002: stage ownership via ContractLifecycleService (system job).
+                        get_contract_lifecycle_service().transition_lifecycle_stage(
+                            contract,
+                            'RENEWAL',
+                            actor=None,
+                            system=True,
+                            reason=f'{guidance["action"]} (job_run_id={run.run_id}; trace_id={trace_id})',
+                            actor_type='scheduled_job',
                         )
                         summary['contracts_promoted_to_renewal'] += 1
                         summary['audit_entries_created'] += 1
