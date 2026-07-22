@@ -188,13 +188,15 @@ Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 in
 - **M1-E2E-001** — Playwright DPA assignee bootstrap flake (non-blocking; isolated from Tranche-1 merge gate)
 - **Human review** — required before merge per programme gate; PR #50 not auto-merged
 
-### Merge recommendation (post-fix push)
+### Merge recommendation (@ `e5956ca2`)
 
-**MERGE READY FOR HUMAN REVIEW** — all four merge-blocking criteria clear:
+**NOT MERGE READY** — 6/8 required GitHub checks green; 2 residuals remain:
 
-1. No reachable Critical/High security findings (`pip-audit`, `bandit`, npm audits pass).
-2. No cross-tenant data exposure (`test_cross_tenant_isolation` + `test_permission_matrix` 77/77 PASS; PAR-SEC-003 assertion closed).
-3. Migrations 0105–0109 forward / rollback / re-forward PASS.
-4. Controlled-pilot core workflow tests PASS (CORE-001/002/003, DOC-001, WF-010 characterization, `test_controlled_pilot_scope`).
+| Check | CI result | Residual |
+|---|---|---|
+| Phase 1 visual baselines | **FAIL** (1/5 snapshots) | `phase-1-list-darwin.png` pixel drift on macos-14 CI vs local capture — **#1** Tranche-1 UI drift |
+| redesigned-e2e | **FAIL** | Smoke likely green; `critical-flows.spec.js` create/edit `selectOption` timeout — **#1** test drift vs contract create UX |
 
-CI re-run pending on final remediation commit; visual baselines and redesigned-e2e routes updated to repository-first navigation.
+All other merge-blocking checks (**Forbidden-brand**, **Anti-drift + contrast**, **pr-release-evidence**, **quality-and-tenancy**, **security-scans**, **verify-ui**) are **PASS**.
+
+Human review required before merge. PR #50 must not be merged until visual + e2e residuals are green or formally exempted.
