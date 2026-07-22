@@ -6,7 +6,7 @@
 **Baseline `main` at package:** `8316a756`  
 **Package-approved reviewed HEAD:** `8390769d`  
 **Merge reviewed HEAD:** `60263068`  
-**Status:** **Gate opened / Requested** — PR #63 merged; R0 votes still required; do not invent votes; do not start R0 until votes recorded  
+**Status:** **Gate opened / Partially recorded** — Engineering + Security Approve recorded; Product timestamp still placeholder (`<actual ISO-8601 UTC>`); **not authorized**; R0 **not started**  
 **Depends on:** [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md)
 
 ---
@@ -17,11 +17,48 @@
 
 | Approver | Vote | Consent |
 |---|---|---|
-| @haroonwahed Product | **Requested** | Pending ISO-8601 UTC |
-| @Technivian Engineering | **Requested** | Pending ISO-8601 UTC |
-| @Technivian Security advisory | **Requested (with conditions)** | Pending ISO-8601 UTC |
+| @haroonwahed Product | **Requested** | Placeholder `<actual ISO-8601 UTC>` rejected — real ISO-8601 UTC required (not invented) |
+| @Technivian Engineering | **Approve** | `2026-07-22T18:53:20Z` — conditions acknowledged: yes; inventory-only: yes; no data repair or runtime authority change: yes |
+| @Technivian Security advisory | **Approve with conditions** | `2026-07-22T18:53:20Z` — conditions acknowledged: yes; binding conditions 1–8 below |
 
-**R0 authorization status:** **Not authorized** (gate opened; awaiting votes)
+**R0 authorization status:** **Not authorized** — Product Approve with real timestamp still required.
+
+### Recorded votes (partial)
+
+```text
+@Technivian Engineering: Approve
+Timestamp: 2026-07-22T18:53:20Z
+Conditions acknowledged: yes
+R0 remains inventory-only: yes
+No data repair or runtime authority change: yes
+
+@Technivian Security advisory: Approve with conditions
+Timestamp: 2026-07-22T18:53:20Z
+Conditions acknowledged: yes
+
+Binding conditions:
+1. Inventory must be tenant-scoped.
+2. Evidence must use permission-safe identifiers and metadata.
+3. No automatic repair or assignment mutation.
+4. No feature flags may be enabled.
+5. No privileges or process authority may be granted.
+6. CROSS_TENANT_ANOMALY or unexpected DIFFERENT_USER findings require escalation.
+7. R0 results must distinguish verified facts from historical programme targets.
+8. Staging activation and canonical cutover remain separately gated.
+```
+
+**Product vote not recorded** — submitted as `Timestamp: <actual ISO-8601 UTC>` (not a real timestamp).
+
+### Binding Security conditions (verbatim — acknowledged by Security)
+
+1. Inventory must be tenant-scoped.  
+2. Evidence must use permission-safe identifiers and metadata.  
+3. No automatic repair or assignment mutation.  
+4. No feature flags may be enabled.  
+5. No privileges or process authority may be granted.  
+6. CROSS_TENANT_ANOMALY or unexpected DIFFERENT_USER findings require escalation.  
+7. R0 results must distinguish verified facts from historical programme targets.  
+8. Staging activation and canonical cutover remain separately gated.
 
 ---
 
@@ -67,24 +104,22 @@
 
 ---
 
-## Vote blocks (after policy package Approved)
+## Vote blocks
 
 ```text
 PAR-ID-001 R0 INVENTORY IMPLEMENTATION AUTHORIZATION — 2026-07-22
 
-@haroonwahed Product: Approve | Reject
+@haroonwahed Product: Approve
 Timestamp: <actual ISO-8601 UTC>
-Inventory-only; no repair/flags/cutover: yes | no
+
+Authorization confirms:
+- R0 may create a clean staging-equivalent environment
+- R0 may apply migration 0113
+- R0 may run deterministic seed/setup
+- R0 may generate tenant-scoped row-level inventory
+- R0 may rerun assignment and resolver parity
+- R0 may replace unverified programme counts with verified evidence
+- No repair, flag activation, privilege grant, resolver authority, staging activation, or cutover is authorized
 ```
 
-```text
-@Technivian Engineering: Approve | Reject
-Timestamp: <actual ISO-8601 UTC>
-```
-
-```text
-@Technivian Security advisory: Approve with conditions | Reject
-Timestamp: <actual ISO-8601 UTC>
-Conditions: no repair; no flag enablement; tenant-scoped evidence; no privilege grant
-Conditions acknowledged: yes | no
-```
+Engineering and Security Approve votes already recorded at `2026-07-22T18:53:20Z`.

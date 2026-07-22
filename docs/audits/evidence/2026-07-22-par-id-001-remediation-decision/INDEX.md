@@ -6,7 +6,7 @@
 **Status:** **In progress** — remediation decision package **Approved and merged**; R0 inventory auth gate **opened** (votes Requested)  
 **Package vote status:** **Approved** — Product `18:33:34Z` / Engineering `18:35:34Z` / Security `18:34:34Z` (conditions 1–6 acknowledged)  
 **PR #63 merge authorization:** **Authorized and merged** — Engineering `18:37:34Z` / Product `18:38:34Z`  
-**R0 authorization status:** **Gate opened / Not authorized** — awaiting separate R0 votes; no execution yet  
+**R0 authorization status:** **Gate opened / Not authorized** — Eng+Sec Approve recorded `18:53:20Z`; Product real timestamp still required  
 
 | Artifact | Purpose |
 |---|---|
