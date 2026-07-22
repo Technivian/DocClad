@@ -7,6 +7,7 @@
 - Related: PAR-EXC-001 (In progress), CANONICAL_DOMAIN_MODEL §2.33, G-DOM-03, PAR-APR-001 / ADR-0013 (pattern precedent)
 - Evidence: [`../../../audits/evidence/2026-07-22-par-exc-001/`](../../../audits/evidence/2026-07-22-par-exc-001/)
 - Decision package: [`../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md`](../../../audits/evidence/2026-07-22-par-exc-001/DECISION_PACKAGE.md)
+- Meeting record: [`0015-governance-acceptance-meeting-record-2026-07-22.md`](0015-governance-acceptance-meeting-record-2026-07-22.md)
 
 ## Approval metadata
 
@@ -14,13 +15,13 @@
 |---|---|
 | **Submitted for ratification** | 2026-07-22 |
 | **Ratified** | _not ratified_ |
-| **Product governance** | _pending_ |
-| **Engineering governance** | _pending_ |
-| **Security & privacy** | _pending_ (required for Critical security-control clauses) |
+| **Product governance** | **Requested** — @haroonwahed |
+| **Engineering governance** | **Requested** — @Technivian |
+| **Security & privacy** | **Requested** — @Technivian (required for Critical-control clauses) |
 | **Authority basis** | `.github/CODEOWNERS`; `GOVERNANCE_CHARTER.md` v2.0; PDR-0003 |
-| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). **Does not authorize** production path cutover without a further written authorization. |
+| **Acceptance scope** | Canonical Exception/Waiver foundation (vocabulary, invariants, additive schema, governed service). **Does not authorize** production path cutover without Motion 2 written authorization. |
 
-**Do not treat this ADR as Accepted.**
+**Do not treat this ADR as Accepted. Do not invent votes.**
 
 ## Context
 
