@@ -9,13 +9,13 @@
 **Evidence manifest:** [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md)  
 **Execution readiness:** [`R5_EXECUTION_READINESS.md`](R5_EXECUTION_READINESS.md)  
 
-**Status:** **Draft / Authorization requested**  
-**R5 programme gate:** **Blocked** — execution prohibited until the vote set below is carried with real UTC timestamps  
+**Status:** **Authorized** (Motions 1–4 carried)  
+**R5 programme gate:** **Authorized** — votes carried; **cutover not executed**; flags not enabled; committed defaults remain false  
 
 **Do not use** `CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md` for this residual gate.  
 **This document is the sole R5 vehicle.**
 
-**PROHIBITION:** Do **not** enable `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED`, change runtime authority, or execute cutover before Product + Engineering + Security votes are recorded as Approve (or Approve with conditions, conditions acknowledged) on this package for the exact environment and artifact below.
+**PROHIBITION:** Do **not** enable `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED`, change runtime authority, or execute cutover until a separate operational execution step is performed under this carried authorization in `par-id-001-r5-staging-equivalent` only, with abort/rollback binding. This vote record **authorizes** but does **not** itself perform enablement.
 
 ---
 
@@ -23,9 +23,13 @@
 
 | Field | Value |
 |---|---|
-| Decision | **PENDING** — not authorized |
-| Carried at | _pending — do not invent_ |
-| Result | _pending_ |
+| Decision | **Authorized** — Motions 1–4 carried |
+| Carried at | `2026-07-22T20:38:18Z` |
+| Result | All required Product / Engineering / Security votes recorded; Security conditions 1–10 acknowledged: **yes** |
+| Package content baseline (unchanged) | `198ed13c93e56fdabb3d0e72246225284a619fc3` |
+| Reviewed deployment HEAD at vote time | `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d` (`main` tip; no `PROCESS_ROLE_*` / resolver-authority code drift vs package baseline) |
+| Cutover executed by this vote? | **No** |
+| Flags enabled by this vote? | **No** |
 
 ---
 
@@ -48,7 +52,7 @@
 | Implementation already on `main` (default off) | `contracts/services/process_role_resolver_authority.py` + settings flags (PR #62 lineage) |
 | Baseline `main` at package prep | `2e7b5adc9f1d9e1aae4478888d0994f4edaf9e60` |
 | Prep documentation branch | `cursor/par-id-001-r5-authority-cutover-prep` |
-| **Reviewed deployment HEAD for execution** | **PENDING** — must be an exact immutable git SHA recorded at vote time; must match deployed artifact |
+| **Reviewed deployment HEAD for execution** | `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d` (recorded at vote time `2026-07-22T20:38:18Z`) |
 | Material code drift vs reviewed HEAD | **Abort condition** |
 
 Do not execute against an unnamed or drifting artifact.
@@ -268,9 +272,11 @@ See [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md). All result files remain **PE
 
 | Approver | Vote | Timestamp (UTC) | Conditions acknowledged |
 |---|---|---|---|
-| @haroonwahed Product | **Requested** | _pending_ | _pending_ |
-| @Technivian Engineering | **Requested** | _pending_ | _pending_ |
-| @Technivian Security advisory | **Requested** | _pending_ | _pending_ |
+| @haroonwahed Product | **Approve** | `2026-07-22T20:38:16Z` | yes |
+| @Technivian Engineering | **Approve** | `2026-07-22T20:38:17Z` | yes |
+| @Technivian Security advisory | **Approve with conditions** | `2026-07-22T20:38:18Z` | yes |
+
+**Motion 1 result:** **Carried**
 
 ### Motion 2 — Authorize canonical resolver authority in that exact environment
 
@@ -278,9 +284,12 @@ See [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md). All result files remain **PE
 
 | Approver | Vote | Timestamp (UTC) | Conditions acknowledged |
 |---|---|---|---|
-| @haroonwahed Product | **Requested** | _pending_ | _pending_ |
-| @Technivian Engineering | **Requested** | _pending_ | _pending_ |
-| @Technivian Security advisory | **Requested** | _pending_ | _pending_ |
+| @haroonwahed Product | **Approve** | `2026-07-22T20:38:16Z` | yes |
+| @Technivian Engineering | **Approve** | `2026-07-22T20:38:17Z` | yes |
+| @Technivian Security advisory | **Approve with conditions** | `2026-07-22T20:38:18Z` | yes |
+
+**Motion 2 result:** **Carried**  
+**Reviewed deployment HEAD bound by this motion:** `058c5ed09cb79b9460cb875e80a9d5ad0cc9367d`
 
 ### Motion 3 — Authorize defined rollback on abort
 
@@ -288,9 +297,11 @@ See [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md). All result files remain **PE
 
 | Approver | Vote | Timestamp (UTC) | Conditions acknowledged |
 |---|---|---|---|
-| @haroonwahed Product | **Requested** | _pending_ | _pending_ |
-| @Technivian Engineering | **Requested** | _pending_ | _pending_ |
-| @Technivian Security advisory | **Requested** | _pending_ | _pending_ |
+| @haroonwahed Product | **Approve** | `2026-07-22T20:38:16Z` | yes |
+| @Technivian Engineering | **Approve** | `2026-07-22T20:38:17Z` | yes |
+| @Technivian Security advisory | **Approve with conditions** | `2026-07-22T20:38:18Z` | yes |
+
+**Motion 3 result:** **Carried**
 
 ### Motion 4 — Confirm hard exclusions remain out of scope
 
@@ -298,9 +309,34 @@ See [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md). All result files remain **PE
 
 | Approver | Vote | Timestamp (UTC) | Conditions acknowledged |
 |---|---|---|---|
-| @haroonwahed Product | **Requested** | _pending_ | _pending_ |
-| @Technivian Engineering | **Requested** | _pending_ | _pending_ |
-| @Technivian Security advisory | **Requested** | _pending_ | _pending_ |
+| @haroonwahed Product | **Approve** | `2026-07-22T20:38:16Z` | yes |
+| @Technivian Engineering | **Approve** | `2026-07-22T20:38:17Z` | yes |
+| @Technivian Security advisory | **Approve with conditions** | `2026-07-22T20:38:18Z` | yes |
+
+**Motion 4 result:** **Carried**
+
+### Verbatim recorded votes (authoritative)
+
+```text
+@haroonwahed Product: Approve
+Timestamp: 2026-07-22T20:38:16Z
+Motions 1–4: Approve
+Conditions acknowledged: yes
+
+@Technivian Engineering: Approve
+Timestamp: 2026-07-22T20:38:17Z
+Motions 1–4: Approve
+Conditions acknowledged: yes
+
+@Technivian Security advisory: Approve with conditions
+Timestamp: 2026-07-22T20:38:18Z
+Motions 1–4: Approve with conditions
+Conditions 1–10 acknowledged: yes
+```
+
+Timestamps obtained at recording via `date -u +"%Y-%m-%dT%H:%M:%SZ"`.
+
+**Aggregate:** Motions 1–4 **all carried**. R5 **Authorized**. Cutover **not** executed by this record. Flags **not** enabled by this record.
 
 ---
 

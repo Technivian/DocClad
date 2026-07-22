@@ -1,12 +1,12 @@
 # PAR-ID-001 R5 canonical authority cutover — index (preparation)
 
-**Baseline `main`:** `2e7b5adc`  
-**Status:** R5 **Blocked** — authorization package **Draft / Authorization requested**  
-**Do not execute cutover. Do not invent votes.**
+**Baseline `main` (package content):** `198ed13c`  
+**Status:** R5 **Authorized** (Motions 1–4 carried `2026-07-22T20:38:18Z`) — cutover **not** executed; flags **not** enabled  
+**Do not execute cutover in this documentation slice.**
 
 | Artifact | Purpose |
 |---|---|
-| [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) | Sole R5 authorization vehicle (votes Requested) |
+| [`CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_AUTHORITY_CUTOVER_AUTHORIZATION.md) | Sole R5 authorization vehicle (**Authorized**; Motions 1–4 carried) |
 | [`AUTHORITY_TRANSITION.md`](AUTHORITY_TRANSITION.md) | Before/after authority components |
 | [`R4_EVIDENCE_VERIFICATION.md`](R4_EVIDENCE_VERIFICATION.md) | R4 pack verification + gaps |
 | [`R5_EXECUTION_READINESS.md`](R5_EXECUTION_READINESS.md) | Pre-cutover readiness |
