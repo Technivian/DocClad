@@ -561,8 +561,8 @@ class CLMOneRepository {
 
         tbody.innerHTML = result.contracts.map(contract => `
             <tr class="contract-row cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
-                <td class="repo-cell" data-col="select">
-                    <input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}">
+                <td class="repo-cell repo-select-cell" data-col="select">
+                    <span class="repo-select-hit"><input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}"></span>
                 </td>
                 <td class="repo-cell" data-col="title">
                     <div class="repo-title-stack">
