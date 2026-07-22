@@ -563,6 +563,14 @@ PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST = os.getenv(
     'PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST', '',
 ).strip()
 
+# PAR-EXC-001 — priority-path dual-write (default OFF). Legacy remains
+# authoritative. Empty allowlist = no organizations (fail-safe). Enablement
+# requires Motion 2 authorization + controlled-pilot activation.
+EXCEPTION_DUAL_WRITE_ENABLED = _bool_env('EXCEPTION_DUAL_WRITE_ENABLED', default=False)
+EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST = os.getenv(
+    'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST', '',
+).strip()
+
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()

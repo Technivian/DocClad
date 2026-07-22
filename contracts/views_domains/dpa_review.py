@@ -979,11 +979,14 @@ def _approval_risk_snapshot(review_pack):
     }
     blocker_severities = {DPARiskItem.Severity.CRITICAL, DPARiskItem.Severity.HIGH}
     unresolved_blocker_count = 0
+    unresolved_critical_blocker_count = 0
     for risk in risk_items:
         counts[risk.severity] = counts.get(risk.severity, 0) + 1
         if risk.status in unresolved_statuses and risk.severity in blocker_severities:
             unresolved_blocker_count += 1
-    return counts, unresolved_blocker_count
+            if risk.severity == DPARiskItem.Severity.CRITICAL:
+                unresolved_critical_blocker_count += 1
+    return counts, unresolved_blocker_count, unresolved_critical_blocker_count
 
 
 @require_POST
@@ -1073,7 +1076,37 @@ def dpa_review_set_approval_status(request, pk):
         DPAReviewPack.ApprovalStatus.ESCALATED,
     } and not comment:
         return JsonResponse({'error': 'A decision note is required.'}, status=400)
-    risk_counts_by_severity, unresolved_blocker_count = _approval_risk_snapshot(review_pack)
+    risk_counts_by_severity, unresolved_blocker_count, unresolved_critical_blocker_count = _approval_risk_snapshot(review_pack)
+    security_approval = bool(payload.get('security_approval'))
+
+    from contracts.services.exception_dual_write import dual_write_enabled_for_org
+    if (
+        new_status == DPAReviewPack.ApprovalStatus.APPROVED
+        and unresolved_critical_blocker_count > 0
+        and dual_write_enabled_for_org(review_pack.organization)
+        and not security_approval
+    ):
+        from contracts.middleware import log_action as _log
+        from contracts.services.exception_dual_write import EVENT_SECURITY_GATE_BLOCKED
+        _log(
+            request.user,
+            AuditLog.Action.UPDATE,
+            'DPAReviewPack',
+            object_id=review_pack.pk,
+            object_repr=str(review_pack),
+            organization=review_pack.organization,
+            changes={
+                'event': EVENT_SECURITY_GATE_BLOCKED,
+                'source': 'DPA_APPROVE_WITH_BLOCKERS',
+                'unresolved_critical_blocker_count': unresolved_critical_blocker_count,
+            },
+            event_type=EVENT_SECURITY_GATE_BLOCKED,
+            outcome='blocked',
+            request=request,
+        )
+        return JsonResponse({
+            'error': 'Critical open blockers require explicit Security approval before DPA approve.',
+        }, status=403)
 
     review_pack.approval_status = new_status
     if new_status == DPAReviewPack.ApprovalStatus.APPROVED:
@@ -1104,6 +1137,51 @@ def dpa_review_set_approval_status(request, pk):
         },
         request=request,
     )
+    if (
+        new_status == DPAReviewPack.ApprovalStatus.APPROVED
+        and unresolved_blocker_count > 0
+    ):
+        from contracts.services.exception_dual_write import (
+            ExceptionDualWriteError,
+            SOURCE_DPA_APPROVE_WITH_BLOCKERS,
+            build_correlation_id,
+            safe_mirror_legacy_exception,
+        )
+        try:
+            safe_mirror_legacy_exception(
+                source=SOURCE_DPA_APPROVE_WITH_BLOCKERS,
+                organization=review_pack.organization,
+                actor=request.user,
+                owner=review_pack.reviewer or request.user,
+                title=f'DPA approve with open blockers ({unresolved_blocker_count})',
+                reason=comment or (
+                    f'DPA review pack approved with {unresolved_blocker_count} unresolved HIGH/CRITICAL blockers.'
+                ),
+                scope_object_model='DPAReviewPack',
+                scope_object_id=review_pack.pk,
+                correlation_id=build_correlation_id(
+                    source=SOURCE_DPA_APPROVE_WITH_BLOCKERS,
+                    object_model='DPAReviewPack',
+                    object_id=review_pack.pk,
+                    suffix=f'{previous_status}->{new_status}',
+                ),
+                outcome='APPROVED',
+                contract=review_pack.contract,
+                scope_reference={
+                    'unresolved_blocker_count': unresolved_blocker_count,
+                    'unresolved_critical_blocker_count': unresolved_critical_blocker_count,
+                    'risk_counts_by_severity': risk_counts_by_severity,
+                },
+                authority_basis='security' if unresolved_critical_blocker_count else 'legal',
+                compensating_controls=comment or 'Open blockers remain tracked on the DPA review pack.',
+                granted_privileges=['approval.defer_blocker'],
+                risk_classification='CRITICAL' if unresolved_critical_blocker_count else 'HIGH',
+                bypasses_critical_security_control=bool(unresolved_critical_blocker_count),
+                security_approval=security_approval,
+                request=request,
+            )
+        except ExceptionDualWriteError as exc:
+            return JsonResponse({'error': str(exc)}, status=403)
     return JsonResponse({'ok': True, 'status': new_status})
 
 
@@ -1197,6 +1275,44 @@ def dpa_risk_item_set_status(request, pk):
         },
         request=request,
     )
+    if new_status == DPARiskItem.Status.ACCEPTED_RISK:
+        from contracts.services.exception_dual_write import (
+            ExceptionDualWriteError,
+            SOURCE_ACCEPTED_RISK,
+            build_correlation_id,
+            safe_mirror_legacy_exception,
+        )
+        is_critical = risk_item.severity == DPARiskItem.Severity.CRITICAL
+        security_approval = bool(payload.get('security_approval'))
+        try:
+            safe_mirror_legacy_exception(
+                source=SOURCE_ACCEPTED_RISK,
+                organization=risk_item.review_pack.organization,
+                actor=request.user,
+                owner=request.user,
+                title=f'Accepted risk: {risk_item.title}'[:255],
+                reason=note_text or f'DPA risk item {risk_item.pk} accepted as risk.',
+                scope_object_model='DPARiskItem',
+                scope_object_id=risk_item.pk,
+                correlation_id=build_correlation_id(
+                    source=SOURCE_ACCEPTED_RISK,
+                    object_model='DPARiskItem',
+                    object_id=risk_item.pk,
+                    suffix='accepted',
+                ),
+                outcome='APPROVED',
+                contract=risk_item.review_pack.contract,
+                scope_reference={'review_pack_id': risk_item.review_pack_id},
+                authority_basis='security' if is_critical else 'policy_owner',
+                compensating_controls=note_text or 'Accepted risk recorded on DPA review pack.',
+                granted_privileges=['risk.accept'],
+                risk_classification=risk_item.severity or 'MEDIUM',
+                bypasses_critical_security_control=is_critical,
+                security_approval=security_approval,
+                request=request,
+            )
+        except ExceptionDualWriteError as exc:
+            return JsonResponse({'error': str(exc)}, status=403)
     return JsonResponse({'ok': True, 'status': new_status, 'note_id': note_id})
 
 

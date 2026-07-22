@@ -235,6 +235,40 @@ def drafting_exception_action(request, pk, signal_id, *, kind):
             request=request,
             organization=workflow.organization,
         )
+        from contracts.services.exception_dual_write import (
+            ExceptionDualWriteError,
+            SOURCE_KEEP_EXCEPTION,
+            build_correlation_id,
+            safe_mirror_legacy_exception,
+        )
+        try:
+            safe_mirror_legacy_exception(
+                source=SOURCE_KEEP_EXCEPTION,
+                organization=workflow.organization,
+                actor=request.user,
+                owner=owner.user,
+                title=f'Keep exception: {signal.code}',
+                reason=reason,
+                scope_object_model='RiskSignal',
+                scope_object_id=signal.pk,
+                correlation_id=build_correlation_id(
+                    source=SOURCE_KEEP_EXCEPTION,
+                    object_model='RiskSignal',
+                    object_id=signal.pk,
+                    suffix='kept',
+                ),
+                outcome='APPROVED',
+                contract=getattr(workflow, 'contract', None),
+                scope_reference={'workflow_id': workflow.pk, 'signal_code': signal.code},
+                authority_basis='policy_owner',
+                compensating_controls=(comment or 'Playbook deviation retained with accountable owner.'),
+                granted_privileges=['policy.deviation'],
+                risk_classification='MEDIUM',
+                request=request,
+            )
+        except ExceptionDualWriteError as exc:
+            messages.error(request, str(exc))
+            return redirect('contracts:workflow_detail', pk=workflow.pk)
         messages.success(
             request,
             'Exception retained with accountable owner. The required approval route remains active.',

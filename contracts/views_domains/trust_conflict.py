@@ -106,3 +106,62 @@ class ConflictCheckUpdateView(TenantScopedFormMixin, TenantScopedQuerysetMixin, 
     template_name = 'contracts/conflict_check_form.html'
     success_url = reverse_lazy('contracts:conflict_check_list')
     scoped_form_fields = {'client': Client, 'matter': Matter}
+
+    def form_valid(self, form):
+        previous_status = (
+            ConflictCheck.objects.filter(pk=form.instance.pk).values_list('status', flat=True).first()
+            if form.instance.pk else None
+        )
+        response = super().form_valid(form)
+        if (
+            self.object.status == ConflictCheck.Status.WAIVED
+            and previous_status != ConflictCheck.Status.WAIVED
+        ):
+            from django.contrib import messages
+
+            from contracts.services.exception_dual_write import (
+                ExceptionDualWriteError,
+                SOURCE_CONFLICT_CHECK_WAIVER,
+                build_correlation_id,
+                safe_mirror_legacy_exception,
+            )
+            organization = None
+            if self.object.client_id:
+                organization = getattr(self.object.client, 'organization', None)
+            if organization is None:
+                organization = self.get_organization()
+            try:
+                safe_mirror_legacy_exception(
+                    source=SOURCE_CONFLICT_CHECK_WAIVER,
+                    organization=organization,
+                    actor=self.request.user,
+                    owner=self.request.user,
+                    title=f'Conflict check waived: {self.object.checked_party}'[:255],
+                    reason=(self.object.notes or self.object.conflicts_found or 'ConflictCheck waived.').strip(),
+                    scope_object_model='ConflictCheck',
+                    scope_object_id=self.object.pk,
+                    correlation_id=build_correlation_id(
+                        source=SOURCE_CONFLICT_CHECK_WAIVER,
+                        object_model='ConflictCheck',
+                        object_id=self.object.pk,
+                        suffix='waived',
+                    ),
+                    outcome='APPROVED',
+                    scope_reference={
+                        'client_id': self.object.client_id,
+                        'matter_id': self.object.matter_id,
+                        'previous_status': previous_status,
+                    },
+                    authority_basis='legal',
+                    compensating_controls='Conflict waiver recorded on ConflictCheck; ethical wall policies remain in force.',
+                    granted_privileges=['policy.deviation'],
+                    risk_classification='HIGH',
+                    request=self.request,
+                )
+            except ExceptionDualWriteError as exc:
+                messages.error(self.request, str(exc))
+        log_action(
+            self.request.user, 'UPDATE', 'ConflictCheck',
+            self.object.id, str(self.object), request=self.request,
+        )
+        return response

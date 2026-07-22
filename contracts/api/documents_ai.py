@@ -1144,6 +1144,43 @@ def contract_review_finding_action_api(request, contract_id, finding_id):
             'document_id': finding.document_id,
         },
     )
+    if action == 'create_exception':
+        from contracts.services.exception_dual_write import (
+            ExceptionDualWriteError,
+            SOURCE_AI_EXCEPTION,
+            build_correlation_id,
+            safe_mirror_legacy_exception,
+        )
+        try:
+            safe_mirror_legacy_exception(
+                source=SOURCE_AI_EXCEPTION,
+                organization=organization,
+                actor=request.user,
+                owner=contract.owner or request.user,
+                title=f'AI exception requested: {finding.title}'[:255],
+                reason=(
+                    f'AI review finding {finding.pk} marked EXCEPTION_REQUESTED; '
+                    'human exception decision pending via ApprovalRequest.'
+                ),
+                scope_object_model='ContractReviewFinding',
+                scope_object_id=finding.pk,
+                correlation_id=build_correlation_id(
+                    source=SOURCE_AI_EXCEPTION,
+                    object_model='ContractReviewFinding',
+                    object_id=finding.pk,
+                    suffix='requested',
+                ),
+                outcome='NONE',
+                contract=contract,
+                scope_reference={'document_id': finding.document_id, 'previous_status': previous_status},
+                authority_basis='policy_owner',
+                compensating_controls='ApprovalRequest opened for exception decision; AI output is non-authoritative.',
+                granted_privileges=[],
+                risk_classification='MEDIUM',
+                request=request,
+            )
+        except ExceptionDualWriteError as exc:
+            return JsonResponse({'error': str(exc)}, status=403)
     return JsonResponse({
         'ok': True,
         'finding_id': finding.pk,

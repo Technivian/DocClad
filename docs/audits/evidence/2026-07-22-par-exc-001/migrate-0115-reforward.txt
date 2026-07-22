@@ -1,0 +1,5 @@
+[CLM One] Database: /workspace/db.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0115_exception_correlation_id, from contracts
+Running migrations:
+  Applying contracts.0115_exception_correlation_id... OK

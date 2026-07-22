@@ -531,6 +531,46 @@ def deadline_defer(request, pk):
             'defer_days': 7,
         },
     )
+    from contracts.services.exception_dual_write import (
+        ExceptionDualWriteError,
+        SOURCE_DEADLINE_DEFER,
+        build_correlation_id,
+        safe_mirror_legacy_exception,
+    )
+    try:
+        safe_mirror_legacy_exception(
+            source=SOURCE_DEADLINE_DEFER,
+            organization=organization,
+            actor=request.user,
+            owner=deadline.assigned_to or request.user,
+            title=f'Deadline defer: {deadline.title}',
+            reason=f'Deferred obligation by 7 days (legacy path; previous due {previous_due.isoformat()}).',
+            scope_object_model='Deadline',
+            scope_object_id=deadline.pk,
+            correlation_id=build_correlation_id(
+                source=SOURCE_DEADLINE_DEFER,
+                object_model='Deadline',
+                object_id=deadline.pk,
+                suffix=deadline.due_date.isoformat(),
+            ),
+            outcome='APPROVED',
+            contract=deadline.contract,
+            scope_reference={
+                'previous_due_date': previous_due.isoformat(),
+                'new_due_date': deadline.due_date.isoformat(),
+                'defer_days': 7,
+            },
+            authority_basis='workspace_admin',
+            compensating_controls='Obligation owner remains accountable; review before new due date.',
+            granted_privileges=['deadline.extend'],
+            risk_classification='LOW',
+            expires_at=timezone.now() + timedelta(days=7),
+            request=request,
+        )
+    except ExceptionDualWriteError as exc:
+        if wants_json:
+            return JsonResponse({'error': str(exc)}, status=403)
+        return HttpResponseForbidden(str(exc))
     if wants_json:
         return JsonResponse({
             'ok': True,

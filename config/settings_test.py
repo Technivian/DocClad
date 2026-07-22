@@ -30,6 +30,9 @@ os.environ['PROCESS_ROLE_PARITY_REPORTING_ENABLED'] = 'false'
 os.environ['PROCESS_ROLE_RESOLVER_PARITY_ENABLED'] = 'false'
 os.environ['PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED'] = 'false'
 os.environ['PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST'] = ''
+# PAR-EXC-001 dual-write must not leak from staging .env into hermetic tests.
+os.environ['EXCEPTION_DUAL_WRITE_ENABLED'] = 'false'
+os.environ['EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST'] = ''
 
 from .settings_development import *  # noqa: E402,F401,F403
 
@@ -61,6 +64,8 @@ PROCESS_ROLE_PARITY_REPORTING_ENABLED = False
 PROCESS_ROLE_RESOLVER_PARITY_ENABLED = False
 PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED = False
 PROCESS_ROLE_CANONICAL_RESOLVER_ORG_ALLOWLIST = ''
+EXCEPTION_DUAL_WRITE_ENABLED = False
+EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST = ''
 
 # Run RQ jobs synchronously in tests (no Redis required).
 RQ_QUEUES = {

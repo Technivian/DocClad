@@ -5396,6 +5396,13 @@ class ExceptionRequest(models.Model):
         default='',
         help_text='Discovery path id (e.g. EXC-POL-001) when linked from a legacy path.',
     )
+    correlation_id = models.CharField(
+        max_length=191,
+        blank=True,
+        default='',
+        db_index=True,
+        help_text='Stable dual-write correlation key shared with the legacy record.',
+    )
     legacy_reference = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -5409,6 +5416,7 @@ class ExceptionRequest(models.Model):
             models.Index(fields=['organization', 'expires_at'], name='excreq_org_expiry_ix'),
             models.Index(fields=['contract', 'status'], name='excreq_contract_status_ix'),
             models.Index(fields=['scope_type', 'scope_object_id'], name='excreq_scope_ix'),
+            models.Index(fields=['organization', 'legacy_source', 'correlation_id'], name='excreq_corr_ix'),
         ]
 
     def __str__(self):
