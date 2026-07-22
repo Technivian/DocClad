@@ -1,10 +1,10 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — foundation + dual-write adapters (default-off); ADR-0015 **Proposed**; votes **Requested** (not invented)  
-**ADR:** ADR-0015 **Proposed**  
-**Foundation branch / PR:** `cursor/feat-par-exc-001-exception-waiver-discovery-d7f1` / [#66](https://github.com/Technivian/CLMOne/pull/66)  
-**Dual-write branch:** `cursor/feat-par-exc-001-priority-dual-write-d7f1`  
+**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #67 (default-off); controlled-pilot activation **Requested** / **not** activated; canonical read cutover **unauthorized**  
+**ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
+**Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
+**Dual-write branch / PR:** `cursor/feat-par-exc-001-dual-write-main-d7f1` / [#69](https://github.com/Technivian/CLMOne/pull/69) (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
 **Explicit non-starts:** PAR-APR-002, PAR-WF-010, PAR-ID-002
 
 ---
@@ -14,10 +14,11 @@
 | Artifact | Purpose |
 |---|---|
 | [`GOVERNANCE_REVIEW.md`](GOVERNANCE_REVIEW.md) | Compliance, planning boundary, vote gate |
-| [`DECISION_PACKAGE.md`](DECISION_PACKAGE.md) | Ratification package for Proposed ADR-0015 |
-| [`DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md`](DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md) | Motion 2 dual-write auth (**Requested**) |
-| [`../../../governance/decisions/adr/0015-exception-request-decision-model.md`](../../../governance/decisions/adr/0015-exception-request-decision-model.md) | ADR (**Proposed**) |
-| [`../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md) | Motions 1–2 + ballot templates |
+| [`DECISION_PACKAGE.md`](DECISION_PACKAGE.md) | Ratification package for ADR-0015 |
+| [`DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md`](DUAL_WRITE_IMPLEMENTATION_AUTHORIZATION.md) | Motion 2 dual-write auth (**Authorized** default-off) |
+| [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Motion 3 activation package (**Requested**; flags off) |
+| [`../../../governance/decisions/adr/0015-exception-request-decision-model.md`](../../../governance/decisions/adr/0015-exception-request-decision-model.md) | ADR (**Accepted**) |
+| [`../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md) | Motions 1–2 ratified; Motion 3 not opened here |
 
 ---
 
@@ -45,20 +46,20 @@
 | `tests/test_par_exc_001_exception.py` | 11 OK |
 | `tests/test_par_exc_001_dual_write.py` | 16 OK |
 | [`TEST_RESULTS.md`](TEST_RESULTS.md) / [`DUAL_WRITE_TEST_RESULTS.md`](DUAL_WRITE_TEST_RESULTS.md) | Test evidence |
-| [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Pilot template (**not activated**) |
+| [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Pilot activation package (**votes Requested**; **not activated**) |
 
 ---
 
-## Closure gate (not met)
+## Closure gate (partial — keep In progress)
 
-PAR-EXC-001 remains **In progress** until:
-
-1. ADR-0015 Accepted (genuine Product + Engineering + Security advisory votes);
-2. Motion 2 dual-write authorization Accepted;
-3. Six priority dual-write paths delivered and verified (**code ready, flags off**);
-4. Controlled-pilot activation evidence;
-5. Remaining production exception paths inventoried or transferred to named residual;
-6. Canonical read authority and legacy retirement criteria documented.
+| Gate | Status |
+|---|---|
+| ADR-0015 Accepted (genuine Product + Engineering + Security votes) | **Met** |
+| Motion 2 dual-write authorization (default-off) | **Met** |
+| Six priority dual-write paths delivered and verified (flags off) | Code on PR #69; merge pending |
+| Controlled-pilot activation evidence | Package **Requested**; **not** activated |
+| Remaining production exception paths inventoried or residual | Break-glass + signature-provider inventoried |
+| Canonical read authority and legacy retirement | **Unauthorized** |
 
 ---
 

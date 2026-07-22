@@ -2,10 +2,10 @@ DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test test
 Creating test database for alias 'default'...
 ./workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
   mw_instance = middleware(adapted_handler)
-2026-07-22 19:06:24,500 INFO contracts.middleware request_id=95aeb94c-8764-4950-845d-388761795a3a user_id=1 org_id=1 path=/contracts/conflicts/1/edit/ request_completed
-.....2026-07-22 19:06:24,545 INFO contracts.middleware request_id=7e9286d0-1b88-436b-8bc7-3831b1b92e00 user_id=1 org_id=1 path=/contracts/deadlines/1/defer/ request_completed
-....2026-07-22 19:06:24,582 INFO contracts.middleware request_id=c3c7ead3-d51a-40f1-abfc-ac8923b18b51 user_id=1 org_id=1 path=/contracts/deadlines/1/defer/ request_completed
-..2026-07-22 19:06:24,591 ERROR contracts.services.exception_dual_write request_id=- user_id=- org_id=- path=- exception dual-write create failed source=KEEP_EXCEPTION
+2026-07-22 19:29:12,222 INFO contracts.middleware request_id=996c213f-99d2-4576-b62c-961ae85fffe5 user_id=1 org_id=1 path=/contracts/conflicts/1/edit/ request_completed
+.....2026-07-22 19:29:12,269 INFO contracts.middleware request_id=2cae5f7f-31fc-4460-9c4a-77c53f4081cb user_id=1 org_id=1 path=/contracts/deadlines/1/defer/ request_completed
+....2026-07-22 19:29:12,307 INFO contracts.middleware request_id=9fc1eef6-b6db-4691-a09e-902c6ed884c5 user_id=1 org_id=1 path=/contracts/deadlines/1/defer/ request_completed
+..2026-07-22 19:29:12,316 ERROR contracts.services.exception_dual_write request_id=- user_id=- org_id=- path=- exception dual-write create failed source=KEEP_EXCEPTION
 Traceback (most recent call last):
   File "/workspace/contracts/services/exception_dual_write.py", line 354, in mirror_legacy_exception
     exception = ExceptionRequest.objects.create(
@@ -21,7 +21,7 @@ Traceback (most recent call last):
 RuntimeError: boom
 ....
 ----------------------------------------------------------------------
-Ran 16 tests in 0.256s
+Ran 16 tests in 0.213s
 
 OK
 Destroying test database for alias 'default'...
