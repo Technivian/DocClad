@@ -4,7 +4,7 @@
 **ADR:** ADR-0014 **Accepted**  
 **Prerequisite:** PR [#54](https://github.com/Technivian/CLMOne/pull/54) merged to `main` @ `58966de7`  
 **Request timestamp:** 2026-07-22T11:40:00Z  
-**Status:** **Requested** — votes not invented; record approvals on this PR / in a follow-up meeting record
+**Status:** **Partial** — Product Approve recorded; Engineering and Security advisory votes still pending
 
 ---
 
@@ -14,11 +14,68 @@
 
 | Approver | GitHub identity | Governance capacity | Authority basis | Vote | Consent |
 |---|---|---|---|---|---|
-| Haroon Wahed | @haroonwahed | Product governance | CODEOWNERS `/docs/`; Charter v2.0 | **Requested** | Pending |
+| Haroon Wahed | @haroonwahed | Product governance | CODEOWNERS `/docs/`; Charter v2.0 | **Approve** | Recorded 2026-07-22T13:02:57Z (verbatim below) |
 | Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Requested** | Pending |
 | Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Requested (advisory, with conditions)** | Pending |
 
-**Result:** **Not yet authorized by recorded vote** — implementation lands as draft PR for the required approvers; do not treat this file as fabricated consent.
+**Result:** **Not yet authorized** — Engineering and Security advisory votes remain pending. Do not mark ready or merge until all required votes are recorded.
+
+---
+
+## Verbatim vote evidence
+
+### Product — @haroonwahed (accepted)
+
+Source: direct user-provided authorization text  
+Received and recorded as provided:
+
+```text
+SHADOW ROLE SYNC IMPLEMENTATION AUTHORIZATION — 2026-07-22
+
+PR: #55
+Branch: cursor/feat-par-id-001-shadow-role-sync
+HEAD: ecf5cf3a
+
+@haroonwahed Product: Approve
+Timestamp: 2026-07-22T13:02:57Z
+
+Approved scope:
+- Shadow role synchronization
+- Parity reporting
+- Audit and evidence updates
+- Tests
+- Roadmap updates
+
+Conditions acknowledged: yes
+Slice remains non-authoritative: yes
+Feature flags remain default off: yes
+
+This approval does not authorize:
+- Production resolver cutover
+- Permission or privilege changes
+- Membership-authority changes
+- Navigation behaviour changes
+- PAR-ID-001 resolver-parity implementation
+- PR merge
+
+Engineering and Security advisory votes from @Technivian remain pending and must be provided directly with their own ISO-8601 UTC timestamps and conditions.
+
+After all required votes are recorded, the agent is authorized to:
+1. Record the votes verbatim in SHADOW_ROLE_SYNC_IMPLEMENTATION_AUTHORIZATION.md.
+2. Fix the pr-release-evidence checklist.
+3. Re-run required CI checks.
+4. Mark PR #55 ready for review only when authorization is complete and all required checks are green.
+
+A separate explicit authorization is required before merging PR #55.
+```
+
+### Engineering — @Technivian
+
+**Pending.** Must be provided directly with ISO-8601 UTC timestamp.
+
+### Security advisory — @Technivian
+
+**Pending.** Must be provided directly with ISO-8601 UTC timestamp, conditions text, conditions acknowledged, and non-authoritative confirmation.
 
 ---
 
@@ -48,10 +105,12 @@
 | Navigation changes | **No** |
 | Workflow assignment cutover | **No** |
 | PAR-APR-002 / PAR-WF-010 | **No** |
+| PAR-ID-001 resolver-parity implementation | **No** |
+| PR #55 merge (requires separate authorization) | **No** |
 
 ---
 
-## Security advisory conditions (proposed)
+## Security advisory conditions (proposed until advisory vote)
 
 1. Legacy `UserProfile.role` remains authoritative while flags are off or on.
 2. Shadow failure must not roll back or corrupt the legacy write; fail closed on cross-tenant violations; audit `role.assignment.shadow_sync_failed`.
