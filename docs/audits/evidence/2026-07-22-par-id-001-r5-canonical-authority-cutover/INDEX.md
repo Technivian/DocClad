@@ -12,6 +12,7 @@
 | [`R5_EXECUTION_READINESS.md`](R5_EXECUTION_READINESS.md) | Pre-cutover readiness |
 | [`EVIDENCE_MANIFEST.md`](EVIDENCE_MANIFEST.md) | Required execution evidence (pending placeholders) |
 | [`PREP_VALIDATION.md`](PREP_VALIDATION.md) | Prep-only validation actually run |
+| [`PR72_PREPARATION_MERGE_AUTHORIZATION.md`](PR72_PREPARATION_MERGE_AUTHORIZATION.md) | Bundled preparation-merge authorization for PR #72 |
 | [`SUMMARY.md`](SUMMARY.md) | Short status |
 | `pending/` | Future execution outputs only |
 
