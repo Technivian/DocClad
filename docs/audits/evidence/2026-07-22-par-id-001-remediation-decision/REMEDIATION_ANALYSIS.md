@@ -15,17 +15,17 @@ Related:
 
 ## Inventory integrity notice
 
-Programme targets previously recorded as **14** inactive/missing, **1** LEGACY_ONLY organization, and **13** AMBIGUOUS ADMIN mappings were **planning assumptions** transcribed into the backlog. They are **not** yet backed by a committed row-level inventory from a migrated environment with `ProcessRoleAssignment` populated.
-
 | Claim | Evidence status |
 |---|---|
-| 14 inactive/missing | **Unverified programme target** — must be replaced by verified inventory |
-| 1 LEGACY_ONLY org | **Unverified programme target** |
-| 13 AMBIGUOUS ADMIN | **Unverified programme target** (seed corpus yields **8** profile-ADMIN users if all demo seeds run once) |
+| Historical 14 inactive/missing | **Superseded** — was unverified programme target |
+| Historical 1 LEGACY_ONLY org | **Superseded** |
+| Historical 13 AMBIGUOUS ADMIN | **Superseded** |
+| **R0 verified INACTIVE/MISSING** | **20** (`MISSING_CANONICAL_SETUP` 20 / `INACTIVE_HISTORY` 0) in clean seed corpus |
+| **R0 verified LEGACY_ONLY orgs** | **4** (`demo-firm`, `clmone-demo`, `clmone-mvp`, `controlled-pilot-org`) |
+| **R0 verified AMBIGUOUS ADMIN** | **8** |
+| Environment | Clean staging-equivalent SQLite; migrate through **0113**; deterministic demo seeds; all `PROCESS_ROLE_*` flags **false** |
 
-**Local `db.sqlite3` (dev machine):** `contracts_processroleassignment` table **absent** (0113 not applied) — cannot verify PRA gaps there without a schema migrate (not performed; would change local schema).
-
-**Illustrative inventory (in-memory test DB + migrate + demo seeds only):** used below to classify root-cause patterns. Counts differ from 14/1/13 and **must not** be treated as production fact.
+See [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md) and [`r0_inventory_raw.json`](r0_inventory_raw.json). Verified counts are for this corpus only — **not** production facts.
 
 ---
 

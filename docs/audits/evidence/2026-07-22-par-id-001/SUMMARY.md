@@ -1,6 +1,6 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — cutover implementation delivered; activation pending; remediation package merged; R0 gate open
+## Status: In progress — cutover implementation delivered; activation pending; R0 inventory PASS
 
 **ADR:** ADR-0014 **Accepted**  
 **PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
@@ -8,7 +8,8 @@
 **Retrospective ratification:** Product `15:31:46Z` / Engineering `15:31:55Z` — **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
 **Merge evidence:** `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`  
 **Canonical resolver:** implemented default-off (PR [#62](https://github.com/Technivian/CLMOne/pull/62) → `main`); activation **Requested**  
-**Remediation decision package:** **Approved and merged** PR [#63](https://github.com/Technivian/CLMOne/pull/63) @ `06258d26` (2026-07-22T18:44:14Z); R0 inventory auth gate **opened** (votes Requested)
+**Remediation decision package:** **Approved and merged** PR [#63](https://github.com/Technivian/CLMOne/pull/63) @ `06258d26`  
+**R0 inventory:** **Authorized and PASS** — verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8** (historical 14/1/13 superseded); see [`../2026-07-22-par-id-001-remediation-decision/R0_EXIT_REPORT.md`](../2026-07-22-par-id-001-remediation-decision/R0_EXIT_REPORT.md)
 
 
 ### Delivered
@@ -41,8 +42,8 @@
 - `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` = false
 
 ### Next decision gate
-1. Authorize and execute R0 inventory-only (separate votes) — replace unverified 14/1/13.  
-2. Separately authorize R1–R5 remediation slices as needed.  
-3. Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md) — stop before enabling canonical authority without recorded activation votes.  
-PAR-ID-001 remains **In progress**. No flag enablement by the remediation decision package merge.
+1. Authorize R1 CERTAIN missing-assignment remediation (separate votes) — do not auto-repair ADMIN.  
+2. Separately authorize R2–R5 as needed.  
+3. Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md).  
+PAR-ID-001 remains **In progress**. Flags remain default off.
 

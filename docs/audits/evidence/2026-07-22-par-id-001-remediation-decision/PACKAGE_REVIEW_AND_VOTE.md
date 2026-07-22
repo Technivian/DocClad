@@ -14,11 +14,10 @@
 
 | Programme target | Status |
 |---|---|
-| 14 INACTIVE/MISSING | **Unverified** — not committed row-level inventory |
-| 1 LEGACY_ONLY | **Unverified** |
-| 13 AMBIGUOUS ADMIN | **Unverified** |
-| Local DB migration 0113 | **Not applied** on local `db.sqlite3` |
-| In-memory seed result | **Pattern evidence only** |
+| Historical 14 INACTIVE/MISSING | **Superseded** by R0 verified **20** |
+| Historical 1 LEGACY_ONLY | **Superseded** by R0 verified **4** orgs |
+| Historical 13 AMBIGUOUS ADMIN | **Superseded** by R0 verified **8** |
+| R0 environment | Clean staging-equivalent; 0113 applied; flags false — see [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md) |
 
 Verified counts require a separate **R0** implementation authorization (below). This package does **not** authorize R0.
 
@@ -143,22 +142,22 @@ Merge authorization confirms:
 
 ## R0 authorization status
 
-**Gate opened (votes Requested).** PR #63 is merged. R0 execution remains **Not authorized** until separate Product / Engineering / Security votes are recorded in [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md).
-
-R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0113; deterministic setup; tenant-scoped inventory + provenance; parity rerun; replace 14/1/13; **no** repair, flags, privileges, resolver-authority change, staging activation, or cutover.
+**Authorized and executed — PASS.** See [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md).  
+Verified (clean seed corpus): MISSING/INACTIVE **20**; LEGACY_ONLY orgs **4**; AMBIGUOUS ADMIN **8**. Historical 14/1/13 superseded.  
+R1+ / flags / cutover remain **not** authorized.
 
 ---
 
 ## Gate sequence (binding)
 
-1. Record package votes (Product / Engineering / Security) — **done; package Approved**.  
-2. Separate Product + Engineering **Approve merge** for PR #63 — **done**.  
-3. Merge PR #63 (docs-only) — **done** @ `06258d26` / `2026-07-22T18:44:14Z`.  
-4. Open R0 inventory authorization gate — **opened**; execute only after separate R0 votes.  
+1. Record package votes — **done**.  
+2. Separate merge authorization — **done**.  
+3. Merge PR #63 — **done** @ `06258d26`.  
+4. R0 inventory authorization + execution — **done (PASS)**.  
 5. R1+ and staging/canonical activation remain later gates.
 
 ## Next authorized action
 
-**Await R0 inventory implementation authorization votes** (Product / Engineering / Security).  
-Do **not** execute R0 without them. Do **not** enable flags. Do **not** repair assignments or start cutover.  
+**Await R1 CERTAIN missing-assignment remediation authorization** (separate Product / Engineering / Security votes).  
+Do **not** repair assignments, enable flags, or start cutover.  
 PAR-ID-001 remains **In progress**.

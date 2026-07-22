@@ -6,7 +6,7 @@
 **Baseline `main` at package:** `8316a756`  
 **Package-approved reviewed HEAD:** `8390769d`  
 **Merge reviewed HEAD:** `60263068`  
-**Status:** **Gate opened / Partially recorded** — Engineering + Security Approve recorded; Product timestamp still placeholder (`<actual ISO-8601 UTC>`); **not authorized**; R0 **not started**  
+**Status:** **Authorized** — Product `18:55:17Z` / Engineering `18:53:20Z` / Security `18:53:20Z`  
 **Depends on:** [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md)
 
 ---
@@ -17,15 +17,18 @@
 
 | Approver | Vote | Consent |
 |---|---|---|
-| @haroonwahed Product | **Requested** | Placeholder `<actual ISO-8601 UTC>` rejected — real ISO-8601 UTC required (not invented) |
+| @haroonwahed Product | **Approve** | `2026-07-22T18:55:17Z` — inventory-only; no repair/flags/cutover |
 | @Technivian Engineering | **Approve** | `2026-07-22T18:53:20Z` — conditions acknowledged: yes; inventory-only: yes; no data repair or runtime authority change: yes |
 | @Technivian Security advisory | **Approve with conditions** | `2026-07-22T18:53:20Z` — conditions acknowledged: yes; binding conditions 1–8 below |
 
-**R0 authorization status:** **Not authorized** — Product Approve with real timestamp still required.
+**R0 authorization status:** **Authorized** (inventory-only). Does **not** authorize R1–R5 writes, flag enablement, staging activation, or cutover.
 
-### Recorded votes (partial)
+### Recorded votes (verbatim)
 
 ```text
+@haroonwahed Product: Approve
+Timestamp: 2026-07-22T18:55:17Z
+
 @Technivian Engineering: Approve
 Timestamp: 2026-07-22T18:53:20Z
 Conditions acknowledged: yes
@@ -47,9 +50,7 @@ Binding conditions:
 8. Staging activation and canonical cutover remain separately gated.
 ```
 
-**Product vote not recorded** — submitted as `Timestamp: <actual ISO-8601 UTC>` (not a real timestamp).
-
-### Binding Security conditions (verbatim — acknowledged by Security)
+### Binding Security conditions (verbatim — acknowledged)
 
 1. Inventory must be tenant-scoped.  
 2. Evidence must use permission-safe identifiers and metadata.  
@@ -62,13 +63,13 @@ Binding conditions:
 
 ---
 
-## Allowed (when votes recorded)
+## Allowed (authorized)
 
 1. Apply required migrations (including 0113) in a **clean staging-equivalent** environment (not silent mutation of unreviewed production DBs).  
 2. Run deterministic seed/setup **in that environment only** if required for inventory reproducibility.  
 3. Generate tenant-scoped row-level inventory (INACTIVE / MISSING / LEGACY_ONLY / AMBIGUOUS ADMIN).  
 4. Record stable identifiers and assignment provenance.  
-5. Rerun assignment / resolver parity reports as diagnostics (flags remain default **false** unless a **separate** activation authorization exists — none granted here).  
+5. Rerun assignment / resolver parity reports as diagnostics (flags remain default **false**).  
 6. Replace programme target counts (14 / 1 / 13) with **verified** counts.  
 7. Update the remediation decision package docs with verified evidence.
 
@@ -102,24 +103,4 @@ Binding conditions:
 | Counts | Verified totals replace 14/1/13 (or document residual delta) |
 | Package update | Decision package evidence files updated; no false “complete” status |
 
----
-
-## Vote blocks
-
-```text
-PAR-ID-001 R0 INVENTORY IMPLEMENTATION AUTHORIZATION — 2026-07-22
-
-@haroonwahed Product: Approve
-Timestamp: <actual ISO-8601 UTC>
-
-Authorization confirms:
-- R0 may create a clean staging-equivalent environment
-- R0 may apply migration 0113
-- R0 may run deterministic seed/setup
-- R0 may generate tenant-scoped row-level inventory
-- R0 may rerun assignment and resolver parity
-- R0 may replace unverified programme counts with verified evidence
-- No repair, flag activation, privilege grant, resolver authority, staging activation, or cutover is authorized
-```
-
-Engineering and Security Approve votes already recorded at `2026-07-22T18:53:20Z`.
+See [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md) after execution.
