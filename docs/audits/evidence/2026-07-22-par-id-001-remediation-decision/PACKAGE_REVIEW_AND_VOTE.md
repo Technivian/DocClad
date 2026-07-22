@@ -3,10 +3,12 @@
 **PR:** [#63](https://github.com/Technivian/CLMOne/pull/63)  
 **Baseline `main`:** `8316a756`  
 **Package path:** `docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/`  
-**Reviewed HEAD:** `4a8b1aa9be08ed45e6ad72420d50b26d3e52fb5e`  
+**Reviewed HEAD (prior lock):** `4a8b1aa9be08ed45e6ad72420d50b26d3e52fb5e`  
+**Current PR tip / vote-gate HEAD:** `d1a3cb78ce8fb0f4dd14f6e63938a48fbccb466d`  
 **Review timestamp:** 2026-07-22T15:56:14Z  
 **Vote-gate processing timestamp:** 2026-07-22T16:01:57Z  
-**CI on reviewed HEAD:** see § CI state (must be green before merge auth)  
+**Package-vote gate refresh:** 2026-07-22T16:07:36Z  
+**CI on vote-gate HEAD:** see § CI state (must be green before merge auth)  
 **Package type:** Policy and planning only — **no** production code, seed, assignment, flag, or authority changes in this PR  
 **Package approval ≠ merge authorization:** Package Approve votes do **not** authorize merging PR #63; see § Merge authorization (separate).
 
@@ -81,7 +83,7 @@ Verified counts require a separate **R0** implementation authorization (below). 
 ```text
 PAR-ID-001 REMEDIATION DECISION PACKAGE (PR #63) — 2026-07-22
 Baseline main: 8316a756
-Reviewed HEAD: 4a8b1aa9
+Reviewed HEAD: d1a3cb78 (or later content-identical tip)
 
 @haroonwahed Product: Approve | Reject
 Timestamp: <actual ISO-8601 UTC>
@@ -139,9 +141,14 @@ Package approval is not PR merge authorization: yes | no
 
 ---
 
-## CI state (reviewed HEAD `4a8b1aa9`)
+## CI state
 
-Recorded at vote-gate processing; refresh before merge:
+| HEAD | Status |
+|---|---|
+| `4a8b1aa9` (prior reviewed) | All 6 required checks **SUCCESS** |
+| `d1a3cb78` (current tip at package-vote gate refresh) | Re-check required after tip refresh commit; merge only when all 6 SUCCESS |
+
+Required checks:
 
 | Check | Required |
 |---|---|
@@ -152,7 +159,7 @@ Recorded at vote-gate processing; refresh before merge:
 | verify-ui | SUCCESS |
 | quality-and-tenancy | SUCCESS |
 
-Merge only if HEAD remains `4a8b1aa9` or content-identical **and** all required checks SUCCESS.
+Merge only if final reviewed HEAD has all required checks SUCCESS.
 
 ---
 
@@ -168,7 +175,7 @@ Package approval does **not** authorize merge.
 PR #63 MERGE AUTHORIZATION — 2026-07-22
 
 PR: #63
-Reviewed HEAD: 4a8b1aa9
+Reviewed HEAD: <final reviewed HEAD after package Approved + CI green>
 Package: docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/
 
 @haroonwahed Product: Approve merge | Reject merge
@@ -203,13 +210,13 @@ R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0
 
 ## Gate sequence (binding)
 
-1. Record package votes (Product / Engineering / Security) — **current step; votes not yet received with real timestamps**.  
-2. Separate Product + Engineering **Approve merge** for PR #63.  
-3. Merge PR #63 (docs-only) when CI green.  
-4. Open/execute R0 only after separate R0 authorization.  
+1. Record package votes (Product / Engineering / Security) — **current step; votes not yet received with real timestamps** (not invented).  
+2. Separate Product + Engineering **Approve merge** for PR #63 (after package Approved + CI green on final reviewed HEAD).  
+3. Merge PR #63 (docs-only) when CI green — package approval ≠ merge authorization.  
+4. Open/execute R0 only after PR #63 merged **and** separate R0 authorization votes.  
 5. R1+ and staging activation remain later gates.
 
 ## Next authorized action
 
 **Await and record** verbatim package Approve votes with real ISO-8601 UTC timestamps.  
-Do **not** merge PR #63. Do **not** start R0. Do **not** enable flags.
+Do **not** merge PR #63. Do **not** open or execute R0. Do **not** enable flags.
