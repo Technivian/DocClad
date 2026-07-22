@@ -15,7 +15,27 @@
   }
   .repo-page #contracts-table th,
   .repo-page #contracts-table td {
-    vertical-align: middle;
+    vertical-align: middle !important;
+  }
+  /* Kebab menus center via flex on .wq-kebab-trigger; block/grid cell content ignores
+     td vertical-align, so body cells use the same flex centering pattern. */
+  .repo-page #contracts-table tbody td.repo-cell {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  .repo-page #contracts-table tbody td.repo-cell > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="title"] > .repo-title-stack {
+    width: 100%;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="value"] {
+    justify-content: flex-end;
+  }
+  .repo-page #contracts-table tbody td.repo-cell[data-col="actions"] {
+    justify-content: center;
   }
   .repo-page #contracts-table th.tbl-th:not([data-col="select"]),
   .repo-page #contracts-table td.repo-cell:not([data-col="select"]) {
@@ -49,13 +69,13 @@
     position: sticky;
     left: 0;
     z-index: 3;
-    width: 36px !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
     box-sizing: border-box;
     vertical-align: middle !important;
     background-color: var(--card-bg, #fff);
-    padding: 0 0 0 12px !important;
+    padding: 0 0 0 10px !important;
     overflow: visible !important;
     text-align: left;
   }
@@ -78,10 +98,10 @@
   .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
   .repo-page #contracts-table th[data-col="title"],
   .repo-page #contracts-table td[data-col="title"] {
-    position: sticky; left: 36px; z-index: 3; min-width: 260px; width: 24%;
+    position: sticky; left: 32px; z-index: 3; min-width: 260px; width: 24%;
     background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
-    padding-left: 8px;
+    padding-left: 6px;
   }
   .repo-page #contracts-table thead th[data-col="title"] { z-index: 6; }
   .repo-page #contracts-table tbody tr:hover:not(.wq-row-selected) td[data-col="select"],
