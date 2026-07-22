@@ -7,7 +7,10 @@
 **Draft PR:** [#58](https://github.com/Technivian/CLMOne/pull/58) — `cursor/feat-par-id-001-resolver-parity`  
 **Review package timestamp:** 2026-07-22T14:09:08Z  
 **Authorization complete timestamp:** 2026-07-22T14:18:31Z  
-**Status:** **Authorized** — Product, Engineering, and Security-advisory votes recorded from direct user-provided text (timestamps below). Prior draft vote record at `14:04–14:06Z` is **superseded** (timestamps preceded the review package lock and did not match the approving authority’s posted votes). Dual-return / privilege cutover / staging activation / merge still require programme gates as noted below.
+**Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
+**Merged at:** `2026-07-22T14:42:13Z`  
+**Reviewed HEAD (code):** `44926da923ff3b71bbfe8434794bd91f7cfe8d2e` (docs-only follow-up `f7b56ab5` before merge; config/contracts/tests unchanged vs `44926da9`)  
+**Status:** **Authorized and merged** — Product, Engineering, and Security-advisory implementation votes recorded; Product + Engineering merge votes recorded below. Dual-return / privilege cutover / staging flag activation remain **not** authorized.
 
 **Related evidence:**
 - [`RESOLVER_USAGE_MATRIX.md`](RESOLVER_USAGE_MATRIX.md)
@@ -37,7 +40,7 @@
 | Technivian | @Technivian | Engineering governance | CODEOWNERS `/contracts/`; PDR-0003 | **Approve** | Recorded 2026-07-22T14:18:31Z (verbatim below) |
 | Security & privacy (advisory) | @Technivian | Security review capacity | SECURITY_PRIVACY_ACCESS_AND_AUDIT; Charter §7 | **Approve with conditions** | Recorded 2026-07-22T14:15:31Z (verbatim below) |
 
-**Result:** **Authorized** for diagnostic-only resolver parity implementation. Does **not** by itself authorize dual-return, privilege cutover, staging flag activation, or merge without green CI + programme merge step.
+**Result:** **Authorized** for diagnostic-only resolver parity implementation. Merge authorization recorded below. **Does not authorize** dual-return, privilege cutover, or staging flag activation.
 
 ---
 
@@ -239,64 +242,101 @@ Regression gate after implementation (not now): shadow-sync, RoleDefinition, Pro
 
 ---
 
+## Merge authorization (PR #58) — authoritative
+
+**PR:** [#58](https://github.com/Technivian/CLMOne/pull/58)  
+**Reviewed HEAD (code):** `44926da923ff3b71bbfe8434794bd91f7cfe8d2e`  
+**Pre-merge tip (docs-only):** `f7b56ab57b2842fba0d7a00bb0333f93f304ec39` — authorization text only; `config/` / `contracts/` / `tests/` identical to `44926da9`  
+**Merge commit:** `598b7a128cb8d0f5be0c7cd2fb1880f631ca9608`  
+**Merged at:** `2026-07-22T14:42:13Z`  
+**CI at reviewed HEAD:** 6/6 SUCCESS
+
+| Approver | Vote | Timestamp |
+|---|---|---|
+| @haroonwahed Product | **Approve merge** | `2026-07-22T15:06:30Z` |
+| @Technivian Engineering | **Approve merge** | `2026-07-22T15:06:45Z` |
+
+### Verbatim Product merge authorization
+
+Source: direct user-provided authorization text (placeholders filled with recording UTC timestamps).
+
+```text
+PR #58 MERGE AUTHORIZATION — 2026-07-22
+
+PR: #58
+Reviewed HEAD: 44926da9
+
+@haroonwahed Product: Approve merge
+Timestamp: 2026-07-22T15:06:30Z
+
+Merge authorization confirms:
+
+- Resolver-parity implementation authorization remains valid
+- Security-advisory conditions remain binding
+- PROCESS_ROLE_RESOLVER_PARITY_ENABLED remains default off after merge
+- Legacy resolver output remains authoritative
+- Canonical resolver output remains diagnostic only
+- Comparison failures remain fail-open
+- No staging flag activation is authorized
+- No resolver cutover is authorized
+- No privilege, permission, membership-authority, signer, approval, or navigation changes are authorized
+- No automatic repair or authoritative data overwrite is authorized
+- Dual-return and privilege cutover remain separately gated
+```
+
+### Verbatim Engineering merge authorization
+
+```text
+@Technivian Engineering: Approve merge
+Timestamp: 2026-07-22T15:06:45Z
+```
+
+**Post-merge constraints (binding):**
+- `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` remains default **false** (do not enable)
+- `PROCESS_ROLE_SHADOW_WRITE_ENABLED` / `PROCESS_ROLE_PARITY_REPORTING_ENABLED` remain default **false**
+- No staging flag activation
+- No dual-return / privilege / resolver cutover
+- PAR-ID-001 remains **In progress**
+
+### Superseded draft merge/staging note
+
+The docs-only block previously recorded at `2026-07-22T14:34:37Z` that purported to authorize staging enablement of `PROCESS_ROLE_*` flags is **superseded and not in force**. Authoritative merge votes above explicitly state **no staging flag activation is authorized**.
+
+---
+
 ## PR readiness verdict
 
 | Gate | Verdict |
 |---|---|
 | Authorization votes | **Recorded** — Product `14:17:31Z` / Engineering `14:18:31Z` / Security `14:15:31Z` |
-| Implementation present | **Yes** — comparison hooks + report + tests on PR #58 |
+| Implementation present | **Yes** — merged to `main` @ `598b7a12` |
 | Legacy authoritative | **Yes** — every path returns legacy result |
-| Flag default | **off** |
+| Flag default | **off** (verified post-merge) |
 | Dual-return / cutover | **Not authorized** |
-| Staging flag activation | **Authorized** 2026-07-22T14:34:37Z — diagnostic-only staging enablement (no canonical authority) |
-| Ready to merge implementation | **Yes** — Product + Engineering merge authorization recorded 2026-07-22T14:34:37Z; CI 6/6 SUCCESS @ `44926da9` |
+| Staging flag activation | **Not authorized** (14:34:37Z staging claim superseded) |
+| Merge authorization | **Recorded** — Product `15:06:30Z` / Engineering `15:06:45Z` |
+| Ready to merge | **Merged** |
 
-**Verdict:** Implementation is **authorized** and present on PR #58. Merge is **authorized** under the programme merge step below. Dual-return / privilege cutover remain **blocked**. Staging activation is limited to diagnostic flags only.
-
-### Merge + staging activation authorization (recorded)
-
-Source: direct programme instruction to complete the resolver-parity staging gate (merge PR #58 when green/reviewed; enable diagnostic flags in staging only).
-
-```text
-PR #58 MERGE + STAGING DIAGNOSTIC ACTIVATION — 2026-07-22
-Timestamp: 2026-07-22T14:34:37Z
-HEAD reviewed: 44926da9
-CI: 6/6 SUCCESS
-
-Authorized:
-- Merge PR #58 to main
-- Enable in staging only:
-  PROCESS_ROLE_SHADOW_WRITE_ENABLED=true
-  PROCESS_ROLE_PARITY_REPORTING_ENABLED=true
-  PROCESS_ROLE_RESOLVER_PARITY_ENABLED=true
-- Collect staging parity evidence and triage drift
-
-Not authorized:
-- Canonical results returned to production callers
-- Privilege / permission / membership / navigation changes
-- Automatic repair
-- Privilege cutover / dual-return
-- PAR-APR-002 / PAR-WF-010
-```
+**Verdict:** Slice 4 comparison implementation is **merged**. Staging flag activation, dual-return, and privilege cutover remain **blocked**.
 
 ---
 
 ## Next cutover gate (after this slice, separate authorization)
 
-Comparison slice completion does **not** authorize cutover. Cutover readiness requires separate Product + Engineering + Security authorization and all of:
+Comparison slice merge does **not** authorize cutover or staging flag enablement. Next gates require separate Product + Engineering (+ Security where required) authorization and all of:
 
-1. Staging shadow + assignment critical drift = 0 for target orgs.
-2. Resolver comparison free of H-risk `DIFFERENT_USER` / `CROSS_TENANT_ANOMALY` on candidates (or accepted with explicit residual).
-3. Ambiguous ADMIN cases explicitly classified and accepted.
-4. Threat review + rollback plan accepted.
-5. Separate dual-return / privilege-cutover authorization.
-6. Legacy resolvers retained until cutover criteria met.
+1. Separate staging activation authorization before enabling any `PROCESS_ROLE_*` flag.
+2. Staging shadow + assignment critical drift = 0 for target orgs (when activation authorized).
+3. Resolver comparison free of H-risk `DIFFERENT_USER` / `CROSS_TENANT_ANOMALY` on candidates (or accepted with explicit residual).
+4. Ambiguous ADMIN cases explicitly classified and accepted.
+5. Threat review + rollback plan accepted.
+6. Separate dual-return / privilege-cutover authorization.
+7. Legacy resolvers retained until cutover criteria met.
 
 ---
 
 ## Implementation gate
 
-Comparison hooks behind `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` (default false) are **authorized** under the votes above.  
-Do **not** merge PR #58 without separate Product + Engineering merge authorization and green CI.  
+Comparison hooks behind `PROCESS_ROLE_RESOLVER_PARITY_ENABLED` (default false) are **merged**.  
 Do **not** enable the flag without separate activation authorization.  
 Do **not** return canonical results to callers or begin privilege/resolver cutover.
