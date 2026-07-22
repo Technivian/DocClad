@@ -54,10 +54,10 @@ class PerformanceGuardrailsTests(TestCase):
 
     def test_contract_list_query_count_does_not_scale_linearly(self):
         self._seed_contracts(5)
-        baseline = self._query_count_for(reverse('contracts:contract_list'))
+        baseline = self._query_count_for(reverse('contracts:repository'))
 
         self._seed_contracts(40)
-        expanded = self._query_count_for(reverse('contracts:contract_list'))
+        expanded = self._query_count_for(reverse('contracts:repository'))
 
         self.assertLessEqual(expanded, baseline + 6)
 

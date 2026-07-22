@@ -161,9 +161,9 @@ Parent: d9ded244 (PAR-SEC-003 + DOC-001 seed fix)
 | pr-release-evidence | PR body missing required checklist lines | **#2** Missing required evidence | PR #50 body updated with checked verification items + smoke/rollback evidence |
 | quality-and-tenancy | Production deploy check missing `APP_BASE_URL`, `OPERATOR_ALERT_EMAIL`, and durable storage env | **#3** CI configuration defect | Added valid HTTPS `APP_BASE_URL`, operator email, and S3 storage env to `.github/workflows/platform-guardrails.yml` (validation unchanged) |
 | security-scans | `theme/static_src` npm audit: `brace-expansion` (high), `tar` (critical) | **#5** pre-existing transitive deps | `npm audit fix` in `theme/static_src` (lockfile updated) |
-| redesigned-e2e | `seed_demo_command_center` → `WorkflowLaunchBlocked` (flagship templates lack assignees) + `DocumentVersionError` in `seed_payrollminds_demo` post-lock file mutation | **#1** Genuine Tranche-1 defect | Migration `0110_flagship_workflow_template_assignees`; demo provenance intake fix; `seed_payrollminds_demo` uses `create_document_version` and create-only provenance stamping |
-| Phase 1 visual baselines | Same e2e webServer bootstrap failure as redesigned-e2e (not snapshot drift on first failure) | **#1** Genuine Tranche-1 defect (shared bootstrap) | Fixed with payrollminds seed + playwright config path |
-| quality-and-tenancy | `ContractIsolationTest.test_list_shows_only_own_org` expects 200; product returns 302 to repository (PAR-SEC-001) | **#1** Genuine Tranche-1 test drift (named PAR-SEC-003 residual) | Test updated to assert 302 → repository + tenant-scoped repository contents |
+| redesigned-e2e | Smoke test expected legacy `.page-wrap.cw-page` at `/contracts/` (302→repository) and hidden subtitle copy | **#1** Genuine Tranche-1 test drift | Updated `client/tests/e2e/smoke.spec.js` selectors for repository + workflow ops shells |
+| Phase 1 visual baselines | Template migration drift + wrong markers/paths; bootstrap fixed in pass 2 | **#1** Genuine Tranche-1 visual drift | Updated `visual-baselines.spec.js` paths/markers; regenerated `phase-1-*-darwin.png` snapshots |
+| quality-and-tenancy (pass 2) | `test_contract_list_query_count_*` hit 302 on legacy list alias | **#1** Test drift (PAR-SEC-003) | Point performance guardrail at `contracts:repository` |
 
 ### Why visual / redesigned-E2E ran on this PR
 

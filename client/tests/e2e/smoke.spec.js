@@ -54,10 +54,10 @@ test('redesigned workspace shells render on key frontend pages', async ({ page }
     },
     {
       path: '/contracts/repository/',
-      title: /Contracts/,
+      title: /^Contracts$/,
       summaryText: /Start new contract/,
       marker: '#contracts-table',
-      shell: '.repo-page',
+      shell: '.dc-ds-list-page.repo-page',
     },
     {
       path: '/contracts/workflows/',

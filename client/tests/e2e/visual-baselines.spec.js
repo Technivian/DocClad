@@ -54,7 +54,7 @@ test.describe('Phase 1 visual baselines', () => {
   });
 
   test('list baseline', async ({ page }) => {
-    await capture(page, '/contracts/repository/', '.repo-page', 'list');
+    await capture(page, '/contracts/repository/', '.dc-ds-list-page.repo-page', 'list');
   });
 
   test('form baseline', async ({ page }) => {
@@ -62,14 +62,15 @@ test.describe('Phase 1 visual baselines', () => {
   });
 
   test('workspace baseline', async ({ page }) => {
-    await capture(page, '/contracts/workflows/', '.workflow-ops-page', 'workspace');
+    await capture(page, '/contracts/workflows/', '#workflow-ops-root, .workflow-ops-page', 'workspace');
   });
 
   test('detail baseline', async ({ page }) => {
-    await page.goto('/contracts/repository/');
-    await expect(page.locator('.contract-row').first()).toBeVisible();
-    const contractId = await page.locator('.contract-row').first().getAttribute('data-contract-id');
-    expect(contractId).toBeTruthy();
-    await capture(page, `/contracts/${contractId}/`, '.dc-ds-workspace--record, .page-wrap', 'detail');
+    await page.goto('/contracts/workflows/');
+    const detailPath = await page.locator('a[href^="/contracts/workflows/"]').evaluateAll((links) => (
+      links.map((link) => link.getAttribute('href')).find((href) => /^\/contracts\/workflows\/\d+\/$/.test(href))
+    ));
+    expect(detailPath).toBeTruthy();
+    await capture(page, detailPath, '.dc-ds-workspace--nda, .dc-ds-workspace--record, .workspace-main.hero-shell', 'detail');
   });
 });
