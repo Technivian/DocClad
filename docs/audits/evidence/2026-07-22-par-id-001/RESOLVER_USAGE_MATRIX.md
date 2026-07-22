@@ -3,7 +3,7 @@
 **Date:** 2026-07-22  
 **Branch:** `cursor/feat-par-id-001-resolver-parity`  
 **Base:** `main` @ `bb881ac2` (PR #55 shadow sync merged)  
-**Authorization:** `RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md` (**Requested**)
+**Authorization:** `RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md` (**Reviewed — Pending Votes**)
 
 Purpose: inventory production consumers that resolve actors for workflow, approval, signer, owner, and reviewer paths — prior to any comparison-mode implementation.
 

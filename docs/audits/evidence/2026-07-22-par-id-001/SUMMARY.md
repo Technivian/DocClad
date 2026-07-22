@@ -16,8 +16,8 @@
 - Deterministic `process_role_parity_report` management command
 - Shadow write-path inventory + Slice 3 authorization (Product / Engineering / Security)
 
-### Prepared (not implemented — votes Requested)
-- `RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md`
+### Prepared (not implemented — Reviewed, Pending Votes)
+- `RESOLVER_PARITY_IMPLEMENTATION_AUTHORIZATION.md` — scope + binding Security conditions locked; Product/Engineering/Security votes **Requested**
 - `RESOLVER_USAGE_MATRIX.md` (parity-candidate: `resolve_assignee`, `resolve_rule_assignee` chains)
 
 ### Explicitly unchanged
