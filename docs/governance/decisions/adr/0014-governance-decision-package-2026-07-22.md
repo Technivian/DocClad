@@ -1,10 +1,10 @@
 # ADR-0014 governance decision package
 
 **Package date:** 2026-07-22 (UTC)  
-**Status:** **Decision-ready — not ratified**  
-**ADR:** [`0014-role-definition-reconciliation.md`](0014-role-definition-reconciliation.md) — **Proposed**  
-**Programme:** PAR-ID-001 — discovery complete  
-**Branch:** `cursor/feat-par-apr-001-foundation-governance`
+**Status:** **Ratified** — see meeting record  
+**ADR:** [`0014-role-definition-reconciliation.md`](0014-role-definition-reconciliation.md) — **Accepted**  
+**Programme:** PAR-ID-001 — discovery complete; additive catalogue authorized  
+**Meeting record:** [`0014-governance-acceptance-meeting-record-2026-07-22.md`](0014-governance-acceptance-meeting-record-2026-07-22.md)
 
 > **No votes recorded.** This package prepares motions and approver requirements only. Per `docs/governance/decisions/README.md`, do not mark ADR-0014 Accepted without documented approval metadata.
 

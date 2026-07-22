@@ -15,9 +15,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 | Rollup | Count | Notes |
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 13 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001` |
+| Completed unique PAR IDs | 14 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003` |
 | In progress | 1 | `PAR-ID-001` — Role Definition reconciliation (Milestone 3) |
-| Future / residual unique PAR IDs | 10 | Includes `PAR-SEC-002`, `PAR-SEC-003` |
+| Future / residual unique PAR IDs | 9 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed) |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -26,11 +26,11 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed (13):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`
+**Completed (14):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`
 
 **In progress (1):** `PAR-ID-001`
 
-**Future / residual (10):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (9):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -45,7 +45,6 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 Parallel Milestone 1 hygiene:
 
 - `M1-E2E-001` Fix Playwright DPA bootstrap
-- `PAR-SEC-003` Close stale ContractIsolationTest assertion (separate from Completed `PAR-SEC-001`)
 - `PAR-SEC-002` Uniform authz / client-hide ≠ authorization
 
 ---
@@ -73,6 +72,7 @@ Parallel Milestone 1 hygiene:
 | ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. Interim pinning only. |
 | ADR-0012 | Workflow Definition aggregate and cutover | **Proposed** — `docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`. Required for PAR-WF-010 production cutover. |
 | ADR-0013 | Approval Requirement / Decision split | **Accepted** — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md`. Foundation scope only; PAR-APR-002 required for legacy cutover. |
+| ADR-0014 | Role Definition reconciliation | **Accepted** — `docs/governance/decisions/adr/0014-role-definition-reconciliation.md`. Target model + additive catalogue; privilege/resolver cutover requires separate authorization. |
 
 ---
 
@@ -95,7 +95,7 @@ Parallel Milestone 1 hygiene:
 |---|---|---|---|
 | **PAR-CORE-001** | Complete remaining PDR-0002 UI/test drift | P0 | **Completed** |
 | **PAR-SEC-002** | Uniform authz for search/analytics/AI; client-hide ≠ authorization | P1 | Future |
-| **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | Future residual |
+| **PAR-SEC-003** | Stale ContractIsolationTest repository-redirect assertion | P1 | **Closed** |
 | M1-E2E-001 | Fix Playwright DPA bootstrap | P1 | Future (non-PAR) |
 
 ### Milestone 2 — Canonical contract core
@@ -236,23 +236,14 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 1 residual) — **not Completed**; separate from Completed `PAR-SEC-001` |
+| Status | **Closed** (2026-07-22) |
 | Priority | P1 |
-| Problem | `ContractIsolationTest.test_list_shows_only_own_org` expects HTTP 200 on legacy `contract_list`; product intentionally 302-redirects authenticated users to repository. |
-| Governance source | ENGINEERING_GUARDRAILS tenant isolation; gap G-SEC-01 / PAR-SEC-001 follow-up |
-| Current evidence | Baseline + merge-gate: `AssertionError: 302 != 200`; cross-org detail/update still 404 PASS; catalog `known-preexisting-failures.md` |
-| Target outcome | Test asserts redirect to repository and verifies org isolation on the canonical repository surface |
-| Dependencies | Stable `contracts:repository` isolation behaviour |
-| Decision required | None — align test to intentional alias behaviour |
-| Migration impact | None |
-| Security and permissions impact | Strengthens regression signal; no authz change |
-| Audit requirements | None |
-| UX requirements | None |
-| Tests | Updated isolation test(s); full `test_cross_tenant_isolation` green |
-| Rollback strategy | Revert test-only change |
-| Acceptance criteria | Isolation suite 0 failures; no anonymous alias bypass regressions |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Problem | `ContractIsolationTest.test_list_shows_only_own_org` expected HTTP 200 on legacy `contract_list`; product intentionally 302-redirects to repository. |
+| Resolution | Test asserts 302 → repository and verifies org isolation on the canonical repository surface. |
+| Fix commit | `d9ded244` (merged via Tranche-1 / PR #50 lineage) |
+| Tests | Full `test_cross_tenant_isolation` **75/75 PASS** |
+| Evidence | `docs/audits/evidence/2026-07-22-par-sec-003/CLOSURE.md` |
+| Programme isolation | Proven for additive PAR-ID catalogue slice; does **not** authorize privilege cutover |
 | Last updated | 2026-07-22 |
 
 ### PAR-SEC-002 — Uniform authz for search / analytics / AI
@@ -411,24 +402,24 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — **discovery complete**; ADR-0014 awaiting ratification |
+| Status | **In progress** (2026-07-22) — discovery complete; ADR-0014 **Accepted**; additive catalogue `0112` authorized; Completion deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` — ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, 0112 authorization |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
-| Dependencies | ADR-0014 Acceptance; PAR-SEC-003 disposition before cutover; authz matrix inventory |
-| Decision required | **ADR-0014** — decision package ready, not ratified |
-| Migration impact | Mapping table / backfill per CUTOVER_PLAN (not authorized) |
-| Security and permissions impact | **High** — must preserve least privilege; server-side checks remain source of truth |
-| Audit requirements | Role/mapping changes audited |
-| UX requirements | Consistent role labels in My Work, Approvals, Admin |
-| Tests | `tests/test_par_id_001_characterization.py` — **19 PASS** |
-| Rollback strategy | Feature flag + migration checkpoints per CUTOVER_PLAN |
-| Acceptance criteria | Accepted ADR; documented mapping; tests prove no privilege widening |
+| Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); further slices need separate authorization |
+| Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
+| Migration impact | `0112_role_definition_registry` additive catalogue (authorized); further migrations not authorized |
+| Security and permissions impact | **High** — catalogue labels grant no permissions; runtime authz unchanged in this slice |
+| Audit requirements | `role.definition.created/updated/deactivated/repaired` |
+| UX requirements | Consistent role labels in My Work, Approvals, Admin (copy audit residual) |
+| Tests | Characterization (19) + `test_par_id_001_role_definition` catalogue suite |
+| Rollback strategy | Reverse migration 0112; feature flag reserved for future cutover |
+| Acceptance criteria | Accepted ADR (**met**); additive catalogue (**in this slice**); runtime cutover criteria **not yet** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
-| Proposed ADR | **ADR-0014** + decision package `0014-governance-decision-package-2026-07-22.md` |
-| PR/commits | PR [#51](https://github.com/Technivian/CLMOne/pull/51) |
+| Accepted ADR | **ADR-0014** + meeting record + 0112 authorization |
+| PR/commits | PR #51 merge `21e65f09`; follow-up branch `cursor/feat-par-id-001-role-definition-registry-d7f1` |
 | Last updated | 2026-07-22 |
 
 ### PAR-EXC-001 — Governed Exception
@@ -628,3 +619,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **Tranche-1 integration gate Completed:** PR #50 merged to `main` @ `c52d699a` |
 | 2026-07-22 | **PAR-APR-001 Completed:** `ApprovalRequirement` + `ApprovalDecision`; migration 0111; ADR-0013 **Accepted**; evidence `2026-07-22-par-apr-001`; cutover residuals → PAR-APR-002 |
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
+| 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
+| 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |

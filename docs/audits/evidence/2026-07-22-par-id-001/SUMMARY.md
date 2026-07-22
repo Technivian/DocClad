@@ -1,39 +1,28 @@
 # PAR-ID-001 evidence summary — 2026-07-22
 
-## Status: In progress — discovery complete
+## Status: In progress — additive catalogue delivered
 
 **Programme:** Role Definition reconciliation (Milestone 3)  
-**ADR:** ADR-0014 **Proposed** — decision package ready, not ratified  
-**Next gate:** ADR-0014 ratification vote (@haroonwahed + @Technivian)
+**ADR:** ADR-0014 **Accepted** 2026-07-22T11:00:00Z  
+**PR #51 merge:** `21e65f09`  
+**Authorized slice:** migration `0112_role_definition_registry`
 
-### Problem
-Dual role systems conflict with canonical Role Definition (CANONICAL_DOMAIN_MODEL §2.5). Six primary conflicts documented (C-ID-01 through C-ID-06) in `ROLE_USAGE_MATRIX.md`.
+### Delivered
+- Discovery pack (ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN)
+- ADR-0014 Accepted with named approvers
+- PAR-SEC-003 Closed
+- Additive `RoleDefinition` model + service + migration 0112
+- Compatibility lookup (no privilege dual-write)
+- Ambiguous `UserProfile.ADMIN` → `legacy_process_admin` (LEGACY_UNKNOWN)
 
-### Discovery deliverables (complete)
-- Full role usage matrix — 30+ role-like concepts inventoried
-- Target five-concept model (`TARGET_ROLE_MODEL.md`)
-- Cutover plan with additive migration sequence (`CUTOVER_PLAN.md`) — **not authorized**
-- ADR-0014 updated with authorization boundaries
-- Governance decision package (motions drafted, votes not recorded)
-- Characterization tests — **19 tests** (`tests/test_par_id_001_characterization.py`)
+### Explicitly unchanged
+- Permissions / authorization outcomes
+- Runtime assignee resolution
+- Navigation access
+- `OrganizationMembership` / `UserProfile.role` behaviour
 
-### Primary conflicts
-| ID | Conflict | Severity |
-|---|---|---|
-| C-ID-01 | `ADMIN` in membership vs profile | High |
-| C-ID-02 | User-global profile vs org membership | High |
-| C-ID-03 | ApprovalRoute display vs ApprovalRule runtime | Medium |
-| C-ID-04 | SCIM workspace-only provisioning | Medium |
+### Not Completed
+PAR-ID-001 remains **In progress** until runtime role assignment and compatibility cutover criteria are delivered under separate authorization.
 
-### Explicit non-goals (unchanged)
-- No schema changes in this slice
-- No privilege model changes
-- No enum removal
-- No SCIM / RBAC redesign
-
-### Tenant isolation
-- Programme suite: **75/75 PASS** (`tests.test_cross_tenant_isolation`)
-- PAR-SEC-003: roadmap **not formally closed** — privilege cutover **blocked**
-
-### Next implementation step (after ADR-0014 Accepted + authorization)
-Migration `0112_role_definition_registry` on dedicated branch — additive catalogue only; no resolver flip.
+### Next authorized slice (proposed)
+Org-scoped process-role dual-read adapter — **not authorized** in this package.

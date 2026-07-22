@@ -1,52 +1,34 @@
-# PAR-ID-001 — test results
+# PAR-ID-001 — test results (additive catalogue slice)
 
 **Date:** 2026-07-22  
-**Branch:** `cursor/feat-par-apr-001-foundation-governance`  
-**Settings:** `config.settings_test` (in-memory SQLite)
+**Branch:** `cursor/feat-par-id-001-role-definition-registry-d7f1`  
+**Settings:** `config.settings_test`
 
 ---
 
-## PAR-ID characterization suite
+## Suites
 
 | Module | Result |
 |---|---|
+| `tests.test_par_id_001_role_definition` | **17 PASS** |
 | `tests.test_par_id_001_characterization` | **19 PASS** |
-
-### Coverage areas
-
-- Workspace role authority (`can_manage_organization`, contract EDIT)
-- Workflow role definition resolution (`resolve_assignee`, `resolve_rule_assignee`)
-- Runtime assignment independence from profile role
-- Delegation (delegate may act; assignee preserved)
-- Signer email vs display role label
-- Navigation visibility vs configuration authorization
-- Cross-tenant approval denial (404)
-- Org-scoped assignee resolution
-
----
-
-## Programme tenant isolation
-
-| Module | Result |
-|---|---|
+| `tests.test_par_apr_001_approval` + approval workflow/authorization | **33 PASS** |
+| `tests.test_par_wf_010_characterization` | **4 PASS** |
 | `tests.test_cross_tenant_isolation` | **75 PASS** |
-
-Includes `ContractIsolationTest.test_list_shows_only_own_org` (PAR-SEC-003 technical fix on `main`).
+| **Combined gate run** | **148 PASS** |
 
 ---
 
-## PAR-SEC-003 disposition
+## Migration proof
 
-| Check | Status |
+| Operation | Result |
 |---|---|
-| Isolation test passes | **Yes** |
-| Roadmap PAR-SEC-003 formally closed | **No** |
-| Privilege cutover authorized | **No** — blocked pending disposition |
+| Forward `0112` | **PASS** |
+| Rollback → `0111` | **PASS** |
+| Re-forward → `0112` | **PASS** |
 
 ---
 
 ## Tenant isolation conclusion
 
-**Technical:** Cross-tenant isolation suite is green (75/75) on this branch. Resolvers and approval authz return 404/403 across tenant boundaries in characterized paths.
-
-**Programme:** Tenant isolation is **not proven at programme assurance level** for PAR-ID-001 cutover until PAR-SEC-003 is formally disposed in roadmap governance. Discovery and characterization may proceed; **privilege cutover remains blocked**.
+Programme isolation suite **75/75 PASS**. PAR-SEC-003 **Closed**. Programme-level tenant isolation is **proven for the additive RoleDefinition catalogue slice**. Privilege / resolver cutover remains **not authorized**.

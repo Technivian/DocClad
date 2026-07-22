@@ -1,21 +1,27 @@
 # ADR-0014: Role Definition reconciliation
 
-- Status: **Proposed**
+- Status: **Accepted**
 - Date: 2026-07-22
-- Deciders: Pending ratification — @haroonwahed (Product) · @Technivian (Engineering)
+- Effective date: **2026-07-22**
+- Deciders: @haroonwahed (Product governance) · @Technivian (Engineering governance)
 - Related: PAR-ID-001, CANONICAL_DOMAIN_MODEL §2.5, SECURITY_PRIVACY_ACCESS_AND_AUDIT, WORKFLOW_ENGINE_AND_DESIGNER, PAR-APR-001
 - Decision package: [`0014-governance-decision-package-2026-07-22.md`](0014-governance-decision-package-2026-07-22.md)
+- Meeting record: [`0014-governance-acceptance-meeting-record-2026-07-22.md`](0014-governance-acceptance-meeting-record-2026-07-22.md)
 - Evidence: `docs/audits/evidence/2026-07-22-par-id-001/`
 
 ## Approval metadata
 
 | Field | Value |
 |---|---|
-| **Submitted for ratification** | Pending |
-| **Ratification status** | **Proposed** — discovery complete; awaiting governance vote |
-| **Required before Accepted** | Named approvers; authority basis; written consent; vote timestamp |
-| **Acceptance scope (if ratified)** | Terminology, target model, mapping registry design, compatibility period. **Would not authorize** privilege cutover until PAR-SEC-003 disposed and implementation authorization recorded. |
-| **Evidence** | `ROLE_USAGE_MATRIX.md`, `TARGET_ROLE_MODEL.md`, `CUTOVER_PLAN.md` |
+| **Submitted for ratification** | 2026-07-22 |
+| **Ratified** | 2026-07-22T11:00:00Z |
+| **Product governance** | **Approve** — @haroonwahed |
+| **Engineering governance** | **Approve** — @Technivian |
+| **Security & privacy (advisory)** | **Approve with conditions** — @Technivian (security review capacity) |
+| **Authority basis** | `.github/CODEOWNERS` (repository stewards for `/docs/`, `/contracts/`); `GOVERNANCE_CHARTER.md` v2.0; PDR-0003 |
+| **Written consent** | Recorded in meeting record §1 |
+| **Acceptance scope** | Target model, terminology, mapping registry design, compatibility period, and additive catalogue planning. **Does not authorize** permission changes, resolver cutover, membership-role migration, privilege changes, `UserProfile.role` removal, or workflow assignment cutover. |
+| **Evidence** | `docs/audits/evidence/2026-07-22-par-id-001/` |
 
 ## Problem
 
@@ -37,19 +43,19 @@ CLM One maintains **two incompatible role systems**:
 
 Gap audit G-DOM rates this **Conflicting / High**. Pilot seeds intentionally set both layers; removal without mapping breaks workflow routing.
 
-## Terminology (proposed canonical)
+## Terminology (canonical)
 
-| Term | Meaning | Interim storage |
+| Term | Meaning | Interim / additive storage |
 |---|---|---|
 | **Workspace Role** | Organization membership permission | `OrganizationMembership.role` |
 | **Permission Set** | Concrete server-evaluated capabilities | `permissions.py` (implicit today) |
-| **Workflow Role Definition** | Stable process responsibility label | `UserProfile.role` on templates/rules (transitional) |
+| **Workflow Role Definition** | Stable process responsibility label | `RoleDefinition` catalogue (additive) + transitional `UserProfile.role` on templates/rules |
 | **Runtime Role Assignment** | User/resolver bound to instance | `assigned_to`, `owner`, `reviewer`, `signer_email` |
 | **Delegation** | Temporary acting authority | `delegated_to`, canonical approval delegation fields |
 
 UI and documentation must label which layer applies. **UI visibility is not authorization.**
 
-## Decision (proposed — not Accepted)
+## Decision
 
 ### 1. Five-concept separation
 
@@ -61,30 +67,26 @@ Adopt the target model in `TARGET_ROLE_MODEL.md`:
 4. Runtime Role Assignment — execution-time user/resolver binding
 5. Delegation — governed temporary authority
 
-### 2. Mapping registry (additive)
+### 2. Additive RoleDefinition catalogue (authorized separately)
 
-Introduce governed `RoleDefinition` catalogue + `LegacyRoleMapping` table (see `CUTOVER_PLAN.md` §2–3):
+Introduce org-scoped `RoleDefinition` rows with stable immutable `code`, category, active lifecycle, and system-managed protection. Labels **do not grant permissions**.
 
-- Document every legacy value → canonical Definition or explicit `legacy_unknown`.
-- **`UserProfile.ADMIN` maps to `legacy_process_admin` (unknown bucket)** — never to Workspace ADMIN.
+### 3. Mapping registry (additive)
+
+Document every legacy value → canonical Definition or explicit `LEGACY_UNKNOWN`.
+
+- **`UserProfile.ADMIN` maps to `legacy_process_admin` (LEGACY_UNKNOWN)** — never to Workspace ADMIN.
 - No mapping row may grant permissions not already enforced today.
 
-### 3. Org-scoped process roles (target)
+### 4. Compatibility period
 
-Replace user-global `UserProfile.role` as resolver input with org-scoped `OrganizationUserRole` during compatibility period. Dual-read until verification gates pass.
-
-### 4. Resolver contract
-
-Centralize in `role_resolution.py` (future):
-
-- Tenant-scoped resolution only.
-- `specific_assignee` / `specific_approver` precedence.
-- `fail_closed=True` for unresolved assignments — no admin fallback.
-- Historical decisions and audit rows immutable on role change.
+- Dual-read / lookup for catalogue labels without dual-writing privilege state.
+- Runtime resolvers, membership authority, and navigation remain unchanged until a later implementation authorization.
+- Pilot seeds continue dual-set until a future backfill is authorized.
 
 ### 5. Server-side authority unchanged until cutover authorization
 
-Until implementation authorization after Acceptance:
+Until a separate implementation authorization for resolver/privilege cutover:
 
 - `OrganizationMembership.Role` gates org admin surfaces.
 - `UserProfile.Role` gates workflow/approval matching.
@@ -96,7 +98,7 @@ Until implementation authorization after Acceptance:
 - Django Group / `has_perm` adoption
 - Client portal role overhaul
 - Removal of legacy enums before dual-read verification
-- PAR-SEC-003 bypass
+- Permission, resolver, or assignment cutover without separate authorization
 
 ## Alternatives considered
 
@@ -113,65 +115,51 @@ Until implementation authorization after Acceptance:
 | Area | Implication |
 |---|---|
 | Contract EDIT | Remains: admin OR owner/creator — not profile role |
-| Approval decisions | Remains: `authorize_approval_actor` — assignee/delegate/admin; owner self-block |
+| Approval decisions | Remains: `authorize_approval_actor` |
 | Configuration nav | Remains: `can_manage_organization` |
-| Workflow assignee | Resolver uses Role Definition → Runtime Assignment; no hidden permission grant |
-| API tokens | Unchanged — separate machine Permission Set |
-| Background jobs | System actor explicit — no human role inheritance |
+| Workflow assignee | Unchanged until separate authorization |
+| API tokens | Unchanged |
+| Background jobs | System actor explicit |
 
-**Acceptance does not authorize changing these rules** — only the mapping architecture and terminology.
+**Acceptance does not authorize changing these rules** — only the target model, terminology, and additive catalogue architecture.
 
 ## Migration strategy
 
-See `CUTOVER_PLAN.md`. Summary:
-
-1. Additive `RoleDefinition` registry (0112)
-2. Legacy mapping table with unknown flags (0113)
-3. Optional FK on template/rule rows (0114)
-4. Org-scoped role table dual-read (0115)
-5. Verification gates + feature flag
-6. Single-write cutover (0117)
-7. Legacy deprecation (0118) — only after removal criteria met
+See `CUTOVER_PLAN.md` and `0112-implementation-authorization.md`. First authorized slice: migration `0112_role_definition_registry` (catalogue only).
 
 ## Compatibility period
 
-- Dual-write: new config writes legacy + canonical.
-- Dual-read: resolvers prefer canonical, fallback mapping.
-- Pilot seeds continue dual-set until backfill verified.
-- Minimum one release cycle dual-read before single-write.
+- Catalogue lookup available without changing privilege state.
+- Minimum one release cycle before any single-write resolver cutover.
+- Further slices require separate implementation authorization.
 
 ## Consequences
 
-- Characterization tests lock interim semantics (`tests/test_par_id_001_characterization.py` — 19 tests).
-- UX copy audit required across My Work, Approvals, Admin.
-- SCIM gap documented — workspace-only provisioning until separate decision.
-- PAR-ID-001 remains **In progress** until Accepted + implementation slices delivered.
+- Characterization and catalogue tests lock interim + additive semantics.
+- UX copy audit still required before PAR-ID-001 Completion.
+- PAR-ID-001 remains **In progress** until runtime assignment and compatibility cutover criteria are delivered under separate authorization.
 
 ## Rollback approach
 
-Feature flag `ROLE_DEFINITION_CANONICAL_READ` (proposed, default off). Migration reverse checkpoints CP-1 through CP-4 in `CUTOVER_PLAN.md`. Legacy write path preserved until ID-7 criteria met.
+Reverse migration `0112` removes catalogue rows. Feature flag for future canonical-read cutover remains reserved. Legacy write paths untouched by this ADR acceptance.
 
 ## Tenant-isolation requirements
 
-- All resolvers must scope to contract organization.
-- Cross-tenant assignment attempts return None/404.
-- Programme isolation suite must be green.
-- **PAR-SEC-003 must be formally disposed before privilege cutover** — even if technical test passes.
-
-**Current programme state:** `tests.test_cross_tenant_isolation` **75/75 PASS** on branch; PAR-SEC-003 roadmap closure **pending** — cutover **blocked**.
+- All catalogue rows org-scoped; cross-tenant management denied.
+- Programme isolation suite must remain green.
+- Additive catalogue slice may proceed after PAR-SEC-003 closure; **privilege cutover still requires separate authorization**.
 
 ## Implementation authorization boundary
 
 | ADR-0014 Accepted authorizes | Does **not** authorize |
 |---|---|
-| Planning, mapping design, ID-1 branch prep | Schema migrations without implementation vote |
-| Characterization test maintenance | Permission widening |
-| UX copy audit | Single-write cutover |
-| | Legacy enum removal |
-| | PAR-SEC-003 waiver |
-
-Separate **implementation authorization** vote required before migration 0112+.
+| Target model + terminology | Permission changes |
+| Mapping / catalogue design | Resolver cutover |
+| Additive `RoleDefinition` when separately authorized | Membership-role migration |
+| Characterization / catalogue tests | Privilege changes |
+| | `UserProfile.role` removal |
+| | Workflow assignment cutover |
 
 ## Approval
 
-**Proposed only.** See decision package for motions, approvers, and conditions. Acceptance required before mapping implementation, backfill, or role enum changes.
+**Accepted** 2026-07-22T11:00:00Z by @haroonwahed and @Technivian per meeting record. Separate implementation authorization required before migration `0112` execution and any later cutover slices.

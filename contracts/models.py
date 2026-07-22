@@ -4535,6 +4535,99 @@ class ApprovalDecision(models.Model):
         super().save(*args, **kwargs)
 
 
+class RoleDefinitionQuerySet(models.QuerySet):
+    """Block QuerySet.update from bypassing RoleDefinition governance rules."""
+
+    def update(self, **kwargs):
+        from contracts.services.role_definition import IMMUTABLE_ROLE_DEFINITION_FIELDS, RoleDefinitionError
+
+        blocked = sorted(set(kwargs) & IMMUTABLE_ROLE_DEFINITION_FIELDS)
+        if blocked:
+            raise RoleDefinitionError(
+                f'QuerySet.update cannot mutate immutable RoleDefinition fields {blocked}.'
+            )
+        if 'is_system_managed' in kwargs:
+            raise RoleDefinitionError(
+                'QuerySet.update cannot change is_system_managed; use governed repair.'
+            )
+        return super().update(**kwargs)
+
+
+class RoleDefinitionManager(models.Manager.from_queryset(RoleDefinitionQuerySet)):
+    pass
+
+
+class RoleDefinition(models.Model):
+    """Canonical Role Definition catalogue entry (PAR-ID-001 additive slice / ADR-0014).
+
+    Labels do not grant permissions. Runtime resolvers and membership authority
+    are unchanged by this model.
+    """
+
+    class Category(models.TextChoices):
+        WORKSPACE = 'WORKSPACE', 'Workspace'
+        WORKFLOW = 'WORKFLOW', 'Workflow'
+        APPROVAL = 'APPROVAL', 'Approval'
+        SIGNATURE = 'SIGNATURE', 'Signature'
+        SYSTEM = 'SYSTEM', 'System'
+        LEGACY_UNKNOWN = 'LEGACY_UNKNOWN', 'Legacy unknown'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='role_definitions',
+    )
+    code = models.CharField(max_length=64)
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True, default='')
+    category = models.CharField(max_length=32, choices=Category.choices)
+    is_active = models.BooleanField(default=True)
+    is_system_managed = models.BooleanField(
+        default=False,
+        help_text='System-seeded definitions; code and category protected from casual edit.',
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='role_definitions_created',
+    )
+    updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='role_definitions_updated',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = RoleDefinitionManager()
+
+    class Meta:
+        ordering = ['organization_id', 'category', 'code']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'code'],
+                name='roledef_org_code_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'category', 'is_active'], name='roledef_org_cat_active_ix'),
+            models.Index(fields=['organization', 'is_active'], name='roledef_org_active_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.code} ({self.organization_id})'
+
+    def save(self, *args, **kwargs):
+        skip_immutability = kwargs.pop('skip_role_definition_immutability', False)
+        if self.pk and not skip_immutability:
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values('code', 'organization_id', 'category', 'is_system_managed')
+                .first()
+            )
+            if previous:
+                from contracts.services.role_definition import assert_role_definition_immutable
+
+                assert_role_definition_immutable(self, previous=previous)
+        super().save(*args, **kwargs)
+
+
 class BackgroundJob(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
