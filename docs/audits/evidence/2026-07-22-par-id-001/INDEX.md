@@ -52,7 +52,6 @@
 | [`django-tests-slice3.txt`](django-tests-slice3.txt) | Slice 3 captured run |
 | [`django-tests.txt`](django-tests.txt) | Prior adapter run |
 | [`../2026-07-22-pr52-merge/SUMMARY.md`](../2026-07-22-pr52-merge/SUMMARY.md) | PR #52 merge evidence |
-| [`../2026-07-22-par-id-001-pr55-merge/SUMMARY.md`](../2026-07-22-par-id-001-pr55-merge/SUMMARY.md) | PR #55 merge evidence (if present) |
 
 ---
 
