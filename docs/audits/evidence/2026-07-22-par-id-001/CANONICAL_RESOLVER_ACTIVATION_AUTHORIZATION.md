@@ -12,8 +12,8 @@
 | Field | Value |
 |---|---|
 | Implementation branch | `cursor/feat-par-id-001-canonical-resolver-authority-d7f1` |
-| Implementation PR | _pending open_ |
-| Implementation HEAD | _pending_ |
+| Implementation PR | [#62](https://github.com/Technivian/CLMOne/pull/62) |
+| Implementation HEAD | `fc0f889ac504c5e6414096ff6ea9ebbef2470cd3` (+ follow-up docs commit) |
 | Merge SHA | _pending_ |
 | Flag default | `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED=false` |
 | Org allowlist default | empty (no orgs) |
