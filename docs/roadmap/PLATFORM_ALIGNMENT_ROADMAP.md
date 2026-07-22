@@ -38,7 +38,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (canonical authority **implemented** default-off; **activation pending**; R0 inventory **PASS** verified 20/4/8; R1+ pending; legacy retained; ADMIN deferred)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (R0 inventory **PASS**; R1 CERTAIN non-ADMIN remediation auth **Requested** — 12 rows; activation pending; flags default off; ADMIN deferred under P1+P3)
+
 
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
@@ -403,7 +404,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — cutover **implementation** merged (default off); activation **pending**; remediation package merged; R0 inventory **PASS** (verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8**; historical 14/1/13 superseded); R1+ **not** authorized; GI pre-auth merge **Ratified and Closed**; legacy retained; ADMIN deferred |
+| Status | **In progress** (2026-07-22) — R0 inventory **PASS** (verified 20/4/8); R1 CERTAIN non-ADMIN remediation auth package **Requested** (12 rows; ADMIN/AMBIGUOUS excluded); activation **pending**; flags default off; P1+P3 binding; P2 rejected; GI pre-auth merge **Ratified and Closed** |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -642,4 +643,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-ID-001 remediation decision package Approved** on PR #63 reviewed HEAD `8390769d`: Product `18:33:34Z` / Engineering `18:35:34Z` / Security advisory `18:34:34Z` (conditions 1–6 acknowledged); motion **P1+P3**; **P2 rejected**; package approval ≠ merge auth; R0 not opened; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PR #63 merged** to `main` @ `06258d26` (2026-07-22T18:44:14Z); reviewed HEAD `60263068` CI 6/6; merge auth Engineering `18:37:34Z` / Product `18:38:34Z`; docs/governance only; R0 inventory authorization gate **opened** (votes Requested); no R0 execution; flags remain default off; PAR-ID-001 remains **In progress** |
 | 2026-07-22 | **PAR-ID-001 R0 inventory Authorized and PASS:** Product `18:55:17Z` / Engineering `18:53:20Z` / Security `18:53:20Z`; clean staging-equivalent + 0113 + deterministic seeds; verified MISSING **20** / LEGACY_ONLY orgs **4** / AMBIGUOUS ADMIN **8** (historical 14/1/13 superseded); CROSS_TENANT/DIFFERENT_USER **0**; flags remain default off; R1+ not authorized; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PAR-ID-001 R1 CERTAIN non-ADMIN remediation auth package prepared** from `main` @ `0404e284`: 12 CERTAIN missing rows in scope; 8 AMBIGUOUS ADMIN excluded; mapping manifest + test/rollback plan; votes **Requested**; no implementation; flags remain default off; PAR-ID-001 remains **In progress** |
 

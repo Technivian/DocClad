@@ -42,8 +42,8 @@
 - `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` = false
 
 ### Next decision gate
-1. Authorize R1 CERTAIN missing-assignment remediation (separate votes) — do not auto-repair ADMIN.  
-2. Separately authorize R2–R5 as needed.  
+1. Authorize R1 CERTAIN non-ADMIN remediation (12 rows) — package **Requested** at [`../2026-07-22-par-id-001-remediation-decision/R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](../2026-07-22-par-id-001-remediation-decision/R1_CERTAIN_REMEDIATION_AUTHORIZATION.md).  
+2. Separately authorize R2–R5 as needed (ADMIN AMBIGUOUS remains hold under P1+P3).  
 3. Separate activation decision on [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md).  
 PAR-ID-001 remains **In progress**. Flags remain default off.
 

@@ -2,10 +2,12 @@
 
 **Baseline `main`:** `8316a756` (pre-package)  
 **Merged to `main`:** `06258d26` at `2026-07-22T18:44:14Z` (PR [#63](https://github.com/Technivian/CLMOne/pull/63))  
-**Status:** **In progress** — package **Approved and merged**; R0 inventory **Authorized and complete** (PASS); R1+ not authorized  
+**R0 evidence tip:** `0404e284`  
+**Status:** **In progress** — R0 **PASS**; R1 CERTAIN non-ADMIN remediation auth package **Requested**  
 **Package vote status:** **Approved** — Product `18:33:34Z` / Engineering `18:35:34Z` / Security `18:34:34Z`  
-**PR #63 merge authorization:** **Authorized and merged** — Engineering `18:37:34Z` / Product `18:38:34Z`  
-**R0 authorization status:** **Authorized and executed** — Product `18:55:17Z` / Eng+Sec `18:53:20Z`; exit **PASS** — see [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md)  
+**PR #63 merge authorization:** **Authorized and merged**  
+**R0 authorization status:** **Authorized and executed** — exit **PASS**  
+**R1 authorization status:** **Requested** — see [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md)  
 
 | Artifact | Purpose |
 |---|---|
@@ -16,7 +18,12 @@
 | [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md) | R0 inventory auth (**Authorized**) |
 | [`R0_EXIT_REPORT.md`](R0_EXIT_REPORT.md) | R0 exit verdict + verified counts |
 | [`r0_inventory_raw.json`](r0_inventory_raw.json) | Tenant-scoped row inventory + parity rows |
+| [`R1_CERTAIN_REMEDIATION_AUTHORIZATION.md`](R1_CERTAIN_REMEDIATION_AUTHORIZATION.md) | R1 CERTAIN non-ADMIN remediation auth (**Requested**) |
+| [`R1_MAPPING_MANIFEST.md`](R1_MAPPING_MANIFEST.md) | Deterministic CERTAIN mapping rules |
+| [`R1_ROW_SCOPE.md`](R1_ROW_SCOPE.md) | Exact 12 in-scope rows; 8 ADMIN denied |
+| [`R1_TEST_MATRIX_AND_ROLLBACK.md`](R1_TEST_MATRIX_AND_ROLLBACK.md) | Tests + rollback plan |
 
-**Verified R0 counts (clean seed corpus, not production):** MISSING/INACTIVE **20**; LEGACY_ONLY orgs **4**; AMBIGUOUS ADMIN **8**. Historical 14/1/13 superseded.
+**Verified R0 counts (clean seed corpus, not production):** MISSING/INACTIVE **20**; LEGACY_ONLY orgs **4**; AMBIGUOUS ADMIN **8**.  
+**R1 proposed scope:** **12** CERTAIN non-ADMIN creates only.
 
-**Not authorized:** R1–R5 writes; staging flag activation; dual-return; privilege/resolver cutover; automatic repair.
+**Not authorized:** R1 apply (until votes); R2–R5; staging flag activation; dual-return; privilege/resolver cutover; automatic repair; ADMIN/AMBIGUOUS remediation.
