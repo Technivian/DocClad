@@ -14,6 +14,11 @@ from contracts.services.workflow_routing import (
     build_approval_request_plan_for_contract,
     select_approval_rules_for_contract,
 )
+from contracts.services.approval_canonical import (
+    create_approval_requirement,
+    ensure_requirement_for_legacy_request,
+    record_approval_decision,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +139,17 @@ def actor_can_decide(ar: ApprovalRequest, actor: User, action: str) -> bool:
         return False
 
 
+def _requirement_for_request(ar: ApprovalRequest, *, actor: User | None = None):
+    try:
+        return ar.canonical_requirement
+    except Exception:
+        from contracts.models import ApprovalRequirement
+        try:
+            return ApprovalRequirement.objects.get(legacy_request_id=ar.pk)
+        except ApprovalRequirement.DoesNotExist:
+            return ensure_requirement_for_legacy_request(ar, actor=actor)
+
+
 def _audit_approval_decision(
     ar: ApprovalRequest,
     actor: User,
@@ -233,6 +249,19 @@ class ApprovalWorkflowService:
                 ).exists():
                     continue
                 ar = ApprovalRequest.objects.create(**step_data)
+                create_approval_requirement(
+                    organization=contract.organization,
+                    contract=contract,
+                    approval_step=step_data['approval_step'],
+                    assigned_to=step_data.get('assigned_to'),
+                    rule=step_data.get('rule'),
+                    sort_order=step_data.get('sort_order', 0),
+                    authority_basis='rule',
+                    authority_reference={'rule_id': getattr(step_data.get('rule'), 'pk', None)},
+                    due_date=step_data.get('due_date'),
+                    actor=actor,
+                    legacy_request=ar,
+                )
                 if actor is not None:
                     from contracts.middleware import log_action
                     log_action(
@@ -342,6 +371,18 @@ class ApprovalWorkflowService:
                 return _to_dto(
                     ApprovalRequest.objects.select_related('contract', 'assigned_to', 'rule').get(pk=approval.pk)
                 )
+            create_approval_requirement(
+                organization=locked_contract.organization,
+                contract=locked_contract,
+                approval_step=approval_step,
+                assigned_to=reviewer,
+                rule=rule,
+                authority_basis='workflow_submit',
+                due_date=approval.due_date,
+                actor=actor,
+                legacy_request=approval,
+                request=request,
+            )
             dpa_pack = locked_contract.dpa_review_packs.order_by('-created_at').first()
             if dpa_pack and not dpa_pack.reviewer_id:
                 dpa_pack.reviewer = reviewer
@@ -416,6 +457,14 @@ class ApprovalWorkflowService:
                 previous_status = ar.status
                 if action in ('reject', 'request_changes') and not comments.strip():
                     raise ValueError('A comment is required for this decision.')
+                requirement = _requirement_for_request(ar, actor=actor)
+                if requirement is not None and requirement.status == 'OPEN':
+                    record_approval_decision(
+                        requirement,
+                        action=action,
+                        actor=actor,
+                        comments=comments,
+                    )
                 ar.status = new_status
                 ar.comments = comments
                 ar.decided_at = timezone.now()
@@ -555,6 +604,15 @@ class ApprovalWorkflowService:
             ar.save(update_fields=[
                 'delegated_to', 'delegated_at', 'delegation_reason', 'delegation_ends_at',
             ])
+            requirement = _requirement_for_request(ar, actor=actor)
+            if requirement is not None and requirement.status == 'OPEN':
+                requirement.delegated_to = to_user
+                requirement.delegated_at = ar.delegated_at
+                requirement.delegation_reason = ar.delegation_reason
+                requirement.delegation_ends_at = ar.delegation_ends_at
+                requirement.save(update_fields=[
+                    'delegated_to', 'delegated_at', 'delegation_reason', 'delegation_ends_at', 'updated_at',
+                ])
             from contracts.middleware import log_action
             log_action(
                 actor, AuditLog.Action.UPDATE, 'ApprovalRequest',
@@ -631,6 +689,17 @@ class ApprovalWorkflowService:
                 'assigned_to', 'delegated_to', 'delegated_at',
                 'delegation_reason', 'delegation_ends_at',
             ])
+            requirement = _requirement_for_request(ar, actor=actor)
+            if requirement is not None and requirement.status == 'OPEN':
+                requirement.assigned_to = to_user
+                requirement.delegated_to = None
+                requirement.delegated_at = None
+                requirement.delegation_reason = ''
+                requirement.delegation_ends_at = None
+                requirement.save(update_fields=[
+                    'assigned_to', 'delegated_to', 'delegated_at',
+                    'delegation_reason', 'delegation_ends_at', 'updated_at',
+                ])
             from contracts.middleware import log_action
             log_action(
                 actor, AuditLog.Action.UPDATE, 'ApprovalRequest',

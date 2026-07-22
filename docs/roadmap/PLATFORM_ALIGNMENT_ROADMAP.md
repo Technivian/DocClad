@@ -3,7 +3,7 @@
 **Created:** 2026-07-21  
 **Last refined:** 2026-07-22 (Tranche-1 integration / PR-scope normalization)  
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
-**Branch:** `cursor/feat-platform-alignment-tranche-1` (integration PR) · PAR-APR-001 continuation: `cursor/feat-platform-documentation-alignment-d7f1`  
+**Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
 
 Statuses: Completed · In progress · Blocked · Deferred by approved decision · Future roadmap · Cancelled with rationale
@@ -15,9 +15,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 | Rollup | Count | Notes |
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 12 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001` |
-| In progress | 1 | `PAR-APR-001` — additive schema + primary dual-write on continuation branch; not in Tranche-1 PR |
-| Future / residual unique PAR IDs | 11 | Includes `PAR-SEC-002`, `PAR-SEC-003` |
+| Completed unique PAR IDs | 13 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001` |
+| In progress | 1 | `PAR-ID-001` — Role Definition reconciliation (Milestone 3) |
+| Future / residual unique PAR IDs | 10 | Includes `PAR-SEC-002`, `PAR-SEC-003` |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
@@ -26,11 +26,11 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed (12):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`
+**Completed (13):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`
 
-**In progress (1):** `PAR-APR-001` — continuation branch `cursor/feat-platform-documentation-alignment-d7f1` @ `c9ae7305`
+**In progress (1):** `PAR-ID-001`
 
-**Future / residual (11):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (10):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -38,8 +38,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **Tranche-1 programme integration gate** — merge `cursor/feat-platform-alignment-tranche-1` to `main` (governance docs + Foundation/Pilot + CORE/DOC + WF-010 discovery only) — **required before PAR-ID-001**
-2. **PAR-APR-001** — **In progress** on continuation branch (`c9ae7305`); additive schema + primary dual-write delivered; legacy cutover pending Accepted ADR-0013
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress**
+2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
 Parallel Milestone 1 hygiene:
@@ -72,7 +72,7 @@ Parallel Milestone 1 hygiene:
 |---|---|---|
 | ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. Interim pinning only. |
 | ADR-0012 | Workflow Definition aggregate and cutover | **Proposed** — `docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`. Required for PAR-WF-010 production cutover. |
-| ADR-0013 | Approval Requirement / Decision split | **Proposed** — continuation branch only (`c9ae7305`); not in Tranche-1 PR. Required before PAR-APR-001 legacy cutover. |
+| ADR-0013 | Approval Requirement / Decision split | **Accepted** — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md`. Foundation scope only; PAR-APR-002 required for legacy cutover. |
 
 ---
 
@@ -81,7 +81,7 @@ Parallel Milestone 1 hygiene:
 | Item | Why |
 |---|---|
 | Charter v3 activation | Separate constitutional review and formal Charter amendment approval required. PDR-0003 does not approve Charter v3. |
-| Production Definition/Version cutover | Needs Accepted ADR covering `PAR-WF-010` + ops window |
+| Production Definition/Version cutover | Needs **Accepted ADR-0012** (ADR-0010 alone insufficient) + ops window |
 | External IdP production credentials | External dependency |
 | Commercial vuln-scan SaaS evidence | External tooling |
 
@@ -111,9 +111,9 @@ Parallel Milestone 1 hygiene:
 
 | ID | Title | Priority | Status |
 |---|---|---|---|
-| PAR-APR-001 | Approval Requirement/Decision split | P1 | **In progress** (continuation branch) |
-| *(gate)* | **Tranche-1 programme integration** | P0 | **Required before PAR-ID-001** |
-| PAR-ID-001 | Role Definition reconciliation | P1 | Future (blocked on gate) |
+| PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
+| PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
+| PAR-ID-001 | Role Definition reconciliation | P1 | **In progress** |
 | PAR-EXC-001 | Governed Exception | P1 | Future |
 
 ### Milestone 4 — Canonical data and post-signature
@@ -385,36 +385,33 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **Required before PAR-ID-001** |
-| Integration branch | `cursor/feat-platform-alignment-tranche-1` @ `cf2d5ae2` (+ non-destructive `origin/main` merge) |
-| PR scope | Accepted governance documentation; Foundation + Pilot hardening; PAR-CORE-001/002/003; PAR-DOC-001; PAR-WF-010 discovery |
-| Explicitly excluded | `c9ae7305` / PAR-APR-001 implementation (continuation branch preserved) |
+| Status | **Completed** (2026-07-22) — PR #50 merged to `main` @ `c52d699a` |
+| Integration branch | `cursor/feat-platform-alignment-tranche-1` |
 | Gate evidence | `docs/audits/2026-07-22-platform-alignment-tranche-1-merge-gate.md` |
-| Acceptance criteria | Governance checks PASS; migrations 0105–0109 forward/rollback/re-forward PASS; CORE/DOC/WF characterization + isolation + pilot-scope tests PASS |
-| Next after gate | Land Tranche-1 PR; complete PAR-APR-001 cutover on continuation branch; then **PAR-ID-001** |
+| Next after gate | PAR-APR-001 foundation merge; **PAR-ID-001** |
 | Last updated | 2026-07-22 |
 
 ### PAR-APR-001 — Approval Requirement/Decision split
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — continuation branch `cursor/feat-platform-documentation-alignment-d7f1` @ `c9ae7305`; **not included in Tranche-1 PR** |
+| Status | **Completed** (2026-07-22) |
 | Priority | P1 |
 | Problem | `ApprovalRequest` collapses Requirement and Decision; domain requires Decision bound to approved state/document version. |
-| Delivered (continuation branch) | Additive `ApprovalRequirement` + `ApprovalDecision` schema; migration `0110`; `approval_canonical.py`; primary dual-write from `ApprovalWorkflowService`; document-version binding; invalidation on supersession |
-| Proposed ADR | **ADR-0013** (not Accepted) — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md` on continuation branch only |
-| Evidence (continuation) | `docs/audits/evidence/2026-07-22-par-apr-001/` |
-| Remaining cutover criteria | **Accepted ADR-0013**; legacy `ApprovalRequest` read-path retirement plan; `DPAReviewPack` parallel model reconciliation; `ApprovalRoute` → runtime requirement mapping; `ABSTAIN` UI action; full approval regression sign-off; Tranche-1 landed on `main` before continuation merge |
-| Tests (continuation) | `tests/test_par_apr_001_approval.py` + approval regression suites — on continuation branch only |
-| Acceptance criteria | Separate concepts; governed decisions; version binding; invalidation; audit — **partially met** (additive path delivered; legacy cutover and ADR acceptance pending) |
-| Next after cutover | **PAR-ID-001** (blocked until Tranche-1 gate + PAR-APR-001 completion) |
+| Resolution | `ApprovalRequirement` + immutable `ApprovalDecision`; `approval_canonical.py`; migration **0111** (renumbered after Tranche-1 `0110` flagship assignees) |
+| Accepted ADR | **ADR-0013** — ratified 2026-07-22 with named approvers (see meeting record) |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/` |
+| Cutover residuals | Transferred to **PAR-APR-002** (legacy read-path retirement, DPAReviewPack, ABSTAIN UI, etc.) |
+| Tests | `tests/test_par_apr_001_approval.py` + approval regression suites |
+| Acceptance criteria | Separate concepts; governed decisions; version binding; invalidation; audit — **met** for foundation scope |
+| Next | **PAR-ID-001** (In progress) |
 | Last updated | 2026-07-22 |
 
 ### PAR-ID-001 — Role Definition reconciliation
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 3) — **not Completed**; **blocked on Tranche-1 programme integration gate** |
+| Status | **In progress** (2026-07-22) — Tranche-1 gate cleared; PAR-APR-001 closed |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
@@ -627,4 +624,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-CORE-002 Completed:** canonical `ContractType` catalogue + `contract_type_catalogue` FK; transitional char mirror; migration 0107; Proposed ADR-0011; evidence `2026-07-22-par-core-002`; next **PAR-DOC-001** |
 | 2026-07-22 | **PAR-DOC-001 Completed:** `DocumentVersion` entity + immutability service; migrations 0108–0109; signature version binding; evidence `2026-07-22-par-doc-001`; next **PAR-WF-010** (design only until Accepted ADR) |
 | 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR |
-| 2026-07-22 | **Tranche-1 integration / PR-scope normalization:** branch `cursor/feat-platform-alignment-tranche-1` at `cf2d5ae2`; excludes `c9ae7305`; PAR-APR-001 → **In progress** on continuation branch; programme integration gate added before PAR-ID-001 |
+| 2026-07-22 | **Tranche-1 integration gate Completed:** PR #50 merged to `main` @ `c52d699a` |
+| 2026-07-22 | **PAR-APR-001 Completed:** `ApprovalRequirement` + `ApprovalDecision`; migration 0111; ADR-0013 **Accepted**; evidence `2026-07-22-par-apr-001`; cutover residuals → PAR-APR-002 |
+| 2026-07-22 | **PAR-ID-001 started:** Proposed ADR-0014; characterization tests; evidence `2026-07-22-par-id-001` |

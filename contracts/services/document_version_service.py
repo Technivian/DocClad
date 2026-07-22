@@ -257,6 +257,19 @@ def create_document_version(
             request=request,
             organization=organization,
         )
+        if contract is not None:
+            try:
+                from contracts.services.approval_canonical import invalidate_open_requirements_for_contract
+
+                invalidate_open_requirements_for_contract(
+                    contract,
+                    reason='Material document version superseded; prior approvals invalidated.',
+                    actor=actor,
+                    document_version=version_row,
+                    request=request,
+                )
+            except Exception:
+                pass
 
     snap = version_snapshot(version_row)
     _emit_version_audit(
