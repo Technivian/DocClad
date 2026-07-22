@@ -1,0 +1,5 @@
+[CLM One] Database: /workspace/db.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0114_exception_request_decision, from contracts
+Running migrations:
+  Applying contracts.0114_exception_request_decision... OK

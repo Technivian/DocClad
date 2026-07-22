@@ -1,0 +1,14 @@
+DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_par_exc_001_exception
+Creating test database for alias 'default'...
+........./workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-22 18:43:31,064 INFO contracts.middleware request_id=6bf401e0-ce89-4af0-b2ec-6bc15592be7e user_id=1 org_id=1 path=/contracts/deadlines/1/defer/ request_completed
+..
+----------------------------------------------------------------------
+Ran 11 tests in 0.151s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 11 test(s).
+System check identified no issues (0 silenced).

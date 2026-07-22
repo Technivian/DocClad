@@ -5243,6 +5243,275 @@ class RestoreDrill(models.Model):
         return f'Restore drill {self.drill_date} ({self.organization})'
 
 
+class ExceptionRequestQuerySet(models.QuerySet):
+    pass
+
+
+class ExceptionRequestManager(models.Manager.from_queryset(ExceptionRequestQuerySet)):
+    pass
+
+
+class ExceptionRequest(models.Model):
+    """Canonical Exception / Waiver request (PAR-EXC-001). Temporary approved deviation."""
+
+    class Status(models.TextChoices):
+        DRAFT = 'DRAFT', 'Draft'
+        SUBMITTED = 'SUBMITTED', 'Submitted'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+        ACTIVE = 'ACTIVE', 'Active'
+        EXPIRED = 'EXPIRED', 'Expired'
+        REVOKED = 'REVOKED', 'Revoked'
+        CLOSED = 'CLOSED', 'Closed'
+        SUPERSEDED = 'SUPERSEDED', 'Superseded'
+
+    class ExceptionCategory(models.TextChoices):
+        POLICY = 'POLICY', 'Policy exception'
+        APPROVAL = 'APPROVAL', 'Approval override'
+        WORKFLOW = 'WORKFLOW', 'Workflow bypass'
+        DEADLINE = 'DEADLINE', 'Deadline extension'
+        SECURITY = 'SECURITY', 'Security exception'
+        SIGNATURE = 'SIGNATURE', 'Signature exception'
+        ADMINISTRATIVE = 'ADMINISTRATIVE', 'Administrative override'
+        REPAIR = 'REPAIR', 'Manual repair'
+        FEATURE_FLAG = 'FEATURE_FLAG', 'Feature-flag / pilot allowance'
+        RISK_ACCEPTANCE = 'RISK_ACCEPTANCE', 'Risk acceptance'
+        AUDIT_FINDING = 'AUDIT_FINDING', 'Audit finding accepted or deferred'
+        OTHER = 'OTHER', 'Other'
+
+    class ScopeType(models.TextChoices):
+        CONTRACT = 'CONTRACT', 'Contract'
+        DOCUMENT = 'DOCUMENT', 'Document'
+        DEADLINE = 'DEADLINE', 'Deadline / obligation'
+        RISK_SIGNAL = 'RISK_SIGNAL', 'Risk signal'
+        DPA_RISK_ITEM = 'DPA_RISK_ITEM', 'DPA risk item'
+        REVIEW_FINDING = 'REVIEW_FINDING', 'Contract review finding'
+        CONFLICT_CHECK = 'CONFLICT_CHECK', 'Conflict check'
+        WORKFLOW = 'WORKFLOW', 'Workflow'
+        ORGANIZATION = 'ORGANIZATION', 'Organization'
+        PLATFORM = 'PLATFORM', 'Platform / environment'
+        OTHER = 'OTHER', 'Other'
+
+    class RiskClassification(models.TextChoices):
+        LOW = 'LOW', 'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH = 'HIGH', 'High'
+        CRITICAL = 'CRITICAL', 'Critical'
+
+    class AuthorityBasis(models.TextChoices):
+        POLICY_OWNER = 'policy_owner', 'Policy owner'
+        SECURITY = 'security', 'Security'
+        WORKSPACE_ADMIN = 'workspace_admin', 'Workspace admin'
+        LEGAL = 'legal', 'Legal'
+        PRODUCT_GOVERNANCE = 'product_governance', 'Product governance'
+        ENGINEERING_GOVERNANCE = 'engineering_governance', 'Engineering governance'
+        CHARTER_EXCEPTION = 'charter_exception', 'Charter exception record'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Legacy / unknown'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='exception_requests',
+    )
+    category = models.CharField(max_length=32, choices=ExceptionCategory.choices)
+    title = models.CharField(max_length=255)
+    reason = models.TextField()
+    scope_type = models.CharField(max_length=32, choices=ScopeType.choices)
+    scope_object_model = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Affected model name (e.g. Contract, Deadline). Empty for platform-scoped rows.',
+    )
+    scope_object_id = models.PositiveIntegerField(null=True, blank=True)
+    scope_reference = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Explicit scope payload; must not imply privileges beyond granted_privileges.',
+    )
+    contract = models.ForeignKey(
+        Contract,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exception_requests',
+    )
+    requester = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='exception_requests_raised',
+    )
+    owner = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='exception_requests_owned',
+    )
+    authority_basis = models.CharField(
+        max_length=40, choices=AuthorityBasis.choices, default=AuthorityBasis.LEGACY_UNKNOWN,
+    )
+    authority_reference = models.JSONField(default=dict, blank=True)
+    designated_approver = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exception_requests_to_approve',
+        help_text='Named human approver when authority is person-bound.',
+    )
+    risk_classification = models.CharField(
+        max_length=16, choices=RiskClassification.choices, default=RiskClassification.MEDIUM,
+    )
+    bypasses_critical_security_control = models.BooleanField(
+        default=False,
+        help_text='When True, ExceptionDecision APPROVED requires explicit Security authority.',
+    )
+    compensating_controls = models.TextField(
+        blank=True,
+        default='',
+        help_text='Required compensating controls while the exception is active.',
+    )
+    granted_privileges = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Explicit privilege tokens this exception may grant. Empty = deviation only, no privilege grant.',
+    )
+    is_permanent = models.BooleanField(
+        default=False,
+        help_text='False by default. Permanent exceptions require explicit approval decision metadata.',
+    )
+    starts_at = models.DateTimeField()
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Required unless is_permanent was explicitly approved.',
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    renewed_from = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='renewals',
+        help_text='Prior exception this renewal supersedes.',
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closure_notes = models.TextField(blank=True, default='')
+    legacy_source = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        help_text='Discovery path id (e.g. EXC-POL-001) when linked from a legacy path.',
+    )
+    legacy_reference = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ExceptionRequestManager()
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(fields=['organization', 'status'], name='excreq_org_status_ix'),
+            models.Index(fields=['organization', 'expires_at'], name='excreq_org_expiry_ix'),
+            models.Index(fields=['contract', 'status'], name='excreq_contract_status_ix'),
+            models.Index(fields=['scope_type', 'scope_object_id'], name='excreq_scope_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.title} ({self.get_status_display()})'
+
+    def is_temporally_applicable(self, *, at=None) -> bool:
+        """True when status and window allow the exception to apply (server-side)."""
+        from django.utils import timezone
+
+        moment = at or timezone.now()
+        if self.status not in {self.Status.APPROVED, self.Status.ACTIVE}:
+            return False
+        if self.starts_at and moment < self.starts_at:
+            return False
+        if self.is_permanent:
+            return True
+        if self.expires_at is None:
+            return False
+        return moment <= self.expires_at
+
+
+class ExceptionDecisionQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        from contracts.services.exception_canonical import IMMUTABLE_DECISION_FIELDS, ExceptionCanonicalError
+
+        blocked = sorted(set(kwargs) & IMMUTABLE_DECISION_FIELDS)
+        if blocked:
+            raise ExceptionCanonicalError(
+                f'QuerySet.update cannot mutate immutable ExceptionDecision fields {blocked}.'
+            )
+        return super().update(**kwargs)
+
+
+class ExceptionDecisionManager(models.Manager.from_queryset(ExceptionDecisionQuerySet)):
+    pass
+
+
+class ExceptionDecision(models.Model):
+    """Immutable Exception Decision history (PAR-EXC-001)."""
+
+    class Outcome(models.TextChoices):
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+        RENEWED = 'RENEWED', 'Renewed (superseding prior)'
+        CLOSED = 'CLOSED', 'Closed'
+        REVOKED = 'REVOKED', 'Revoked'
+        EXPIRED_RECORDED = 'EXPIRED_RECORDED', 'Expiry recorded'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='exception_decisions',
+    )
+    exception_request = models.ForeignKey(
+        ExceptionRequest, on_delete=models.CASCADE, related_name='decisions',
+    )
+    outcome = models.CharField(max_length=24, choices=Outcome.choices)
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='exception_decisions_made',
+    )
+    authority_basis = models.CharField(max_length=40, blank=True, default='')
+    authority_holder_id = models.IntegerField(null=True, blank=True)
+    security_approval = models.BooleanField(
+        default=False,
+        help_text='True when this decision includes explicit Security approval.',
+    )
+    comments = models.TextField(blank=True, default='')
+    compensating_controls_at_decision = models.TextField(blank=True, default='')
+    granted_privileges_at_decision = models.JSONField(default=list, blank=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_permanent_approved = models.BooleanField(default=False)
+    decided_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ExceptionDecisionManager()
+
+    class Meta:
+        ordering = ['-decided_at', '-pk']
+        indexes = [
+            models.Index(fields=['exception_request', 'decided_at'], name='excdec_req_decided_ix'),
+            models.Index(fields=['organization', 'outcome'], name='excdec_org_outcome_ix'),
+        ]
+
+    def __str__(self):
+        return f'Decision {self.outcome} on exception {self.exception_request_id}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            from contracts.services.exception_canonical import IMMUTABLE_DECISION_FIELDS, ExceptionCanonicalError
+
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values(*IMMUTABLE_DECISION_FIELDS)
+                .first()
+            )
+            if previous:
+                for field in IMMUTABLE_DECISION_FIELDS:
+                    if previous.get(field) != getattr(self, field, None):
+                        raise ExceptionCanonicalError(
+                            f'ExceptionDecision field "{field}" is immutable after creation.'
+                        )
+        super().save(*args, **kwargs)
+
+
 # Alias-first structural migration layer.
 # These symbols let care-native code paths move toward case-oriented names
 # without changing database tables, migration history, or legacy imports yet.

@@ -1,0 +1,6 @@
+[CLM One] Database: /workspace/db.sqlite3 (local, env=development)
+Operations to perform:
+  Target specific migration: 0113_process_role_assignment, from contracts
+Running migrations:
+  Rendering model states... DONE
+  Unapplying contracts.0114_exception_request_decision... OK

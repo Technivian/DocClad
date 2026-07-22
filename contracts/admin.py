@@ -14,6 +14,7 @@ from .models import (
     ApprovalRule, ApprovalRequest, EthicalWall, SalesforceOrganizationConnection,
     OrganizationContractFieldMap, SalesforceSyncRun, WebhookEndpoint, WebhookDelivery,
     CommandCenterSavedView, CommandCenterWorkItem, CommandCenterRailItem, ReviewMemo,
+    ExceptionRequest, ExceptionDecision,
 )
 
 
@@ -558,6 +559,34 @@ class ApprovalRequestAdmin(OrganizationScopedAdmin):
     @admin.display(boolean=True, description='Overdue')
     def is_overdue(self, obj):
         return bool(obj.status == 'PENDING' and obj.due_date and obj.due_date < timezone.now())
+
+
+@admin.register(ExceptionRequest)
+class ExceptionRequestAdmin(OrganizationScopedAdmin):
+    list_display = [
+        'title', 'organization', 'category', 'status', 'owner',
+        'risk_classification', 'starts_at', 'expires_at', 'is_permanent',
+    ]
+    list_filter = ['organization', 'status', 'category', 'risk_classification']
+    search_fields = ['title', 'reason', 'legacy_source']
+    readonly_fields = ['created_at', 'updated_at', 'closed_at']
+
+
+@admin.register(ExceptionDecision)
+class ExceptionDecisionAdmin(OrganizationScopedAdmin):
+    list_display = [
+        'exception_request', 'organization', 'outcome', 'decided_by',
+        'security_approval', 'decided_at',
+    ]
+    list_filter = ['organization', 'outcome', 'security_approval']
+    search_fields = ['comments', 'authority_basis']
+    readonly_fields = [
+        'exception_request', 'organization', 'outcome', 'decided_by',
+        'authority_basis', 'authority_holder_id', 'security_approval',
+        'comments', 'compensating_controls_at_decision',
+        'granted_privileges_at_decision', 'starts_at', 'expires_at',
+        'is_permanent_approved', 'decided_at', 'created_at',
+    ]
 
 
 @admin.register(CommandCenterSavedView)

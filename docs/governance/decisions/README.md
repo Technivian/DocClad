@@ -50,6 +50,9 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 |---|---|
 | [0008-frontend-design-system-phase-1.md](adr/0008-frontend-design-system-phase-1.md) | See file |
 | [0009-governance-charter-supersession.md](adr/0009-governance-charter-supersession.md) | Accepted |
+| [0013-approval-requirement-decision-split.md](adr/0013-approval-requirement-decision-split.md) | Accepted |
+| [0014-role-definition-reconciliation.md](adr/0014-role-definition-reconciliation.md) | Accepted |
+| [0015-exception-request-decision-model.md](adr/0015-exception-request-decision-model.md) | **Accepted** |
 
 ### PDRs
 
