@@ -45,7 +45,14 @@ class DesignSystemPhaseOneFoundationTests(SimpleTestCase):
         self.assertFalse((self.theme / 'package.json').exists())
 
     def test_phase_one_decision_and_legacy_inventory_exist(self):
-        adr = (self.root / 'docs' / 'adr' / '0008-frontend-design-system-phase-1.md').read_text()
+        adr = (
+            self.root
+            / 'docs'
+            / 'governance'
+            / 'decisions'
+            / 'adr'
+            / '0008-frontend-design-system-phase-1.md'
+        ).read_text()
         inventory = (self.root / 'docs' / 'design-system' / 'LEGACY_COMPATIBILITY_INVENTORY.md').read_text()
         phase1_inventory = (
             self.root / 'docs' / 'design-system' / 'LEGACY_COMPATIBILITY_INVENTORY_PHASE1.md'

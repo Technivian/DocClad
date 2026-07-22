@@ -20,7 +20,7 @@
 | PAR-CORE-003 | Yes | `0ebf69d9`; migration 0106; evidence `2026-07-22-par-core-003` |
 | PAR-DOC-001 | Yes | `74260855`; migrations 0108–0109; evidence `2026-07-22-par-doc-001` |
 | PAR-WF-010 discovery | Yes | `cf2d5ae2`; Proposed ADR-0012; evidence `2026-07-22-par-wf-010` |
-| PAR-APR-001 (`c9ae7305`) excluded | Yes | No `0110` migration; no `approval_canonical.py`; `c9ae7305` not ancestor of tranche-1 HEAD |
+| PAR-APR-001 (`c9ae7305`) excluded | Yes | No `approval_canonical.py`; `c9ae7305` not ancestor of tranche-1 HEAD; migration `0110` is flagship assignee backfill only |
 
 ---
 
@@ -141,6 +141,50 @@ Preserved on `cursor/feat-platform-documentation-alignment-d7f1` — not discard
 
 ```
 Branch: cursor/feat-platform-alignment-tranche-1
-HEAD:   5bfc3588 (roadmap + merge-gate documentation)
-Parent: cf2d5ae2 (programme tip without PAR-APR-001)
+HEAD:   (see PR #50 — CI blocker resolution commit)
+Parent: c5a1109b (draft PR #50 baseline)
 ```
+
+---
+
+## 10. PR #50 CI blocker triage (2026-07-22)
+
+**PR:** [#50](https://github.com/Technivian/CLMOne/pull/50) — `cursor/feat-platform-alignment-tranche-1`  
+**Pre-fix CI (run `29903469042` et al.):** 7/8 checks failing; only `verify-ui` green.
+
+### Root-cause classification
+
+| Check | Root cause | Class | Fix applied |
+|---|---|---|---|
+| Forbidden-brand scan | Historical audit markdown + `artifacts/` archive mention legacy CMS Aegis/DocClad in negative findings — not live product copy | **#5** pre-existing historical docs; **#2** missing scan exclusions | Added `artifacts/` to `EXCLUDE_DIRS`; added `PAYROLLMINDS_CLM_READINESS_AUDIT.md` and `PRE_DEMO_READINESS_REPORT.md` to `EXCLUDE_FILES` with documented rationale |
+| Anti-drift + contrast | ADR-0008 path moved under `docs/governance/decisions/adr/`; `approval_request_list.html` intentionally uses `_workflow_designer_tabs.html` | **#1** Genuine Tranche-1 defect | Updated `tests/test_design_system_phase1_foundation.py` ADR path; aligned `tests/test_design_system_phase2a.py` expectations |
+| pr-release-evidence | PR body missing required checklist lines | **#2** Missing required evidence | PR #50 body updated with checked verification items + smoke/rollback evidence |
+| quality-and-tenancy | Production deploy check missing `APP_BASE_URL`, `OPERATOR_ALERT_EMAIL`, and durable storage env | **#3** CI configuration defect | Added valid HTTPS `APP_BASE_URL`, operator email, and S3 storage env to `.github/workflows/platform-guardrails.yml` (validation unchanged) |
+| security-scans | `theme/static_src` npm audit: `brace-expansion` (high), `tar` (critical) | **#5** pre-existing transitive deps | `npm audit fix` in `theme/static_src` (lockfile updated) |
+| redesigned-e2e | `seed_demo_command_center` → `WorkflowLaunchBlocked` (flagship templates lack assignees) + `ProvenanceError` on post-lock `source_system` mutation | **#1** Genuine Tranche-1 defect | Migration `0110_flagship_workflow_template_assignees`; pass `source_system`/`source_system_id` in workflow intake before provenance lock |
+| Phase 1 visual baselines | `check_visual_baselines.sh` referenced `playwright.config.js` from repo root | **#3** CI configuration defect | `--config=client/playwright.config.js` |
+
+### Why visual / redesigned-E2E ran on this PR
+
+Both workflows path-filter on `theme/templates/**` and `client/**`. Tranche-1 includes template and navigation changes, so the filters correctly triggered despite programme scope being governance/CORE/DOC.
+
+### Local re-verification (post-fix)
+
+| Check | Local result |
+|---|---|
+| `scripts/check_brand_regression.sh` | **PASS** |
+| `tests/test_design_system_phase1_foundation` + `phase2a` | **PASS** (33 tests) |
+| `tests/test_demo_command_center` | **PASS** (4 tests) |
+| Production deploy check (CI-equivalent env) | **PASS** (`manage.py check --deploy --fail-level WARNING`) |
+| `theme/static_src` npm audit `--audit-level=high` | **PASS** (0 vulnerabilities) |
+| `client` npm audit `--audit-level=high` | **PASS** (0 high/critical) |
+| `scripts/check_design_system_contrast.sh` | **PASS** |
+
+### Named residual (unchanged)
+
+- **PAR-SEC-003** — `ContractIsolationTest.test_list_shows_only_own_org` (302 redirect; not a data leak)
+- **Human review** — required before merge per programme gate; PR #50 not auto-merged
+
+### Merge recommendation (post-fix push)
+
+**PENDING CI RE-RUN** — after push, all seven previously failing checks must re-run green (or be formally exempted with policy reference). Until CI confirms: **NOT MERGE READY**.

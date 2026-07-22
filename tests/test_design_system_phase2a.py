@@ -266,7 +266,7 @@ class DesignSystemPhaseTwoATests(SimpleTestCase):
             'document_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_category_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
             'clause_template_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-header', 'dc-ds-actions'),
-            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', 'dc-ds-workspace-tabs', '_workflow_operations_tabs.html'),
+            'approval_request_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),
             # Intentional Workflow Ops unification: approval rules use the shared
             # list-page toolbar + workflow ops tabs include (not page_scaffold).
             'approval_rule_list.html': ('authenticated_page_title', 'dc-ds-list-page', 'dc-ds-list-toolbar', '_workflow_designer_tabs.html'),

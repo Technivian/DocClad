@@ -77,6 +77,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
         user=user,
         cleaned_values={
             'counterparty': 'Northwind Inc.',
+            'source_system': 'demo_seed',
+            'source_system_id': 'northwind-dpa',
             'start_date': '2026-09-01',
             'governing_law': 'Netherlands',
             'jurisdiction': 'Amsterdam',
@@ -98,10 +100,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
     dpa_workflow.description = 'Demo DPA workflow showing SCC fallback and subprocessor governance.'
     dpa_workflow.save(update_fields=['title', 'description'])
     dpa_workflow.contract.title = 'Northwind DPA'
-    dpa_workflow.contract.source_system = 'demo_seed'
-    dpa_workflow.contract.source_system_id = 'northwind-dpa'
     dpa_workflow.contract.risk_level = Contract.RiskLevel.HIGH
-    dpa_workflow.contract.save(update_fields=['title', 'source_system', 'source_system_id', 'risk_level'])
+    dpa_workflow.contract.save(update_fields=['title', 'risk_level'])
     _set_current_stage(dpa_workflow, 'DPO / Privacy Review')
     sync_dpa_item(dpa_workflow)
     _update_work_item(
@@ -122,6 +122,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
         user=user,
         cleaned_values={
             'counterparty': 'Acme Corporation',
+            'source_system': 'demo_seed',
+            'source_system_id': 'acme-msa',
             'start_date': '2026-09-15',
             'contract_owner': 'Avery Brooks',
             'business_unit': 'Revenue Operations',
@@ -154,10 +156,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
     msa_workflow.description = 'Demo MSA workflow showing liability fallback and finance routing.'
     msa_workflow.save(update_fields=['title', 'description'])
     msa_workflow.contract.title = 'Acme MSA'
-    msa_workflow.contract.source_system = 'demo_seed'
-    msa_workflow.contract.source_system_id = 'acme-msa'
     msa_workflow.contract.risk_level = Contract.RiskLevel.HIGH
-    msa_workflow.contract.save(update_fields=['title', 'source_system', 'source_system_id', 'risk_level'])
+    msa_workflow.contract.save(update_fields=['title', 'risk_level'])
     _set_current_stage(msa_workflow, 'Legal Review')
     sync_msa_item(msa_workflow)
     _update_work_item(
@@ -178,6 +178,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
         user=user,
         cleaned_values={
             'counterparty': 'Brightlane Ltd',
+            'source_system': 'demo_seed',
+            'source_system_id': 'brightlane-nda',
             'start_date': '2026-10-01',
             'contract_owner': 'Avery Brooks',
             'business_unit': 'Business Development',
@@ -202,10 +204,8 @@ def seed_demo_command_center_workflows(*, organization, user) -> list[DemoWorkfl
     nda_workflow.description = 'Demo NDA workflow showing self-serve signature readiness.'
     nda_workflow.save(update_fields=['title', 'description'])
     nda_workflow.contract.title = 'Brightlane NDA'
-    nda_workflow.contract.source_system = 'demo_seed'
-    nda_workflow.contract.source_system_id = 'brightlane-nda'
     nda_workflow.contract.risk_level = Contract.RiskLevel.LOW
-    nda_workflow.contract.save(update_fields=['title', 'source_system', 'source_system_id', 'risk_level'])
+    nda_workflow.contract.save(update_fields=['title', 'risk_level'])
     _set_current_stage(nda_workflow, 'Signature')
     sync_nda_item(nda_workflow)
     _update_work_item(

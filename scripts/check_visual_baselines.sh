@@ -30,7 +30,7 @@ npm --prefix client ci >/dev/null
 npm --prefix client exec playwright install chromium >/dev/null
 
 npm --prefix client exec -- playwright test \
-  --config=playwright.config.js \
+  --config=client/playwright.config.js \
   tests/e2e/visual-baselines.spec.js \
   --update-snapshots=none \
   "$@"

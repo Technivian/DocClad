@@ -362,6 +362,8 @@ def create_dpa_workflow_instance(*, organization, user, cleaned_values: dict, re
         actor=user,
         lock=False,
         validate=False,
+        source_system=cleaned_values.get('source_system'),
+        source_system_id=cleaned_values.get('source_system_id'),
     )
     contract.save()
 

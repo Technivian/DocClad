@@ -44,6 +44,13 @@
 #     name never renders. The forbidden string exists only inside this negative
 #     assertion, never as leaked output. Remove the allowlist entry only if the
 #     assertion itself is removed.
+#
+#   artifacts/
+#     Historical exports and chatgpt-project-source archives. Not product UI.
+#
+#   PAYROLLMINDS_CLM_READINESS_AUDIT.md, PRE_DEMO_READINESS_REPORT.md
+#     Pre-rename audit reports that document migration findings (negative
+#     assertions about legacy CMS Aegis / DocClad branding). Not live product copy.
 
 set -euo pipefail
 
@@ -70,6 +77,7 @@ ALLOWLIST_FILES=(
 # Directories to skip entirely
 EXCLUDE_DIRS=(
   'docs'
+  'artifacts'
   'evidence'
   'backups'
   '.git'
@@ -100,6 +108,8 @@ EXCLUDE_FILES=(
   'QA_CHECKLIST.md'
   'TECH_DEBT.md'
   'DECISIONS.md'
+  'PAYROLLMINDS_CLM_READINESS_AUDIT.md'
+  'PRE_DEMO_READINESS_REPORT.md'
 )
 
 # Build grep exclude args
