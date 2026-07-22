@@ -141,6 +141,6 @@ Preserved on `cursor/feat-platform-documentation-alignment-d7f1` — not discard
 
 ```
 Branch: cursor/feat-platform-alignment-tranche-1
-HEAD:   60f92dfc (after roadmap commit — see git log)
+HEAD:   5bfc3588 (roadmap + merge-gate documentation)
 Parent: cf2d5ae2 (programme tip without PAR-APR-001)
 ```
