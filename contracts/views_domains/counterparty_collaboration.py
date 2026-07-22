@@ -284,10 +284,22 @@ def counterparty_collaboration_upload_revision(request, token):
             'upload_error': 'The revision must be 50 MB or smaller.',
         }, status=400)
     title = (request.POST.get('title') or '').strip() or upload.name.rsplit('.', 1)[0]
-    document = Document.objects.create(
-        organization=participant.organization, contract=participant.contract, title=title,
-        document_type=Document.DocType.CONTRACT, status=Document.Status.DRAFT, file=upload,
-        is_confidential=True, share_with_counterparty=True,
+    from contracts.services.document_version_service import create_document_version
+
+    document, _version = create_document_version(
+        organization=participant.organization,
+        title=title,
+        document_type=Document.DocType.CONTRACT,
+        status=Document.Status.DRAFT,
+        contract=participant.contract,
+        file=upload,
+        uploaded_by=None,
+        actor=None,
+        source='counterparty_revision',
+        is_confidential=True,
+        share_with_counterparty=True,
+        request=request,
+        supersede_prior=False,
     )
     item = CounterpartyCollaborationItem.objects.create(
         organization=participant.organization, contract=participant.contract, participant=participant,

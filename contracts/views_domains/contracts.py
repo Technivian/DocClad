@@ -347,10 +347,29 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
                 attach_document_dialog_open=True,
             ))
 
-        document = form.save(commit=False)
-        set_organization_on_instance(document, get_user_organization(request.user))
-        document.uploaded_by = request.user
-        document.save()
+        from contracts.services.document_version_service import create_document_version
+
+        staged = form.save(commit=False)
+        organization = get_user_organization(request.user)
+        document, _version = create_document_version(
+            organization=organization,
+            title=staged.title,
+            document_type=staged.document_type,
+            status=staged.status,
+            description=staged.description,
+            file=staged.file,
+            contract=self.object,
+            matter=staged.matter,
+            client=staged.client,
+            uploaded_by=request.user,
+            actor=request.user,
+            source='contract_attachment',
+            tags=staged.tags,
+            is_privileged=staged.is_privileged,
+            is_confidential=staged.is_confidential,
+            request=request,
+            supersede_prior=False,
+        )
         form.save_m2m()
         queue_document_ocr_review(document)
         log_action(
@@ -360,7 +379,8 @@ class ContractDetailView(TenantScopedQuerysetMixin, LoginRequiredMixin, DetailVi
             document.id,
             str(document),
             changes={
-                'event': 'document_uploaded',
+                'event': 'document.uploaded',
+                'equivalent_event': 'document.version.created',
                 'version': document.version,
                 'file_hash': document.file_hash,
                 'source': 'contract_detail_attachment',

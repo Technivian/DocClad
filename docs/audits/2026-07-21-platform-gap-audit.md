@@ -99,7 +99,7 @@ Status key: Compliant · Partially compliant · Missing · Conflicting · Not im
 | Obligation first-class | DOMAIN | Objects | Deadline alias | obligations.py | Conflicting | High | Model + migration plan | ADR/PDR | PAR-OBL-001 |
 | Reminder first-class | DOMAIN | Objects | Fields/jobs only | Deadline.reminder_days | Missing | Medium | Model later | — | PAR-OBL-002 |
 | Exception first-class | DOMAIN | Objects | RiskSignal / actions | — | Missing | Medium | Governed Exception | PDR | PAR-EXC-001 |
-| Document Version immutable entity | DOMAIN | Documents | version int + parent | Document | Partially compliant | Medium | Harden | — | PAR-DOC-001 |
+| Document Version immutable entity | DOMAIN | Documents | `DocumentVersion` + service | `document_version_service` | Compliant (residual: DraftDocument, approval FK) | — | Maintain | — | PAR-DOC-001 **Resolved** |
 | Role Definition process roles | DOMAIN | Identity | Dual role systems | Membership vs Profile | Conflicting | High | Terminology ADR | ADR | PAR-ID-001 |
 
 ---

@@ -240,7 +240,9 @@ def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values)
             else f'{evidence_key.replace("_document", "").replace("_", " ").title()} proposed wording'
         )
         with default_storage.open(storage_name, 'rb') as source:
-            document = Document(
+            from contracts.services.document_version_service import create_document_version
+
+            create_document_version(
                 organization=organization,
                 contract=workflow.contract,
                 title=title,
@@ -248,8 +250,11 @@ def _attach_dpa_intake_evidence(*, workflow, organization, user, cleaned_values)
                 status=Document.Status.DRAFT,
                 description='Evidence captured during DPA Step 4 operational intake.',
                 uploaded_by=user,
+                actor=user,
+                source='generated',
+                file=File(source, name=evidence.get('original_name') or 'evidence'),
+                supersede_prior=False,
             )
-            document.file.save(evidence.get('original_name') or 'evidence', File(source), save=True)
         default_storage.delete(storage_name)
 
 

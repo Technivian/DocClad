@@ -1,0 +1,17 @@
+DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_par_doc_001_document_version
+Creating test database for alias 'default'...
+../workspace/.venv/lib/python3.12/site-packages/django/core/handlers/base.py:61: UserWarning: No directory at: /workspace/staticfiles/
+  mw_instance = middleware(adapted_handler)
+2026-07-22 07:31:56,093 INFO contracts.middleware request_id=f5f99cdb-a996-42f1-a37d-909bf276a804 user_id=1 org_id=1 path=/contracts/documents/1/edit/ request_completed
+2026-07-22 07:31:56,128 INFO contracts.middleware request_id=cd0f840a-5bef-4c6b-bdaa-da2d413c8a1d user_id=1 org_id=1 path=/contracts/documents/2/ request_completed
+.........../workspace/tests/test_par_doc_001_document_version.py:320: UserWarning: Overriding setting DATABASES can lead to unexpected behavior.
+  with override_settings(DATABASES=db_settings):
+.
+----------------------------------------------------------------------
+Ran 14 tests in 4.917s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 14 test(s).
+System check identified no issues (0 silenced).

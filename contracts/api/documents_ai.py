@@ -408,32 +408,23 @@ def document_upload_api(request):
             prior_document = None
             if contract is not None:
                 prior_document = contract.documents.order_by('-version', '-created_at').first()
-            document = Document(
+            from contracts.services.document_version_service import create_document_version
+
+            document, _version = create_document_version(
                 organization=organization,
                 title=title,
                 document_type=doc_type,
                 status=Document.Status.DRAFT,
                 contract=contract,
                 uploaded_by=request.user,
-                version=((prior_document.version or 1) + 1) if prior_document else 1,
+                actor=request.user,
+                source='ai_upload',
+                derived_from_document=prior_document,
                 parent_document=(prior_document.parent_document or prior_document) if prior_document else None,
+                file=uploaded_file,
+                request=request,
+                supersede_prior=True,
             )
-            document.file = uploaded_file
-            document.save()  # triggers SHA256 hash + OCR queue in Document.save()
-            if prior_document and prior_document.status in {
-                Document.Status.FINAL,
-                Document.Status.EXECUTED,
-            }:
-                from contracts.services.document_supersession import supersede_document
-                supersede_document(
-                    prior_document,
-                    document,
-                    actor=request.user,
-                    reason='revised source document upload',
-                    source='documents_ai_upload',
-                    request=request,
-                    organization=organization,
-                )
             if contract and prior_document:
                 get_version_service().create_version(
                     contract, changed_by=request.user,

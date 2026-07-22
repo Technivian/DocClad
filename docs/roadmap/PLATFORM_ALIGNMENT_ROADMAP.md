@@ -26,16 +26,15 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed (11):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`
+**Completed (12):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`
 
-**Future / residual (13):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-DOC-001`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (12):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 ---
 
 ## Immediate next items
 
-1. **PAR-DOC-001** — Document Version entity harden (Milestone 2) — **next**
-2. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
+1. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
 
 Parallel Milestone 1 hygiene:
 
@@ -97,7 +96,7 @@ Parallel Milestone 1 hygiene:
 |---|---|---|---|
 | **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) | **Completed** |
 | **PAR-CORE-002** | Dual ContractType enum vs model (G-DOM-02) | P0 (before WF-010 cutover) | **Completed** |
-| **PAR-DOC-001** | Document Version entity harden | P0 | Future |
+| **PAR-DOC-001** | Document Version entity harden | P0 | **Completed** |
 | **PAR-WF-010** | Workflow Definition aggregate | P0 (Accepted ADR required for cutover) | Future |
 
 ### Milestone 3 — Authority and decision models
@@ -324,23 +323,24 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 2) — **not Completed** |
+| Status | **Completed** (2026-07-22) |
 | Priority | P0 after PAR-CORE-003 |
 | Problem | Document Version is partially modelled (`version` int + parent) and not fully immutable as required by domain. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.16 / invariant “Document Version is immutable” |
-| Current evidence | `Document` model versioning fields; gap audit Partially compliant |
-| Target outcome | Immutable Document Version semantics: edits create new versions; historical versions read-only; approvals bind to version |
+| Resolution | Additive `DocumentVersion` entity + `create_document_version()` service; immutability guards; truthful legacy backfill |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-doc-001/` |
+| Target outcome | Immutable Document Version semantics: edits create new versions; historical versions read-only; signatures bind to version |
 | Dependencies | PAR-CORE-003 provenance; PAR-APR-001 later for approval binding depth |
-| Decision required | ADR if splitting Document vs DocumentVersion tables |
-| Migration impact | Likely non-trivial; dual-write/backfill plan required |
-| Security and permissions impact | Version access follows contract/org scoping |
-| Audit requirements | Version create/restore/clone audited; forbid silent in-place rewrite |
-| UX requirements | Clear version selector; no editable historical bytes in UI |
-| Tests | Immutability tests; approval/doc binding; isolation |
-| Rollback strategy | Expand-contract migration with documented reverse; feature flag new paths |
-| Acceptance criteria | Cannot mutate historical version content via app or Admin; tests + migration + rollback proof |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Decision required | Expand-contract pattern (no table split ADR required) |
+| Migration impact | `0108_document_version_entity`, `0109_signature_request_document_version`; rollback/re-forward proven |
+| Security and permissions impact | Tenant checks in service; QuerySet.update guards |
+| Audit requirements | `document.version.created`, `document.version.marked_final`; reuse `document.superseded` |
+| UX requirements | Version compare unchanged; edits create new version rows |
+| Tests | `tests/test_par_doc_001_document_version.py` (14 OK) + `tests/test_document_versioning.py` |
+| Rollback strategy | Reverse 0109 → 0108; clear `DocumentVersion` rows |
+| Acceptance criteria | Production upload/edit paths use service; immutability enforced; signatures pin version — **met** (approval FK deferred) |
+| Evidence | `docs/audits/evidence/2026-07-22-par-doc-001/` |
+| PR/commits | Branch `cursor/feat-platform-documentation-alignment-d7f1` |
 | Last updated | 2026-07-22 |
 
 ### PAR-WF-010 — Workflow Definition aggregate
@@ -608,3 +608,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-CORE-001 Completed:** closed CRM/CSV/inbound ownership, document supersession audit, and Contract.save pair protection; checklist Compliant; next item **PAR-CORE-003** |
 | 2026-07-22 | **PAR-CORE-003 Completed:** Contract Record provenance fields + immutability + governed repair; migration 0106 truthful backfill; import/workflow/manual/admin/seed paths wired; tests + rollback proof; next item **PAR-CORE-002** |
 | 2026-07-22 | **PAR-CORE-002 Completed:** canonical `ContractType` catalogue + `contract_type_catalogue` FK; transitional char mirror; migration 0107; Proposed ADR-0011; evidence `2026-07-22-par-core-002`; next **PAR-DOC-001** |
+| 2026-07-22 | **PAR-DOC-001 Completed:** `DocumentVersion` entity + immutability service; migrations 0108–0109; signature version binding; evidence `2026-07-22-par-doc-001`; next **PAR-WF-010** (design only until Accepted ADR) |
