@@ -16,6 +16,7 @@
 4. **Least privilege** — backfill must not widen permissions.
 5. **Dual-read period** — interim resolvers read legacy + canonical mapping.
 6. **Pilot protection** — `seed_controlled_pilot` and production pilot orgs validated before single-write.
+7. **First cutover ADMIN exclusion (2026-07-22)** — `profile_role` ADMIN / `legacy_process_admin` is **out of scope** for the first `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` authority flip; legacy continues for those cases; AMBIGUOUS must not be relabeled MATCH; dedicated later reconciliation required before ADMIN cutover. Workspace OWNER/ADMIN/MEMBER remain outside process-role resolution.
 
 ---
 
