@@ -426,7 +426,9 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Tests | Permission matrix tests; pilot role fixtures; isolation |
 | Rollback strategy | Keep dual-read mapping; revert ADR implementation behind flag |
 | Acceptance criteria | Accepted ADR; documented mapping; tests prove no privilege widening |
-| Evidence | TBD |
+| Evidence | `docs/audits/evidence/2026-07-22-par-id-001/` |
+| Proposed ADR | **ADR-0014** — `docs/governance/decisions/adr/0014-role-definition-reconciliation.md` |
+| Tests | `tests/test_par_id_001_characterization.py` |
 | PR/commits | TBD |
 | Last updated | 2026-07-22 |
 

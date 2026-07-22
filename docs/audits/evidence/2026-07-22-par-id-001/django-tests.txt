@@ -1,0 +1,11 @@
+PAR-ID characterization — 2026-07-22T09:33:35Z
+Creating test database for alias 'default'...
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.014s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 5 test(s).
+System check identified no issues (0 silenced).

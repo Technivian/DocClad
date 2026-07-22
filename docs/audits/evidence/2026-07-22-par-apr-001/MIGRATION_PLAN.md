@@ -1,6 +1,8 @@
 # PAR-APR-001 — Migration plan
 
-## Migration `0110_approval_requirement_decision`
+## Migration `0111_approval_requirement_decision`
+
+> **Renumber note:** Originally authored as `0110` on the continuation branch. Renumbered to `0111` after Tranche-1 merge introduced `0110_flagship_workflow_template_assignees` on `main`.
 
 ### Additive schema
 - `ApprovalRequirement` + `ApprovalDecision` tables
@@ -24,14 +26,14 @@
 - `ApprovalRequest.save` idempotently ensures requirement for paths not yet calling `create_approval_requirement` explicitly
 
 ### Rollback
-- Reverse `0110` deletes canonical rows; `ApprovalRequest` unchanged
+- Reverse `0111` deletes canonical rows; `ApprovalRequest` unchanged
 
-### Removal criteria (future)
+### Removal criteria (future — PAR-APR-002)
 - All reads use `ApprovalRequirement` / `ApprovalDecision`
 - No production code mutates decision fields on `ApprovalRequest`
-- Accepted ADR-0013 + ops sign-off
+- Accepted ADR-0013 + ops sign-off + PAR-APR-002 implementation authorization
 
 ### Evidence
-- `migrate-rollback.txt` (→ 0109)
-- `migrate-reforward.txt` (→ 0110)
+- `migrate-rollback.txt` (→ 0110)
+- `migrate-reforward.txt` (→ 0111)
 - `django-tests.txt` (10 OK PAR-APR-001 + regression)
