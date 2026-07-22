@@ -4310,6 +4310,21 @@ class ApprovalRequest(models.Model):
     def __str__(self):
         return f'{self.contract.title} - {self.approval_step} ({self.get_status_display()})'
 
+    def save(self, *args, **kwargs):
+        skip_canonical = kwargs.pop('skip_canonical_requirement', False)
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if skip_canonical or not is_new:
+            return
+        try:
+            from contracts.models import ApprovalRequirement
+            if ApprovalRequirement.objects.filter(legacy_request_id=self.pk).exists():
+                return
+            from contracts.services.approval_canonical import ensure_requirement_for_legacy_request
+            ensure_requirement_for_legacy_request(self)
+        except Exception:
+            pass
+
     class Meta:
         ordering = ['sort_order', 'created_at']
         indexes = [
@@ -4348,6 +4363,176 @@ class ApprovalRequest(models.Model):
             from .permissions import can_manage_organization
             return can_manage_organization(actor, self.organization)
         return False
+
+
+class ApprovalRequirementQuerySet(models.QuerySet):
+    pass
+
+
+class ApprovalRequirementManager(models.Manager.from_queryset(ApprovalRequirementQuerySet)):
+    pass
+
+
+class ApprovalRequirement(models.Model):
+    """Canonical Approval Requirement — why approval is needed (PAR-APR-001)."""
+
+    class Status(models.TextChoices):
+        OPEN = 'OPEN', 'Open'
+        SATISFIED = 'SATISFIED', 'Satisfied'
+        REJECTED = 'REJECTED', 'Rejected'
+        RETURNED = 'RETURNED', 'Returned'
+        INVALIDATED = 'INVALIDATED', 'Invalidated'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    class AuthorityBasis(models.TextChoices):
+        RULE = 'rule', 'Approval rule'
+        MANUAL = 'manual', 'Manual submission'
+        WORKFLOW_SUBMIT = 'workflow_submit', 'Workflow submit'
+        AI_AD_HOC = 'ai_ad_hoc', 'AI-assisted ad hoc'
+        LEGACY_UNKNOWN = 'legacy_unknown', 'Legacy / unknown'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='approval_requirements',
+    )
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='approval_requirements')
+    legacy_request = models.OneToOneField(
+        'ApprovalRequest',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='canonical_requirement',
+    )
+    rule = models.ForeignKey('ApprovalRule', on_delete=models.SET_NULL, null=True, blank=True)
+    approval_step = models.CharField(max_length=50)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    authority_basis = models.CharField(
+        max_length=32, choices=AuthorityBasis.choices, default=AuthorityBasis.LEGACY_UNKNOWN,
+    )
+    authority_reference = models.JSONField(default=dict, blank=True)
+    contract_status_at_open = models.CharField(max_length=32, blank=True, default='')
+    contract_lifecycle_stage_at_open = models.CharField(max_length=32, blank=True, default='')
+    document_version = models.ForeignKey(
+        'DocumentVersion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approval_requirements',
+    )
+    document_version_missing = models.BooleanField(
+        default=False,
+        help_text='True when no Document Version could be bound at requirement open.',
+    )
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_requirements',
+    )
+    delegated_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='delegated_approval_requirements',
+    )
+    delegated_at = models.DateTimeField(null=True, blank=True)
+    delegation_reason = models.TextField(blank=True, default='')
+    delegation_ends_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    due_date = models.DateTimeField(null=True, blank=True)
+    invalidation_reason = models.TextField(blank=True, default='')
+    invalidated_at = models.DateTimeField(null=True, blank=True)
+    opened_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='opened_approval_requirements',
+    )
+    opened_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ApprovalRequirementManager()
+
+    class Meta:
+        ordering = ['sort_order', 'opened_at']
+        indexes = [
+            models.Index(fields=['contract', 'status'], name='apreq_contract_status_ix'),
+            models.Index(fields=['organization', 'status'], name='apreq_org_status_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.contract_id} — {self.approval_step} ({self.get_status_display()})'
+
+
+class ApprovalDecisionQuerySet(models.QuerySet):
+    def update(self, **kwargs):
+        from contracts.services.approval_canonical import IMMUTABLE_DECISION_FIELDS, ApprovalCanonicalError
+
+        blocked = sorted(set(kwargs) & IMMUTABLE_DECISION_FIELDS)
+        if blocked:
+            raise ApprovalCanonicalError(
+                f'QuerySet.update cannot mutate immutable ApprovalDecision fields {blocked}.'
+            )
+        return super().update(**kwargs)
+
+
+class ApprovalDecisionManager(models.Manager.from_queryset(ApprovalDecisionQuerySet)):
+    pass
+
+
+class ApprovalDecision(models.Model):
+    """Immutable Approval Decision tied to evaluated contract/document state (PAR-APR-001)."""
+
+    class Outcome(models.TextChoices):
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+        RETURNED = 'RETURNED', 'Returned'
+        REVOKED = 'REVOKED', 'Revoked'
+        ABSTAINED = 'ABSTAINED', 'Abstained'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='approval_decisions',
+    )
+    requirement = models.ForeignKey(
+        ApprovalRequirement, on_delete=models.CASCADE, related_name='decisions',
+    )
+    outcome = models.CharField(max_length=20, choices=Outcome.choices)
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approval_decisions_made',
+    )
+    authority_holder_id = models.IntegerField(null=True, blank=True)
+    acting_under_delegation = models.BooleanField(default=False)
+    delegation_holder_id = models.IntegerField(null=True, blank=True)
+    comments = models.TextField(blank=True, default='')
+    contract_status = models.CharField(max_length=32, blank=True, default='')
+    contract_lifecycle_stage = models.CharField(max_length=32, blank=True, default='')
+    document_version = models.ForeignKey(
+        'DocumentVersion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approval_decisions',
+    )
+    document_version_missing = models.BooleanField(default=False)
+    decided_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ApprovalDecisionManager()
+
+    class Meta:
+        ordering = ['-decided_at', '-pk']
+
+    def __str__(self):
+        return f'Decision {self.outcome} on requirement {self.requirement_id}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            from contracts.services.approval_canonical import IMMUTABLE_DECISION_FIELDS, ApprovalCanonicalError
+
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values(*IMMUTABLE_DECISION_FIELDS)
+                .first()
+            )
+            if previous:
+                for field in IMMUTABLE_DECISION_FIELDS:
+                    if previous.get(field) != getattr(self, field, None):
+                        raise ApprovalCanonicalError(
+                            f'ApprovalDecision field "{field}" is immutable after creation.'
+                        )
+        super().save(*args, **kwargs)
 
 
 class BackgroundJob(models.Model):

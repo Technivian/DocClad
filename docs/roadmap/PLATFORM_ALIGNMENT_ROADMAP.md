@@ -26,9 +26,9 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ### Unique PAR ID inventory
 
-**Completed (12):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`
+**Completed (13):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`
 
-**Future / residual (12):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Future / residual (11):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -36,8 +36,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-APR-001** — Approval Requirement/Decision split (Milestone 3) — **next unblocked**
-2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **next unblocked**
+2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012
 
 Parallel Milestone 1 hygiene:
 
@@ -69,6 +69,7 @@ Parallel Milestone 1 hygiene:
 |---|---|---|
 | ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. Interim pinning only. |
 | ADR-0012 | Workflow Definition aggregate and cutover | **Proposed** — `docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`. Required for PAR-WF-010 production cutover. |
+| ADR-0013 | Approval Requirement / Decision split | **Proposed** — `docs/governance/decisions/adr/0013-approval-requirement-decision-split.md`. Documents PAR-APR-001 implementation; legacy removal gate. |
 
 ---
 
@@ -77,7 +78,7 @@ Parallel Milestone 1 hygiene:
 | Item | Why |
 |---|---|
 | Charter v3 activation | Separate constitutional review and formal Charter amendment approval required. PDR-0003 does not approve Charter v3. |
-| Production Definition/Version cutover | Needs Accepted ADR covering `PAR-WF-010` + ops window |
+| Production Definition/Version cutover | Needs **Accepted ADR-0012** (ADR-0010 alone insufficient) + ops window |
 | External IdP production credentials | External dependency |
 | Commercial vuln-scan SaaS evidence | External tooling |
 
@@ -107,7 +108,7 @@ Parallel Milestone 1 hygiene:
 
 | ID | Title | Priority |
 |---|---|---|
-| PAR-APR-001 | Approval Requirement/Decision split | P1 |
+| PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
 | PAR-ID-001 | Role Definition reconciliation | P1 |
 | PAR-EXC-001 | Governed Exception | P1 |
 
@@ -380,23 +381,15 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 3) — **not Completed** |
+| Status | **Completed** (2026-07-22) |
 | Priority | P1 |
 | Problem | `ApprovalRequest` collapses Requirement and Decision; domain requires Decision bound to approved state/document version. |
-| Governance source | CANONICAL_DOMAIN_MODEL §2.23–2.24; PDR-0002 where vocabulary intersects |
-| Current evidence | `ApprovalRequest` / rules models; gap audit Partially compliant |
-| Target outcome | Distinct Requirement vs Decision entities (or equivalent governed states) with document/version binding |
-| Dependencies | PAR-DOC-001 for version binding; PDR if vocabulary changes |
-| Decision required | PDR if status vocabulary changes; ADR for model split |
-| Migration impact | Medium–high; backfill decisions from historical requests |
-| Security and permissions impact | Approver authorization unchanged or strengthened; tenant scoped |
-| Audit requirements | Requirement creation and Decision outcome audited |
-| UX requirements | Approval UI distinguishes “required” vs “decided”; show bound doc version |
-| Tests | Binding invariants; isolation; finance threshold still single entry (PDR-0001) |
-| Rollback strategy | Expand-contract; flag new model reads |
-| Acceptance criteria | Decisions reference approved state/doc version; tests + migration + docs |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Resolution | `ApprovalRequirement` + immutable `ApprovalDecision`; `approval_canonical.py`; migration 0110 |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/` |
+| Proposed ADR | **ADR-0013** (not Accepted) |
+| Tests | `tests/test_par_apr_001_approval.py` (10 OK) + approval regression suites |
+| Acceptance criteria | Separate concepts; governed decisions; version binding; invalidation; audit — **met** (DPAReviewPack residual) |
+| Next unblocked | **PAR-ID-001** |
 | Last updated | 2026-07-22 |
 
 ### PAR-ID-001 — Role Definition reconciliation
@@ -616,3 +609,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-CORE-002 Completed:** canonical `ContractType` catalogue + `contract_type_catalogue` FK; transitional char mirror; migration 0107; Proposed ADR-0011; evidence `2026-07-22-par-core-002`; next **PAR-DOC-001** |
 | 2026-07-22 | **PAR-DOC-001 Completed:** `DocumentVersion` entity + immutability service; migrations 0108–0109; signature version binding; evidence `2026-07-22-par-doc-001`; next **PAR-WF-010** (design only until Accepted ADR) |
 | 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR; next unblocked **PAR-APR-001** |
+| 2026-07-22 | **PAR-APR-001 Completed:** `ApprovalRequirement` + `ApprovalDecision`; migration 0110; document version binding; invalidation on supersession; evidence `2026-07-22-par-apr-001`; next **PAR-ID-001** |

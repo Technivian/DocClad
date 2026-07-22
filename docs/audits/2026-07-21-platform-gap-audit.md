@@ -82,7 +82,7 @@ Status key: Compliant · Partially compliant · Missing · Conflicting · Not im
 | Restore → new draft only | WORKFLOW_ENGINE | Restore | Clone path exists | `clone_template_version` | Partially compliant | Medium | Verify audit + tests | — | PAR-WF-005 |
 | Simulation never creates live data | WORKFLOW_ENGINE | Simulation | Dry-run service | `workflow_simulation.py` | Compliant | — | Maintain tests | — | PAR-WF-005 |
 | Contract Record provenance | DOMAIN | Invariants | Contract has creator/org; workflow optional | `models.Contract` | Partially compliant | High | Strengthen provenance fields/events | — | PAR-CORE-003 |
-| Approval bound to approved state/doc | DOMAIN / PDR-0002 | Approvals | `ApprovalRequest` collapsed | models + services | Partially compliant | High | Separate requirement/decision over time | PDR if vocabulary | PAR-APR-001 |
+| Approval bound to approved state/doc | DOMAIN / PDR-0002 | Approvals | `ApprovalRequirement` + `ApprovalDecision` | `approval_canonical.py` | Compliant (DPAReviewPack residual) | — | Maintain | ADR-0013 | PAR-APR-001 **Resolved** |
 | Material actions → Audit Event | SECURITY / DOMAIN | Audit | AuditLog + workflow_audit | services | Partially compliant | High | Close Admin/publish/migration gaps | — | PAR-AUD-001 |
 | AI non-authoritative until verified | DATA_AI | Suggestions | ClauseRecommendation accept flags | models | Partially compliant | Medium | Add provenance fields | — | PAR-AI-001 |
 | Same access rules for search/analytics/AI | SECURITY | Authz | Mixed | tenancy helpers | Partially compliant | High | Permission tests | — | PAR-SEC-002 |

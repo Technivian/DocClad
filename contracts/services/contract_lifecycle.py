@@ -271,6 +271,15 @@ def get_signature_routing_blockers(contract):
     if stage not in {STAGE_APPROVAL, STAGE_SIGNATURE, STAGE_EXECUTED}:
         blockers.append('Move the contract to Approval or Signature stage before routing signatures.')
 
+    from contracts.models import ApprovalRequirement
+
+    open_requirements = ApprovalRequirement.objects.filter(
+        contract=contract,
+        status=ApprovalRequirement.Status.OPEN,
+    )
+    if open_requirements.exists():
+        blockers.append('All open approval requirements must be satisfied before signature routing.')
+
     approvals = ApprovalRequest.objects.filter(contract=contract)
     if not approvals.exists():
         blockers.append('At least one approval is required before signature routing.')

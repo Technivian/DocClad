@@ -58,10 +58,11 @@ class TestApprovalWorkflowService(unittest.TestCase):
         self.actor = MagicMock()
         self.actor.pk = 99
 
+    @patch('contracts.services.approval_workflow.create_approval_requirement')
     @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.build_approval_request_plan_for_contract')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_initiate_creates_requests(self, MockAR, mock_plan, mock_txn):
+    def test_initiate_creates_requests(self, MockAR, mock_plan, mock_txn, _mock_create_req):
         mock_txn.atomic.return_value.__enter__ = MagicMock(return_value=None)
         mock_txn.atomic.return_value.__exit__ = MagicMock(return_value=False)
         rule = _make_rule()
@@ -114,10 +115,11 @@ class TestApprovalWorkflowService(unittest.TestCase):
         (MockAR.objects.select_related.return_value
             .select_for_update.return_value.get.return_value) = ar
 
+    @patch('contracts.services.approval_workflow._requirement_for_request', return_value=None)
     @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
     @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_approve_transitions_status(self, MockAR, mock_txn, _mock_auth):
+    def test_approve_transitions_status(self, MockAR, mock_txn, _mock_auth, _mock_req):
         ar = _make_ar(status='PENDING')
         self._wire_fetch(MockAR, mock_txn, ar)
         dto = self.svc.approve(1, self.actor, comments='LGTM')
@@ -134,21 +136,23 @@ class TestApprovalWorkflowService(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.svc.approve(1, self.actor)
 
+    @patch('contracts.services.approval_workflow._requirement_for_request', return_value=None)
     @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
     @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_reject_transitions_status(self, MockAR, mock_txn, _mock_auth):
+    def test_reject_transitions_status(self, MockAR, mock_txn, _mock_auth, _mock_req):
         ar = _make_ar(status='PENDING')
         self._wire_fetch(MockAR, mock_txn, ar)
         dto = self.svc.reject(1, self.actor, comments='Needs revision')
         self.assertEqual(ar.status, ApprovalRequest.Status.REJECTED)
         ar.save.assert_called_once()
 
+    @patch('contracts.services.approval_workflow._requirement_for_request', return_value=None)
     @patch.object(ApprovalWorkflowService, '_authorize_actor', return_value=None)
     @patch('contracts.models.OrganizationMembership')
     @patch('contracts.services.approval_workflow.transaction')
     @patch('contracts.services.approval_workflow.ApprovalRequest')
-    def test_delegate_preserves_original_assignee(self, MockAR, mock_txn, MockOM, _mock_auth):
+    def test_delegate_preserves_original_assignee(self, MockAR, mock_txn, MockOM, _mock_auth, _mock_req):
         original = MagicMock()
         original.pk = 5
         ar = _make_ar(status='PENDING', assigned_to_id=5)
