@@ -3,6 +3,7 @@
 **Programme:** PAR-ID-001  
 **Prerequisite implementation authorization:** [`CANONICAL_RESOLVER_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_CUTOVER_AUTHORIZATION.md) — **Authorized** (implementation only)  
 **Status:** **Requested** — activation votes must not be invented.  
+**Implementation merge:** PR #62 → `main` @ `4c08fb9c` (2026-07-22T15:59:25Z). Post-merge authority + rollback tests **PASS**.  
 **Do not enable** `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` until this package is Authorized.
 
 ---
@@ -13,8 +14,8 @@
 |---|---|
 | Implementation branch | `cursor/feat-par-id-001-canonical-resolver-authority-d7f1` |
 | Implementation PR | [#62](https://github.com/Technivian/CLMOne/pull/62) |
-| Implementation HEAD | `2d052246fdc60131ae19d01897cc0bc8635f2dff` |
-| Merge SHA | _pending_ |
+| Implementation HEAD (pre-merge tip) | `7ed7b2d9` (final push before merge) |
+| Merge SHA | `4c08fb9c98e934ece9b1ed00ae788055cccae6f0` (2026-07-22T15:59:25Z) |
 | Flag default | `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED=false` |
 | Org allowlist default | empty (no orgs) |
 

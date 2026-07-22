@@ -1,18 +1,11 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — canonical authority **implemented** (default off); activation **pending**; legacy retained; ADMIN reconciliation deferred; **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
+**Status:** **In progress** — PR #62 **merged** (`4c08fb9c`); canonical authority **default off**; activation votes **Requested**; legacy retained; ADMIN reconciliation deferred; **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
 **ADR:** ADR-0014 **Accepted**  
-**PR #51 merge:** `21e65f09`  
-**PR #53 merge:** `0bf7c9dc`  
-**PR #54 merge:** `58966de7`  
-**PR #52 merge:** `3c5e628b`  
-**PR #55 merge:** `bb881ac2` (2026-07-22T13:35:32Z) — reviewed HEAD `432a55b1`  
-**PR #57 merge (PR #52 evidence):** `2f14c034`  
-**PR #59 merge (PR #55 merge evidence):** `0d9712ca`  
 **PR #58 merge:** `598b7a12` (2026-07-22T14:42:13Z) — reviewed code HEAD `44926da9`  
-**Implementation branch:** `cursor/feat-par-id-001-canonical-resolver-authority-d7f1` (PR [#62](https://github.com/Technivian/CLMOne/pull/62))  
-**Baseline `main`:** `8316a756` (pre-merge tip)
+**PR #62 merge:** `4c08fb9c98e934ece9b1ed00ae788055cccae6f0` (2026-07-22T15:59:25Z)  
+**Baseline `main`:** `4c08fb9c`
 
 ---
 
@@ -28,6 +21,7 @@
 | [`RESOLVER_READINESS_REMEDIATION_AUTHORIZATION.md`](RESOLVER_READINESS_REMEDIATION_AUTHORIZATION.md) | Remediation (**Authorized** 15:27–15:29Z) |
 | [`CANONICAL_RESOLVER_CUTOVER_AUTHORIZATION.md`](CANONICAL_RESOLVER_CUTOVER_AUTHORIZATION.md) | Default-off implementation (**Authorized**; activation not) |
 | [`CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md`](CANONICAL_RESOLVER_ACTIVATION_AUTHORIZATION.md) | Staging/production enablement (**Requested**) |
+| [`PR62_MERGE_AND_ACTIVATION_GATE.md`](PR62_MERGE_AND_ACTIVATION_GATE.md) | PR #62 merge SHA + activation blocked pending votes |
 | [`../2026-07-22-par-id-001-pr58-merge/SUMMARY.md`](../2026-07-22-par-id-001-pr58-merge/SUMMARY.md) | PR #58 merge evidence |
 | [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) | Pre-auth merge incident — **Ratified and Closed** |
 | [`../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md`](../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md) | Remediation backlog (planning open; no staging request) |

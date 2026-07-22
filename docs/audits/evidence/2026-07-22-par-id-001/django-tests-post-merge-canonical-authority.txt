@@ -1,0 +1,36 @@
+2026-07-22 16:00:10,742 ERROR contracts.services.process_role_resolver_authority request_id=- user_id=- org_id=- path=- canonical resolver authority failed
+Traceback (most recent call last):
+  File "/workspace/contracts/services/process_role_resolver_authority.py", line 282, in apply_canonical_authority
+    canonical_user = _select_canonical_user(active_ids, legacy_user)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1193, in _execute_mock_call
+    raise effect
+RuntimeError: boom
+2026-07-22 16:00:12,336 ERROR contracts.services.process_role_resolver_parity request_id=- user_id=- org_id=- path=- resolver parity comparison failed
+Traceback (most recent call last):
+  File "/workspace/contracts/services/process_role_resolver_parity.py", line 222, in compare_assignee_resolution
+    canonical_ids, mapped_code, confidence, inactive_exists = _canonical_users_for_role(
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1193, in _execute_mock_call
+    raise effect
+RuntimeError: canonical boom
+----------------------------------------------------------------------
+Ran 35 tests in 2.009s
+
+OK
+[CLM One] Database: :memory: (local, env=development)
+System check identified no issues (0 silenced).
+[CLM One] Database: /workspace/db.sqlite3 (local, env=development)
+{'rollback_drill': 'PASS', 'canonical_on': 'rb2', 'legacy_off': 'rb1', 'assignments_intact': True}

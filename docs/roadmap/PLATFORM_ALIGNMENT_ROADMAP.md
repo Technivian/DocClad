@@ -38,7 +38,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (canonical authority **implemented** default-off on PR #62; **activation pending**; legacy retained; ADMIN deferred)
+1. **PAR-ID-001** — Role Definition reconciliation (Milestone 3) — **In progress** (PR #62 merged `4c08fb9c`; authority default off; **activation votes Requested**; do not enable)
 2. **PAR-APR-002** — legacy approval cutover — **Planned** (blocked on owner + cutover plan)
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
@@ -402,11 +402,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-22) — cutover **implementation** on PR #62 (`PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off); activation **pending** separate votes; GI-2026-07-22-PR58-PREAUTH-MERGE **Ratified and Closed**; legacy retained; ADMIN reconciliation deferred |
+| Status | **In progress** (2026-07-22) — PR #62 **merged** (`4c08fb9c`); `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off; activation votes **Requested**; legacy retained; ADMIN reconciliation deferred |
 | Priority | P1 |
 | Problem | Dual role systems (`OrganizationMembership` vs `UserProfile.Role`) conflict with canonical Role Definition. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.5; SECURITY_PRIVACY_ACCESS_AND_AUDIT |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + `docs/audits/evidence/2026-07-22-par-id-001-pr58-merge/`; implementation Authorized `15:27–15:29Z`; activation package **Requested** |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-id-001/` + PR62 merge gate; activation package **Requested** |
 | Target outcome | Single terminology and mapping for process vs org roles; no silent privilege escalation |
 | Dependencies | ADR-0014 Accepted (**met**); PAR-SEC-003 Closed (**met**); privilege/resolver cutover needs separate authorization |
 | Decision required | **ADR-0014 Accepted** — privilege/resolver cutover still needs separate implementation authorization |
@@ -636,4 +636,5 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed:** Product `15:31:46Z` / Engineering `15:31:55Z`; PAR-ID-001 **In progress** — resolver parity merged; remediation required before staging activation; flags remain default off |
 | 2026-07-22 | **PAR-ID-001 staging resolver-parity gate + remediation:** CERTAIN assignment gaps fixed; ADMIN first-cutover exclusion; threat review PASS for packaging; post-parity MATCH 24 / AMBIGUOUS 13 / critical 0; verdict **READY FOR CUTOVER AUTHORIZATION** |
 | 2026-07-22 | **PAR-ID-001 cutover implementation Authorized:** Product `15:27:09Z` / Engineering `15:28:09Z` / Security `15:29:09Z` (Approve with conditions); `PROCESS_ROLE_CANONICAL_RESOLVER_ENABLED` default off on PR [#62](https://github.com/Technivian/CLMOne/pull/62); activation votes **Requested**; flag **not** enabled; PAR-ID-001 remains **In progress** |
+| 2026-07-22 | **PR #62 merged** to `main` @ `4c08fb9c` (2026-07-22T15:59:25Z) — canonical authority default off; post-merge authority+rollback PASS; activation votes still **Requested**; flag **not** enabled; PAR-ID-001 remains **In progress** |
 
