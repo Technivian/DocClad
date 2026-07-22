@@ -10,7 +10,7 @@
 | Paths in scope | Six Motion-2 paths only (below) |
 | Authority model | **Legacy remains authoritative** |
 | Flags (current) | `EXCEPTION_DUAL_WRITE_ENABLED=false`; `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=` (empty) |
-| Prerequisites met | ADR-0015 **Accepted**; Motion 2 dual-write **Authorized** (default-off); PR #66 merged; PR #67 merge required before enablement |
+| Prerequisites met | ADR-0015 **Accepted**; Motion 2 dual-write **Authorized** (default-off); PR #66 merged (`982b0900`); PR #69 dual-write merged (`f19eae42`) |
 | **Not** authorized by this package alone | Canonical read authority; legacy retirement; automatic repair; historical invention; any org beyond allowlist |
 
 ## Six approved source paths only
@@ -28,7 +28,7 @@
 
 1. ADR-0015 Motion 1 **Accepted** — **met** (`2026-07-22T19:12:39Z`).
 2. Motion 2 default-off six-path dual-write **Authorized** — **met**.
-3. Dual-write PR #67 **merged** to `main` — pending at package prepare time.
+3. Dual-write PR #69 **merged** to `main` (`f19eae42`) — **met** (supersedes stacked #67).
 4. **Separate** Product + Engineering + Security activation votes recorded on this package (Motion 3).
 5. Allowlist set to `controlled-pilot-org` only; global enable without allowlist **prohibited**.
 

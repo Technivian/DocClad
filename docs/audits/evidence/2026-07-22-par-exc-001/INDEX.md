@@ -4,7 +4,7 @@
 **Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); controlled-pilot activation **Requested** / **not** activated; canonical read cutover **unauthorized**  
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
-**Dual-write branch / PR:** `cursor/feat-par-exc-001-dual-write-main-d7f1` / [#69](https://github.com/Technivian/CLMOne/pull/69) (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
+**Dual-write:** PR [#69](https://github.com/Technivian/CLMOne/pull/69) merge `f19eae42fd14e310364fb047868abea4951a5efe` (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
 **Explicit non-starts:** PAR-APR-002, PAR-WF-010, PAR-ID-002
 
 ---
@@ -56,7 +56,7 @@
 |---|---|
 | ADR-0015 Accepted (genuine Product + Engineering + Security votes) | **Met** |
 | Motion 2 dual-write authorization (default-off) | **Met** |
-| Six priority dual-write paths delivered and verified (flags off) | Code on PR #69; merge pending |
+| Six priority dual-write paths delivered and verified (flags off) | **Met** (PR #69 merged `f19eae42`; flags off) |
 | Controlled-pilot activation evidence | Package **Requested**; **not** activated |
 | Remaining production exception paths inventoried or residual | Break-glass + signature-provider inventoried |
 | Canonical read authority and legacy retirement | **Unauthorized** |
