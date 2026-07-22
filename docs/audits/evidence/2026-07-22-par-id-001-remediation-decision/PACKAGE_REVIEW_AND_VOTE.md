@@ -101,44 +101,49 @@ Required checks: Forbidden-brand scan · Anti-drift + contrast · pr-release-evi
 
 ## Merge authorization (PR #63) — separate from package approval
 
-**Status:** **Requested** — package is Approved; CI was green on `8390769d`; awaiting Product + Engineering **Approve merge**.
+**Status:** **Authorized and merged**
 
-Package approval does **not** authorize merge.
+| Approver | Vote | Timestamp |
+|---|---|---|
+| @Technivian Engineering | **Approve merge** | `2026-07-22T18:37:34Z` |
+| @haroonwahed Product | **Approve merge** | `2026-07-22T18:38:34Z` |
 
-### Merge vote blocks
+**Merge reviewed HEAD:** `60263068` (`602630684dc423dc58dbc093c4ac965584b10fab`) — CI 6/6 SUCCESS  
+**Merge commit on `main`:** `06258d26` (`06258d265471d5e1b4b4baea1ed85cc427e534ed`)  
+**Merged at:** `2026-07-22T18:44:14Z`
+
+### Recorded merge votes (verbatim)
 
 ```text
 PR #63 MERGE AUTHORIZATION — 2026-07-22
 
 PR: #63
-Reviewed HEAD: 8390769d
-(or later content-identical / CI-green tip that includes this vote record)
-Package: docs/audits/evidence/2026-07-22-par-id-001-remediation-decision/
+Reviewed HEAD: 60263068
 
-@haroonwahed Product: Approve merge | Reject merge
-Timestamp: <actual ISO-8601 UTC>
+@haroonwahed Product: Approve merge
+Timestamp: 2026-07-22T18:38:34Z
+
+@Technivian Engineering: Approve merge
+Timestamp: 2026-07-22T18:37:34Z
 
 Merge authorization confirms:
-- Policy package Product/Engineering/Security votes recorded Approve
-- Motion remains P1+P3; P2 rejected
-- Docs-only PR; no code/flag/data mutation
-- Does not authorize R0 execution
-- Does not authorize staging activation or cutover
-```
-
-```text
-@Technivian Engineering: Approve merge | Reject merge
-Timestamp: <actual ISO-8601 UTC>
+- The policy package is Approved
+- P1 labels + P3 authority remains binding
+- legacy_process_admin remains AMBIGUOUS diagnostic only
+- workspace ADMIN receives no automatic process authority
+- explicit CERTAIN process-role assignments are required
+- P2 remains rejected
+- Security conditions 1–6 remain binding
+- This is a documentation and governance merge only
+- No R0 execution is authorized
+- No flag activation, repair, privilege grant, resolver authority, staging activation, or cutover is authorized
 ```
 
 ---
 
 ## R0 authorization status
 
-**Not authorized.** Package is **Approved**. R0 remains blocked until:
-
-1. PR #63 **merged** under separate merge authorization, and  
-2. Separate R0 votes recorded in [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md).
+**Gate opened (votes Requested).** PR #63 is merged. R0 execution remains **Not authorized** until separate Product / Engineering / Security votes are recorded in [`R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md`](R0_INVENTORY_IMPLEMENTATION_AUTHORIZATION.md).
 
 R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0113; deterministic setup; tenant-scoped inventory + provenance; parity rerun; replace 14/1/13; **no** repair, flags, privileges, resolver-authority change, staging activation, or cutover.
 
@@ -147,12 +152,13 @@ R0 allow/deny unchanged: inventory-only in clean staging-equivalent env; apply 0
 ## Gate sequence (binding)
 
 1. Record package votes (Product / Engineering / Security) — **done; package Approved**.  
-2. Separate Product + Engineering **Approve merge** for PR #63 — **current step**.  
-3. Merge PR #63 (docs-only) when CI green on merge HEAD.  
-4. Open R0 inventory authorization gate only after PR #63 merged; execute only after separate R0 votes.  
+2. Separate Product + Engineering **Approve merge** for PR #63 — **done**.  
+3. Merge PR #63 (docs-only) — **done** @ `06258d26` / `2026-07-22T18:44:14Z`.  
+4. Open R0 inventory authorization gate — **opened**; execute only after separate R0 votes.  
 5. R1+ and staging/canonical activation remain later gates.
 
 ## Next authorized action
 
-**Await separate Product + Engineering Approve merge** votes.  
-Do **not** merge without them. Do **not** open or execute R0. Do **not** enable flags.
+**Await R0 inventory implementation authorization votes** (Product / Engineering / Security).  
+Do **not** execute R0 without them. Do **not** enable flags. Do **not** repair assignments or start cutover.  
+PAR-ID-001 remains **In progress**.

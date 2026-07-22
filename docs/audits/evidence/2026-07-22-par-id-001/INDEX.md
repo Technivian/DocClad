@@ -1,7 +1,7 @@
 # PAR-ID-001 evidence index
 
 **Programme ID:** PAR-ID-001  
-**Status:** **In progress** — canonical authority **implemented** (default off); activation **pending**; remediation decision package pending votes; legacy retained; ADMIN reconciliation deferred; **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
+**Status:** **In progress** — canonical authority **implemented** (default off); activation **pending**; remediation decision package **Approved and merged** (PR #63 @ `06258d26`); R0 inventory auth gate **opened**; legacy retained; ADMIN reconciliation deferred; **GI-2026-07-22-PR58-PREAUTH-MERGE Ratified and Closed**  
 
 **ADR:** ADR-0014 **Accepted**  
 **PR #51 merge:** `21e65f09`  
@@ -33,7 +33,7 @@
 | [`../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md`](../2026-07-22-par-id-001-pr58-merge/GOVERNANCE_INCIDENT_AND_RATIFICATION_ADDENDUM.md) | Pre-auth merge incident — **Ratified and Closed** |
 | [`../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md`](../2026-07-22-par-id-001-pr58-merge/REMEDIATION_BACKLOG.md) | Remediation backlog (planning open; no staging request) |
 | [`../2026-07-22-par-id-001-pr58-merge/REMEDIATION_PLANNING.md`](../2026-07-22-par-id-001-pr58-merge/REMEDIATION_PLANNING.md) | Analysis/planning order for REM-01..06 |
-| [`../2026-07-22-par-id-001-remediation-decision/INDEX.md`](../2026-07-22-par-id-001-remediation-decision/INDEX.md) | Remediation decision package (pending votes) |
+| [`../2026-07-22-par-id-001-remediation-decision/INDEX.md`](../2026-07-22-par-id-001-remediation-decision/INDEX.md) | Remediation decision package (**Approved and merged** PR #63 @ `06258d26`; R0 gate opened) |
 
 | [`../2026-07-22-par-sec-003/CLOSURE.md`](../2026-07-22-par-sec-003/CLOSURE.md) | PAR-SEC-003 Closed |
 

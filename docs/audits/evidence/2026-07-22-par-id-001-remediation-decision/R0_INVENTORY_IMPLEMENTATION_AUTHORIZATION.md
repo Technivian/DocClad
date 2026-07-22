@@ -2,10 +2,11 @@
 
 **Programme:** PAR-ID-001  
 **Prerequisite:** Remediation decision package (PR #63) **Approved** (Product `18:33:34Z` / Engineering `18:35:34Z` / Security `18:34:34Z`)  
-**Additional prerequisite:** PR #63 **merged** under separate merge authorization (not yet)  
+**Additional prerequisite:** PR #63 **merged** — **met** @ `06258d26` / `2026-07-22T18:44:14Z` (merge reviewed HEAD `60263068`; Eng `18:37:34Z` / Product `18:38:34Z`)  
 **Baseline `main` at package:** `8316a756`  
 **Package-approved reviewed HEAD:** `8390769d`  
-**Status:** **Requested** — package Approved; R0 gate **not opened** until PR #63 merges; do not invent R0 votes; do not start R0  
+**Merge reviewed HEAD:** `60263068`  
+**Status:** **Gate opened / Requested** — PR #63 merged; R0 votes still required; do not invent votes; do not start R0 until votes recorded  
 **Depends on:** [`PACKAGE_REVIEW_AND_VOTE.md`](PACKAGE_REVIEW_AND_VOTE.md)
 
 ---
@@ -20,7 +21,7 @@
 | @Technivian Engineering | **Requested** | Pending ISO-8601 UTC |
 | @Technivian Security advisory | **Requested (with conditions)** | Pending ISO-8601 UTC |
 
-**R0 authorization status:** **Not authorized**
+**R0 authorization status:** **Not authorized** (gate opened; awaiting votes)
 
 ---
 
