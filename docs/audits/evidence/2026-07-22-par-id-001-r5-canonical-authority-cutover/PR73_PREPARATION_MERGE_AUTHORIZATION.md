@@ -21,4 +21,4 @@ R5 activation, canonical authority, staging/production cutover, ADMIN authority,
 
 ### Reviewed tip
 
-Filled after commit.
+`13e39a35be02ba05243feea0751c8aa18814ce17`
