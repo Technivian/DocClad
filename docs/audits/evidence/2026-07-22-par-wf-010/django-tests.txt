@@ -1,0 +1,11 @@
+DJANGO_SETTINGS_MODULE=config.settings_test .venv/bin/python manage.py test tests.test_par_wf_010_characterization
+Creating test database for alias 'default'...
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.021s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 4 test(s).
+System check identified no issues (0 silenced).

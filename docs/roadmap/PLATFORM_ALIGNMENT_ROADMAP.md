@@ -30,11 +30,14 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 **Future / residual (12):** `PAR-SEC-002`, `PAR-SEC-003`, `PAR-WF-010`, `PAR-APR-001`, `PAR-ID-001`, `PAR-EXC-001`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
+**Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
+
 ---
 
 ## Immediate next items
 
-1. **PAR-WF-010** — Workflow Definition aggregate (discovery/design OK; **no production cutover** until an appropriate ADR is Accepted; ADR-0010 stays Proposed/non-authorizing)
+1. **PAR-APR-001** — Approval Requirement/Decision split (Milestone 3) — **next unblocked**
+2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 (discovery complete — see evidence)
 
 Parallel Milestone 1 hygiene:
 
@@ -64,7 +67,8 @@ Parallel Milestone 1 hygiene:
 
 | ID | Title | Status |
 |---|---|---|
-| ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. |
+| ADR-0010 | Workflow instance version pinning interim | **Proposed** — `docs/governance/decisions/adr/0010-workflow-instance-version-pinning-interim.md`. Non-authorizing until Accepted. Interim pinning only. |
+| ADR-0012 | Workflow Definition aggregate and cutover | **Proposed** — `docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`. Required for PAR-WF-010 production cutover. |
 
 ---
 
@@ -97,7 +101,7 @@ Parallel Milestone 1 hygiene:
 | **PAR-CORE-003** | Contract Record provenance completeness | P0 (after CORE-001) | **Completed** |
 | **PAR-CORE-002** | Dual ContractType enum vs model (G-DOM-02) | P0 (before WF-010 cutover) | **Completed** |
 | **PAR-DOC-001** | Document Version entity harden | P0 | **Completed** |
-| **PAR-WF-010** | Workflow Definition aggregate | P0 (Accepted ADR required for cutover) | Future |
+| **PAR-WF-010** | Workflow Definition aggregate | P0 (Accepted ADR required for cutover) | **Blocked** (discovery complete) |
 
 ### Milestone 3 — Authority and decision models
 
@@ -347,23 +351,25 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | Future roadmap (Milestone 2) — **not Completed**; discovery/design allowed; **production Definition/Version cutover Blocked** until an appropriate ADR is Accepted (ADR-0010 remains Proposed/non-authorizing) |
+| Status | **Blocked pending architecture approval** — discovery/design complete 2026-07-22; **not Completed** |
 | Priority | P0 after PAR-DOC-001 |
 | Problem | No first-class Workflow Definition; versions are `WorkflowTemplate` rows — conflicts with Definition → Version → Instance chain. |
-| Governance source | CANONICAL_DOMAIN_MODEL; WORKFLOW_ENGINE_AND_DESIGNER; Proposed ADR-0010 interim only |
-| Current evidence | Template+version fields; governed migrate helper; gap G-DOM-01 |
+| Governance source | CANONICAL_DOMAIN_MODEL; WORKFLOW_ENGINE_AND_DESIGNER; ADR-0010 interim only (Proposed, non-authorizing) |
+| Discovery evidence | `docs/audits/evidence/2026-07-22-par-wf-010/` — matrix, target aggregate, cutover plan, risks, characterization tests |
+| Proposed ADR | **ADR-0012** (`docs/governance/decisions/adr/0012-workflow-definition-aggregate-cutover.md`) — **Proposed, not Accepted** |
 | Target outcome | First-class Definition aggregate with immutable Versions; instances pin to Version; designer operates on drafts |
-| Dependencies | Accepted ADR (not ADR-0010 alone); ops migration window; PAR-WF-002 patterns |
-| Decision required | **Accepted ADR** for schema + cutover (ADR-0010 remains Proposed interim only) |
-| Migration impact | High — data model split, dual-read period, instance pin migration |
-| Security and permissions impact | Designer/config permissions stay configuration-scoped; pilot may keep designer denied until ready |
-| Audit requirements | Publish, version create, instance pin/migrate fully audited |
+| Dependencies | **Accepted ADR-0012** (ADR-0010 alone insufficient); ops migration window; PAR-WF-002 patterns |
+| Decision required | Accept ADR-0012 or successor + ops sign-off before phase 3+ |
+| Migration impact | Planned 0110–0115 additive sequence (not executed) |
+| Security and permissions impact | Designer/config permissions stay configuration-scoped; pilot protected until flag opt-in |
+| Audit requirements | Canonical events mapped in TARGET_AGGREGATE.md; reuse interim events during dual-write |
 | UX requirements | Designer IA: Definition → Versions; no silent edit of published versions |
-| Tests | Invariants, migrate forward/rollback/re-forward, designer/publish, isolation |
-| Rollback strategy | Dual-read feature flag; reverse migrate only with ops runbook |
-| Acceptance criteria | Accepted ADR; migrations proved; no silent rebinds; docs updated; pilot controls respected |
-| Evidence | TBD |
-| PR/commits | TBD |
+| Tests | Existing workflow suites + `test_par_wf_010_characterization.py` (4 OK) |
+| Rollback strategy | Per-phase checkpoints in CUTOVER_PLAN.md |
+| Acceptance criteria | Accepted ADR; migrations proved; no silent rebinds; pilot verified — **not met** (cutover blocked) |
+| Evidence | `docs/audits/evidence/2026-07-22-par-wf-010/` |
+| PR/commits | Branch `cursor/feat-platform-documentation-alignment-d7f1` |
+| Next unblocked item | **PAR-APR-001** |
 | Last updated | 2026-07-22 |
 
 ---
@@ -609,3 +615,4 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PAR-CORE-003 Completed:** Contract Record provenance fields + immutability + governed repair; migration 0106 truthful backfill; import/workflow/manual/admin/seed paths wired; tests + rollback proof; next item **PAR-CORE-002** |
 | 2026-07-22 | **PAR-CORE-002 Completed:** canonical `ContractType` catalogue + `contract_type_catalogue` FK; transitional char mirror; migration 0107; Proposed ADR-0011; evidence `2026-07-22-par-core-002`; next **PAR-DOC-001** |
 | 2026-07-22 | **PAR-DOC-001 Completed:** `DocumentVersion` entity + immutability service; migrations 0108–0109; signature version binding; evidence `2026-07-22-par-doc-001`; next **PAR-WF-010** (design only until Accepted ADR) |
+| 2026-07-22 | **PAR-WF-010 discovery complete (Blocked):** evidence `2026-07-22-par-wf-010`; Proposed ADR-0012; characterization tests; production cutover blocked pending Accepted ADR; next unblocked **PAR-APR-001** |

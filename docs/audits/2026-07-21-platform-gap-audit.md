@@ -95,7 +95,7 @@ Status key: Compliant · Partially compliant · Missing · Conflicting · Not im
 | PDR-0002 status/stage vocabulary | PDR-0002 | Binding | Lifecycle service | services | Partially compliant | High | Align remaining UI/tests | — | PAR-CORE-001 |
 | Finance threshold single entry | PDR-0001 | Finance | `get_finance_approval_threshold` | services | Compliant | — | Keep | — | — |
 | Charter v3 not active | PDR-0003 | Authority | Proposed file present | governance | Compliant | — | Do not implement v3 | — | — |
-| Workflow Definition first-class | DOMAIN | Objects | Missing | — | Not implemented | High | Introduce with migration | ADR | PAR-WF-010 |
+| Workflow Definition first-class | DOMAIN | Objects | `WorkflowTemplate` collapse (interim) | ADR-0012 proposed; evidence `2026-07-22-par-wf-010` | **Blocked** — discovery complete | High | Accept ADR-0012 + cutover | ADR-0012 | PAR-WF-010 |
 | Obligation first-class | DOMAIN | Objects | Deadline alias | obligations.py | Conflicting | High | Model + migration plan | ADR/PDR | PAR-OBL-001 |
 | Reminder first-class | DOMAIN | Objects | Fields/jobs only | Deadline.reminder_days | Missing | Medium | Model later | — | PAR-OBL-002 |
 | Exception first-class | DOMAIN | Objects | RiskSignal / actions | — | Missing | Medium | Governed Exception | PDR | PAR-EXC-001 |
