@@ -2901,21 +2901,29 @@ class WorkflowTemplateStep(models.Model):
             return False
 
     def resolve_assignee(self, contract=None):
+        # Legacy resolution remains authoritative (PAR-ID-001 resolver parity).
         if self.specific_assignee_id:
-            return self.specific_assignee
-        role = (self.assignee_role or '').strip()
-        organization = getattr(contract, 'organization', None)
-        if not role or organization is None:
-            return None
-        membership_qs = OrganizationMembership.objects.filter(
-            organization=organization,
-            is_active=True,
-        ).select_related('user').prefetch_related('user__profile')
-        for membership in membership_qs:
-            profile_role = getattr(getattr(membership.user, 'profile', None), 'role', None)
-            if profile_role == role:
-                return membership.user
-        return None
+            legacy_user = self.specific_assignee
+        else:
+            legacy_user = None
+            role = (self.assignee_role or '').strip()
+            organization = getattr(contract, 'organization', None)
+            if role and organization is not None:
+                membership_qs = OrganizationMembership.objects.filter(
+                    organization=organization,
+                    is_active=True,
+                ).select_related('user').prefetch_related('user__profile')
+                for membership in membership_qs:
+                    profile_role = getattr(getattr(membership.user, 'profile', None), 'role', None)
+                    if profile_role == role:
+                        legacy_user = membership.user
+                        break
+        try:
+            from contracts.services.process_role_resolver_parity import after_resolve_assignee
+
+            return after_resolve_assignee(legacy_user=legacy_user, step=self, contract=contract)
+        except Exception:
+            return legacy_user
 
 
 class Workflow(models.Model):

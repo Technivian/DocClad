@@ -1,0 +1,24 @@
+Creating test database for alias 'default'...
+.............2026-07-22 14:14:37,690 ERROR contracts.services.process_role_resolver_parity request_id=- user_id=- org_id=- path=- resolver parity comparison failed
+Traceback (most recent call last):
+  File "/workspace/contracts/services/process_role_resolver_parity.py", line 222, in compare_assignee_resolution
+    canonical_ids, mapped_code, confidence, inactive_exists = _canonical_users_for_role(
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1193, in _execute_mock_call
+    raise effect
+RuntimeError: canonical boom
+..
+----------------------------------------------------------------------
+Ran 15 tests in 0.630s
+
+OK
+Destroying test database for alias 'default'...
+[CLM One] Database: :memory: (local, env=development)
+Found 15 test(s).
+System check identified no issues (0 silenced).

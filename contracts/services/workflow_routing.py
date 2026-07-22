@@ -158,22 +158,31 @@ def select_approval_rules_for_contract(contract):
 
 
 def resolve_rule_assignee(rule, contract):
+    # Legacy resolution remains authoritative (PAR-ID-001 resolver parity).
     if rule.specific_approver_id:
-        return rule.specific_approver
-    if not contract or not contract.organization_id:
-        return None
-    matching_profiles = {rule.approver_role}
-    memberships = (
-        OrganizationMembership.objects
-        .filter(organization=contract.organization, is_active=True)
-        .select_related('user')
-        .prefetch_related('user__profile')
-    )
-    for membership in memberships:
-        profile_role = getattr(getattr(membership.user, 'profile', None), 'role', None)
-        if profile_role in matching_profiles:
-            return membership.user
-    return None
+        legacy_user = rule.specific_approver
+    elif not contract or not contract.organization_id:
+        legacy_user = None
+    else:
+        legacy_user = None
+        matching_profiles = {rule.approver_role}
+        memberships = (
+            OrganizationMembership.objects
+            .filter(organization=contract.organization, is_active=True)
+            .select_related('user')
+            .prefetch_related('user__profile')
+        )
+        for membership in memberships:
+            profile_role = getattr(getattr(membership.user, 'profile', None), 'role', None)
+            if profile_role in matching_profiles:
+                legacy_user = membership.user
+                break
+    try:
+        from contracts.services.process_role_resolver_parity import after_resolve_rule_assignee
+
+        return after_resolve_rule_assignee(legacy_user=legacy_user, rule=rule, contract=contract)
+    except Exception:
+        return legacy_user
 
 
 def build_approval_request_plan_for_contract(contract):

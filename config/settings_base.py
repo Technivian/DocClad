@@ -547,6 +547,9 @@ CONTROLLED_PILOT_ENABLED = _bool_env('CONTROLLED_PILOT_ENABLED', default=False)
 # ProcessRoleAssignment. Legacy profile role remains authoritative for runtime.
 PROCESS_ROLE_SHADOW_WRITE_ENABLED = _bool_env('PROCESS_ROLE_SHADOW_WRITE_ENABLED', default=False)
 PROCESS_ROLE_PARITY_REPORTING_ENABLED = _bool_env('PROCESS_ROLE_PARITY_REPORTING_ENABLED', default=False)
+# When enabled, selected legacy assignee resolvers also run canonical comparison
+# diagnostics. Legacy return values remain authoritative for all callers.
+PROCESS_ROLE_RESOLVER_PARITY_ENABLED = _bool_env('PROCESS_ROLE_RESOLVER_PARITY_ENABLED', default=False)
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
