@@ -141,7 +141,7 @@ Preserved on `cursor/feat-platform-documentation-alignment-d7f1` — not discard
 
 ```
 Branch: cursor/feat-platform-alignment-tranche-1
-HEAD:   (see PR #50 — E2E/baseline alignment commit after d9ded244)
+HEAD:   7afa7b73
 Parent: d9ded244 (PAR-SEC-003 + DOC-001 seed fix)
 ```
 
