@@ -42,13 +42,22 @@
   .repo-page .assignee-chip-empty .assignee-chip-name.repo-empty-label { color: var(--ink-700, var(--text-secondary)); }
   .repo-page #contracts-table th[data-col="select"],
   .repo-page #contracts-table td[data-col="select"] {
-    position: sticky; left: 0; z-index: 3; width: 44px; min-width: 44px; max-width: 44px;
-    background-color: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
+    position: sticky; left: 0; z-index: 3;
+    width: 32px; min-width: 32px; max-width: 32px;
+    vertical-align: middle;
+    background-color: var(--card-bg, #fff);
+    padding: 16px 4px 16px 8px;
+    text-align: center;
+  }
+  .repo-page #contracts-table th[data-col="select"] input,
+  .repo-page #contracts-table td[data-col="select"] input {
+    display: block;
+    margin: 0 auto;
   }
   .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
   .repo-page #contracts-table th[data-col="title"],
   .repo-page #contracts-table td[data-col="title"] {
-    position: sticky; left: 44px; z-index: 3; min-width: 260px; width: 24%;
+    position: sticky; left: 32px; z-index: 3; min-width: 260px; width: 24%;
     background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
