@@ -51,7 +51,7 @@
 | [`TEST_RESULTS.md`](TEST_RESULTS.md) / [`DUAL_WRITE_TEST_RESULTS.md`](DUAL_WRITE_TEST_RESULTS.md) | Test evidence |
 | [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Pilot activation package (**Motion 3 Authorized**; operational **PASS**) |
 | [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) | Operational evidence (**PASS**) |
-| [`PILOT_MONITORING_EXTENSION.md`](PILOT_MONITORING_EXTENSION.md) | Read-only pilot_daily_health dual-write monitoring (PR #78; auth Requested) |
+| [`PILOT_MONITORING_EXTENSION.md`](PILOT_MONITORING_EXTENSION.md) | Read-only pilot_daily_health dual-write monitoring (PR #78 merged `e26a2bdc`; Product Approve only; Eng/Sec ratification pending) |
 
 ---
 

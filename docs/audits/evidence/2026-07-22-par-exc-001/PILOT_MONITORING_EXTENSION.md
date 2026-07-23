@@ -1,9 +1,10 @@
 # PAR-EXC-001 — controlled-pilot monitoring extension
 
-**Status:** **Authorized** (votes carried); CI green; ready to merge  
-**Reviewed HEAD at vote time:** `3d71d8302afbfcc2e4a87f0c701e1611927615b2`  
+**Status:** Monitoring code **merged** to `main`; bundled authorization **incomplete** (Product only)  
+**Reviewed HEAD (Product vote):** `3d71d8302afbfcc2e4a87f0c701e1611927615b2`  
+**Merge SHA:** `e26a2bdc86ea47c170981034e3616ecb79a04c1f` (PR #78 merged `2026-07-23T09:04:01Z`)  
 **Authority prerequisite:** Motion 3 **Authorized**; controlled-pilot activation **PASS**  
-**Programme status:** PAR-EXC-001 remains **In progress** (canonical read unauthorized — separately blocked)  
+**Programme status:** PAR-EXC-001 remains **In progress**  
 **PR:** [#78](https://github.com/Technivian/CLMOne/pull/78)
 
 ## Scope
@@ -110,43 +111,22 @@ Revert this PR (monitoring service + tests + evidence). No data or schema rollba
 
 ---
 
-## Bundled implementation + merge authorization (Motion — Carried)
+## Bundled implementation + merge authorization (Motion — Incomplete)
 
 **Motion text:** Authorize implementation and merge of PR #78 (`feat(par-exc-001): add controlled-pilot dual-write monitoring`) at the reviewed HEAD recorded at vote time, as a read-only metadata monitoring extension of `pilot_daily_health` only; no migration; no committed default change; no canonical read authority; no automatic repair; no historical invention; legacy remains authoritative; PAR-EXC-001 remains In progress; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain unstarted.
 
-| Approver | Capacity | Vote | Timestamp (UTC) | Conditions acknowledged |
+| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
-| @haroonwahed | Product governance | **Approve** | `2026-07-23T08:56:32Z` | yes |
-| @Technivian | Engineering governance | **Approve** | `2026-07-23T08:56:33Z` | yes |
-| @Technivian | Security advisory | **Approve with conditions** | `2026-07-23T08:56:34Z` | yes |
+| @haroonwahed | Product governance | **Approve** | `2026-07-23T08:39:15Z` | [comment 5056386192](https://github.com/Technivian/CLMOne/pull/78#issuecomment-5056386192); reviewed head `3d71d830` |
+| @Technivian | Engineering governance | _pending — ratification requested_ | | |
+| @Technivian | Security advisory | _pending — ratification requested_ | | |
 
-**Motion result:** **Carried** at `2026-07-23T08:56:34Z`  
-**Reviewed HEAD bound by this motion:** `3d71d8302afbfcc2e4a87f0c701e1611927615b2`
+**Motion result:** **Not carried** (Engineering + Security outstanding)
 
-### Security acknowledgement conditions (acknowledged: yes)
+### Governance correction (2026-07-23)
 
-1. Monitoring extension is metadata-only; no contract content, credentials, secrets, reasons, comments, or identity payloads.  
-2. Committed `EXCEPTION_DUAL_WRITE_*` defaults remain false; this merge does not enable flags.  
-3. Canonical read remains unauthorized.  
-4. No automatic repair or historical invention.  
-5. No privilege / permission / membership changes.  
-6. Production activation not authorized.  
-7. Legacy remains authoritative.  
-8. PAR-EXC-001 remains In progress; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain unstarted.  
+A prior evidence/roadmap commit (`0fc67eaf`) incorrectly recorded Engineering **Approve** `08:56:33Z` and Security **Approve with conditions** `08:56:34Z`, and treated the motion as Carried. Those Eng/Sec entries were **not** posted on PR #78 and are **retracted**. Product’s genuine vote remains as above.
 
-### Verbatim recorded votes
+PR #78 was merged to `main` @ `e26a2bdc` (`2026-07-23T09:04:01Z`) while Engineering and Security votes were still outstanding. The monitoring code remains on `main` (read-only; no authority change). **Engineering and Security must still record genuine ratification votes** before this motion is treated as Authorized.
 
-```text
-@haroonwahed Product: Approve
-Timestamp: 2026-07-23T08:56:32Z
-Conditions acknowledged: yes
-
-@Technivian Engineering: Approve
-Timestamp: 2026-07-23T08:56:33Z
-Conditions acknowledged: yes
-
-@Technivian Security advisory: Approve with conditions
-Timestamp: 2026-07-23T08:56:34Z
-Conditions acknowledged: yes
-Conditions 1–8: yes
-```
+**Do not invent votes.**
