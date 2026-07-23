@@ -7,6 +7,11 @@
 
 Before material product, architecture, design, security, workflow, AI, or engineering work, follow root [`AGENTS.md`](../AGENTS.md). The active Governance Charter is [`docs/governance/GOVERNANCE_CHARTER.md`](../docs/governance/GOVERNANCE_CHARTER.md). Accepted supporting docs (PDR-0003) remain subordinate to the active Charter. Proposed Charter v3 does not supersede approved governance until separately approved.
 
+For authorization or release work, use the GitHub review-and-release evidence
+model in [`GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md`](../docs/governance/GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md).
+The PR, its submitted reviews, CI results, immutable SHAs, and operator or
+release record are the evidence; do not add a manual approval table.
+
 ## Risk and Scope
 
 - Tenant isolation impact: `none | low | medium | high`
@@ -35,3 +40,4 @@ Before material product, architecture, design, security, workflow, AI, or engine
 - Screenshots / logs / links:
 - Smoke evidence:
 - Rollback evidence:
+- Required GitHub review roles and release/operator record (when applicable):

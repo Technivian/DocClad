@@ -1,40 +1,44 @@
-# PAR-EXC-001 — Canonical read authority authorization (Motion 4)
+# PAR-EXC-001 — Canonical read authority authorization
 
 **Programme:** PAR-EXC-001  
-**ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
-**Prerequisites:** Motion 2 **Authorized** (default-off dual-write); Motion 3 **Authorized** + controlled-pilot activation **PASS**; monitoring extension on `main` (PR #78 / correction PR #79)  
-**Package type:** Separate canonical-read authority (Motion 4)  
-**Status:** **Authorization requested** — votes **not carried** (Product Approve recorded; Engineering + Security outstanding)  
-**Authorizing PR:** [#81](https://github.com/Technivian/CLMOne/pull/81)  
-**Reviewed HEAD:** `acc19e82d1b03a0691d46a10679af10b07d59ab5` (docs-only; reconciled with `main` @ `091882c7` / PR #80)  
-**Product vote reviewed package baseline:** `e1858cd33c1652349a44540d152b4a57af150dd5` (Motion text unchanged since Product Approve)  
-**This vote enables flags?** **No**  
-**This vote merges implementation?** **No**  
-**Production?** **OUT OF SCOPE**
+**ADR:** ADR-0015 **Accepted**
+**Prerequisites:** Default-off dual-write and its controlled-pilot observation
+are complete; PR #78 monitoring remains read-only; legacy remains authoritative.
+**Package type:** Non-production canonical-read authority
+**Authorizing PR:** [#81](https://github.com/Technivian/CLMOne/pull/81)
+**Flags enabled by this package:** **No**
+**Production:** **OUT OF SCOPE**
 
-**Do not invent votes.** Product, Engineering, and Security must each record a genuine vote with a UTC timestamp on the authorizing PR before this package may be treated as **Authorized**.
+## Evidence model
 
----
+This package uses the repository evidence model in Governance Charter v2.1.
+Its immutable reviewed SHA is the exact PR #81 head SHA bound to the approved
+GitHub reviews and green CI; GitHub records that SHA with the reviews and merge
+event. The operator record must repeat that deployed SHA. Do not copy approval
+text, construct a vote table, or manually enter approval timestamps here.
 
-## Decision outcome (live)
+Historical approval comments and historical vote records remain preserved in
+GitHub and prior immutable commits; they are not rewritten by this package.
 
-| Field | Value |
-|---|---|
-| Decision | **Not authorized** (Motion 4 not carried) |
-| Aggregate | Product **Approve**; Engineering **pending**; Security **pending** |
-| Security conditions acknowledged | **No** (pending Security vote) |
-| Flags enabled by this record | **No** |
-| Committed defaults changed by this record | **No** |
-| Programme status | PAR-EXC-001 remains **In progress** |
-| Exact blocker | Canonical read authority **unauthorized** — Engineering and Security genuine votes outstanding on PR #81 |
+## Authorization readiness
 
----
+Canonical authority is **not ready** until all of the following are true:
 
-## Motion 4 — Authorize controlled-pilot canonical read authority
+1. PR #81 has approved Engineering and Security GitHub reviews.
+2. CI is green for the reviewed PR #81 head SHA.
+3. The default-off canonical-read implementation has merged to `main` and its
+   immutable merge SHA is recorded by GitHub.
+4. The implementation keeps all committed canonical-read defaults `false` and
+   its allowlist empty.
+5. The rollback drill is recorded for the named environment before enablement.
+6. A named-environment operator record is ready to capture deployed SHA, CI
+   run, flag values, counters, isolation/authorization results, abort events,
+   and rollback outcome.
 
-**Text:** Authorize **canonical read authority** for PAR-EXC-001 under the exact environment, scope, allowlist, observation window, abort conditions, and rollback defined in this package only; authorize subsequent **default-off** dual-read / canonical-read implementation and **named-env-only** operational enablement after that implementation is merged to `main`; do **not** enable flags by this vote; do **not** change committed defaults; do **not** authorize production, automatic repair, permission/privilege changes, ADMIN authority, or legacy retirement.
+PR #81 currently has no approved Engineering or Security review. It must not
+be merged or used to authorize enablement until the first two gates are met.
 
-### Exact environment
+## Exact environment
 
 | Field | Value |
 |---|---|
@@ -45,7 +49,7 @@
 | Production | **OUT OF SCOPE** |
 | Remote shared staging URL | **Not identified** — not inferred |
 
-### Exact scope
+## Exact scope
 
 | In scope | Out of scope (hard) |
 |---|---|
@@ -58,59 +62,63 @@
 | | Legacy retirement / removal of legacy fallback |
 | | PAR-APR-002 / PAR-WF-010 / PAR-ID-002 |
 
-### Exact allowlist
+## Exact allowlist and committed defaults
 
-| Flag (proposed; default-off until implemented and separately enabled in named env only) | Authorized operational value |
+| Flag | Permitted operational value |
 |---|---|
-| `EXCEPTION_CANONICAL_READ_ENABLED` | `true` **only** in `par-exc-001-canonical-read-authority` after Motions carried **and** default-off implementation is on `main` |
+| `EXCEPTION_CANONICAL_READ_ENABLED` | `true` **only** in `par-exc-001-canonical-read-authority` after every readiness gate is met |
 | `EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST` | `controlled-pilot-org` **only** |
-| `EXCEPTION_DUAL_WRITE_ENABLED` (prerequisite during observation) | `true` in the same named env only (Motion 3 already authorized) |
+| `EXCEPTION_DUAL_WRITE_ENABLED` (prerequisite during observation) | `true` in the same named env only |
 | `EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST` | `controlled-pilot-org` **only** |
 
-Committed defaults in `config/settings_base.py` / `config/settings_test.py` must remain **false** / empty at all times under this package.
+Committed defaults in `config/settings_base.py` and `config/settings_test.py`
+remain **false** / empty. Global enablement without the allowlist is prohibited.
 
-Global enable without allowlist is **prohibited**.
-
-### Authority model (if Motions carried and named-env enabled)
+## Authority model
 
 | Phase | Authority |
 |---|---|
 | Before enablement | Legacy remains authoritative; canonical rows non-authoritative |
 | During authorized observation (allowlisted org + correlated canonical present) | Canonical applicability / privilege-token checks are **authoritative for read**; on canonical miss/failure → **legacy fallback** (fail-open to legacy product path except cross-tenant / Critical-gate fail-closed) |
 | AI_EXCEPTION without decision | Remains **SUBMITTED**; must **not** become applicable via invented decision |
-| After observation (default plan) | Return all canonical-read flags to **false** / empty unless a **separate sustainment** vote carries |
+| After observation (default plan) | Return all canonical-read flags to **false** / empty; legacy resumes sole authority |
 | Abort / rollback | Immediate flag-off; legacy sole authority; leave canonical rows in place (no repair) |
 
-### Observation window
+## Observation and operator record
 
-| Field | Value |
-|---|---|
-| Window type | Controlled named-env observation (harness + required scenarios), not a production multi-day watch |
-| Earliest start | Only after (1) Motions 4.1–4.4 carried with genuine votes, (2) default-off implementation merged to `main`, (3) reviewed deployment HEAD recorded, (4) rollback dry-validated |
-| Planned duration | Complete required six-path matrix + negatives + monitoring stop-condition scan within a single operator session; record UTC start/end in exit evidence |
-| Operators on watch | Engineering (cutover / rollback); Security may order stop |
-| Evidence location | This directory + `canonical_read_env/` + `pending/` placeholders as created at execution |
+The observation window is a single controlled named-environment session: the
+six-path matrix, negative scenarios, monitoring stop-condition scan, and
+rollback check. It is not a production watch.
 
-### Abort conditions (immediate stop)
+The operator record must link to the GitHub-reviewed SHA and CI run, identify
+the named environment, capture the four flag values before/during/after,
+include the six-path, tenant-isolation, authorization, fallback and AI
+`SUBMITTED` results, record metadata-only counters, and show the flag-off
+restoration of legacy authority. Security may order an immediate stop.
 
-Disable `EXCEPTION_CANONICAL_READ_ENABLED` and clear `EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST` (and, if dual-write stop conditions also fire, disable dual-write per Motion 3) on **any** of:
+## Abort conditions (immediate stop)
 
-1. Cross-tenant anomaly or data exposure  
-2. Unauthorized Critical bypass / Security-gate failure  
-3. Invented historical decision or AI_EXCEPTION becoming applicable without authorized decision  
-4. Duplicate canonical decision / duplicate correlation creating conflicting authority  
-5. Missing owner or expiry on an approved/active temporary exception relied on for authority  
-6. Privilege or permission expansion attributable to canonical read  
-7. ADMIN authority or automatic ADMIN mapping  
-8. User-visible regression attributable to canonical read  
-9. Inability to restore legacy authority immediately via flag-off  
-10. Material difference between reviewed and deployed HEAD  
-11. Restricted content (credentials, contract body, unrestricted identity) appearing in monitoring evidence  
-12. Security reviewer stop instruction  
+Disable `EXCEPTION_CANONICAL_READ_ENABLED` and clear
+`EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST` (and, if dual-write stop conditions
+also fire, disable dual-write) on any of:
 
-Abort criteria do **not** depend solely on aggregate percentages. A single tenant-isolation, Critical-control, or invented-authority violation is a **stop**.
+1. Cross-tenant anomaly or data exposure.
+2. Unauthorized Critical bypass / Security-gate failure.
+3. Invented historical decision or AI_EXCEPTION becoming applicable without authorized decision.
+4. Duplicate canonical decision / duplicate correlation creating conflicting authority.
+5. Missing owner or expiry on an approved/active temporary exception relied on for authority.
+6. Privilege or permission expansion attributable to canonical read.
+7. ADMIN authority or automatic ADMIN mapping.
+8. User-visible regression attributable to canonical read.
+9. Inability to restore legacy authority immediately via flag-off.
+10. Material difference between reviewed and deployed HEAD.
+11. Restricted content (credentials, contract body, unrestricted identity) appearing in monitoring evidence.
+12. Security reviewer stop instruction.
 
-### Rollback
+A single tenant-isolation, Critical-control, or invented-authority violation is
+a stop; aggregate percentages do not override it.
+
+## Rollback
 
 ```bash
 # In par-exc-001-canonical-read-authority only
@@ -121,140 +129,16 @@ export EXCEPTION_DUAL_WRITE_ENABLED=false
 export EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST=
 ```
 
-1. Flag-off is non-destructive.  
-2. Leave canonical rows in place — **no** automatic repair or deletion.  
-3. Legacy paths become sole authority again.  
-4. Capture stop-event audit evidence; do not invent remediation decisions.  
-5. Committed repo defaults remain unchanged.
+1. Flag-off is non-destructive.
+2. Leave canonical rows in place — **no** automatic repair or deletion.
+3. Legacy paths become sole authority again.
+4. Capture the stop-event audit evidence; do not invent remediation decisions.
+5. Committed repository defaults remain unchanged.
 
----
+## Completion and failure disposition
 
-## Motions (explicit)
-
-### Motion 4.1 — Accept exact environment, scope, allowlist, and observation window
-
-**Text:** Accept the exact named environment `par-exc-001-canonical-read-authority`, six-path scope, allowlist `controlled-pilot-org` only, observation window, and monitoring posture defined above.
-
-| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
-|---|---|---|---|---|
-| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
-| @Technivian | Engineering governance | _pending_ | | |
-| @Technivian | Security advisory | _pending_ | | |
-
-**Motion 4.1 result:** **Not carried**
-
-### Motion 4.2 — Authorize canonical read authority in that exact environment
-
-**Text:** Authorize canonical read authority (canonical applicability authoritative for correlated rows) in `par-exc-001-canonical-read-authority` only, for `controlled-pilot-org` and the six approved paths only; authorize default-off implementation of `EXCEPTION_CANONICAL_READ_*` (or equivalent) prior to enablement; this vote does **not** enable flags.
-
-| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
-|---|---|---|---|---|
-| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
-| @Technivian | Engineering governance | _pending_ | | |
-| @Technivian | Security advisory | _pending_ | | |
-
-**Motion 4.2 result:** **Not carried**
-
-### Motion 4.3 — Authorize defined rollback on abort
-
-**Text:** Authorize the flag-off rollback procedure above as the binding abort response; Security may order stop; Engineering executes.
-
-| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
-|---|---|---|---|---|
-| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
-| @Technivian | Engineering governance | _pending_ | | |
-| @Technivian | Security advisory | _pending_ | | |
-
-**Motion 4.3 result:** **Not carried**
-
-### Motion 4.4 — Confirm hard exclusions remain out of scope
-
-**Text:** Confirm that production activation, automatic repair, permission/privilege/membership/signer/approval/navigation changes, ADMIN authority, and legacy retirement remain **out of scope** and are **not** authorized by Motions 4.1–4.3.
-
-| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
-|---|---|---|---|---|
-| @haroonwahed | Product governance | **Approve** | `2026-07-23T09:21:26Z` | [comment 5056679929](https://github.com/Technivian/CLMOne/pull/81#issuecomment-5056679929) |
-| @Technivian | Engineering governance | _pending_ | | |
-| @Technivian | Security advisory | _pending_ | | |
-
-**Motion 4.4 result:** **Not carried**
-
-### Recorded Product approval (verbatim; authoritative)
-
-```text
-MOTION 4 — PAR-EXC-001 Canonical Read Authority
-
-Approver: @haroonwahed
-Capacity: Product governance
-Timestamp: 2026-07-23T09:21:26Z
-
-Motions 4.1–4.4: Approve
-
-Vote: Approve
-
-Conditions acknowledged:
-- exact env par-exc-001-canonical-read-authority only;
-- allowlist controlled-pilot-org only;
-- six approved paths only;
-- this vote does not enable flags or change committed defaults;
-- production, repair, permission changes, ADMIN authority, and legacy retirement remain out of scope;
-- Engineering and Security genuine votes still required before Motion 4 is Authorized;
-- PAR-EXC-001 remains In progress until Completion criteria are met.
-```
-
----
-
-## Security conditions (must be acknowledged on Security vote)
-
-1. Activation limited to `controlled-pilot-org` in the named non-production env only.  
-2. Committed defaults remain off; this vote does not enable flags.  
-3. Cross-tenant anomalies fail closed.  
-4. Critical bypasses require existing Security controls (`security_approval=True`).  
-5. No invented historical decisions; AI exceptions stay SUBMITTED until authorized decision.  
-6. No automatic repair; no privilege/permission expansion; no ADMIN authority.  
-7. Restricted data must not appear in monitoring evidence.  
-8. Rollback must remain immediately available; Security stop instruction honored immediately.  
-9. Production and legacy retirement remain unauthorized.  
-10. Stop on any listed abort condition.
-
-**Security conditions acknowledged:** **No** (pending Security **Approve** or **Approve with conditions** that explicitly acknowledges 1–10).
-
----
-
-## Vote template (reply on the authorizing PR — do not invent)
-
-```text
-MOTION 4 — PAR-EXC-001 Canonical Read Authority
-
-Approver: @<identity>
-Capacity: Product governance | Engineering governance | Security advisory
-Timestamp: <UTC ISO-8601>
-
-Motions 4.1–4.4: Approve | Approve with conditions | Reject
-
-Vote: <...>
-
-Conditions acknowledged (required for Security):
-1–10 as listed in CANONICAL_READ_AUTHORITY_AUTHORIZATION.md — yes/no
-```
-
----
-
-## Preconditions before any operational enablement (after votes carry)
-
-1. Motions 4.1–4.4 carried with genuine Product + Engineering + Security votes and UTC timestamps.  
-2. Security conditions 1–10 acknowledged **yes**.  
-3. Default-off dual-read / canonical-read implementation merged to `main` (separate implementation PR).  
-4. Exact reviewed deployment HEAD recorded and deployed to the named env without material drift.  
-5. Dual-write Motion 3 stop conditions clear (or dual-write also rolled back if required).  
-6. Rollback dry-validated (flag-off) **before** canonical-read enablement.  
-7. Evidence capture locations ready.  
-8. No production target.
-
----
-
-## Related programme notes
-
-- PR #78 monitoring remains on `main`; Eng/Sec post-merge ratification for continued retention is a **separate** governance item and is **not** substituted by Motion 4.  
-- PAR-EXC-001 stays **In progress** until Completion criteria are met; authorizing Motion 4 alone does not mark the programme Completed.  
-- Flags were **not** enabled by preparing this package.
+After a PASS, switch the canonical-read flags off, restore legacy authority,
+and record the operator evidence before marking PAR-EXC-001 **Completed**. On
+any failure, roll back immediately, retain PAR-EXC-001 as **In progress**, and
+record the blocker. Neither outcome authorizes production, automatic repair,
+permission changes, ADMIN authority, legacy retirement, or another PAR item.

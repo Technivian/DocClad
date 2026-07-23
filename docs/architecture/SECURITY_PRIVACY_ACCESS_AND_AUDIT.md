@@ -192,3 +192,10 @@ No enterprise release without evidence for:
 - vulnerability review;
 - incident response;
 - backup and restore.
+
+For a non-production canonical-authority change, the security gate also
+requires an approved Security GitHub review, green CI, reversible default-off
+flags, and a named-environment operator record. Production activation,
+permission or privilege changes, automatic repair, ADMIN authority, and legacy
+retirement additionally require approved Product, Engineering, and Security
+GitHub reviews and a release record. A feature flag does not grant authority.

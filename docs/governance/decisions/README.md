@@ -31,6 +31,22 @@ Earlier accepted records may use the legacy forms `0008-….md` / `0001-….md` 
 - [ADR template](adr/ADR_TEMPLATE.md)
 - [PDR template](pdr/PDR_TEMPLATE.md)
 - [Exception template](exceptions/EXCEPTION_TEMPLATE.md)
+- [GitHub review and release evidence](../GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md)
+
+## Repository review and release evidence
+
+For new authorization and release work, the GitHub PR, submitted reviews, CI
+results, immutable reviewed and merged SHAs, and the required operator or
+release record are the evidence.
+
+Decision records may link to the PR and release record, but must not recreate
+approval evidence in a manually maintained vote table or copy approval text
+into the record. Historical decision evidence remains unchanged.
+
+See the active Charter and
+[`GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md`](../GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md)
+for the applicable gate.
+
 
 ## Status values
 
@@ -61,6 +77,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0001-finance-approval-threshold.md](pdr/0001-finance-approval-threshold.md) | See file |
 | [0002-contract-stage-and-status.md](pdr/0002-contract-stage-and-status.md) | See file |
 | [PDR-0003-documentation-operating-model.md](pdr/PDR-0003-documentation-operating-model.md) | Accepted |
+| [PDR-0004-github-review-and-release-evidence.md](pdr/PDR-0004-github-review-and-release-evidence.md) | Proposed |
 
 ### Exceptions
 

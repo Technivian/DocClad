@@ -76,6 +76,11 @@ Do not call model providers directly from feature code.
 
 A feature flag controls exposure. It does not legalize a conflicting architecture or domain model.
 
+Release authority is evidenced by the applicable GitHub PR reviews, green CI,
+immutable reviewed and merged SHAs, and the required operator or release
+record. Active authorization packages must not use manually maintained vote
+tables or manually entered approval timestamps.
+
 ## 16. Tests protect invariants
 
 Mandatory invariant tests include:

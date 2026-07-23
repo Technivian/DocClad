@@ -1,8 +1,8 @@
 # CLM One Governance Charter
 
-Version: 2.0
+Version: 2.1
 Status: Mandatory — canonical repository governance document
-Last amended: 2026-07-20 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
+Last amended: 2026-07-23 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
 Purpose: enforce one coherent enterprise-grade product language across all CLM One pages
 
 Product name: **CLM One** is the only customer-facing product name. Historical
@@ -403,3 +403,25 @@ never hardcoded silently into a template.
   name the specific check and where it runs — do not leave enforcement
   claims ambiguous between "reviewers must catch this" and "CI will catch
   this."
+
+## 16) Repository evidence and release control (added 2026-07-23, v2.1)
+
+GitHub is the authority for repository change approval and release evidence.
+The authoritative record comprises submitted GitHub PR reviews, check results,
+the immutable reviewed and merged commit SHAs, and deployment or operator logs.
+Documentation may link to those records but must not recreate them as editable
+approval evidence.
+
+- Do not use manually maintained vote tables, copied approval statements, or
+  manually entered approval timestamps in active authorization packages.
+- Preserve historical governance evidence as historical evidence. Do not
+  rewrite prior records merely to conform them to this prospective rule.
+- A low-risk, default-off change requires green CI and normal PR review.
+- A non-production canonical-authority change requires approved Engineering
+  and Security GitHub reviews, green CI, default-off and reversible flags, and
+  an operator record for the named environment.
+- Production activation, permission or privilege changes, automatic repair,
+  ADMIN authority, and legacy retirement require approved Product,
+  Engineering, and Security GitHub reviews, green CI, and a release record.
+- A feature flag only controls exposure. It never grants authority, bypasses
+  required review, or substitutes for an operator or release record.

@@ -10,6 +10,17 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ---
 
+## Repository review and release evidence
+
+New roadmap-linked authorization packages use submitted GitHub PR reviews,
+green CI, immutable reviewed and merged SHAs, and the applicable operator or
+release record. Do not create manual approval tables or copied approval
+evidence. This prospective model does not alter any PAR status, authority,
+execution gate, or historical record. See
+[`PDR-0004`](../governance/decisions/pdr/PDR-0004-github-review-and-release-evidence.md).
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
@@ -38,7 +49,7 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; PR #78/#79 monitoring auth incomplete; Motion 4 PR #81 Product Approve `09:21:26Z`; Eng/Sec **pending**; Motion 4 **not carried**; committed defaults remain off; **no flags enabled**; **blocker:** canonical read **unauthorized**)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; **blocker:** PR #81 needs approved Engineering and Security GitHub reviews and green CI before canonical-read implementation may start)
 
 2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
@@ -430,7 +441,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 **merged prematurely** `e26a2bdc` (Product Approve `08:39:15Z`; Eng/Sec post-merge ratification **pending**); correction PR #79 **merged** `83a0a00f`; Motion 4 PR [#81](https://github.com/Technivian/CLMOne/pull/81) (Product Approve `2026-07-23T09:21:26Z` comment `5056679929`; Eng/Sec **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**); committed defaults remain **off**; legacy authoritative; **blocker:** canonical read **unauthorized** (Eng/Sec votes outstanding); break-glass / signature-provider residuals inventoried |
+| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package under the GitHub-review evidence model; **no flags enabled**; committed defaults remain **off**; legacy authoritative; **blocker:** approved Engineering and Security GitHub reviews and green CI on PR #81; break-glass / signature-provider residuals inventoried |
 
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
@@ -438,20 +449,20 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; Motion 3 **Authorized**; operational activation **PASS**; Motion 4 canonical-read **Authorization requested** (not carried) |
+| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires approved Engineering and Security GitHub reviews and green CI before the separate default-off canonical-read implementation may start |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
 | Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
-| Rollback strategy | Flags default off; reverse `0115` then `0114`; Motion 3 rollback = flag-off + clear allowlist (**drilled PASS**); Motion 4 rollback = canonical-read flag-off (defined; not authorized) |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; Motion 3 activation authorized + operational PASS; remaining paths inventoried; read authority still open — **keep In progress** |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (required before enablement) |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires PR #81 review/CI gates, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
 | PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
 | Last updated | 2026-07-23 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain genuine Engineering + Security votes on Motion 4 PR #81 (Product Approve recorded; Security conditions 1–10 required); separately obtain Eng/Sec post-merge ratification for PR #78 or revert; do not invent votes; do not enable flags; **exact blocker:** canonical read unauthorized (Eng/Sec outstanding); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
+| Next cutover step | Obtain approved Engineering and Security GitHub reviews and green CI on PR #81; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. **Exact blocker:** PR #81 has no approved Engineering or Security reviews. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
 
 
 ---

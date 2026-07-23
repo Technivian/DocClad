@@ -65,6 +65,25 @@ Do not silently introduce new:
 
 Decision records live under `docs/governance/decisions/`. See `docs/governance/decisions/README.md`.
 
+## GitHub review and release evidence
+
+For new authorization and release work, use GitHub submitted PR reviews, CI
+results, immutable reviewed and merged SHAs, and deployment or operator logs
+as evidence. Do not create or rely on manual vote tables, copied approval
+statements, or manually entered approval timestamps. Historical evidence is
+preserved and must not be rewritten.
+
+- Low-risk default-off work: green CI and normal review.
+- Non-production canonical authority: approved Engineering and Security GitHub
+  reviews, green CI, reversible default-off flags, and a named-environment
+  operator record.
+- Production activation, permission or privilege changes, automatic repair,
+  ADMIN authority, and legacy retirement: approved Product, Engineering, and
+  Security GitHub reviews plus green CI and a release record.
+
+A feature flag does not grant authority. Never enable one before the
+applicable gate is satisfied.
+
 ## Cursor Cloud specific instructions
 
 CLM One is a single Django 5.2 app (project `config`, main domain app `contracts`, Tailwind theme app `theme`). Dev runs on SQLite with all third-party integrations (Redis, Stripe, Gemini AI, S3, OIDC/SAML SSO, Salesforce, NetSuite, e-sign) feature-flagged off, so no external services are needed to run or test it.

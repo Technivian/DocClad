@@ -28,3 +28,8 @@ Why the exception is necessary.
 ## Exit plan
 
 ## Resolution evidence
+
+Link the authorizing GitHub PR and any operator or release record. Required
+approvals are the submitted GitHub PR reviews for the applicable gate; GitHub
+binds those reviews to the immutable reviewed SHA. Do not add a manual
+approval table or copy approval statements into this record.
