@@ -1,11 +1,12 @@
 # PAR-EXC-001 — controlled-pilot monitoring extension
 
-**Status:** Monitoring code **merged** to `main`; bundled authorization **incomplete** (Product only)  
-**Reviewed HEAD (Product vote):** `3d71d8302afbfcc2e4a87f0c701e1611927615b2`  
-**Merge SHA:** `e26a2bdc86ea47c170981034e3616ecb79a04c1f` (PR #78 merged `2026-07-23T09:04:01Z`)  
+**Status:** **Merged prematurely; correction recorded; Engineering/Security ratification pending**  
+**Reviewed implementation HEAD:** `3d71d8302afbfcc2e4a87f0c701e1611927615b2`  
+**PR #78 merge SHA:** `e26a2bdc86ea47c170981034e3616ecb79a04c1f` (merged `2026-07-23T09:04:01Z`)  
+**Correction PR #79:** reviewed head `2bdc189aafd473803757bb3ba501133a9c051e62`; merge method **merge commit**; merge SHA `83a0a00f8e0fc0276033c6b61c20619d3f4c740b`; merged `2026-07-23T09:15:22Z`; resulting `main` HEAD `83a0a00f8e0fc0276033c6b61c20619d3f4c740b`  
 **Authority prerequisite:** Motion 3 **Authorized**; controlled-pilot activation **PASS**  
 **Programme status:** PAR-EXC-001 remains **In progress**  
-**PR:** [#78](https://github.com/Technivian/CLMOne/pull/78)
+**PR:** [#78](https://github.com/Technivian/CLMOne/pull/78) (implementation); [#79](https://github.com/Technivian/CLMOne/pull/79) (governance correction — **not** pre-merge authorization)
 
 ## Scope
 
@@ -111,22 +112,39 @@ Revert this PR (monitoring service + tests + evidence). No data or schema rollba
 
 ---
 
-## Bundled implementation + merge authorization (Motion — Incomplete)
+## Pre-merge authorization (incomplete — historical)
 
-**Motion text:** Authorize implementation and merge of PR #78 (`feat(par-exc-001): add controlled-pilot dual-write monitoring`) at the reviewed HEAD recorded at vote time, as a read-only metadata monitoring extension of `pilot_daily_health` only; no migration; no committed default change; no canonical read authority; no automatic repair; no historical invention; legacy remains authoritative; PAR-EXC-001 remains In progress; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain unstarted.
+Original motion sought pre-merge Product + Engineering + Security authorization. Only Product voted before merge.
 
 | Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
 |---|---|---|---|---|
 | @haroonwahed | Product governance | **Approve** | `2026-07-23T08:39:15Z` | [comment 5056386192](https://github.com/Technivian/CLMOne/pull/78#issuecomment-5056386192); reviewed head `3d71d830` |
-| @Technivian | Engineering governance | _pending — ratification requested_ | | |
-| @Technivian | Security advisory | _pending — ratification requested_ | | |
+| @Technivian | Engineering governance | **Missing** (never posted pre-merge) | | |
+| @Technivian | Security advisory | **Missing** (never posted pre-merge) | | |
 
-**Motion result:** **Not carried** (Engineering + Security outstanding)
+**Pre-merge motion result:** **Not carried.** The original merge is **not** described as authorized and is **not** claimed to have had retroactive pre-merge Eng/Sec approval.
 
-### Governance correction (2026-07-23)
+### Governance correction (PR #79)
 
-A prior evidence/roadmap commit (`0fc67eaf`) incorrectly recorded Engineering **Approve** `08:56:33Z` and Security **Approve with conditions** `08:56:34Z`, and treated the motion as Carried. Those Eng/Sec entries were **not** posted on PR #78 and are **retracted**. Product’s genuine vote remains as above.
+A prior evidence/roadmap commit (`0fc67eaf`) incorrectly recorded Engineering **Approve** `08:56:33Z` and Security **Approve with conditions** `08:56:34Z`, and treated the motion as Carried. Those Eng/Sec entries were **not** posted on PR #78 and are **retracted**.
 
-PR #78 was merged to `main` @ `e26a2bdc` (`2026-07-23T09:04:01Z`) while Engineering and Security votes were still outstanding. The monitoring code remains on `main` (read-only; no authority change). **Engineering and Security must still record genuine ratification votes** before this motion is treated as Authorized.
+PR #78 was merged to `main` @ `e26a2bdc` (`2026-07-23T09:04:01Z`) while Engineering and Security votes were still outstanding. Correction PR #79 repaired the record (merge `83a0a00f`, `2026-07-23T09:15:22Z`). PR #79 is a corrective record only — **not** authorization for PR #78.
 
-**Do not invent votes.**
+---
+
+## Post-merge ratification (continued retention) — Pending
+
+**Motion:** Ratify the continued retention of the already-merged PR #78 monitoring implementation at merge SHA `e26a2bdc86ea47c170981034e3616ecb79a04c1f`, reviewed implementation head `3d71d8302afbfcc2e4a87f0c701e1611927615b2`.
+
+This is **post-merge ratification of continued retention only**. It does not rewrite history or claim that Engineering and Security approval existed before the merge.
+
+**Binding scope:** read-only `pilot_daily_health` monitoring only; no migration; no runtime authority change; committed defaults remain off; legacy remains authoritative; canonical read remains unauthorized; no automatic repair; no historical invention; PAR-EXC-001 remains In progress; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 remain unstarted.
+
+| Approver | Capacity | Vote | Timestamp (UTC) | Evidence |
+|---|---|---|---|---|
+| @Technivian | Engineering governance | **Missing** | | |
+| @Technivian | Security advisory | **Missing** | | |
+
+**Disposition:** **Ratification pending** — do not call this motion Authorized or Carried; do not begin further PAR-EXC work beyond this governance record.
+
+**Do not invent, proxy, infer, or manufacture either vote.**

@@ -1,7 +1,7 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); Motion 3 **Authorized** (PR #74 @ `058c5ed0`); controlled-pilot operational activation evidence **PASS**; committed flag defaults remain **off**; canonical read cutover **unauthorized**  
+**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); Motion 3 **Authorized** (PR #74 @ `058c5ed0`); controlled-pilot operational activation evidence **PASS**; monitoring PR #78 **merged prematurely** `e26a2bdc` (Product Approve only); correction PR #79 **merged** `83a0a00f`; Eng/Sec **post-merge ratification pending**; committed flag defaults remain **off**; canonical read cutover **unauthorized**  
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
 **Dual-write:** PR [#69](https://github.com/Technivian/CLMOne/pull/69) merge `f19eae42fd14e310364fb047868abea4951a5efe` (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
@@ -51,7 +51,7 @@
 | [`TEST_RESULTS.md`](TEST_RESULTS.md) / [`DUAL_WRITE_TEST_RESULTS.md`](DUAL_WRITE_TEST_RESULTS.md) | Test evidence |
 | [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Pilot activation package (**Motion 3 Authorized**; operational **PASS**) |
 | [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) | Operational evidence (**PASS**) |
-| [`PILOT_MONITORING_EXTENSION.md`](PILOT_MONITORING_EXTENSION.md) | Read-only pilot_daily_health dual-write monitoring (PR #78 merged `e26a2bdc`; Product Approve only; Eng/Sec ratification pending) |
+| [`PILOT_MONITORING_EXTENSION.md`](PILOT_MONITORING_EXTENSION.md) | Read-only pilot_daily_health dual-write monitoring (PR #78 merge `e26a2bdc`; correction PR #79 merge `83a0a00f`; Eng/Sec post-merge ratification **pending**) |
 
 ---
 
