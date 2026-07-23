@@ -11,10 +11,11 @@ record rewriting, and any authorization or execution decision.
 
 ## Rule
 
-Manual UTC timestamp entry for governance votes is discontinued. The genuine
-GitHub comment or review that contains the vote is the authoritative evidence;
-GitHub's system-generated `created_at` is the authoritative audit timestamp.
-It may be retrieved for audit, but approvers must not type or calculate it.
+PDR-0004 proposes discontinuing manual UTC timestamp entry for governance
+votes. Once accepted, the genuine GitHub comment or review that contains the
+vote is the authoritative evidence; GitHub's system-generated `created_at` is
+the authoritative audit timestamp. It may be retrieved for audit, but
+approvers must not type or calculate it.
 
 Vote tables use this form:
 

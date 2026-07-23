@@ -10,7 +10,8 @@ Before material product, architecture, design, security, workflow, AI, or engine
 If this PR requests a governance decision, use the GitHub evidence model in
 [`GITHUB_VOTE_EVIDENCE_GUIDANCE.md`](../docs/governance/GITHUB_VOTE_EVIDENCE_GUIDANCE.md).
 Votes link to the genuine GitHub comment or review; do not enter a manual UTC
-timestamp in the PR or vote template.
+timestamp in the PR or vote template. This guidance becomes binding when
+PDR-0004 is accepted.
 
 ## Risk and Scope
 

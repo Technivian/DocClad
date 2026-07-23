@@ -35,10 +35,11 @@ Earlier accepted records may use the legacy forms `0008-….md` / `0001-….md` 
 
 ## Governance vote evidence
 
-For a new governance vote, the genuine GitHub comment or review is the
-evidence. Its system-generated `created_at` is the authoritative audit
-timestamp and may be retrieved for audit; it must not be manually typed,
-calculated, or copied into a vote template.
+PDR-0004 proposes that the genuine GitHub comment or review become the
+evidence for a new governance vote. Its system-generated `created_at` would
+be the authoritative audit timestamp and may be retrieved for audit; it must
+not be manually typed, calculated, or copied into a vote template. This model
+becomes binding only when PDR-0004 is accepted.
 
 A valid vote identifies its approver through the GitHub evidence and contains:
 

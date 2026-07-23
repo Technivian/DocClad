@@ -72,7 +72,8 @@ For new governance votes, use the GitHub evidence model in
 comment or review is the vote evidence and its system-generated `created_at`
 is the authoritative audit timestamp. Do not enter, calculate, infer, or
 proxy a vote timestamp. Historical records remain unchanged unless a separate
-approved record requires a correction.
+approved record requires a correction. PDR-0004 is Proposed, so this model
+does not itself authorize a decision until the PDR is accepted.
 
 ## Cursor Cloud specific instructions
 
