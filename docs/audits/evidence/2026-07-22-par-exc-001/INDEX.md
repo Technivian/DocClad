@@ -1,7 +1,7 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); Motion 3 **Authorized** (PR #74 @ `058c5ed0`); controlled-pilot operational activation evidence **PASS**; monitoring PR #78 **merged** `e26a2bdc` / correction PR #79 `83a0a00f`; Motion 4 canonical-read package **Authorization requested** (votes not carried; no flags enabled); committed flag defaults remain **off**; canonical read cutover **unauthorized**  
+**Status:** **In progress** — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot operational activation evidence **PASS**; monitoring PR #78 **merged** `e26a2bdc` / correction PR #79 `83a0a00f`; Motion 4 PR [#81](https://github.com/Technivian/CLMOne/pull/81) Product Approve `2026-07-23T09:21:26Z` / Eng+Sec **pending** / **not carried** / **no flags enabled**; committed flag defaults remain **off**; canonical read cutover **unauthorized**  
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
 **Dual-write:** PR [#69](https://github.com/Technivian/CLMOne/pull/69) merge `f19eae42fd14e310364fb047868abea4951a5efe` (supersedes stacked [#67](https://github.com/Technivian/CLMOne/pull/67))  
