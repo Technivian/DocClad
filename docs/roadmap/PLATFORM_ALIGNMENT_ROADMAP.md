@@ -38,7 +38,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; Motion 4 PR #81 Product Approve `09:21:26Z`; Eng/Sec **pending**; Motion 4 **not carried**; committed defaults remain off; **no flags enabled**; **blocker:** canonical read **unauthorized**)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; PR #78/#79 monitoring auth incomplete; Motion 4 PR #81 Product Approve `09:21:26Z`; Eng/Sec **pending**; Motion 4 **not carried**; committed defaults remain off; **no flags enabled**; **blocker:** canonical read **unauthorized**)
+
 2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 4. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
@@ -429,7 +430,8 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 **merged** `e26a2bdc`; Motion 4 PR [#81](https://github.com/Technivian/CLMOne/pull/81) **Authorization requested** (Product Approve `2026-07-23T09:21:26Z` comment `5056679929`; Eng/Sec **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**); committed defaults remain **off**; legacy authoritative; **blocker:** canonical read **unauthorized** (Eng/Sec votes outstanding); break-glass / signature-provider residuals inventoried |
+| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 **merged prematurely** `e26a2bdc` (Product Approve `08:39:15Z`; Eng/Sec post-merge ratification **pending**); correction PR #79 **merged** `83a0a00f`; Motion 4 PR [#81](https://github.com/Technivian/CLMOne/pull/81) (Product Approve `2026-07-23T09:21:26Z` comment `5056679929`; Eng/Sec **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**); committed defaults remain **off**; legacy authoritative; **blocker:** canonical read **unauthorized** (Eng/Sec votes outstanding); break-glass / signature-provider residuals inventoried |
+
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
@@ -446,10 +448,11 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; Motion 3 activation authorized + operational PASS; remaining paths inventoried; read authority still open — **keep In progress** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (auth incomplete); correction PR #79 merge `83a0a00f` |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
 | Last updated | 2026-07-23 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain genuine Engineering + Security votes on Motion 4 PR #81 (Product Approve recorded); do not invent votes; do not enable flags; **exact blocker:** canonical read unauthorized (Eng/Sec outstanding); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
+| Next cutover step | Obtain genuine Engineering + Security votes on Motion 4 PR #81 (Product Approve recorded; Security conditions 1–10 required); separately obtain Eng/Sec post-merge ratification for PR #78 or revert; do not invent votes; do not enable flags; **exact blocker:** canonical read unauthorized (Eng/Sec outstanding); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
+
 
 ---
 
@@ -661,6 +664,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #69 merged** to `main` @ `f19eae42` (six-path dual-write default-off); PR #70 recorded merge SHA; activation still **Requested**; committed defaults remain off; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PAR-EXC-001 Motion 3 Authorized:** Product `20:04:13Z` / Engineering `20:04:15Z` / Security `20:04:34Z` (Approve with conditions); controlled-pilot dual-write activation for `controlled-pilot-org` only; committed defaults remain off; operational env enablement now permitted; canonical read still unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PR #74 merged** to `main` @ `058c5ed0` (Motion 3 authorization record); committed defaults remain off; PAR-EXC-001 remains **In progress** |
-| 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged** `e26a2bdc` (read-only `pilot_daily_health` extension). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`, reviewed head `3d71d830`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**; Engineering + Security ratification **still required**. Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
+| 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (PR [#81](https://github.com/Technivian/CLMOne/pull/81); `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; Product Approve `2026-07-23T09:21:26Z` (comment `5056679929`); Engineering + Security **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**; PAR-EXC-001 remains **In progress** |
+
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |
