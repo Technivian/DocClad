@@ -26,8 +26,8 @@ execution gate, or historical record. See
 | Rollup | Count | Notes |
 |---|---:|---|
 | **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
-| Completed unique PAR IDs | 15 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001` |
-| In progress | 1 | `PAR-EXC-001` |
+| Completed unique PAR IDs | 16 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001` |
+| In progress | 0 | — |
 | Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed); `PAR-ID-002` residual not started |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
@@ -37,9 +37,9 @@ execution gate, or historical record. See
 
 ### Unique PAR ID inventory
 
-**Completed (15):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`
+**Completed (16):** `PAR-WF-001`, `PAR-AUD-001`, `PAR-WF-002`, `PAR-WF-003`, `PAR-WF-005`, `PAR-NAV-001`, `PAR-SEC-001`, `PAR-WORK-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001`
 
-**In progress (1):** `PAR-EXC-001`
+**In progress (0):** —
 
 **Future / residual (8):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
@@ -49,11 +49,9 @@ execution gate, or historical record. See
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; single-maintainer bootstrap requires the repository-owner attestation on PR #81's exact SHA plus green CI before canonical-read implementation may start)
-
-2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
-3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
-4. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
+1. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
+2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
+3. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
 
 Parallel Milestone 1 hygiene:
 
@@ -127,7 +125,7 @@ Parallel Milestone 1 hygiene:
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
 | PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
 | PAR-ID-001 | Role Definition reconciliation | P1 | **Completed** |
-| PAR-EXC-001 | Governed Exception | P1 | **In progress** |
+| PAR-EXC-001 | Governed Exception | P1 | **Completed** |
 
 ### Milestone 4 — Canonical data and post-signature
 
@@ -677,5 +675,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #74 merged** to `main` @ `058c5ed0` (Motion 3 authorization record); committed defaults remain off; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (PR [#81](https://github.com/Technivian/CLMOne/pull/81); `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; Product Approve `2026-07-23T09:21:26Z` (comment `5056679929`); Engineering + Security **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**; PAR-EXC-001 remains **In progress** |
+| 2026-07-24 | **PAR-EXC-001 Completed:** PR #81 governance and authorization package merged `3eba3602211c58ad73d6612201d6e8587f21f689`; PR #85 default-off canonical-read implementation merged `86625b95cfbc968dea2f7cb31b8fc354a36584cf`; named environment `par-exc-001-canonical-read-authority` observation PASS (six correlated paths, 6 canonical reads, 1 legacy fallback, AI submitted/no decision, tenant isolation test PASS); both flags off, allowlists empty, legacy authoritative. Operator evidence: [PR #85 comment 5068883933](https://github.com/Technivian/CLMOne/pull/85#issuecomment-5068883933). Production, repair, permission changes, ADMIN authority, and legacy retirement remain out of scope. Next unstarted item: PAR-APR-002. |
 
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |

@@ -1,6 +1,6 @@
 # PAR-EXC-001 evidence summary — 2026-07-22
 
-## Status: In progress
+## Status: Completed
 
 **ADR-0015:** **Accepted** (`2026-07-22T19:12:39Z`).  
 **Motion 2:** Default-off six-path dual-write **Authorized**; PR #69 merged (`f19eae42`).  
@@ -8,7 +8,7 @@
 **Operational activation:** **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md).  
 **Pilot monitoring:** PR #78 merged prematurely `e26a2bdc`; correction PR #79 merged `83a0a00f`. The historical record is preserved; monitoring remains read-only and does not change runtime authority — [`PILOT_MONITORING_EXTENSION.md`](PILOT_MONITORING_EXTENSION.md).
 **Committed flag defaults:** remain **off**.  
-**Canonical read authority:** **Not ready** — package [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) on PR [#81](https://github.com/Technivian/CLMOne/pull/81) requires approved Engineering and Security GitHub reviews, green CI, default-off reversible flags, and an operator record; flags are **not** enabled.
+**Canonical read authority:** **PASS (named non-production observation only)** — authorization package PR [#81](https://github.com/Technivian/CLMOne/pull/81) merged `3eba3602211c58ad73d6612201d6e8587f21f689`; default-off implementation PR [#85](https://github.com/Technivian/CLMOne/pull/85) merged `86625b95cfbc968dea2f7cb31b8fc354a36584cf`; results [`CANONICAL_READ_OPERATOR_RESULTS.md`](CANONICAL_READ_OPERATOR_RESULTS.md). Both flags are now **off**, allowlists empty, and legacy authority restored.
 **Not started:** PAR-APR-002, PAR-WF-010, PAR-ID-002.
 
 ### Discovery
@@ -29,6 +29,4 @@
 - Activation package: [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) — Motion 3 **Authorized**; operational evidence **PASS**.
 
 ### Next (from evidence)
-1. Obtain approved Engineering and Security GitHub reviews and green CI for PR [#81](https://github.com/Technivian/CLMOne/pull/81); do not enable flags.
-2. After PR #81 is merged, implement canonical read behind reversible default-off flags in a separate reviewed PR.
-3. Keep programme **In progress** until the named-environment operator run passes, flags are returned off, and legacy authority is restored; do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 from this slice.
+PAR-EXC-001 is complete. The next unstarted roadmap item is PAR-APR-002; it has not begun in this slice.
