@@ -32,6 +32,23 @@ status.
 
 ---
 
+## Qualified Platform Alignment closeout
+
+**PASS — Platform Alignment tranche closed with inherited full-suite
+residuals.** The reviewed evidence baseline is
+`706f20b8b84833d97f85342c8182283c8d1fcfea`; see the
+[final closeout record](../audits/evidence/2026-07-24-platform-alignment-final-closeout.md).
+The controlled full-suite comparison remains non-green only for its recorded
+inherited residuals (70 identical failure/error identifiers; no new regression).
+Post-baseline PAR-APR-002 characterization is separate future work and does
+not make implementation or cutover part of this closed tranche. Historical
+stale PRs [#60](https://github.com/Technivian/CLMOne/pull/60),
+[#64](https://github.com/Technivian/CLMOne/pull/64), and
+[#65](https://github.com/Technivian/CLMOne/pull/65) are closed without merge;
+their branches are retained as historical context.
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
