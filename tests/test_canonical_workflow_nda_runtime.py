@@ -209,6 +209,8 @@ class CanonicalWorkflowNDAServiceTests(TestCase):
         with self.assertRaises(CanonicalWorkflowError):
             SignatureEvidence.objects.filter(pk=evidence.pk).update(event_type='tampered')
         with self.assertRaises(CanonicalWorkflowError):
+            SignatureEvidence.objects.filter(pk=evidence.pk).delete()
+        with self.assertRaises(CanonicalWorkflowError):
             evidence.delete()
         with self.assertRaises(Exception):
             AuditLog.objects.filter(organization=self.organization).update(event_type='tampered')

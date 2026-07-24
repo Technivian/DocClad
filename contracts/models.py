@@ -4109,6 +4109,11 @@ class SignatureEvidenceQuerySet(models.QuerySet):
 
         raise CanonicalWorkflowError('Signature evidence is append-only and cannot be deleted.')
 
+    def _raw_delete(self, *args, **kwargs):
+        from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+        raise CanonicalWorkflowError('Signature evidence is append-only and cannot be deleted.')
+
 
 class SignatureEvidenceManager(models.Manager.from_queryset(SignatureEvidenceQuerySet)):
     pass
