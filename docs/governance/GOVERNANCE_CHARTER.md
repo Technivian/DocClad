@@ -1,8 +1,8 @@
 # CLM One Governance Charter
 
-Version: 2.3
+Version: 2.4
 Status: Mandatory — canonical repository governance document
-Last amended: 2026-07-24 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
+Last amended: 2026-07-25 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
 Purpose: enforce one coherent enterprise-grade product language across all CLM One pages
 
 Product name: **CLM One** is the only customer-facing product name. Historical
@@ -433,6 +433,20 @@ approval evidence.
   unchanged; abort and rollback controls and a named-environment operator
   record are mandatory; and flags must be off again after observation. This is
   not a GitHub review and does not apply to any action in the following bullet.
+- **Pilot Hardening bootstrap (`PAR-SEC-002`):** `@haroonwahed` is the named
+  Programme, Product, Engineering, and Security owner. The repository owner
+  declares that this account is the sole direct human collaborator with admin
+  access; GitHub confirms its admin permission. For planning-only work,
+  tests-and-evidence-only work, and committed-default-off observational
+  instrumentation, an exact-SHA GitHub owner attestation may satisfy the
+  otherwise unavailable normal-review gate. The attestation must name the
+  immutable head SHA; all required CI must be green for that SHA; and the
+  reviewed scope must remain unchanged. Observational instrumentation must be
+  content-free and pass-through while its committed control is off. This
+  bootstrap never authorizes a runtime authorization, permission, authority,
+  filtering, migration, production, repair, ADMIN, canonical-read, or
+  legacy-retirement change. Any live observation still follows the applicable
+  operator-record and rollback requirements.
 - Production activation, permission or privilege changes, automatic repair,
   ADMIN authority, and legacy retirement require approved Product,
   Engineering, and Security GitHub reviews that are independent of one
