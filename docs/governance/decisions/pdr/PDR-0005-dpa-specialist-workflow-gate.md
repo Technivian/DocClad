@@ -1,6 +1,6 @@
 # PDR-0005: DPA specialist workflow gate (combined ADR/PDR)
 
-**Status:** Proposed — planning only; not binding or implementation authority.
+**Status:** Accepted — planning decision only; not implementation authority.
 **Date:** 2026-07-24
 **Owner:** PAR-APR-002 programme
 **Affected Charter sections:** Repository evidence and release control
@@ -25,8 +25,8 @@ coupling.
 
 ## Proposed decision
 
-Adopt **DPA as a specialist workflow gate** as the target model, subject to
-this PDR being accepted and a separate implementation authorization.
+Adopt **DPA as a specialist workflow gate** as the target model. A separate
+implementation authorization remains required.
 
 The gate is a Privacy Review capability, not a generic approval requirement
 and not a fully independent lifecycle with no workflow contract. It may be
@@ -115,8 +115,8 @@ None of these effects is implemented or authorized by this proposal.
 
 ## Migration, rollback, and compatibility
 
-No migration is authorized by this PDR while Proposed. If accepted and later
-implemented, the first slice must be additive and nullable, preserve legacy
+No migration is authorized by this PDR. If later implemented under separate
+authorization, the first slice must be additive and nullable, preserve legacy
 and DPA reads, use no inferred backfill, and include forward/rollback/re-forward
 verification. Rollback must disable use of the new workflow-gate reference
 before removing it and leave historical DPA and approval evidence unchanged.
@@ -164,8 +164,9 @@ organization, actor, timing, or label is not a durable relationship key.
 - green CI. Any canonical-authority or legacy-retirement step remains subject
   to its separate governance gate.
 
-## Approval
+## Acceptance evidence
 
-Proposed only. Approval must be recorded by the applicable submitted GitHub
-reviews and immutable reviewed SHA. This record creates no implementation or
+Accepted under the standing single-maintainer governance rule. The authoritative
+evidence is the repository-owner GitHub attestation on PR #101's exact reviewed
+SHA together with green required CI. This record creates no implementation or
 release authority.
