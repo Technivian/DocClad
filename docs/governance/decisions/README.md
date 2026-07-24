@@ -80,6 +80,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [PDR-0004-github-review-and-release-evidence.md](pdr/PDR-0004-github-review-and-release-evidence.md) | Proposed |
 | [PDR-0005-dpa-specialist-workflow-gate.md](pdr/PDR-0005-dpa-specialist-workflow-gate.md) | Accepted |
 | [PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md](pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md) | Proposed |
+| [PDR-0007-approval-route-runtime-boundary.md](pdr/PDR-0007-approval-route-runtime-boundary.md) | Proposed |
 
 ### Exceptions
 
