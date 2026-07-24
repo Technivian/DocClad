@@ -1,8 +1,8 @@
 # Named GitHub Release Authority for non-production canonical authority: @haroonwahed
-* @haroonwahed @Technivian
+* @haroonwahed
 
-/config/ @haroonwahed @Technivian
-/contracts/ @haroonwahed @Technivian
-/tests/ @haroonwahed @Technivian
-/.github/ @haroonwahed @Technivian
-/docs/ @haroonwahed @Technivian
+/config/ @haroonwahed
+/contracts/ @haroonwahed
+/tests/ @haroonwahed
+/.github/ @haroonwahed
+/docs/ @haroonwahed
