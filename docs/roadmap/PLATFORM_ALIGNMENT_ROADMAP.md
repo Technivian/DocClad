@@ -21,6 +21,17 @@ execution gate, or historical record. See
 
 ---
 
+## Governance reconciliation
+
+PR #82 was closed without merge as superseded by Governance Charter §16 and
+`main` commit `3eba3602211c58ad73d6612201d6e8587f21f689`. Its editable
+evidence-table policy and associated branch remain historical context only;
+active templates and guidance use the GitHub review-and-release evidence model
+above. This reconciliation changes no Motion 4, canonical-authority, or PAR
+status.
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
