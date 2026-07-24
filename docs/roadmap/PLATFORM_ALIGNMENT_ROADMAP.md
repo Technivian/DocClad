@@ -447,20 +447,20 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires the applicable exact-SHA gate (named Release Authority review, or the narrowly scoped sole-maintainer owner attestation) and green CI before the separate default-off canonical-read implementation may start |
+| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 sole-maintainer exception, exact-SHA attestation, and green CI satisfied; PR #85 implementation and named observation **PASS** |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
-| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
+| Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; no permission mutation; legacy authority restored after observation |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
-| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (required before enablement) |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires the applicable exact-SHA/CI gate on PR #81, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (**PASS**; both flags off and allowlists empty) |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical-read exact-SHA/CI gate, separate default-off implementation, and named-environment PASS observation completed with flag-off restoration — **Completed** |
 | Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
-| Last updated | 2026-07-23 |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; authorization PR #81 merge `3eba3602`; canonical-read PR #85 merge `86625b95`; closure PR #87 merge `6f58cb81` |
+| Last updated | 2026-07-24 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain the applicable exact-SHA gate for PR #81 (the named Release Authority review or, only where independently unavailable, the sole-maintainer owner attestation) while CI is green; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
+| Next roadmap item | PAR-APR-002 legacy approval cutover — planned and not started in this slice |
 
 
 ---
