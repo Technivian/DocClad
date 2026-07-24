@@ -1,9 +1,13 @@
 # PDR-0006: Canonical Workflow Versioning and Contract Execution Authority
 
-**Status:** Proposed
+**Status:** Approved — canonical product and architecture direction only; implementation and activation remain separately governed.
 **Date:** 2026-07-24
 **Decision type:** Combined Product Decision Record / Architecture Decision Record
 **Scope:** Canonical workflow runtime and the minimum NDA execution authority
+**Approval evidence:** The approving GitHub review or repository-owner attestation
+on the approval PR's exact reviewed SHA, together with green required CI and merge
+metadata, is authoritative. This record does not recreate a vote table or manual
+approval timestamp.
 
 **Related authority:** [Governance Charter](../../GOVERNANCE_CHARTER.md),
 [Master Blueprint](../../../product/MASTER_BLUEPRINT.md),
@@ -21,17 +25,16 @@
 
 ## Status and authority boundary
 
-This record is **Proposed**. It is implementation-ready for review, but does not
-authorize a migration, permission change, provider activation, pilot, or production
-behaviour. Those actions require the applicable accepted authority, reviewed pull
-request, CI evidence, and release gate under the active Charter.
+This record is **Approved** as the canonical product and architecture direction. It
+does not authorize a migration, permission change, provider activation, pilot, or
+production behaviour. Those actions require the applicable accepted authority,
+reviewed pull request, CI evidence, and release gate under the active Charter.
 
 The active Charter and accepted supporting documents above remain authoritative.
 Charter v3, PDR-0004, ADR-0010, ADR-0011 and ADR-0012 are proposed and do not
-supply implementation authority. If accepted, this record becomes the single
-decision for this scope and supersedes the proposed workflow-runtime direction in
-ADR-0010 and ADR-0012. Until acceptance, neither those records nor this record
-authorizes implementation by implication.
+supply implementation authority. This record is the single decision for this scope
+and supersedes the proposed workflow-runtime direction in ADR-0010 and ADR-0012.
+Its approval does not authorize implementation by implication.
 
 ## Context and problem statement
 
