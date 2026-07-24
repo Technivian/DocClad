@@ -60,7 +60,7 @@ status.
 
 ## Immediate next items
 
-1. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
+1. **PAR-APR-002** — legacy approval cutover — **Planned — baseline verified; implementation blocked before entry gates**
 2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 3. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
 
@@ -134,7 +134,7 @@ Parallel Milestone 1 hygiene:
 | ID | Title | Priority | Status |
 |---|---|---|---|
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
-| PAR-APR-002 | Legacy approval cutover | P1 | **Planned** |
+| PAR-APR-002 | Legacy approval cutover | P1 | **Planned — baseline verified; implementation blocked** |
 | PAR-ID-001 | Role Definition reconciliation | P1 | **Completed** |
 | PAR-EXC-001 | Governed Exception | P1 | **Completed** |
 
@@ -420,6 +420,29 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | Next | **PAR-EXC-001** (In progress); **PAR-ID-001 Completed** |
 | Last updated | 2026-07-22 |
 
+### PAR-APR-002 — Legacy approval cutover
+
+| Field | Content |
+|---|---|
+| Status | **Planned — baseline verified 2026-07-24; implementation blocked before entry gates** |
+| Priority | P1 |
+| Objective | Retire `ApprovalRequest` as the approval read authority only after canonical `ApprovalRequirement` / immutable `ApprovalDecision` behaviour is demonstrably equivalent, the residual approval flows are reconciled, and a separately authorised cutover plan exists. This planning slice does not retire, remove, or deactivate the legacy model. |
+| Scope | Inventory and classify legacy approval reads and writes; characterize parity and isolation; reconcile DPA review approval state, template-route configuration, and the deferred ABSTAIN / explicit REVOKE experience; then define a reversible read-cutover plan. |
+| Verified completed baseline | **Completed:** ADR-0013 foundation; migration `0111`; canonical requirement and immutable decision models; canonical requirement creation, decision recording, version binding, invalidation, audit events, and legacy mirror linkage; foundation approval, authorization, inbox, and DPA regression coverage. |
+| Verified partial baseline | **Partial:** canonical and legacy records coexist, but the workflow service, inbox, contract lifecycle signature/activation gates, and many operational/API surfaces still query `ApprovalRequest`; lifecycle currently requires both open canonical requirements and legacy approval status. The legacy model therefore remains authoritative in practice. |
+| Verified missing baseline | **Missing:** a complete call-site ownership matrix; canonical-read parity evidence; reconciled `DPAReviewPack.approval_status`; required `ApprovalRoute` mapping; ABSTAIN and explicit REVOKE UI/actions; cutover and rollback rehearsal; authorization for legacy read retirement. |
+| Deferred / not required | **Deferred:** physical removal of `ApprovalRequest` and any dual-write sunset until after a separately authorised, reversible read cutover. **Not required in this PAR:** production activation, privilege or permission changes, data repair, ADMIN authority, and legacy retirement execution. |
+| Dependencies | **Met:** PAR-APR-001 / ADR-0013 foundation and PAR-SEC-003 closure. **Unmet / blocking:** named programme, engineering, product, and security ownership; approved cutover plan; implementation authorization. ADR-0013 authorizes planning only, not code changes or legacy removal. |
+| Current test evidence | 2026-07-24 focused baseline: **119/120** selected approval, authorization, inbox, DPA, and workflow tests passed. The single failure is `tests.test_workflow_routing.WorkflowRoutingTests.test_workflow_dashboard_and_detail_surface_routing_endpoints`: it expects the dashboard not to contain `/contracts/approval-rules/`, but the rendered command surface includes it. This is an existing workflow-dashboard assertion drift; it is not changed or attributed to the cutover. Django system checks passed. |
+| Acceptance criteria | (1) every non-migration `ApprovalRequest` call site classified and owned; (2) canonical/legacy read parity, tenant-isolation, authorization, and fallback characterization passed; (3) DPA, route-template, ABSTAIN, and REVOKE behaviours reconciled or explicitly accepted as out of scope; (4) a reversible, rehearsed cutover and rollback plan approved; (5) required regression suite and CI green; (6) release evidence is recorded before any authority change. |
+| Release gates | Planning and characterization remain non-authorizing. No flag grants authority. Any future non-production canonical authority requires the repository governance gate applicable at that time, green CI, reversible default-off controls, and an operator record. Legacy retirement, production activation, permissions/privileges, automatic repair, or ADMIN authority require independent Product, Engineering, and Security approval, green CI, and a release record. |
+| First implementation slice | **Not yet authorised.** After the unmet entry gates are satisfied, the smallest safe slice is a characterization-only test and evidence package: a deterministic call-site matrix and parity fixtures for one representative read path, with no schema migration, no resolver switch, no flag activation, no permissions change, and no legacy write/read removal. It must leave legacy authoritative. |
+| Likely files for that future slice | `docs/audits/evidence/2026-07-22-par-apr-002/` (baseline matrix and test record); a new focused APR-002 characterization test under `tests/`; and, only if a test seam is genuinely needed, the narrow read boundary in `contracts/services/approval_workflow.py`. Later, separately scoped phases are likely to affect `contracts/services/contract_lifecycle.py`, `contracts/views_domains/privacy_approvals.py`, `contracts/models.py`, and each owned legacy call site. |
+| Required tests and evidence | Focused canonical-foundation, approval workflow, authorization, inbox, DPA, and workflow-routing tests; a call-site inventory excluding migrations; canonical/legacy parity and mismatch fixtures; tenant-isolation and permission-denial tests; CI result; immutable reviewed SHA; and, before an authority change, an approved cutover/rollback and operator record. |
+| Proposed phases | **0 — entry gates and ownership:** assign owners and approve a planning/cutover brief. **1 — characterization:** inventory legacy call sites and establish parity/isolation baselines. **2 — residual reconciliation:** separately scope DPA, route-template, ABSTAIN, and REVOKE work. **3 — reversible read cutover:** only after authorization, default-off and observed with rollback. **4 — retirement decision:** separately governed; not planned or authorised by this PAR baseline. |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/`; `docs/audits/evidence/2026-07-22-par-apr-002/CLOSURE_CHECKLIST.md`; ADR-0013; this verified baseline entry. |
+| Last updated | 2026-07-24 |
+
 ### PAR-ID-001 — Role Definition reconciliation
 
 | Field | Content |
@@ -687,5 +710,6 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (PR [#81](https://github.com/Technivian/CLMOne/pull/81); `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; Product Approve `2026-07-23T09:21:26Z` (comment `5056679929`); Engineering + Security **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**; PAR-EXC-001 remains **In progress** |
 | 2026-07-24 | **PAR-EXC-001 Completed:** PR #81 governance and authorization package merged `3eba3602211c58ad73d6612201d6e8587f21f689`; PR #85 default-off canonical-read implementation merged `86625b95cfbc968dea2f7cb31b8fc354a36584cf`; named environment `par-exc-001-canonical-read-authority` observation PASS (six correlated paths, 6 canonical reads, 1 legacy fallback, AI submitted/no decision, tenant isolation test PASS); both flags off, allowlists empty, legacy authoritative. Operator evidence: [PR #85 comment 5068883933](https://github.com/Technivian/CLMOne/pull/85#issuecomment-5068883933). Production, repair, permission changes, ADMIN authority, and legacy retirement remain out of scope. Next unstarted item: PAR-APR-002. |
+| 2026-07-24 | **PAR-APR-002 baseline verified (planning only):** ADR-0013 foundation confirmed; legacy `ApprovalRequest` remains a live dependency across workflow, lifecycle, inbox, API, and operational surfaces; DPA reconciliation, route mapping, ABSTAIN/REVOKE experience, call-site ownership, cutover plan, and implementation authorization remain open. Focused baseline suite: 119/120 pass; one existing workflow-dashboard assertion drift recorded. PAR-APR-002 remains **Planned**; no implementation, authority, or legacy-retirement work started. |
 
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |
