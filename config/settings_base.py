@@ -571,6 +571,14 @@ EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST = os.getenv(
     'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST', '',
 ).strip()
 
+# PAR-EXC-001 — canonical applicability read (default OFF). This is limited to
+# the controlled non-production window; legacy remains the fallback on a
+# canonical miss or operational failure.
+EXCEPTION_CANONICAL_READ_ENABLED = _bool_env('EXCEPTION_CANONICAL_READ_ENABLED', default=False)
+EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST = os.getenv(
+    'EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST', '',
+).strip()
+
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
