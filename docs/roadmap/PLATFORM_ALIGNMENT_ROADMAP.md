@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-22 (Tranche-1 integration / PR-scope normalization)  
+**Last refined:** 2026-07-24 (PAR-APR-002 closeout / deferred successor backlog)
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -35,12 +35,14 @@ status.
 ## Qualified Platform Alignment closeout
 
 **PASS — Platform Alignment tranche closed with inherited full-suite
-residuals.** The reviewed evidence baseline is
+residuals and no active PAR.** The reviewed evidence baseline is
 `706f20b8b84833d97f85342c8182283c8d1fcfea`; see the
 [final closeout record](../audits/evidence/2026-07-24-platform-alignment-final-closeout.md).
 The controlled full-suite comparison remains non-green only for its recorded
 inherited residuals (70 identical failure/error identifiers; no new regression).
-Post-baseline PAR-APR-002 characterization is separate future work and does
+PAR-APR-002 has now closed as **Deferred implementation** after its scoped
+characterization, DPA decision, and ApprovalRoute evidence work. Its unresolved
+implementation is explicitly captured in the successor backlog below; it does
 not make implementation or cutover part of this closed tranche. Historical
 stale PRs [#60](https://github.com/Technivian/CLMOne/pull/60),
 [#64](https://github.com/Technivian/CLMOne/pull/64), and
@@ -53,15 +55,17 @@ their branches are retained as historical context.
 
 | Rollup | Count | Notes |
 |---|---:|---|
-| **Unique PAR IDs in this roadmap** | **24** | All distinct `PAR-*` identifiers below |
+| **Unique PAR IDs in this roadmap** | **26** | All distinct `PAR-*` identifiers below |
 | Completed unique PAR IDs | 16 | Includes `PAR-AUD-001`, `PAR-CORE-001`, `PAR-CORE-003`, `PAR-CORE-002`, `PAR-DOC-001`, `PAR-APR-001`, `PAR-SEC-003`, `PAR-ID-001`, `PAR-EXC-001` |
+| Closed — deferred implementation | 1 | `PAR-APR-002`; its successor work remains separately authorized backlog |
 | In progress | 0 | — |
-| Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed); `PAR-ID-002` residual not started |
+| Blocked unique PAR IDs | 1 | `PAR-WF-010` |
+| Future / residual unique PAR IDs | 8 | Includes `PAR-SEC-002` (PAR-SEC-003 Closed) and `PAR-ID-002` residual not started |
 | Non-PAR Milestone 1 follow-ups | 1 | Playwright DPA bootstrap (`M1-E2E-001`) |
 
 ### Bundling rule for `PAR-AUD-001`
 
-`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **24**.
+`PAR-AUD-001` remains intentionally bundled with `PAR-WF-001` for delivery and is **included** in the unique total of **26**.
 
 ### Unique PAR ID inventory
 
@@ -69,7 +73,11 @@ their branches are retained as historical context.
 
 **In progress (0):** —
 
-**Future / residual (8):** `PAR-SEC-002`, `PAR-WF-010`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
+**Closed — deferred implementation (1):** `PAR-APR-002`
+
+**Blocked (1):** `PAR-WF-010`
+
+**Future / residual (8):** `PAR-SEC-002`, `PAR-ID-002`, `PAR-DATA-001`, `PAR-OBL-001`, `PAR-OBL-002`, `PAR-AI-001`, `PAR-ENT-001`, `PAR-INT-001`
 
 **Blocked (1):** `PAR-WF-010` — discovery complete; production cutover blocked pending Accepted ADR-0012
 
@@ -77,9 +85,12 @@ their branches are retained as historical context.
 
 ## Immediate next items
 
-1. **PAR-APR-002** — legacy approval cutover — **In progress — characterization completed; residual reconciliation planned**
-2. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
-3. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
+No PAR is active. The Platform Alignment tranche is **Closed — deferred
+successor backlog**.
+
+1. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
+2. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
+3. **PAR-APR-002 successor backlog** — separately authorised planning and implementation only; see the closeout section below
 
 Parallel Milestone 1 hygiene:
 
@@ -151,7 +162,7 @@ Parallel Milestone 1 hygiene:
 | ID | Title | Priority | Status |
 |---|---|---|---|
 | PAR-APR-001 | Approval Requirement/Decision split | P1 | **Completed** |
-| PAR-APR-002 | Legacy approval cutover | P1 | **In progress — characterization completed; residual reconciliation planned** |
+| PAR-APR-002 | Legacy approval cutover | P1 | **Closed — Deferred implementation** |
 | PAR-ID-001 | Role Definition reconciliation | P1 | **Completed** |
 | PAR-EXC-001 | Governed Exception | P1 | **Completed** |
 
@@ -441,30 +452,39 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress — characterization completed; legacy remains authoritative** |
+| Status | **Closed — Deferred implementation.** Legacy `ApprovalRequest` remains authoritative. |
 | Priority | P1 |
 | Objective | Retire `ApprovalRequest` as the approval read authority only after canonical `ApprovalRequirement` / immutable `ApprovalDecision` behaviour is demonstrably equivalent, the residual approval flows are reconciled, and a separately authorised cutover plan exists. This planning slice does not retire, remove, or deactivate the legacy model. |
-| Scope | Inventory and classify legacy approval reads and writes; characterize parity and isolation; reconcile DPA review approval state, template-route configuration, and the deferred ABSTAIN / explicit REVOKE experience; then define a reversible read-cutover plan. |
+| Scope completed | Inventory and classification of legacy approval reads/writes; characterization of parity and isolation; DPA review state planning; and ApprovalRoute evidence/decision planning. This closeout implements none of those deferred runtime changes. |
 | Verified completed baseline | **Completed:** ADR-0013 foundation; migration `0111`; canonical requirement and immutable decision models; canonical requirement creation, decision recording, version binding, invalidation, audit events, and legacy mirror linkage; foundation approval, authorization, inbox, and DPA regression coverage. |
 | Verified partial baseline | **Partial:** canonical and legacy records coexist, but the workflow service, inbox, contract lifecycle signature/activation gates, and many operational/API surfaces still query `ApprovalRequest`; lifecycle currently requires both open canonical requirements and legacy approval status. The legacy model therefore remains authoritative in practice. |
-| Verified missing baseline | **Missing:** canonical-read parity evidence; accepted immutable `ApprovalRoute` identity and route-to-requirement creation boundary; ABSTAIN and explicit REVOKE UI/actions; cutover and rollback rehearsal; authorization for legacy read retirement. DPA planning and ApprovalRoute characterization are completed evidence, not runtime reconciliation. The 40-file ownership matrix is completed evidence, not a remaining gap. |
-| Deferred / not required | **Deferred:** physical removal of `ApprovalRequest` and any dual-write sunset until after a separately authorised, reversible read cutover. **Not required in this PAR:** production activation, privilege or permission changes, data repair, ADMIN authority, and legacy retirement execution. |
-| Dependencies | **Met for characterization:** PAR-APR-001 / ADR-0013 foundation, PAR-SEC-003 closure, named owners, and the narrowly scoped characterization exception. **Still blocking reconciliation and cutover:** approved cutover plan and separate authorization. ADR-0013 remains planning-only except for the expiring characterization exception. |
+| Unresolved and deferred | **Deferred implementation:** lifecycle, inbox, API, operations, ABSTAIN, explicit REVOKE, canonical/legacy read parity, immutable route identity, route-to-requirement creation boundary, cutover rehearsal, and authorization for legacy read retirement. Physical removal of `ApprovalRequest` and any dual-write sunset require a separately authorised, reversible cutover. Production activation, privilege/permission changes, data repair, ADMIN authority, and legacy retirement execution are not part of this PAR. |
+| Dependencies | **Met for completed planning:** PAR-APR-001 / ADR-0013 foundation, PAR-SEC-003 closure, the expired characterization exception, PDR-0005, and ApprovalRoute evidence. **Still blocking every successor implementation:** a separately authorised scope, accepted governing decision where required, green CI, and cutover/rollback evidence. |
 | Current test evidence | 2026-07-24 focused baseline: **119/120** selected approval, authorization, inbox, DPA, and workflow tests passed. The single failure is `tests.test_workflow_routing.WorkflowRoutingTests.test_workflow_dashboard_and_detail_surface_routing_endpoints`: it expects the dashboard not to contain `/contracts/approval-rules/`, but the rendered command surface includes it. The ApprovalRoute evidence slice adds **3/3** passing characterization tests; its focused baseline/approval/tenancy/permission selection passed **98** tests and Django system checks passed. `tests.test_workflow_operations` retains six known setup errors from an invalid `ACTIVE` / `INTERNAL_REVIEW` lifecycle fixture. The evidence and PDR slices do not touch that fixture, model, lifecycle validator, route code, or runtime approval service, so these are unrelated baseline defects. |
-| Acceptance criteria | (1) every non-migration `ApprovalRequest` call site classified and owned; (2) canonical/legacy read parity, tenant-isolation, authorization, and fallback characterization passed; (3) DPA, route-template, ABSTAIN, and REVOKE behaviours reconciled or explicitly accepted as out of scope; (4) a reversible, rehearsed cutover and rollback plan approved; (5) required regression suite and CI green; (6) release evidence is recorded before any authority change. |
+| Closeout criteria | **Met for planning/evidence only:** the non-migration call sites are classified; characterization is complete; PDR-0005 resolves the DPA planning decision; ApprovalRoute evidence is complete; PDR-0007 remains Proposed / Deferred; and no authority changed. The former cutover acceptance criteria remain successor work, not an assertion of completion. |
 | Release gates | Planning and characterization remain non-authorizing. No flag grants authority. Any future non-production canonical authority requires the repository governance gate applicable at that time, green CI, reversible default-off controls, and an operator record. Legacy retirement, production activation, permissions/privileges, automatic repair, or ADMIN authority require independent Product, Engineering, and Security approval, green CI, and a release record. |
-| Phase status | **Entry-gate inventory: Completed. Characterization: Completed. Residual reconciliation: Planned. Read cutover: Blocked. Retirement: Deferred.** |
+| Phase status | **Entry-gate inventory: Completed. Characterization: Completed. DPA decision: Completed (PDR-0005). ApprovalRoute evidence: Completed. Residual reconciliation implementation: Deferred. Read cutover: Blocked. Retirement: Deferred.** |
 | DPA planning result | **Completed — planning only.** `DPAReviewPack.approval_status` remains a separate, human-controlled DPA/privacy-review lifecycle state. `ApprovalRequest` remains the generic approval read authority; no DPA-to-canonical linkage or authority change is approved. See [`DPA_RECONCILIATION_PLANNING_BRIEF.md`](../audits/evidence/2026-07-22-par-apr-002/DPA_RECONCILIATION_PLANNING_BRIEF.md). |
 | DPA inventory finding | **Completed — PR #98:** no valid persisted DPA-to-generic-approval linkage exists; shared contract, organization, reviewer, timing, or status label is insufficient. All DPA statuses remain unmappable until a separately governed linkage rule exists. Fixture-only counts and dependency evidence are in [`DPA_INVENTORY_EVIDENCE.md`](../audits/evidence/2026-07-22-par-apr-002/DPA_INVENTORY_EVIDENCE.md). |
 | DPA reconciliation decision | **Completed — planning decision only.** PDR-0005 accepts DPA as a specialist workflow gate. Do not introduce a local DPA-to-generic relationship or infer one from current rows. Privacy Review retains its specialist, human-controlled DPA state; generic approval remains separately authoritative. |
 | ApprovalRoute reconciliation finding | **Completed — evidence only.** `ApprovalRoute` is template configuration; runtime legacy requests are selected from `ApprovalRule` and canonical requirements mirror those legacy requests. No route ID, tenant-owned route key, workflow/template-version snapshot, document-version snapshot, or route-to-request/requirement relationship exists. Fixture characterization found 0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and 0 explicit stale-route controls. See [`APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md`](../audits/evidence/2026-07-22-par-apr-002/APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md). |
-| ApprovalRoute reconciliation decision | **Proposed — planning only.** PDR-0007 proposes that an immutable, version-bound `ApprovalRoute` remain a selector for a separate runtime approval service. It does not create requirements directly and does not replace workflow configuration. The PDR authorizes no model, migration, mapping, dual-write, read authority, or runtime behaviour. |
-| Next planning slice | No implementation is authorized by this decision. After PDR-0007 is accepted, the smallest safe slice is a separate planning/authorization package that specifies the workflow-version aggregate, route source tuple, condition/precedence vocabulary, and active-workflow transition policy. It must not introduce a model, migration, mapping, dual-write, or read cutover. |
+| ApprovalRoute reconciliation decision | **Proposed / Deferred — planning only.** PDR-0007 proposes that an immutable, version-bound `ApprovalRoute` remain a selector for a separate runtime approval service. It does not create requirements directly and does not replace workflow configuration. The PDR authorizes no model, migration, mapping, dual-write, read authority, or runtime behaviour. |
+| Successor backlog | See the explicit, separately governed backlog immediately after this table. No successor is active or authorised by this closeout. |
 | Likely files for that future slice | `docs/audits/evidence/2026-07-22-par-apr-002/` (baseline matrix and test record); a new focused APR-002 characterization test under `tests/`; and, only if a test seam is genuinely needed, the narrow read boundary in `contracts/services/approval_workflow.py`. Later, separately scoped phases are likely to affect `contracts/services/contract_lifecycle.py`, `contracts/views_domains/privacy_approvals.py`, `contracts/models.py`, and each owned legacy call site. |
 | Required tests and evidence | Focused canonical-foundation, approval workflow, authorization, inbox, DPA, and workflow-routing tests; a call-site inventory excluding migrations; canonical/legacy parity and mismatch fixtures; tenant-isolation and permission-denial tests; CI result; immutable reviewed SHA; and, before an authority change, an approved cutover/rollback and operator record. |
-| Proposed phases | **0 — entry gates and ownership: Completed for characterization only. 1 — characterization: Completed; exception expired on PR #93 merge. 2 — DPA and ApprovalRoute reconciliation planning/evidence: Completed; broader DPA decision: Accepted (PDR-0005); ApprovalRoute runtime-boundary decision: Proposed (PDR-0007); residual reconciliation implementation: Blocked pending separate authorization. 3 — reversible read cutover: Blocked pending a separate authorization. 4 — retirement decision: Deferred and separately governed.** |
-| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/`; `docs/audits/evidence/2026-07-22-par-apr-002/CLOSURE_CHECKLIST.md`; `docs/audits/evidence/2026-07-22-par-apr-002/APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md`; ADR-0013; PDR-0005; PDR-0007; this verified baseline entry. |
+| Closure boundary | No canonical read cutover or legacy retirement occurred. No model, migration, mapping, flag, authority, permission, dual-write, repair, or production behaviour changed. |
+| Evidence | `docs/audits/evidence/2026-07-22-par-apr-001/`; `docs/audits/evidence/2026-07-22-par-apr-002/CLOSURE_CHECKLIST.md`; `docs/audits/evidence/2026-07-22-par-apr-002/APPROVAL_ROUTE_RECONCILIATION_INVENTORY.md`; [`PAR_APR_002_CLOSEOUT.md`](../audits/evidence/2026-07-24-par-apr-002/PAR_APR_002_CLOSEOUT.md); ADR-0013; PDR-0005; PDR-0007. |
 | Last updated | 2026-07-24 |
+
+#### PAR-APR-002 successor backlog (all require separate authorization)
+
+| Backlog item | Current disposition | Minimum prerequisite |
+|---|---|---|
+| ApprovalRoute runtime boundary | Future planning/implementation | Resolve or accept PDR-0007; define workflow-version aggregate, stable route source tuple, precedence vocabulary, and transition policy. |
+| Remaining legacy read ownership | Future reconciliation | Owned call-site plan, parity fixtures, tenant and permission evidence; legacy remains authoritative until an approved cutover. |
+| Decision semantics | Future design | Define governed ABSTAIN and explicit REVOKE lifecycle, UI, API, inbox, audit, and operations behaviour. |
+| Reversible canonical read cutover | Blocked | Separate authorization, green CI, default-off/reversible controls, rehearsed rollback, and named-environment operator evidence. |
+| Legacy `ApprovalRequest` retirement | Deferred | Completed and accepted cutover evidence, no remaining legacy dependency, independent approvals where required, and a release record. |
 
 ### PAR-ID-001 — Role Definition reconciliation
 
@@ -699,6 +719,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-24 | **PAR-APR-002 combined decision accepted:** PDR-0005 selects DPA as a specialist workflow gate, retaining separate Privacy Review and generic Approval ownership. It authorizes no implementation, mapping, migration, authority change, or legacy retirement; all such work remains blocked pending separate authorization. |
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute evidence and decision prepared:** PR #105 completed the evidence-only inventory (0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and no explicit stale-route controls). PDR-0007 proposes a versioned route selector and separate runtime approval-service boundary; it remains planning-only and Proposed. The six `tests.test_workflow_operations` invalid `ACTIVE` / `INTERNAL_REVIEW` fixture setup errors are unrelated baseline defects. No model, migration, mapping, authority, dual-write, read cutover, or legacy change is authorised. |
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute characterization completed:** template route configuration is separate from rule-selected legacy approval creation and canonical mirroring. No governed route-to-requirement identity or version binding exists; duplicate, ambiguous, missing, and stale-route handling requires a separately authorized additive decision. Legacy approval reads remain authoritative. |
+| 2026-07-24 | **PAR-APR-002 Closed — Deferred implementation:** characterization, the DPA planning decision (PDR-0005), and ApprovalRoute evidence are complete. PDR-0007 remains Proposed / Deferred. Lifecycle, inbox, API, operations, ABSTAIN, REVOKE, legacy-read ownership, reversible cutover, and retirement are explicit successor backlog only. No canonical read cutover or legacy retirement occurred; `ApprovalRequest` remains authoritative. No PAR remains active and the Platform Alignment tranche is closed with deferred successor backlog. |
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
 | 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
