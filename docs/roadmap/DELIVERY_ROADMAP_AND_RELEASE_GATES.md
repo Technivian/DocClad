@@ -226,7 +226,26 @@ Exit gate:
 - restore test;
 - release notes.
 
-## 12. Prioritization rule
+## 12. Repository evidence gates
+
+Repository approval and release evidence comes from submitted GitHub PR
+reviews, CI checks, immutable reviewed and merged SHAs, and deployment or
+operator logs. Active packages do not use manual vote tables or manually
+entered approval timestamps; historical evidence remains preserved.
+
+- Low-risk default-off work: green CI and normal PR review.
+- Non-production canonical authority: the named Release Authority's approved
+  PR review, green CI for the unchanged reviewed SHA, reversible default-off
+  flags, documented abort/rollback controls, and a named-environment operator
+  record.
+- Production activation, permission or privilege changes, automatic repair,
+  ADMIN authority, or legacy retirement: approved Product, Engineering, and
+  Security PR reviews that are independent of one another, green CI, and a
+  release record.
+
+Feature flags control exposure only; they never grant release authority.
+
+## 13. Prioritization rule
 
 Choose depth over breadth.
 

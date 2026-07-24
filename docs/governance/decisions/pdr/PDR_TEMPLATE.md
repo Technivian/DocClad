@@ -34,3 +34,8 @@ Describe the approved product behavior.
 ## Metrics and evidence
 
 ## Approval
+
+Link the authorizing GitHub PR and any release record. Required approvals are
+the submitted GitHub PR reviews for the applicable gate; GitHub binds those
+reviews to the immutable reviewed SHA. Do not add a manual approval table or
+copy approval statements into this record.

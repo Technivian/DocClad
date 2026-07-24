@@ -10,6 +10,17 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ---
 
+## Repository review and release evidence
+
+New roadmap-linked authorization packages use submitted GitHub PR reviews,
+green CI, immutable reviewed and merged SHAs, and the applicable operator or
+release record. Do not create manual approval tables or copied approval
+evidence. This prospective model does not alter any PAR status, authority,
+execution gate, or historical record. See
+[`PDR-0004`](../governance/decisions/pdr/PDR-0004-github-review-and-release-evidence.md).
+
+---
+
 ## Catalogue count (reconciled)
 
 | Rollup | Count | Notes |
@@ -38,7 +49,8 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Immediate next items
 
-1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot activation **PASS**; PR #78 **merged prematurely** `e26a2bdc`; correction PR #79 **merged** `83a0a00f`; Eng/Sec post-merge ratification **pending**; committed defaults remain off; **blocker:** canonical read **unauthorized**)
+1. **PAR-EXC-001** — Governed Exception (Milestone 3) — **In progress** (ADR-0015 **Accepted**; controlled-pilot dual-write **PASS**; PR #78/#79 history preserved; PR #81 is the non-production canonical-read package; committed defaults remain off; **no flags enabled**; single-maintainer bootstrap requires the repository-owner attestation on PR #81's exact SHA plus green CI before canonical-read implementation may start)
+
 2. **PAR-APR-002** — legacy approval cutover — **Planned** — **not started this slice**
 3. **PAR-WF-010** — production cutover **blocked** pending Accepted ADR-0012 — **not started this slice**
 4. **PAR-ID-002** — ADMIN process-role reconciliation — Future residual — **not started this slice**
@@ -429,27 +441,29 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-23) — ADR-0015 **Accepted**; Motions 2–3 **Authorized**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 **merged prematurely** `e26a2bdc` (Product Approve `2026-07-23T08:39:15Z` comment `5056386192` @ `3d71d830`; invented Eng/Sec `08:56:33–34Z` **retracted**); correction PR #79 **merged** `83a0a00f` (`2026-07-23T09:15:22Z`); **Eng/Sec post-merge ratification pending**; committed defaults remain **off**; legacy authoritative; **blocker:** canonical read cutover **unauthorized** (separate vote); break-glass / signature-provider residuals inventoried |
+| Status | **In progress** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package; **no flags enabled**; committed defaults remain **off**; legacy authoritative; sole-maintainer bootstrap requires a repository-owner attestation on the unchanged SHA while CI remains green; break-glass / signature-provider residuals inventoried |
+
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
 | Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
-| Decision required | **ADR-0015 Accepted**; Motion 3 **Authorized**; operational activation **PASS**; canonical read still open |
+| Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 requires the applicable exact-SHA gate (named Release Authority review, or the narrowly scoped sole-maintainer owner attestation) and green CI before the separate default-off canonical-read implementation may start |
 | Migration impact | Additive `0114` + `0115` (`correlation_id`); no legacy backfill; dual-write default-off |
 | Security and permissions impact | Server-side authz; Critical security bypass requires explicit Security approval; cross-tenant prohibited; legacy authoritative until read cutover |
 | Audit requirements | `exception.request.*`, `exception.decision.recorded`, `exception.activated`, `exception.dual_write_failed`, `exception.security_gate_blocked`, `exception.cross_tenant.denied` |
 | UX requirements | Exception surfaces deferred until cutover; no hero clutter |
 | Tests | `tests/test_par_exc_001_exception.py` (11 OK) + `tests/test_par_exc_001_dual_write.py` (16 OK) + activation harness PASS |
-| Rollback strategy | Flags default off; reverse `0115` then `0114`; Motion 3 rollback = flag-off + clear allowlist (**drilled PASS**) |
-| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; Motion 3 activation authorized + operational PASS; remaining paths inventoried; read authority still open — **keep In progress** |
-| Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` |
+| Rollback strategy | Flags default off; reverse `0115` then `0114`; dual-write rollback = flag-off + clear allowlist (**drilled PASS**); canonical-read rollback = flag-off + clear allowlist (required before enablement) |
+| Acceptance criteria | Accepted ADR (**met**); six priority paths dual-write merged default-off; controlled-pilot activation **PASS**; remaining paths inventoried; canonical read requires the applicable exact-SHA/CI gate on PR #81, a separate default-off implementation, and a PASS operator run followed by flag-off restoration — **keep In progress** |
+| Evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`) |
 | Accepted ADR | **ADR-0015** (Accepted 2026-07-22T19:12:39Z) |
-| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f` |
+| PR/commits | Foundation PR #66 merge `982b0900`; dual-write PR #69 merge `f19eae42`; Motion 3 auth PR #74 merge `058c5ed0`; monitoring PR #78 merge `e26a2bdc` (premature); correction PR #79 merge `83a0a00f`; Motion 4 PR #81 open |
 | Last updated | 2026-07-23 |
 | Explicit non-starts | PAR-APR-002, PAR-WF-010, PAR-ID-002 |
-| Next cutover step | Obtain genuine Engineering + Security **post-merge ratification** (continued retention) for PR #78 monitoring, or revert; **exact blocker for Completion:** canonical read authority (separate vote); do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here |
+| Next cutover step | Obtain the applicable exact-SHA gate for PR #81 (the named Release Authority review or, only where independently unavailable, the sole-maintainer owner attestation) while CI is green; merge only after those gates pass; then implement default-off canonical read in a separate reviewed PR and run it only in the named environment. Do not start PAR-APR-002 / PAR-WF-010 / PAR-ID-002 here. |
+
 
 ---
 
@@ -661,5 +675,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-22 | **PR #69 merged** to `main` @ `f19eae42` (six-path dual-write default-off); PR #70 recorded merge SHA; activation still **Requested**; committed defaults remain off; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PAR-EXC-001 Motion 3 Authorized:** Product `20:04:13Z` / Engineering `20:04:15Z` / Security `20:04:34Z` (Approve with conditions); controlled-pilot dual-write activation for `controlled-pilot-org` only; committed defaults remain off; operational env enablement now permitted; canonical read still unauthorized; PAR-EXC-001 remains **In progress** |
 | 2026-07-22 | **PR #74 merged** to `main` @ `058c5ed0` (Motion 3 authorization record); committed defaults remain off; PAR-EXC-001 remains **In progress** |
-| 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit; `main` HEAD `83a0a00f`). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; no further PAR-EXC work; PAR-EXC-001 remains **In progress** |
+| 2026-07-23 | **PAR-EXC-001 pilot monitoring PR #78 merged prematurely** `e26a2bdc` (`2026-07-23T09:04:01Z`; reviewed head `3d71d830`). Genuine Product Approve `2026-07-23T08:39:15Z` (comment `5056386192`). Invented Eng/Sec `08:56:33–34Z` votes **retracted**. Correction PR #79 merged `83a0a00f` (`2026-07-23T09:15:22Z`; reviewed head `2bdc189a`; method merge commit). **Disposition: Ratification pending** (Engineering/Security post-merge continued-retention votes Missing). Committed defaults remain off; canonical read unauthorized; PAR-EXC-001 remains **In progress** |
+| 2026-07-23 | **PAR-EXC-001 Motion 4 package prepared** (PR [#81](https://github.com/Technivian/CLMOne/pull/81); `CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`): env `par-exc-001-canonical-read-authority`; allowlist `controlled-pilot-org` only; six paths; observation/abort/rollback defined; production / repair / permissions / ADMIN / legacy retirement **out of scope**; Product Approve `2026-07-23T09:21:26Z` (comment `5056679929`); Engineering + Security **pending**; Security conditions **not** acknowledged; Motion 4 **not carried**; **no flags enabled**; PAR-EXC-001 remains **In progress** |
+
 | 2026-07-22 | **PAR-EXC-001 controlled-pilot dual-write activation PASS:** env `par-exc-001-controlled-pilot-activation`; six paths exercised; negatives + rollback drill PASS; stop conditions clear; committed defaults remain off; canonical read unauthorized; PAR-APR-002 / PAR-WF-010 / PAR-ID-002 unstarted; PAR-EXC-001 remains **In progress** |

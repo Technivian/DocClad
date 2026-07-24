@@ -1,8 +1,8 @@
 # CLM One Governance Charter
 
-Version: 2.0
+Version: 2.3
 Status: Mandatory — canonical repository governance document
-Last amended: 2026-07-20 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
+Last amended: 2026-07-24 (supersedes CMS Aegis `DESIGN_CONSTITUTION.md` v1.5 per ADR-0009)
 Purpose: enforce one coherent enterprise-grade product language across all CLM One pages
 
 Product name: **CLM One** is the only customer-facing product name. Historical
@@ -403,3 +403,39 @@ never hardcoded silently into a template.
   name the specific check and where it runs — do not leave enforcement
   claims ambiguous between "reviewers must catch this" and "CI will catch
   this."
+
+## 16) Repository evidence and release control (amended 2026-07-24, v2.2)
+
+GitHub is the authority for repository change approval and release evidence.
+The authoritative record comprises submitted GitHub PR reviews, check results,
+the immutable reviewed and merged commit SHAs, and deployment or operator logs.
+Documentation may link to those records but must not recreate them as editable
+approval evidence.
+
+- Do not use manually maintained vote tables, copied approval statements, or
+  manually entered approval timestamps in active authorization packages.
+- Preserve historical governance evidence as historical evidence. Do not
+  rewrite prior records merely to conform them to this prospective rule.
+- A low-risk, default-off change requires green CI and normal PR review.
+- The named GitHub Release Authority for non-production canonical-authority
+  work is **@haroonwahed**, an existing repository code owner. This authority
+  is limited to that non-production gate and does not replace any independent
+  approval required below.
+- A non-production canonical-authority change requires an approved GitHub
+  review by the named Release Authority, green CI for that immutable reviewed
+  SHA, default-off and reversible flags, and documented abort, rollback, and
+  named-environment operator controls.
+- **Single-maintainer exception:** when GitHub shows exactly one direct human
+  collaborator with push or admin access, independent review is unavailable.
+  For non-production, reversible, default-off work only, that repository owner
+  may submit a GitHub owner attestation that names the exact immutable head SHA.
+  All required CI must be green for that SHA; the reviewed scope must be
+  unchanged; abort and rollback controls and a named-environment operator
+  record are mandatory; and flags must be off again after observation. This is
+  not a GitHub review and does not apply to any action in the following bullet.
+- Production activation, permission or privilege changes, automatic repair,
+  ADMIN authority, and legacy retirement require approved Product,
+  Engineering, and Security GitHub reviews that are independent of one
+  another, green CI, and a release record.
+- A feature flag only controls exposure. It never grants authority, bypasses
+  required review, or substitutes for an operator or release record.

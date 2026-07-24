@@ -38,6 +38,7 @@ Operating authority, product operating model, decision records, and archive.
 |---|---|---|
 | [GOVERNANCE_CHARTER.md](governance/GOVERNANCE_CHARTER.md) | Active constitutional governance | Approved |
 | [GOVERNANCE_CHARTER_V3_PROPOSED.md](governance/GOVERNANCE_CHARTER_V3_PROPOSED.md) | Proposed Charter amendment | Proposed |
+| [GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md](governance/GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md) | GitHub review and release evidence | Charter v2.1 |
 | [PRODUCT_OPERATING_MODEL.md](governance/PRODUCT_OPERATING_MODEL.md) | Product thesis, users, lifecycle | Accepted |
 | [decisions/](governance/decisions/) | ADRs, PDRs, exceptions | Mixed |
 | [archive/DESIGN_CONSTITUTION.md](governance/archive/DESIGN_CONSTITUTION.md) | Historical CMS Aegis constitution | Superseded |
@@ -110,6 +111,7 @@ Templates:
 - [`governance/decisions/adr/ADR_TEMPLATE.md`](governance/decisions/adr/ADR_TEMPLATE.md)
 - [`governance/decisions/pdr/PDR_TEMPLATE.md`](governance/decisions/pdr/PDR_TEMPLATE.md)
 - [`governance/decisions/exceptions/EXCEPTION_TEMPLATE.md`](governance/decisions/exceptions/EXCEPTION_TEMPLATE.md)
+- [`governance/GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md`](governance/GITHUB_REVIEW_AND_RELEASE_EVIDENCE.md)
 
 Do not fabricate approved decisions. New records start as **Proposed**.
 
