@@ -1,7 +1,7 @@
 # PAR-APR-002 — characterization exception
 
 **Programme ID:** PAR-APR-002  
-**Status:** Effective only when this documentation-only exception is merged to `main`; expires when the authorized characterization PR merges.  
+**Status:** **Expired.** The authorized characterization PR #93 merged to `main`; this exception authorizes no further work.
 **Authority:** Narrow exception to ADR-0013's planning-only boundary and the PAR-APR-002 closure checklist.
 
 ## Named accountable owners
@@ -63,7 +63,7 @@ characterization PR.
 - The PR body and evidence must state the unchanged scope, the legacy-authority
   boundary, the pre-existing workflow-dashboard assertion drift, and rollback
   by reverting the characterization commit(s).
-- This exception expires automatically when that characterization PR merges.
+- This exception expired automatically when characterization PR #93 merged.
 - Any residual reconciliation, read cutover, dual-write change, legacy
   retirement, or production action requires separate authorization.
 

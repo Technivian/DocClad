@@ -2,7 +2,7 @@
 
 **Programme ID:** PAR-APR-002  
 **Title:** Approval Requirement/Decision legacy cutover  
-**Status:** **In progress — characterization only, effective when the narrowly scoped exception merges.**
+**Status:** **In progress — characterization completed; residual reconciliation remains planned.**
 **Opened:** 2026-07-22 (residuals transferred from closed PAR-APR-001)  
 **Predecessor:** PAR-APR-001 (closed) · ADR-0013 (**Accepted** 2026-07-22T09:45:00Z)
 
@@ -32,6 +32,7 @@ review requirements for higher-risk actions remain unchanged.
 - [x] Named programme, product, engineering, and security owners assigned for the characterization exception
 - [x] Characterization scope, rollback boundary, and exclusions published in `CHARACTERIZATION_EXCEPTION.md`
 - [x] Characterization implementation authorization recorded by the merged exception; it expires when the characterization PR merges
+- [x] Characterization tests and the complete 40-file source-reference matrix merged in PR #93
 - [ ] Cutover plan draft published under this folder (required before reconciliation or read cutover)
 
 ---
@@ -86,4 +87,4 @@ Transferred from PAR-APR-001 / ADR-0013 §6 non-goals:
 | **What the exception additionally allows** | Characterization tests and evidence only; no behavioural change |
 | **What it does not allow** | Reconciliation, cutover, authority change, legacy removal, or dual-write sunset |
 
-**Next review gate:** Characterization PR CI and normal review → separate authorization for residual reconciliation.
+**Next review gate:** Separate authorization for residual-reconciliation planning.
