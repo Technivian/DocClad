@@ -98,6 +98,24 @@ def _assert_manage(*, actor, organization):
         raise PermissionDenied('Organization management access is required.')
 
 
+def _assert_contract_edit(*, actor, contract, request=None, model_name='Contract', object_id=None):
+    """Use the existing object-level contract rule; do not infer a new workflow role."""
+    from contracts.permissions import ContractAction, can_access_contract_action
+
+    if can_access_contract_action(actor, contract, ContractAction.EDIT):
+        return
+    _audit(
+        actor=actor,
+        organization=contract.organization,
+        model_name=model_name,
+        object_id=object_id or contract.pk,
+        event_type='canonical.authorization.blocked',
+        outcome='blocked',
+        request=request,
+    )
+    raise PermissionDenied('Contract edit access is required for this canonical workflow action.')
+
+
 def _canonical_runtime_enabled(organization) -> bool:
     if not getattr(settings, 'CANONICAL_NDA_RUNTIME_ENABLED', False):
         return False
@@ -184,18 +202,13 @@ def validate_workflow_version(*, version, actor):
     return errors
 
 
-@transaction.atomic
 def publish_workflow_version(*, version, actor, policy: PublicationPolicy | None = None, request=None):
-    from contracts.models import WorkflowVersion
-
     _assert_member(actor=actor, organization=version.definition.organization)
     policy = policy or DenyPublicationPolicy()
     if not policy.permits(actor=actor, definition=version.definition):
         _audit(actor=actor, organization=version.definition.organization, model_name='WorkflowVersion', object_id=version.pk,
                event_type='workflow.version.publication_blocked', outcome='blocked', request=request)
         raise PermissionDenied('Publication authority is not established for this workflow definition.')
-    if version.state != WorkflowVersion.State.DRAFT:
-        raise CanonicalWorkflowError('Only a draft workflow version can be published.')
     errors = validate_nda_configuration(version.configuration)
     if errors:
         version.validation_errors = errors
@@ -205,6 +218,15 @@ def publish_workflow_version(*, version, actor, policy: PublicationPolicy | None
                event_type='workflow.version.publication_blocked', outcome='blocked',
                changes={'error_count': len(errors)}, request=request)
         raise CanonicalWorkflowError('Workflow version validation failed.')
+    return _publish_workflow_version(version=version, actor=actor, request=request)
+
+
+@transaction.atomic
+def _publish_workflow_version(*, version, actor, request=None):
+    from contracts.models import WorkflowVersion
+
+    if version.state != WorkflowVersion.State.DRAFT:
+        raise CanonicalWorkflowError('Only a draft workflow version can be published.')
     for current in WorkflowVersion.objects.select_for_update().filter(
         definition=version.definition, state=WorkflowVersion.State.PUBLISHED,
     ):
@@ -283,6 +305,10 @@ def create_final_nda_document_version(*, instance, actor, title: str, file, requ
     from contracts.services.document_version_service import create_document_version
 
     _assert_member(actor=actor, organization=instance.organization)
+    _assert_contract_edit(
+        actor=actor, contract=instance.contract, request=request,
+        model_name='WorkflowInstance', object_id=instance.pk,
+    )
     _assert_same_organization(instance, instance.workflow_version, instance.definition, instance.contract)
     if instance.status != instance.Status.ACTIVE:
         raise CanonicalWorkflowError('Final document creation requires an active workflow instance.')
@@ -308,6 +334,9 @@ def create_final_nda_document_version(*, instance, actor, title: str, file, requ
            event_type='document.version.created',
            changes={'workflow_instance_id': instance.pk, 'document_id': document.pk,
                     'derived_from_id': getattr(derived_from, 'pk', None)}, request=request)
+    _audit(actor=actor, organization=instance.organization, model_name='DocumentVersion', object_id=version.pk,
+           event_type='document.locked',
+           changes={'workflow_instance_id': instance.pk, 'document_id': document.pk}, request=request)
     return version
 
 
@@ -341,6 +370,9 @@ def _reset_after_material_change(*, instance, superseding_version, actor, reques
         _audit(actor=actor, organization=instance.organization, model_name='ApprovalRequirement', object_id=requirement.pk,
                event_type='approval.requirement.invalidated',
                changes={'workflow_instance_id': instance.pk, 'document_version_id': superseding_version.pk}, request=request)
+        _audit(actor=actor, organization=instance.organization, model_name='ApprovalRequirement', object_id=requirement.pk,
+               event_type='approval.reset',
+               changes={'workflow_instance_id': instance.pk, 'document_version_id': superseding_version.pk}, request=request)
     for packet in SignaturePacket.objects.select_for_update().filter(
         workflow_instance=instance,
         status__in=[SignaturePacket.Status.PENDING, SignaturePacket.Status.SENT],
@@ -361,6 +393,10 @@ def open_nda_approval_requirement(*, instance, actor, approval_step: str, assign
     from contracts.services.approval_canonical import create_approval_requirement
 
     _assert_member(actor=actor, organization=instance.organization)
+    _assert_contract_edit(
+        actor=actor, contract=instance.contract, request=request,
+        model_name='WorkflowInstance', object_id=instance.pk,
+    )
     document_version = _latest_final_document_version(instance)
     if document_version is None:
         raise CanonicalWorkflowError('Approval requires an immutable final NDA DocumentVersion.')
@@ -409,6 +445,10 @@ def create_signature_packet(*, instance, actor, provider_name='', request=None):
     from contracts.models import ApprovalRequirement, SignaturePacket
 
     _assert_member(actor=actor, organization=instance.organization)
+    _assert_contract_edit(
+        actor=actor, contract=instance.contract, request=request,
+        model_name='WorkflowInstance', object_id=instance.pk,
+    )
     document_version = _latest_final_document_version(instance)
     if document_version is None:
         raise CanonicalWorkflowError('Signature packet requires a final NDA DocumentVersion.')
@@ -435,6 +475,10 @@ def create_signature_packet(*, instance, actor, provider_name='', request=None):
 def dispatch_signature_packet(*, packet, actor, provider_reference='', request=None):
     """Record dispatch intent only; no provider is selected or contacted here."""
     _assert_member(actor=actor, organization=packet.organization)
+    _assert_contract_edit(
+        actor=actor, contract=packet.contract, request=request,
+        model_name='SignaturePacket', object_id=packet.pk,
+    )
     if packet.status != packet.Status.PENDING:
         raise CanonicalWorkflowError('Only a pending signature packet can be dispatched.')
     if _latest_final_document_version(packet.workflow_instance).pk != packet.document_version_id:
@@ -454,6 +498,10 @@ def record_signature_evidence(*, packet, actor, event_id: str, event_type: str, 
     from contracts.models import SignatureEvidence
 
     _assert_member(actor=actor, organization=packet.organization)
+    _assert_contract_edit(
+        actor=actor, contract=packet.contract, request=request,
+        model_name='SignaturePacket', object_id=packet.pk,
+    )
     existing = SignatureEvidence.objects.filter(packet=packet, event_id=(event_id or '').strip()).first()
     if existing is not None:
         return existing
@@ -483,6 +531,10 @@ def promote_contract_record(*, instance, packet, actor, request=None):
     from contracts.models import ApprovalRequirement, ContractRecord, SignatureEvidence
 
     _assert_member(actor=actor, organization=instance.organization)
+    _assert_contract_edit(
+        actor=actor, contract=instance.contract, request=request,
+        model_name='WorkflowInstance', object_id=instance.pk,
+    )
     _assert_same_organization(instance, packet, instance.contract)
     if packet.workflow_instance_id != instance.pk or packet.status != packet.Status.SIGNED:
         raise CanonicalWorkflowError('Contract Record promotion requires a completed signature packet for this instance.')
@@ -521,6 +573,9 @@ def promote_contract_record(*, instance, packet, actor, request=None):
     _audit(actor=actor, organization=instance.organization, model_name='ContractRecord', object_id=record.pk,
            event_type='contract.record.promoted', changes={'workflow_instance_id': instance.pk,
                                                            'document_version_id': packet.document_version_id}, request=request)
+    _audit(actor=actor, organization=instance.organization, model_name='ContractRecord', object_id=record.pk,
+           event_type='contract.record.created', changes={'workflow_instance_id': instance.pk,
+                                                          'document_version_id': packet.document_version_id}, request=request)
     return record
 
 

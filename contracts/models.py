@@ -2971,7 +2971,11 @@ class WorkflowVersionQuerySet(models.QuerySet):
     """Do not permit bulk edits to a canonical workflow configuration."""
 
     def update(self, **kwargs):
-        protected = {'definition', 'definition_id', 'version_number', 'configuration', 'configuration_checksum'}
+        protected = {
+            'definition', 'definition_id', 'version_number', 'state', 'configuration',
+            'configuration_checksum', 'validation_errors', 'validated_at', 'published_at', 'published_by',
+            'published_by_id',
+        }
         blocked = sorted(protected & set(kwargs))
         if blocked:
             from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
@@ -2983,6 +2987,26 @@ class WorkflowVersionQuerySet(models.QuerySet):
 
 
 class WorkflowVersionManager(models.Manager.from_queryset(WorkflowVersionQuerySet)):
+    pass
+
+
+class WorkflowInstanceQuerySet(models.QuerySet):
+    """Do not allow bulk writes to a pinned canonical execution chain."""
+
+    def update(self, **kwargs):
+        protected = {'organization', 'organization_id', 'definition', 'definition_id', 'workflow_version',
+                     'workflow_version_id', 'contract', 'contract_id', 'correlation_id'}
+        blocked = sorted(protected & set(kwargs))
+        if blocked:
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError(
+                f'Canonical workflow instance fields {blocked} cannot be bulk-updated.'
+            )
+        return super().update(**kwargs)
+
+
+class WorkflowInstanceManager(models.Manager.from_queryset(WorkflowInstanceQuerySet)):
     pass
 
 
@@ -3115,6 +3139,8 @@ class WorkflowInstance(models.Model):
     launched_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 
+    objects = WorkflowInstanceManager()
+
     class Meta:
         indexes = [
             models.Index(fields=['organization', 'status'], name='canonical_wfinst_org_status_ix'),
@@ -3125,6 +3151,20 @@ class WorkflowInstance(models.Model):
         return f'{self.definition.key} instance {self.pk}'
 
     def save(self, *args, **kwargs):
+        if (
+            self.definition_id
+            and (
+                self.definition.organization_id != self.organization_id
+                or self.workflow_version.definition_id != self.definition_id
+                or self.workflow_version.definition.organization_id != self.organization_id
+                or self.contract.organization_id != self.organization_id
+            )
+        ):
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError(
+                'A canonical workflow instance must bind one organization, definition, version, and contract.'
+            )
         if self.pk:
             previous = type(self).objects.filter(pk=self.pk).values(
                 'organization_id', 'definition_id', 'workflow_version_id', 'contract_id',
@@ -3966,6 +4006,24 @@ class SignatureRequest(models.Model):
         return self.sent_at <= timezone.now() - timedelta(days=threshold_days)
 
 
+class SignaturePacketQuerySet(models.QuerySet):
+    """Keep a packet bound to the original execution chain outside the UI too."""
+
+    def update(self, **kwargs):
+        protected = {'organization', 'organization_id', 'workflow_instance', 'workflow_instance_id',
+                     'contract', 'contract_id', 'document_version', 'document_version_id'}
+        blocked = sorted(protected & set(kwargs))
+        if blocked:
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError(f'Signature packet fields {blocked} cannot be bulk-updated.')
+        return super().update(**kwargs)
+
+
+class SignaturePacketManager(models.Manager.from_queryset(SignaturePacketQuerySet)):
+    pass
+
+
 class SignaturePacket(models.Model):
     """Provider-neutral signature packet bound to a canonical execution chain."""
 
@@ -3997,6 +4055,8 @@ class SignaturePacket(models.Model):
     invalidated_at = models.DateTimeField(null=True, blank=True)
     invalidation_reason = models.TextField(blank=True, default='')
 
+    objects = SignaturePacketManager()
+
     class Meta:
         indexes = [
             models.Index(fields=['workflow_instance', 'status'], name='canon_sigpacket_inst_ix'),
@@ -4007,6 +4067,21 @@ class SignaturePacket(models.Model):
         return f'Packet {self.pk} for {self.contract_id}'
 
     def save(self, *args, **kwargs):
+        if (
+            self.workflow_instance_id
+            and (
+                self.workflow_instance.organization_id != self.organization_id
+                or self.contract.organization_id != self.organization_id
+                or self.document_version.organization_id != self.organization_id
+                or self.workflow_instance.contract_id != self.contract_id
+                or self.document_version.contract_id != self.contract_id
+            )
+        ):
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError(
+                'A signature packet must bind one organization, workflow instance, contract, and document version.'
+            )
         if self.pk:
             previous = type(self).objects.filter(pk=self.pk).values(
                 'organization_id', 'workflow_instance_id', 'contract_id', 'document_version_id',
@@ -4019,6 +4094,24 @@ class SignaturePacket(models.Model):
 
                 raise CanonicalWorkflowError('A signature packet must remain bound to its original execution chain.')
         super().save(*args, **kwargs)
+
+
+class SignatureEvidenceQuerySet(models.QuerySet):
+    """Signature evidence is append-only, including bulk persistence paths."""
+
+    def update(self, **kwargs):
+        from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+        raise CanonicalWorkflowError('Signature evidence is append-only and cannot be bulk-updated.')
+
+    def delete(self):
+        from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+        raise CanonicalWorkflowError('Signature evidence is append-only and cannot be deleted.')
+
+
+class SignatureEvidenceManager(models.Manager.from_queryset(SignatureEvidenceQuerySet)):
+    pass
 
 
 class SignatureEvidence(models.Model):
@@ -4037,6 +4130,8 @@ class SignatureEvidence(models.Model):
     recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = SignatureEvidenceManager()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['packet', 'event_id'], name='canonical_sigevidence_packet_event_uniq'),
@@ -4051,6 +4146,24 @@ class SignatureEvidence(models.Model):
 
             raise CanonicalWorkflowError('Signature evidence is append-only and cannot be modified.')
         super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+        raise CanonicalWorkflowError('Signature evidence is append-only and cannot be deleted.')
+
+
+class ContractRecordQuerySet(models.QuerySet):
+    """Contract-record provenance and archival transitions require the governed service."""
+
+    def update(self, **kwargs):
+        from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+        raise CanonicalWorkflowError('Contract Records cannot be bulk-updated.')
+
+
+class ContractRecordManager(models.Manager.from_queryset(ContractRecordQuerySet)):
+    pass
 
 
 class ContractRecord(models.Model):
@@ -4073,6 +4186,8 @@ class ContractRecord(models.Model):
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name='canonical_contract_records_archived',
     )
 
+    objects = ContractRecordManager()
+
     class Meta:
         indexes = [
             models.Index(fields=['organization', 'archived_at'], name='canon_record_org_archive_ix'),
@@ -4080,6 +4195,24 @@ class ContractRecord(models.Model):
 
     def save(self, *args, **kwargs):
         allow_archive = kwargs.pop('allow_archive', False)
+        if (
+            self.workflow_instance_id
+            and (
+                self.organization_id != self.contract.organization_id
+                or self.workflow_instance.organization_id != self.organization_id
+                or self.workflow_version.definition.organization_id != self.organization_id
+                or self.document_version.organization_id != self.organization_id
+                or self.signature_packet.organization_id != self.organization_id
+                or self.workflow_instance.workflow_version_id != self.workflow_version_id
+                or self.workflow_instance.contract_id != self.contract_id
+                or self.document_version.contract_id != self.contract_id
+                or self.signature_packet.workflow_instance_id != self.workflow_instance_id
+                or self.signature_packet.document_version_id != self.document_version_id
+            )
+        ):
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError('A Contract Record must preserve a single canonical execution chain.')
         if self.pk:
             previous = type(self).objects.filter(pk=self.pk).values(
                 'contract_id', 'organization_id', 'workflow_instance_id', 'workflow_version_id',
