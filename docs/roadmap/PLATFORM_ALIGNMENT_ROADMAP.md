@@ -450,12 +450,12 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 
 | Field | Content |
 |---|---|
-| Status | **In progress** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) carries the non-production canonical-read package; **no flags enabled**; committed defaults remain **off**; legacy authoritative; sole-maintainer bootstrap requires a repository-owner attestation on the unchanged SHA while CI remains green; break-glass / signature-provider residuals inventoried |
+| Status | **Completed** (2026-07-24) — ADR-0015 **Accepted**; controlled-pilot dual-write activation **PASS**; monitoring PR #78 was merged prematurely `e26a2bdc` and its correction trail is preserved by PR #79 `83a0a00f`; monitoring remains read-only. Authorization PR #81 and default-off implementation PR #85 merged; the named non-production canonical-read observation **PASS**; flags are off, allowlists empty, and legacy remains authoritative; break-glass / signature-provider residuals inventoried |
 
 | Priority | P1 |
 | Problem | No first-class governed Exception; risk/actions are scattered. |
 | Governance source | CANONICAL_DOMAIN_MODEL §2.33; gap G-DOM-03 |
-| Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`) |
+| Current evidence | `docs/audits/evidence/2026-07-22-par-exc-001/` (incl. `CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md` and `CANONICAL_READ_OPERATOR_RESULTS.md`) |
 | Target outcome | Governed `ExceptionRequest` / `ExceptionDecision` with owner, expiry, authority, compensating controls, privilege tokens, immutable history, tenant isolation |
 | Dependencies | PAR-APR-001 pattern helpful (**met**); ADR-0015 Acceptance (**met**); Motion 2 dual-write (**Authorized** default-off); Motion 3 activation (**Authorized** + operational **PASS**) |
 | Decision required | **ADR-0015 Accepted**; controlled-pilot dual-write **PASS**; PR #81 sole-maintainer exception, exact-SHA attestation, and green CI satisfied; PR #85 implementation and named observation **PASS** |
