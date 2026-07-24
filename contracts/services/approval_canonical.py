@@ -87,6 +87,8 @@ def create_approval_requirement(
     due_date=None,
     actor=None,
     legacy_request=None,
+    document_version=None,
+    workflow_instance=None,
     request=None,
 ) -> object:
     """Create a canonical ApprovalRequirement and optionally link a legacy ApprovalRequest."""
@@ -110,12 +112,28 @@ def create_approval_requirement(
                 existing.save(update_fields=[*updates, 'updated_at'])
             return existing
 
-    document_version, document_version_missing = resolve_contract_document_version(contract)
+    if document_version is None:
+        document_version, document_version_missing = resolve_contract_document_version(contract)
+    else:
+        document_version_missing = False
+        if document_version.organization_id != org_id or document_version.contract_id != contract.pk:
+            raise ApprovalCanonicalError(
+                'Approval requirement document version must belong to the same organization and contract.'
+            )
+    if workflow_instance is not None:
+        if (
+            workflow_instance.organization_id != org_id
+            or workflow_instance.contract_id != contract.pk
+        ):
+            raise ApprovalCanonicalError(
+                'Approval requirement workflow instance must belong to the same organization and contract.'
+            )
     snap = contract_state_snapshot(contract)
 
     requirement = ApprovalRequirement.objects.create(
         organization_id=org_id,
         contract=contract,
+        workflow_instance=workflow_instance,
         legacy_request=legacy_request,
         rule=rule,
         approval_step=approval_step,

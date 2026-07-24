@@ -60,3 +60,21 @@ pinned version and prior immutable artifacts; audit the blocked/failed event;
 keep requirement/signature state recoverable; require fresh approval after a
 material change; permit authorized retry only with idempotency/correlation
 evidence. A new version affects new launches only; live instances remain pinned.
+
+## Implementation follow-up (default-off; not an activation result)
+
+The baseline above remains an historical classification of `e413da6`; it is not
+rewritten as a release claim. The additive implementation in migration `0116`
+adds the canonical chain and focused invariant coverage described in
+[the implementation note](../architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md).
+It is disabled by default, leaves the existing `WorkflowTemplate` NDA builder
+unchanged, and creates no historical mapping. The focused automated evidence
+covers immutable publication, live-instance pinning, final `DocumentVersion`,
+approval reset, provider-neutral signature-evidence idempotency, record
+promotion, archival/export authorization, cross-tenant denial, and C-01's
+locked-document permitted-write boundary.
+
+This does **not** close Commercial v1 readiness: publication-role authority,
+named-environment controlled activation, external-provider evidence, final-NDA
+export/non-leakage verification beyond the service boundary, and legacy mapping
+remain separately required.

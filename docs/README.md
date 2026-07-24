@@ -61,6 +61,7 @@ Platform modules, workflow engine, data/AI, and security.
 |---|---|---|
 | [PLATFORM_AND_MODULE_ARCHITECTURE.md](architecture/PLATFORM_AND_MODULE_ARCHITECTURE.md) | Modules and dependency direction | Accepted |
 | [WORKFLOW_ENGINE_AND_DESIGNER.md](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md) | Workflow configuration and execution | Accepted |
+| [CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md](architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md) | Default-off PDR-0006 implementation boundary and rollback | Implemented; not activation authority |
 | [DATA_AI_AND_INTELLIGENCE.md](architecture/DATA_AI_AND_INTELLIGENCE.md) | Data foundation and AI operating model | Accepted |
 | [SECURITY_PRIVACY_ACCESS_AND_AUDIT.md](architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md) | Security, privacy, access, audit | Accepted |
 
@@ -90,7 +91,7 @@ Then read domain-specific documents:
 
 | Work type | Also read |
 |---|---|
-| Workflow | [`architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md) |
+| Workflow | [`architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`](architecture/WORKFLOW_ENGINE_AND_DESIGNER.md); [`architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md`](architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md) when touching the canonical runtime |
 | UI, navigation, terminology, design | [`product/UX_NAVIGATION_AND_WORK_SURFACES.md`](product/UX_NAVIGATION_AND_WORK_SURFACES.md) |
 | Data, AI, extraction, search, analytics | [`architecture/DATA_AI_AND_INTELLIGENCE.md`](architecture/DATA_AI_AND_INTELLIGENCE.md) |
 | Auth, authorization, privacy, audit, exports, security | [`architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md`](architecture/SECURITY_PRIVACY_ACCESS_AND_AUDIT.md) |
