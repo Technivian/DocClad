@@ -1,7 +1,7 @@
 # PAR-EXC-001 evidence index
 
 **Programme ID:** PAR-EXC-001  
-**Status:** **In progress** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); controlled-pilot operational activation evidence **PASS**; monitoring PR #78 was merged prematurely (`e26a2bdc`) and the correction trail is preserved in PR #79 (`83a0a00f`); monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) now uses GitHub-review and CI evidence for non-production canonical authority: approved Engineering and Security reviews plus green CI are required before it is ready. **No flags enabled**; committed defaults remain **off**; legacy remains authoritative.
+**Status:** **Completed** — ADR-0015 **Accepted**; foundation PR #66 **merged** (`982b0900`); dual-write PR #69 **merged** (`f19eae42`, default-off); controlled-pilot operational activation evidence **PASS**; monitoring PR #78 was merged prematurely (`e26a2bdc`) and the correction trail is preserved in PR #79 (`83a0a00f`); monitoring remains read-only. PR [#81](https://github.com/Technivian/CLMOne/pull/81) merged `3eba3602211c58ad73d6612201d6e8587f21f689`; default-off canonical-read implementation PR [#85](https://github.com/Technivian/CLMOne/pull/85) merged `86625b95cfbc968dea2f7cb31b8fc354a36584cf`; the named non-production observation **PASS** record is [`CANONICAL_READ_OPERATOR_RESULTS.md`](CANONICAL_READ_OPERATOR_RESULTS.md). **No flags enabled**; committed defaults remain **off**; legacy remains authoritative.
 
 **ADR:** ADR-0015 **Accepted** (`2026-07-22T19:12:39Z`)  
 **Foundation:** PR [#66](https://github.com/Technivian/CLMOne/pull/66) merge `982b0900b37f64cf3ce36f44e23a062ae908dbb7`  
@@ -22,6 +22,7 @@
 | [`CONTROLLED_PILOT_DUAL_WRITE.md`](CONTROLLED_PILOT_DUAL_WRITE.md) | Motion 3 activation package (**Authorized**; operational **PASS**) |
 | [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) | Operational enablement evidence (**PASS**) |
 | [`CANONICAL_READ_AUTHORITY_AUTHORIZATION.md`](CANONICAL_READ_AUTHORITY_AUTHORIZATION.md) | Non-production canonical-read authority package (requires Engineering + Security GitHub reviews, green CI, reversible flags, and an operator record) |
+| [`CANONICAL_READ_OPERATOR_RESULTS.md`](CANONICAL_READ_OPERATOR_RESULTS.md) | Named non-production canonical-read observation (**PASS**; flags off and legacy restored) |
 | [`../../../governance/decisions/adr/0015-exception-request-decision-model.md`](../../../governance/decisions/adr/0015-exception-request-decision-model.md) | ADR (**Accepted**) |
 | [`../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md`](../../../governance/decisions/adr/0015-governance-acceptance-meeting-record-2026-07-22.md) | Motions 1–3 ratified |
 
@@ -57,7 +58,7 @@
 
 ---
 
-## Closure gate (partial — keep In progress)
+## Closure gate — Completed
 
 | Gate | Status |
 |---|---|
@@ -67,7 +68,7 @@
 | Controlled-pilot activation authorization (Motion 3) | **Met** (PR #74 @ `058c5ed0`) |
 | Controlled-pilot operational enablement + monitoring evidence | **PASS** — [`CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md`](CONTROLLED_PILOT_DUAL_WRITE_ACTIVATION_RESULTS.md) |
 | Remaining production exception paths inventoried or residual | Break-glass + signature-provider inventoried |
-| Non-production canonical read authority | **Not ready** — PR #81 awaits approved Engineering + Security GitHub reviews and green CI; flags not enabled |
+| Non-production canonical read authority | **PASS** — PR #81 and PR #85 merged; named observation passed; flags off and legacy restored |
 
 ---
 
