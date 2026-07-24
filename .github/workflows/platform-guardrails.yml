@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   pr-release-evidence:
     if: github.event_name == 'pull_request'
@@ -110,6 +114,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -132,8 +138,8 @@ jobs:
       - name: Python static security scan
         run: bandit -q -r contracts config -lll
 
-      - name: Client dependency vulnerability scan
-        run: npm --prefix client audit --audit-level=high
-
-      - name: Theme dependency vulnerability scan
-        run: npm --prefix theme/static_src audit --audit-level=high
+      - name: Npm dependency vulnerability baseline gate
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/check_npm_audit_baseline.py --base-ref "$BASE_REF" --verify-github-approvals
