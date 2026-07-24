@@ -16,6 +16,8 @@ Then read the domain-specific documentation relevant to the task.
 For workflow work, also read:
 
 - `docs/architecture/WORKFLOW_ENGINE_AND_DESIGNER.md`
+- `docs/architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md` when
+  touching the default-off canonical Definition/Version/Instance runtime.
 
 For UI, navigation, terminology, or design work, also read:
 

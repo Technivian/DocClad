@@ -58,7 +58,10 @@ Exit gate:
 Planning dependency: [PDR-0006](../governance/decisions/pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md)
 defines the approved canonical workflow-version and NDA execution direction
 needed to satisfy this gate. It does not alter this accepted roadmap or
-authorize implementation or activation.
+authorize activation. The additive implementation path is documented in
+[Canonical Workflow Runtime Implementation Note](../architecture/CANONICAL_WORKFLOW_RUNTIME_IMPLEMENTATION.md);
+it remains default-off and requires immutable GitHub review/CI evidence plus
+the applicable named-environment operator and rollback evidence before use.
 
 ## 4. Stage 2: Workflow depth
 
