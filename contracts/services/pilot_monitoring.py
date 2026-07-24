@@ -23,6 +23,11 @@ from contracts.services.exception_dual_write import (
     EVENT_DUAL_WRITE_FAILED,
     EVENT_SECURITY_GATE_BLOCKED,
 )
+from contracts.services.exception_canonical_read import (
+    EVENT_CANONICAL_READ_DENIED,
+    EVENT_CANONICAL_READ_FALLBACK,
+    EVENT_CANONICAL_READ_USED,
+)
 
 
 def _day_bounds(day=None):
@@ -50,6 +55,12 @@ def pilot_feature_flag_state() -> Dict[str, Any]:
         'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST': getattr(
             settings, 'EXCEPTION_DUAL_WRITE_ORG_ALLOWLIST', ''
         ),
+        'EXCEPTION_CANONICAL_READ_ENABLED': bool(
+            getattr(settings, 'EXCEPTION_CANONICAL_READ_ENABLED', False)
+        ),
+        'EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST': getattr(
+            settings, 'EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST', ''
+        ),
     }
 
 
@@ -67,6 +78,9 @@ def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[st
         'duplicate_correlation_groups': 0,
         'requests_with_multiple_decisions': 0,
         'active_missing_owner_or_expiry': 0,
+        'canonical_read_used': 0,
+        'canonical_read_fallbacks': 0,
+        'canonical_read_denials': 0,
         'stop_required': False,
         'stop_reasons': [],
     }
@@ -109,6 +123,9 @@ def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[st
     dual_write_failures = audits.filter(event_type=EVENT_DUAL_WRITE_FAILED).count()
     security_gate_blocks = audits.filter(event_type=EVENT_SECURITY_GATE_BLOCKED).count()
     cross_tenant_denials = audits.filter(event_type='exception.cross_tenant.denied').count()
+    canonical_read_used = audits.filter(event_type=EVENT_CANONICAL_READ_USED).count()
+    canonical_read_fallbacks = audits.filter(event_type=EVENT_CANONICAL_READ_FALLBACK).count()
+    canonical_read_denials = audits.filter(event_type=EVENT_CANONICAL_READ_DENIED).count()
     submitted_without_decision = requests.filter(
         status=ExceptionRequest.Status.SUBMITTED,
         decisions__isnull=True,
@@ -121,6 +138,8 @@ def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[st
         stop_reasons.append('unauthorized_critical_bypass_blocked')
     if cross_tenant_denials:
         stop_reasons.append('cross_tenant_anomaly')
+    if canonical_read_denials:
+        stop_reasons.append('canonical_read_cross_tenant_denial')
     if duplicate_correlation_groups:
         stop_reasons.append('duplicate_correlation')
     if requests_with_multiple_decisions:
@@ -139,6 +158,9 @@ def _exception_dual_write_health(*, organization, start, end, audits) -> Dict[st
         'duplicate_correlation_groups': duplicate_correlation_groups,
         'requests_with_multiple_decisions': requests_with_multiple_decisions,
         'active_missing_owner_or_expiry': active_missing_owner_or_expiry,
+        'canonical_read_used': canonical_read_used,
+        'canonical_read_fallbacks': canonical_read_fallbacks,
+        'canonical_read_denials': canonical_read_denials,
         'stop_required': bool(stop_reasons),
         'stop_reasons': stop_reasons,
     }
