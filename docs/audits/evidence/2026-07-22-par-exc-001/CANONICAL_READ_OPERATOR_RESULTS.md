@@ -29,3 +29,5 @@ The observation enabled both reversible flags only for `controlled-pilot-org`, r
 - `python manage.py audit_null_organizations` passed.
 
 This result is limited to the named non-production observation. It does not authorize production activation, repair, permission changes, ADMIN authority, or legacy retirement.
+
+The immutable PR and Actions records are the release evidence for this closure; this document does not replace them.
