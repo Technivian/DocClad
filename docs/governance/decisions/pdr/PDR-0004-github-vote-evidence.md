@@ -1,6 +1,6 @@
 # PDR-0004: GitHub-backed governance vote evidence
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-07-23
 - **Owner:** Repository steward
 - **Affected Charter sections:** Charter §10 Change Control
@@ -100,5 +100,14 @@ direct GitHub evidence links and absent manual timestamp fields.
 
 ## Approval
 
-No approval is recorded by this proposal. It is non-binding until formally
-accepted through the repository governance process.
+Accepted for this documentation and governance operating-model scope through
+the repository governance process. GitHub's audit metadata for the linked
+comment is the authoritative timestamp; no timestamp is reproduced here.
+
+| Approver | Capacity | Vote | Evidence |
+|---|---|---|---|
+| haroonwahed | Repository owner and Product governance | Approve | [PR #82 comment 5068807432](https://github.com/Technivian/CLMOne/pull/82#issuecomment-5068807432) |
+
+This acceptance does not authorize Motion 4, canonical-read or canonical-write
+authority, production activation, privilege changes, automatic repair,
+destructive migrations, legacy retirement, or new PAR implementation.

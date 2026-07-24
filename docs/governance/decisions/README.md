@@ -35,11 +35,10 @@ Earlier accepted records may use the legacy forms `0008-….md` / `0001-….md` 
 
 ## Governance vote evidence
 
-PDR-0004 proposes that the genuine GitHub comment or review become the
-evidence for a new governance vote. Its system-generated `created_at` would
-be the authoritative audit timestamp and may be retrieved for audit; it must
-not be manually typed, calculated, or copied into a vote template. This model
-becomes binding only when PDR-0004 is accepted.
+PDR-0004 establishes the genuine GitHub comment or review as the evidence for
+a new governance vote. Its system-generated `created_at` is the authoritative
+audit timestamp and may be retrieved for audit; it must not be manually typed,
+calculated, or copied into a vote template.
 
 A valid vote identifies its approver through the GitHub evidence and contains:
 
@@ -51,7 +50,7 @@ A valid vote identifies its approver through the GitHub evidence and contains:
 Do not accept a timestamp without a genuine vote, a proxy vote, a generated or
 inferred timestamp, or a vote copied by someone other than the approver. Keep
 historical evidence intact, including genuine system timestamps and retracted
-invalid records. See PDR-0004 for the proposed policy record.
+invalid records. See PDR-0004 for the accepted policy record.
 
 ## Status values
 
@@ -82,7 +81,7 @@ Do not fabricate approved decisions. Do not mark a record Accepted without docum
 | [0001-finance-approval-threshold.md](pdr/0001-finance-approval-threshold.md) | See file |
 | [0002-contract-stage-and-status.md](pdr/0002-contract-stage-and-status.md) | See file |
 | [PDR-0003-documentation-operating-model.md](pdr/PDR-0003-documentation-operating-model.md) | Accepted |
-| [PDR-0004-github-vote-evidence.md](pdr/PDR-0004-github-vote-evidence.md) | Proposed |
+| [PDR-0004-github-vote-evidence.md](pdr/PDR-0004-github-vote-evidence.md) | Accepted |
 
 ### Exceptions
 

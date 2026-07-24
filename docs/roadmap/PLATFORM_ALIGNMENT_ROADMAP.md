@@ -12,13 +12,12 @@ Statuses: Completed · In progress · Blocked · Deferred by approved decision �
 
 ## Governance vote evidence
 
-PDR-0004 proposes that new roadmap-linked authorization packages use a genuine
-GitHub comment or review as vote evidence. Record the approver, capacity,
-explicit vote, reviewed reference, conditions where applicable, and an
-Evidence link; GitHub's system-generated `created_at` is the audit timestamp.
-Do not add manual vote timestamps. This model becomes binding only if PDR-0004
-is accepted and does not alter any PAR status, authority, execution gate, or
-historical record. See proposed
+Accepted PDR-0004 requires new roadmap-linked authorization packages to use a
+genuine GitHub comment or review as vote evidence. Record the approver,
+capacity, explicit vote, reviewed reference, conditions where applicable, and
+an Evidence link; GitHub's system-generated `created_at` is the audit
+timestamp. Do not add manual vote timestamps. This model does not alter any
+PAR status, authority, execution gate, or historical record. See accepted
 [`PDR-0004`](../governance/decisions/pdr/PDR-0004-github-vote-evidence.md).
 
 ---

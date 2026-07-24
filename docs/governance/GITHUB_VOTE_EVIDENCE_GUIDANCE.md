@@ -1,6 +1,6 @@
 # GitHub governance vote evidence guidance
 
-**Status:** Proposed — see
+**Status:** Active — accepted through
 [`PDR-0004`](decisions/pdr/PDR-0004-github-vote-evidence.md)
 
 **Scope:** New governance motions, authorization packages, decision records,
@@ -18,9 +18,9 @@ control changes.
 
 ## Rule
 
-PDR-0004 proposes discontinuing manual UTC timestamp entry for governance
-votes. Once accepted, the genuine GitHub comment or review that contains the
-vote is the authoritative evidence; GitHub's system-generated `created_at` is
+PDR-0004 discontinues manual UTC timestamp entry for governance votes. The
+genuine GitHub comment or review that contains the vote is the authoritative
+evidence; GitHub's system-generated `created_at` is
 the authoritative audit timestamp. It may be retrieved for audit, but
 approvers must not type or calculate it.
 
@@ -79,6 +79,5 @@ administration only, not platform audit timestamps.
 
 ## Rollback
 
-Until PDR-0004 is accepted, this guidance is non-binding. If the policy is
-rejected or superseded, restore the prior template language in a follow-up
-docs-only change; do not alter historical records.
+If PDR-0004 is superseded, restore or replace the applicable template language
+in a follow-up docs-only change; do not alter historical records.
