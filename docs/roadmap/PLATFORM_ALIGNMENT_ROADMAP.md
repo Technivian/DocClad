@@ -1,7 +1,7 @@
 # Platform Alignment Roadmap
 
 **Created:** 2026-07-21  
-**Last refined:** 2026-07-24 (PAR-APR-002 closeout / deferred successor backlog)
+**Last refined:** 2026-07-24 (Platform Alignment tranche freeze)
 **Authority:** Gap audit `docs/audits/2026-07-21-platform-gap-audit.md` · active `docs/governance/GOVERNANCE_CHARTER.md` · Accepted PDR-0003  
 **Branch:** `main` @ Tranche-1 merge (`c52d699a`) · PAR-APR follow-up: `cursor/feat-par-apr-001-foundation-governance`  
 **Living document:** update statuses only with implementation, tests, audit evidence, migration evidence (if any), documentation, and rollback proof.
@@ -48,6 +48,23 @@ stale PRs [#60](https://github.com/Technivian/CLMOne/pull/60),
 [#64](https://github.com/Technivian/CLMOne/pull/64), and
 [#65](https://github.com/Technivian/CLMOne/pull/65) are closed without merge;
 their branches are retained as historical context.
+
+---
+
+## Platform Alignment tranche freeze
+
+**Frozen:** `main` at
+`8dbc26b71146803111e20e4bfdb552349d2613a7` (PR
+[#110](https://github.com/Technivian/CLMOne/pull/110) merge). The permanent
+[tranche freeze record](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md)
+links the final immutable SHA, PR #109, PR #110, the completed/deferred PAR
+inventory, and the deferred successor backlog.
+
+There are **no active Platform Alignment PARs**. This freeze does not approve
+any successor item, cutover, authority change, migration, permission change,
+repair, production activation, or legacy retirement. The next programme area
+is **Pilot Hardening**, beginning only under a separately authorised initiation
+for its existing `PAR-SEC-002` work item.
 
 ---
 
@@ -720,6 +737,7 @@ Boundary doc published; no semantic merge of My Work and Command Center.
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute evidence and decision prepared:** PR #105 completed the evidence-only inventory (0 direct links, 1 missing mapping, 2 duplicate-order rows, 1 ambiguous category, and no explicit stale-route controls). PDR-0007 proposes a versioned route selector and separate runtime approval-service boundary; it remains planning-only and Proposed. The six `tests.test_workflow_operations` invalid `ACTIVE` / `INTERNAL_REVIEW` fixture setup errors are unrelated baseline defects. No model, migration, mapping, authority, dual-write, read cutover, or legacy change is authorised. |
 | 2026-07-24 | **PAR-APR-002 ApprovalRoute characterization completed:** template route configuration is separate from rule-selected legacy approval creation and canonical mirroring. No governed route-to-requirement identity or version binding exists; duplicate, ambiguous, missing, and stale-route handling requires a separately authorized additive decision. Legacy approval reads remain authoritative. |
 | 2026-07-24 | **PAR-APR-002 Closed — Deferred implementation:** characterization, the DPA planning decision (PDR-0005), and ApprovalRoute evidence are complete. PDR-0007 remains Proposed / Deferred. Lifecycle, inbox, API, operations, ABSTAIN, REVOKE, legacy-read ownership, reversible cutover, and retirement are explicit successor backlog only. No canonical read cutover or legacy retirement occurred; `ApprovalRequest` remains authoritative. No PAR remains active and the Platform Alignment tranche is closed with deferred successor backlog. |
+| 2026-07-24 | **Platform Alignment tranche frozen:** permanent record [`2026-07-24-platform-alignment-tranche-freeze.md`](../audits/evidence/2026-07-24-platform-alignment-tranche-freeze.md) anchors final `main` SHA `8dbc26b71146803111e20e4bfdb552349d2613a7`, PR #109, and PR #110. All completed and deferred PARs plus the five successor backlog items are enumerated there. There are no active Platform Alignment PARs; the next programme area is Pilot Hardening, not yet started by this record. |
 | 2026-07-22 | **PAR-ID-001 discovery complete:** ROLE_USAGE_MATRIX, TARGET_ROLE_MODEL, CUTOVER_PLAN, ADR-0014 decision package; 19 characterization tests |
 | 2026-07-22 | **PR #51 merged** to `main` @ `21e65f09` |
 | 2026-07-22 | **ADR-0014 Accepted**; **PAR-SEC-003 Closed**; migration `0112` authorized and implemented (additive RoleDefinition catalogue); PAR-ID-001 remains **In progress** |
