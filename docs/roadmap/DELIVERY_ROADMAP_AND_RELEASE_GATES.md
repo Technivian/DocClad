@@ -55,6 +55,11 @@ Exit gate:
 
 - a governed NDA or MSA can move from request to final record with complete audit history.
 
+Planning dependency: [PDR-0006](../governance/decisions/pdr/PDR-0006-canonical-workflow-versioning-and-contract-execution-authority.md)
+defines the proposed canonical workflow-version and NDA execution authority
+needed to satisfy this gate. It is not binding until accepted and does not alter
+this accepted roadmap or authorize implementation.
+
 ## 4. Stage 2: Workflow depth
 
 Deliver:
