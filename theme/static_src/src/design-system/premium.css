@@ -238,17 +238,56 @@ body[data-design-system="casefile"] :is(table, .dc-ds-table) {
   font-variant-numeric: tabular-nums;
 }
 
-body[data-design-system="casefile"] :is(th, .dc-ds-table th) {
+/* Authenticated data tables use the compact density mode. This also brings
+   older plain tables into the same rhythm while they migrate to .dc-ds-table. */
+body[data-design-system="casefile"] table > thead > tr > th {
   height: 36px;
+  padding: var(--space-8) var(--space-12);
   background: var(--color-surface-table-head);
   color: var(--ink-500);
   font-size: var(--font-size-eyebrow);
   font-weight: 650;
   letter-spacing: 0;
+  vertical-align: middle;
 }
 
-body[data-design-system="casefile"] :is(tbody tr, .dc-ds-table tbody tr) {
-  transition: background-color var(--duration-fast) var(--ease-standard);
+body[data-design-system="casefile"] table > tbody > tr > td {
+  padding: var(--space-8) var(--space-12);
+  vertical-align: middle;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+body[data-design-system="casefile"] table > tbody > tr:hover > td,
+body[data-design-system="casefile"] table > tbody > tr:focus-within > td,
+body[data-design-system="casefile"] table > tbody > tr.is-row-active > td {
+  background-color: var(--color-surface-table-head, var(--well));
+}
+
+body[data-design-system="casefile"] table > tbody > tr:is([data-href], .cursor-pointer) {
+  cursor: pointer;
+}
+
+body[data-design-system="casefile"] table > tbody > tr:is([data-href], .cursor-pointer):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+body[data-design-system="casefile"] table th[aria-sort] button {
+  border-radius: var(--radius-control);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+body[data-design-system="casefile"] table th[aria-sort] button:hover {
+  color: var(--ink-900);
+}
+
+body[data-design-system="casefile"] table th[aria-sort] button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 body[data-design-system="casefile"] .ctp-page {

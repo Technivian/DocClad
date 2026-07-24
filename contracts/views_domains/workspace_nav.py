@@ -210,7 +210,7 @@ class MyWorkView(LoginRequiredMixin, TemplateView):
                 'label': label,
                 'count': count,
                 'tone': tone_map.get(key, 'info'),
-                'hidden': count == 0,
+                'hidden': False,
             })
 
         ctx.update({

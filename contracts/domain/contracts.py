@@ -67,6 +67,7 @@ class ContractData:
     updated_at: Optional[str] = None
     created_at: Optional[str] = None
     content: str = ""
+    next_key_date_label: str = ""
 
     # WorkQueue-aligned fields (Repository consolidation) — reuse the same
     # StageDots/AssigneeChip/ActivityLine visual contract as the Dashboard
@@ -82,6 +83,7 @@ class ContractData:
     latest_activity_initial: Optional[str] = None
     value_display: str = ""
     end_date_display: Optional[str] = None
+    next_key_date_display: Optional[str] = None
     due_overdue: bool = False
     contract_type_display: str = ""
     contract_type_short: str = ""

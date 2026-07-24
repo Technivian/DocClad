@@ -96,7 +96,7 @@ from contracts.services.contract_detail_workspace import (
     build_contract_command,
     build_contract_detail_tabs,
     build_workflow_section_tabs,
-    contract_operations_hub_tabs,
+    contract_repository_tabs,
     build_overview_progress,
     contract_detail_tab_url,
     derive_contract_review_status,
@@ -1776,6 +1776,18 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         org = get_user_organization(self.request.user)
+        status_values = tuple(self.request.GET.getlist('status'))
+        stage_values = tuple(self.request.GET.getlist('lifecycle_stage'))
+        expiring_days = self.request.GET.get('expiring_within_days')
+        active_tab = 'all'
+        if status_values == ('ARCHIVED',) and not stage_values and not expiring_days:
+            active_tab = 'archived'
+        elif status_values == ('ACTIVE',) and expiring_days == '30' and not stage_values:
+            active_tab = 'expiring'
+        elif status_values == ('ACTIVE',) and set(stage_values) == {'EXECUTED', 'OBLIGATION_TRACKING'} and not expiring_days:
+            active_tab = 'completed'
+        elif status_values == ('ACTIVE',) and not stage_values and not expiring_days:
+            active_tab = 'active'
         tenant_contracts = scope_queryset_for_organization(Contract.objects.all(), org)
         expiry_cutoff = timezone.localdate() + timedelta(days=30)
         contract_stats = tenant_contracts.aggregate(
@@ -1839,7 +1851,7 @@ class RepositoryView(TenantScopedQuerysetMixin, LoginRequiredMixin, ListView):
             .values_list('counterparty', flat=True)
             .distinct()
         )
-        ctx['hub_tabs'] = contract_operations_hub_tabs(active='repository')
+        ctx['hub_tabs'] = contract_repository_tabs(active=active_tab)
         return ctx
 
 

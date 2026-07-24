@@ -80,11 +80,11 @@
     margin-left: auto;
   }
   .approvals-page .approvals-table {
-    min-width: 100%; width: 100%; table-layout: fixed;
+    min-width: 1260px; width: 100%; table-layout: fixed;
   }
   .approvals-page .approvals-table th,
   .approvals-page .approvals-table td {
-    vertical-align: top; padding: 16px 12px; overflow: hidden;
+    vertical-align: middle; padding: 8px 12px; overflow: hidden;
   }
   .approvals-page .approvals-table [data-col].is-hidden { display: none; }
   .approvals-page .approvals-table th[data-col="title"],
@@ -113,7 +113,7 @@
   .approvals-page .approvals-table td[data-col="next_action"] { min-width: 160px; width: 14%; }
   .approvals-page .approvals-table th[data-col="actions"],
   .approvals-page .approvals-table td[data-col="actions"] {
-    min-width: 168px; width: 168px; overflow: visible; white-space: nowrap;
+    min-width: 220px; width: 220px; overflow: visible; white-space: nowrap;
   }
   .approvals-page .approvals-table .wq-item-link {
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
@@ -217,7 +217,7 @@
   </div>
   {% endwith %}
 
-  <div class="dc-ds-table-wrap">
+  <div class="dc-ds-table-wrap approvals-queue-body">
     {% for tab in queue_tabs %}
       {% approval_queue_table tab.key tab.rows tab.empty_message forloop.first tab.personal_hub tab.empty_title tab.empty_copy tab.empty_how %}
     {% endfor %}

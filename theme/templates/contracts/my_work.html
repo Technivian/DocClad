@@ -3,57 +3,119 @@
 {% block title %}My Work – CLM One{% endblock %}
 {% block authenticated_page_title %}My Work{% endblock %}
 {% block authenticated_page_subtitle %}{% if work_scope == 'team' %}Open work across your organization (admin triage).{% else %}Review and complete the work currently assigned to you.{% endif %}{% endblock %}
-{% block authenticated_page_actions %}
-<div class="my-work-header-actions" style="display:inline-flex;align-items:center;gap:10px;">
-  {% if can_view_team_queue %}
-  <nav class="my-work-scope-tabs" aria-label="Work scope" style="display:inline-flex;align-items:center;gap:6px;">
-    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope != 'team' %} is-active{% endif %}" href="?scope=personal"{% if work_scope != 'team' %} aria-current="page"{% endif %}>My work</a>
-    <a class="dc-ds-button dc-ds-button--ghost{% if work_scope == 'team' %} is-active{% endif %}" href="?scope=team"{% if work_scope == 'team' %} aria-current="page"{% endif %}>Team queue</a>
-  </nav>
-  {% endif %}
-  <span class="my-work-last-updated" id="my-work-last-updated" style="font:var(--text-meta);color:var(--ink-600);white-space:nowrap;">
-    Updated {{ last_updated|date:"g:i A" }}
-  </span>
-  <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
-</div>
-{% endblock %}
+{% block authenticated_page_actions %}{% endblock %}
 {% block content %}
 {% include "components/_list_page_shell_styles.html" %}
 {% include "components/_governance_styles.html" %}
 <style nonce="{{ csp_nonce }}">
-  .my-work-page .clm-list-summary { --dc-ds-summary-columns: 6; }
+  .my-work-page .my-work-last-updated {
+    font: var(--text-meta);
+    color: var(--ink-600);
+    white-space: nowrap;
+  }
+  .my-work-page .my-work-scope-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    margin-right: 4px;
+  }
+  .my-work-page .my-work-scope-tabs .my-work-type-chip {
+    text-decoration: none;
+  }
+  .my-work-page .my-work-scope-tabs .my-work-type-chip,
+  .my-work-page .my-work-view-mode-tabs .my-work-type-chip {
+    border-color: var(--line);
+    background: var(--well);
+    color: var(--ink-600);
+  }
+  .my-work-page .my-work-inline-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-left: var(--space-16);
+    white-space: nowrap;
+  }
+  .my-work-page .my-work-scope-tabs + .my-work-inline-summary::before,
+  .my-work-page .my-work-inline-summary + .my-work-view-mode-tabs::before {
+    content: "|";
+    color: var(--ink-400, var(--text-muted));
+    font-size: 16px;
+    font-weight: 400;
+  }
   .my-work-page .my-work-summary-chip {
-    display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
-    min-height: 36px; margin: 0; padding: 0 12px;
-    border: 1px solid var(--line, var(--hairline)); border-radius: 999px;
-    background: var(--card, #fff); color: var(--ink-600);
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 30px; margin: 0; padding: 0 10px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--well); color: var(--ink-600);
     font: var(--text-meta); font-size: 12px; font-weight: 650; line-height: 1.2;
-    white-space: nowrap; cursor: pointer; box-shadow: none;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    white-space: nowrap; cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
   }
   .my-work-page .my-work-summary-chip:hover {
-    border-color: color-mix(in srgb, var(--seal) 35%, var(--line));
-    color: var(--ink-900);
-    background: color-mix(in srgb, var(--seal) 5%, var(--card));
+    border-color: var(--seal);
+    color: var(--seal-dark, var(--seal));
   }
   .my-work-page .my-work-summary-chip:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
   .my-work-page .my-work-summary-chip.is-active,
   .my-work-page .my-work-summary-chip[aria-pressed="true"] {
     border-color: var(--seal);
-    background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
+    background: color-mix(in srgb, var(--seal) 10%, var(--well));
     color: var(--seal-dark, var(--seal));
     font-weight: 700;
   }
   .my-work-page .my-work-summary-chip.is-hidden { display: none; }
-  .my-work-page .my-work-summary-chip__count { font-variant-numeric: tabular-nums; opacity: 0.85; }
-  .my-work-page .my-work-summary-chip--danger .my-work-summary-chip__count { color: var(--status-danger-fg); }
-  .my-work-page .my-work-summary-chip--warning .my-work-summary-chip__count { color: var(--status-pending-fg); }
-  .my-work-page .my-work-summary-chip--info .my-work-summary-chip__count { color: var(--status-progress-fg); }
+  .my-work-page .my-work-summary-chip__label { color: inherit; }
+  .my-work-page .my-work-summary-chip__count {
+    display: inline-grid; place-items: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 999px; background: var(--well); color: var(--ink-700);
+    font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 700;
+  }
+  .my-work-page .my-work-summary-chip.is-active .my-work-summary-chip__count,
+  .my-work-page .my-work-summary-chip[aria-pressed="true"] .my-work-summary-chip__count {
+    background: color-mix(in srgb, var(--seal) 18%, #fff);
+    color: var(--seal-dark, var(--seal));
+  }
 
-  .my-work-page .my-work-view-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .my-work-page .my-work-view-tabs { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+  .my-work-page .my-work-view-mode-tabs { display: inline-flex; align-items: center; gap: 8px; margin-left: var(--space-16); }
+  .my-work-page .clm-list-filter-controls {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--space-12);
+    padding-top: var(--space-10);
+    border-top: 1px solid var(--line, var(--hairline));
+  }
   .my-work-page .my-work-type-filters {
-    display: flex; flex: 1 1 auto; align-items: center; gap: 6px;
+    display: flex; flex: 0 1 560px; align-items: center; gap: 6px;
     min-width: 0; overflow-x: auto; padding: 1px;
+  }
+  .my-work-page .clm-list-search-field {
+    flex: 1 1 360px;
+    min-width: 260px;
+  }
+  .my-work-page .clm-list-actions-stack {
+    flex: 0 0 auto;
+    margin-left: 0;
+    gap: var(--space-8);
+  }
+  .my-work-page .my-work-toolbar-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-10);
+    margin-left: 0;
+    padding-left: var(--space-8);
+    white-space: nowrap;
+  }
+  .my-work-page .clm-list-result-count {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ink-700, var(--text-secondary));
+    font-size: 13px;
+    font-weight: 600;
   }
   .my-work-page .my-work-type-chip {
     display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
@@ -83,7 +145,7 @@
 
   .my-work-page #my-work-table { min-width: 1100px; width: 100%; table-layout: fixed; }
   .my-work-page #my-work-table th,
-  .my-work-page #my-work-table td { vertical-align: top; padding: 14px 10px; overflow: hidden; }
+  .my-work-page #my-work-table td { vertical-align: middle; padding: 8px 12px; overflow: hidden; }
   .my-work-page #my-work-table th[data-col="priority"],
   .my-work-page #my-work-table td[data-col="priority"] { width: 88px; }
   .my-work-page #my-work-table th[data-col="title"],
@@ -91,7 +153,9 @@
   .my-work-page #my-work-table th[data-col="contract"],
   .my-work-page #my-work-table td[data-col="contract"] { min-width: 140px; width: 14%; }
   .my-work-page #my-work-table th[data-col="counterparty"],
-  .my-work-page #my-work-table td[data-col="counterparty"] { min-width: 120px; width: 12%; }
+  .my-work-page #my-work-table td[data-col="counterparty"] {
+    min-width: 120px; width: 12%; white-space: nowrap; text-overflow: ellipsis;
+  }
   .my-work-page #my-work-table th[data-col="type"],
   .my-work-page #my-work-table td[data-col="type"] { width: 96px; }
   .my-work-page #my-work-table th[data-col="assigned"],
@@ -100,17 +164,25 @@
   .my-work-page #my-work-table td[data-col="assignee"] { min-width: 120px; width: 12%; }
   .my-work-page #my-work-table th[data-col="due"],
   .my-work-page #my-work-table td[data-col="due"] { width: 104px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .my-work-page .my-work-header-actions .dc-ds-button.is-active,
-  .my-work-page .my-work-scope-tabs .dc-ds-button[aria-current="page"] {
+  .my-work-page .my-work-toolbar-actions .dc-ds-button.is-active,
+  .my-work-page .my-work-scope-tabs .dc-ds-button[aria-current="page"],
+  .my-work-page .my-work-scope-tabs .my-work-type-chip[aria-current="page"],
+  .my-work-page .my-work-view-mode-tabs .my-work-type-chip.is-active {
     border-color: var(--seal);
-    background: var(--seal-bg, color-mix(in srgb, var(--seal) 12%, #fff));
+    background: color-mix(in srgb, var(--seal) 10%, var(--well));
     color: var(--seal-dark, var(--seal));
     font-weight: 700;
   }
   .my-work-page #my-work-table th[data-col="status"],
   .my-work-page #my-work-table td[data-col="status"] { min-width: 140px; width: 12%; }
   .my-work-page #my-work-table th[data-col="action"],
-  .my-work-page #my-work-table td[data-col="action"] { width: 108px; overflow: visible; }
+  .my-work-page #my-work-table td[data-col="action"] { width: 136px; overflow: visible; }
+  .my-work-page .my-work-row-actions {
+    display: flex; align-items: center; justify-content: flex-end; gap: 4px; white-space: nowrap;
+  }
+  .my-work-page .my-work-row-actions .dc-ds-button {
+    min-height: 30px; padding: 4px 10px;
+  }
 
   .my-work-page .my-work-row { cursor: pointer; }
   .my-work-page .my-work-row:hover td { background: var(--sidebar-hover); }
@@ -169,7 +241,7 @@
   .my-work-page.is-loading .my-work-skeleton { display: table-row-group; }
   .my-work-page.is-loading #my-work-active-body,
   .my-work-page.is-loading .my-work-cards { visibility: hidden; height: 0; overflow: hidden; }
-  .my-work-page .my-work-skeleton td { padding: 14px 10px; }
+  .my-work-page .my-work-skeleton td { padding: 8px 12px; }
   .my-work-page .my-work-skeleton__bar {
     height: 12px; border-radius: 6px;
     background: linear-gradient(90deg, var(--well) 0%, var(--line) 50%, var(--well) 100%);
@@ -190,13 +262,18 @@
   .my-work-page[data-view="completed"] .my-work-completed-panel { display: block; }
 
   @media (max-width: 900px) {
-    .my-work-page .clm-list-summary { --dc-ds-summary-columns: 3; }
+    .my-work-page .my-work-inline-summary { margin-left: var(--space-8); }
+    .my-work-page .my-work-view-mode-tabs { margin-left: var(--space-8); }
+    .my-work-page .my-work-toolbar-actions { margin-left: auto; padding-left: var(--space-8); }
+    .my-work-page .clm-list-filter-controls { flex-wrap: wrap; }
+    .my-work-page .my-work-type-filters { flex-basis: 100%; max-width: none; }
+    .my-work-page .clm-list-search-field { flex-basis: 100%; }
+    .my-work-page .clm-list-actions-stack { margin-left: 0; }
     .my-work-page .dc-ds-table-wrap { display: none; }
     .my-work-page .my-work-cards { display: grid; }
     .my-work-page .my-work-detail-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 560px) {
-    .my-work-page .clm-list-summary { --dc-ds-summary-columns: 2; }
     .my-work-page .my-work-detail-grid { grid-template-columns: 1fr; }
   }
   body[data-design-system=casefile]:has(.my-work-page) .app-footer { display: none; }
@@ -231,8 +308,31 @@
   <header class="clm-list-shell dc-ds-filterbar dc-ds-table-toolbar dc-ds-list-toolbar" aria-label="My Work controls">
     <div class="clm-list-view-header">
       <nav class="my-work-view-tabs clm-list-view-tabs" aria-label="Work queue views">
-        <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
-        <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
+        {% if can_view_team_queue %}
+        <div class="my-work-scope-tabs" role="group" aria-label="Work scope">
+          <a class="my-work-type-chip{% if work_scope != 'team' %} is-active{% endif %}"
+             href="?scope=personal{% if view_mode == 'completed' %}&view=completed{% endif %}"
+             {% if work_scope != 'team' %}aria-current="page"{% endif %}>My queue</a>
+          <a class="my-work-type-chip{% if work_scope == 'team' %} is-active{% endif %}"
+             href="?scope=team{% if view_mode == 'completed' %}&view=completed{% endif %}"
+             {% if work_scope == 'team' %}aria-current="page"{% endif %}>Team queue</a>
+        </div>
+        {% endif %}
+        <div class="my-work-inline-summary my-work-active-panel" role="group" aria-label="Personal workload summary">
+          {% for chip in summary_chips %}
+          <button type="button"
+                  class="my-work-summary-chip my-work-summary-chip--{{ chip.tone }}{% if chip.hidden %} is-hidden{% endif %}"
+                  data-summary-filter="{{ chip.key }}"
+                  aria-pressed="false">
+            <span class="my-work-summary-chip__label">{{ chip.label }}</span>
+            <span class="my-work-summary-chip__count">{{ chip.count }}</span>
+          </button>
+          {% endfor %}
+        </div>
+        <div class="my-work-view-mode-tabs">
+          <button type="button" class="my-work-type-chip is-active" data-view-tab="active" aria-pressed="true">Active work</button>
+          <button type="button" class="my-work-type-chip" data-view-tab="completed" aria-pressed="false">Recently completed</button>
+        </div>
       </nav>
     </div>
 
@@ -246,8 +346,8 @@
         {% include "design_system/icon.html" with name="search" class_name="clm-list-search-icon" %}
         <input type="search" id="my-work-search" class="dc-ds-control" placeholder="Search contract, counterparty, work item, or reference" aria-label="Search work queue">
       </div>
-      <button type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" id="my-work-filters-toggle" aria-expanded="false" aria-controls="my-work-filters-drawer">Additional filters</button>
       <div class="clm-list-actions-stack" style="display:inline-flex;align-items:center;gap:8px;">
+        <button type="button" class="clm-list-filter-toggle dc-ds-button dc-ds-button--ghost" id="my-work-filters-toggle" aria-expanded="false" aria-controls="my-work-filters-drawer">Filters</button>
         <div class="relative" style="position:relative;">
           <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-views-toggle" aria-expanded="false" aria-controls="my-work-views-panel">Saved views</button>
           <div id="my-work-views-panel" class="clm-list-filter-drawer" hidden style="position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:280px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow-panel,0 8px 24px rgba(0,0,0,.08));">
@@ -267,6 +367,12 @@
           </div>
         </div>
         <p id="my-work-result-count" class="clm-list-result-count" aria-live="polite">{{ my_work_rows|length }} item{{ my_work_rows|length|pluralize }}</p>
+        <div class="my-work-toolbar-actions">
+          <span class="my-work-last-updated" id="my-work-last-updated">
+            Updated {{ last_updated|date:"g:i A" }}
+          </span>
+          <button type="button" class="dc-ds-button dc-ds-button--ghost" id="my-work-refresh" aria-label="Refresh work queue">Refresh</button>
+        </div>
       </div>
     </div>
 
@@ -348,20 +454,6 @@
   </header>
 
   <div class="my-work-active-panel">
-    <div class="my-work-summary-wrap" role="group" aria-label="Personal workload summary">
-      <div class="my-work-type-filters" style="margin-bottom:var(--space-10);">
-        {% for chip in summary_chips %}
-        <button type="button"
-                class="my-work-summary-chip my-work-summary-chip--{{ chip.tone }}{% if chip.hidden %} is-hidden{% endif %}"
-                data-summary-filter="{{ chip.key }}"
-                aria-pressed="false">
-          <span>{{ chip.label }}</span>
-          <span class="my-work-summary-chip__count">{{ chip.count }}</span>
-        </button>
-        {% endfor %}
-      </div>
-    </div>
-
     <div id="my-work-active-filters" class="my-work-active-filters" aria-live="polite"></div>
 
     {% if not my_work_rows %}
@@ -386,10 +478,10 @@
             <th scope="col" data-col="contract">Contract</th>
             <th scope="col" data-col="counterparty">Counterparty</th>
             <th scope="col" data-col="type">Type</th>
-            {% if work_scope == 'team' %}<th scope="col" data-col="assignee">Assignee</th>{% endif %}
-            <th scope="col" data-col="assigned">Assigned</th>
-            <th scope="col" data-col="due">Due</th>
             <th scope="col" data-col="status">Status</th>
+            {% if work_scope == 'team' %}<th scope="col" data-col="assignee">Assignee</th>{% endif %}
+            <th scope="col" data-col="assigned">Assigned on</th>
+            <th scope="col" data-col="due">Due</th>
             <th scope="col" data-col="action"><span class="sr-only">Action</span></th>
           </tr>
         </thead>
@@ -422,7 +514,7 @@
               {% if row.can_resolve_conflict %}data-can-resolve-conflict="1" data-conflict-status-url="{{ row.conflict_status_url }}" data-risk-item-id="{{ row.risk_item_id }}"{% endif %}
               aria-label="{{ row.title }}. {{ row.action_label|default:'Open' }}">
             <td data-col="priority">
-              {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+              {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=0 %}
             </td>
             <td data-col="title">
               <span class="wq-item-link">{{ row.title }}</span>
@@ -437,6 +529,9 @@
             </td>
             <td data-col="counterparty">{{ row.counterparty|default:"—" }}</td>
             <td data-col="type">{{ row.work_type_label }}</td>
+            <td data-col="status">
+              <span class="my-work-status my-work-status--{{ row.status_tone }}">{{ row.status_label }}</span>
+            </td>
             {% if work_scope == 'team' %}
             <td data-col="assignee">{{ row.assignee_label|default:"—" }}</td>
             {% endif %}
@@ -444,10 +539,8 @@
             <td data-col="due" class="{% if row.due_context.due_overdue %}wq-due-overdue{% elif row.due_context.due_today %}wq-due-today{% endif %}">
               {% if row.due_context.due_date %}{{ row.due_context.due_date|date:"j M Y" }}{% else %}—{% endif %}
             </td>
-            <td data-col="status">
-              <span class="my-work-status my-work-status--{{ row.status_tone }}">{{ row.status_label }}</span>
-            </td>
             <td data-col="action">
+              <div class="my-work-row-actions">
               {% if row.action_href %}
               <a href="{{ row.action_href }}" class="dc-ds-button dc-ds-button--quiet text-xs font-semibold px-2.5 py-1.5" onclick="event.stopPropagation();">{{ row.action_label }}</a>
               {% else %}
@@ -481,6 +574,7 @@
                   {% if row.contract and not row.is_restricted %}<a href="{% url 'contracts:contract_detail' row.contract.pk %}" role="menuitem">Open contract</a>{% endif %}
                 </div>
               </details>
+              </div>
               <div class="wq-action-error" hidden></div>
             </td>
           </tr>

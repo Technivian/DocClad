@@ -8,7 +8,7 @@ from contracts.models import Contract, Organization, OrganizationMembership
 from contracts.services.contract_detail_workspace import (
     build_contract_detail_tabs,
     build_workflow_section_tabs,
-    contract_operations_hub_tabs,
+    contract_repository_tabs,
     normalize_contract_detail_tab,
     normalize_workflow_section,
 )
@@ -59,9 +59,16 @@ class WorkspaceTabsCanonicalPatternTests(TestCase):
         self.assertEqual([t['label'] for t in sections], ['Review findings', 'Approvals'])
         self.assertTrue(any(t['active'] and t['key'] == 'approvals' for t in sections))
 
-        hub = contract_operations_hub_tabs(active='repository')
-        self.assertTrue(hub[0]['active'])
-        self.assertEqual(hub[0]['label'], 'All contracts')
+        repository_tabs = contract_repository_tabs(active='completed')
+        self.assertEqual([tab['label'] for tab in repository_tabs], [
+            'All contracts', 'Active', 'Expiring', 'Completed', 'Archived',
+        ])
+        self.assertTrue(repository_tabs[3]['active'])
+        self.assertIn('status=ACTIVE', repository_tabs[1]['url'])
+        self.assertIn('expiring_within_days=30', repository_tabs[2]['url'])
+        self.assertIn('lifecycle_stage=EXECUTED', repository_tabs[3]['url'])
+        self.assertIn('lifecycle_stage=OBLIGATION_TRACKING', repository_tabs[3]['url'])
+        self.assertIn('status=ARCHIVED', repository_tabs[4]['url'])
 
     def test_contract_detail_renders_canonical_markup_and_lifecycle_separation(self):
         url = reverse('contracts:contract_detail', kwargs={'pk': self.contract.pk})

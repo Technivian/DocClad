@@ -20,6 +20,12 @@ Do not use hype, jokes, or anthropomorphic AI language.
 - Use tabular numerals and explicit currencies.
 - Never abbreviate a financial value when precision affects a decision.
 
+## Search Scope
+
+- Global header search uses the product-wide label `Search CLM One`.
+- Surface-scoped search uses the surface noun, such as `Search contracts`.
+- Do not reuse the same placeholder text for different search scopes.
+
 ## Errors
 
 Use: `The approval could not be submitted. Refresh the contract and try again.`

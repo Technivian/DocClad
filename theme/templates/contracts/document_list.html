@@ -30,8 +30,8 @@
             <tr>
                 <th scope="col">Title</th>
                 <th scope="col">Type</th>
-                <th scope="col">Status</th>
                 <th scope="col">Matter</th>
+                <th scope="col">Status</th>
                 <th scope="col">Version</th>
                 <th scope="col">Uploaded</th>
                 <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
@@ -46,8 +46,8 @@
                     {% if doc.is_confidential %}<span class="dc-ds-badge dc-ds-badge--sm ml-1 dc-ds-badge--danger">Confidential</span>{% endif %}
                 </td>
                 <td>{{ doc.get_document_type_display }}</td>
-                <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ doc.status|document_status_badge_tone }}">{{ doc.get_status_display }}</span></td>
                 <td>{{ doc.matter.matter_number|default:"—" }}</td>
+                <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ doc.status|document_status_badge_tone }}">{{ doc.get_status_display }}</span></td>
                 <td data-numeric>v{{ doc.version }}</td>
                 <td>{{ doc.created_at|date:"M d, Y" }}</td>
                 <td class="text-right"><a href="{% url 'contracts:document_update' doc.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a></td>

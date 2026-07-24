@@ -26,6 +26,7 @@ class CLMOneRepository {
             type: true,
             counterparty: true,
             stage: true,
+            status: true,
             owner: true,
             activity: false,
             key_date: true,
@@ -471,12 +472,22 @@ class CLMOneRepository {
         return `<div class="activity-line"><span class="activity-line-avatar avatar-gradient-bg">${this.escapeHtml(shownInitial)}</span><div class="activity-line-body"><div class="activity-line-desc" title="${this.escapeHtml(full)}">${body}</div><div class="activity-line-time">${this.escapeHtml(time || '')}</div></div></div>`;
     }
 
-    renderStatusMeta(contract) {
-        const status = this.escapeHtml(contract.status_display || contract.status || '');
-        if (contract.has_exception) {
-            return `<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention repo-exception-badge">Exception</span><span class="repo-status-sep" aria-hidden="true">·</span><span class="text-sm repo-muted-text">${status}</span>`;
-        }
-        return `<span class="text-sm repo-muted-text">${status}</span>`;
+    renderStatusIndicator(contract) {
+        const status = this.escapeHtml(contract.status_display || contract.status || 'Not set');
+        const allowedTones = new Set(['success', 'progress', 'attention', 'danger', 'special', 'neutral']);
+        const tone = allowedTones.has(contract.status_badge_tone) ? contract.status_badge_tone : 'neutral';
+        const accessibleLabel = `Status: ${status}`;
+        return `
+            <span class="repo-status-inline">
+                <span class="repo-status-dot repo-status-dot--${tone}" title="${accessibleLabel}" aria-hidden="true"></span>
+                <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--${tone} repo-status-badge" title="${accessibleLabel}">${status}</span>
+            </span>
+        `;
+    }
+
+    renderExceptionMeta(contract) {
+        if (!contract.has_exception) return '';
+        return '<div class="repo-title-meta"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--attention repo-exception-badge">Exception</span></div>';
     }
 
     renderStageBadge(contract) {
@@ -517,6 +528,16 @@ class CLMOneRepository {
         return `<span class="dc-ds-table-cell-text" title="${this.escapeHtml(text)}">${this.escapeHtml(text)}</span>`;
     }
 
+    renderKeyDateCell(contract) {
+        const date = contract.next_key_date_display || contract.end_date_display;
+        if (!date) {
+            return '<span class="repo-empty-label">—</span>';
+        }
+        const label = (contract.next_key_date_label || '').trim();
+        const text = label ? `${label} · ${date}` : date;
+        return `<span class="dc-ds-table-cell-text" title="${this.escapeHtml(text)}">${this.escapeHtml(text)}</span>`;
+    }
+
     renderContracts(result) {
         const tbody = document.getElementById('contracts-tbody');
         if (!tbody) return;
@@ -534,7 +555,7 @@ class CLMOneRepository {
                 || this.filters.expiring_within_days
             );
             tbody.innerHTML = `
-                <tr><td colspan="10">
+                <tr><td colspan="11">
                     <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state">
                         <h2 class="dc-ds-empty__title">${hasActiveFilters ? 'No contracts match this view' : 'Your repository is ready'}</h2>
                         <p class="dc-ds-empty__copy">${hasActiveFilters
@@ -560,14 +581,16 @@ class CLMOneRepository {
         }
 
         tbody.innerHTML = result.contracts.map(contract => `
-            <tr class="contract-row cursor-pointer" data-contract-id="${contract.id}" aria-selected="false">
+            <tr class="contract-row cursor-pointer" data-contract-id="${contract.id}" data-href="/contracts/${contract.id}/" tabindex="0" aria-selected="false">
                 <td class="repo-cell" data-col="select">
                     <input type="checkbox" class="contract-checkbox" value="${contract.id}" aria-label="Select ${this.escapeHtml(contract.title)}">
                 </td>
                 <td class="repo-cell" data-col="title">
                     <div class="repo-title-stack">
-                      <div class="font-medium repo-contract-title">${this.escapeHtml(contract.title)}</div>
-                      <div class="repo-title-meta">${this.renderStatusMeta(contract)}</div>
+                      <div class="repo-contract-heading">
+                        <div class="font-medium repo-contract-title">${this.escapeHtml(contract.title)}</div>
+                      </div>
+                      ${this.renderExceptionMeta(contract)}
                     </div>
                 </td>
                 <td class="repo-cell" data-col="type">
@@ -579,14 +602,17 @@ class CLMOneRepository {
                 <td class="repo-cell" data-col="stage">
                     ${this.renderStageBadge(contract)}
                 </td>
+                <td class="repo-cell" data-col="status">
+                    ${this.renderStatusIndicator(contract)}
+                </td>
                 <td class="repo-cell" data-col="owner">
                     ${this.renderAssigneeChip(contract.assignee_name, contract.assignee_initial)}
                 </td>
+                <td class="repo-cell repo-key-date${contract.due_overdue ? ' wq-due-overdue' : ''}" data-col="key_date">
+                    ${this.renderKeyDateCell(contract)}
+                </td>
                 <td class="repo-cell" data-col="activity">
                     ${this.renderActivityLine(contract.latest_activity_text, contract.latest_activity_time, contract.latest_activity_initial)}
-                </td>
-                <td class="repo-cell repo-key-date${contract.due_overdue ? ' wq-due-overdue' : ''}" data-col="key_date">
-                    ${contract.end_date_display ? this.escapeHtml(contract.end_date_display) : '<span class="repo-empty-label">—</span>'}
                 </td>
                 <td class="repo-cell repo-value" data-col="value">
                     ${contract.value_display || '—'}
@@ -601,8 +627,13 @@ class CLMOneRepository {
         tbody.querySelectorAll('.contract-row').forEach(row => {
             row.addEventListener('click', (e) => {
                 if (!e.target.closest('input, a, button, summary, .wq-kebab, .wq-kebab-menu')) {
-                    const contractId = row.dataset.contractId;
-                    window.location.href = `/contracts/${contractId}/`;
+                    window.location.href = row.dataset.href;
+                }
+            });
+            row.addEventListener('keydown', (e) => {
+                if (e.target === row && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    window.location.href = row.dataset.href;
                 }
             });
         });
@@ -1000,7 +1031,7 @@ class CLMOneRepository {
             table.setAttribute('aria-busy', 'true');
         }
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="10"><div class="dc-ds-table-state" role="status" aria-live="polite">Loading contracts…</div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11"><div class="dc-ds-table-state" role="status" aria-live="polite">Loading contracts…</div></td></tr>';
         }
     }
     
@@ -1018,7 +1049,7 @@ class CLMOneRepository {
         const tbody = document.getElementById('contracts-tbody');
         if (tbody) {
             tbody.innerHTML = `
-                <tr><td colspan="10">
+                <tr><td colspan="11">
                     <div class="dc-ds-empty dc-ds-empty--compact repo-empty-state">
                         <h2 class="dc-ds-empty__title">Repository data could not be loaded</h2>
                         <p class="dc-ds-empty__copy">The contract service did not return a usable response.</p>

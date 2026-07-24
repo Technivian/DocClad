@@ -1,6 +1,8 @@
 """Contract Detail workspace command model: tabs, review status, action gating."""
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from django.urls import reverse
 
 CONTRACT_DETAIL_TABS = (
@@ -211,6 +213,48 @@ def contract_operations_hub_tabs(*, active: str = 'repository') -> list[dict]:
             'active': key == active,
         }
         for key, label, route in tabs
+    ]
+
+
+def contract_repository_tabs(*, active: str = 'all') -> list[dict]:
+    """Repository view tabs over the same contract inventory.
+
+    These are alternate filters, not duplicate destinations: each tab stays on
+    the repository surface and only narrows the contract set.
+    """
+
+    def _url(params: dict[str, list[str] | str | int | None]) -> str:
+        base = reverse('contracts:repository')
+        query_parts: list[tuple[str, str]] = []
+        for key, values in params.items():
+            if values is None:
+                continue
+            if isinstance(values, (list, tuple, set)):
+                query_parts.extend((key, str(value)) for value in values)
+            else:
+                query_parts.append((key, str(values)))
+        query = urlencode(query_parts, doseq=True)
+        return f'{base}?{query}' if query else base
+
+    tabs = (
+        ('all', 'All contracts', {}),
+        ('active', 'Active', {'status': ['ACTIVE']}),
+        ('expiring', 'Expiring', {'status': ['ACTIVE'], 'expiring_within_days': 30}),
+        (
+            'completed',
+            'Completed',
+            {'status': ['ACTIVE'], 'lifecycle_stage': ['EXECUTED', 'OBLIGATION_TRACKING']},
+        ),
+        ('archived', 'Archived', {'status': ['ARCHIVED']}),
+    )
+    return [
+        {
+            'key': key,
+            'label': label,
+            'url': _url(params),
+            'active': key == active,
+        }
+        for key, label, params in tabs
     ]
 
 

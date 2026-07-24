@@ -200,13 +200,13 @@
             .wq-tab.wq-tab-active .wq-tab-count { background: var(--primary-subtle); border-color: var(--primary-bg); color: var(--primary-light); }
             .wq-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
             .wq-table th {
-                padding: 10px 16px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+                padding: 8px 12px; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
                 letter-spacing: 0.07em; color: var(--text-muted); text-align: left;
                 background: var(--surface); border-bottom: 1px solid var(--card-border);
                 overflow: hidden;
             }
             .wq-table td {
-                padding: 15px 16px; font-size: 13px; color: var(--text-primary);
+                padding: 8px 12px; font-size: 13px; color: var(--text-primary);
                 border-bottom: 1px solid var(--card-border); vertical-align: middle;
                 overflow: hidden;
             }
@@ -291,8 +291,11 @@
                success/danger tints, same shape language as .repo-mini-btn.
                Only rendered for rows the current user is actually eligible
                to decide on; there is no disabled-button state to style. */
-            .wq-approval-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-            .wq-approve-btn, .wq-reject-btn {
+            .wq-approval-actions {
+                display: flex; align-items: center; justify-content: flex-end;
+                gap: 6px; flex-wrap: nowrap; white-space: nowrap;
+            }
+            .wq-approve-btn, .wq-reject-btn, .wq-return-btn {
                 font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px;
                 cursor: pointer; white-space: nowrap; border: 1px solid transparent;
                 appearance: none; font-family: inherit;
@@ -301,7 +304,9 @@
             .wq-approve-btn:hover { opacity: 0.8; }
             .wq-reject-btn { background: var(--msg-error-bg); color: var(--msg-error-text); border-color: var(--msg-error-border); }
             .wq-reject-btn:hover { opacity: 0.8; }
-            .wq-approve-btn:disabled, .wq-reject-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+            .wq-return-btn { background: var(--well); color: var(--ink-700); border-color: var(--line); }
+            .wq-return-btn:hover { background: var(--surface-hover); color: var(--ink-900); }
+            .wq-approve-btn:disabled, .wq-reject-btn:disabled, .wq-return-btn:disabled { opacity: 0.5; cursor: not-allowed; }
             .wq-action-error { font-size: 11px; color: var(--msg-error-text); margin-top: 4px; max-width: 170px; }
             .wq-edit-link { font-size: 12px; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
             .wq-edit-link:hover { color: var(--primary); text-decoration: underline; }

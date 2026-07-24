@@ -11,15 +11,23 @@
   .repo-page .table-sticky { overflow-x: auto; overflow-y: visible; }
   .repo-page .table-sticky .tbl-head th { background: var(--card-bg); top: 0; z-index: 4; }
   .repo-page #contracts-table {
-    min-width: 1200px; width: 100%; table-layout: fixed;
+    display: table; min-width: 1200px; width: 100%; table-layout: fixed;
   }
-  .repo-page #contracts-table th,
-  .repo-page #contracts-table td {
-    vertical-align: top;
+  .repo-page #contracts-table col.repo-select-col { width: 40px; }
+  /* Keep this dense repository in the browser's table layout model. The
+     surrounding application shell also uses generic layout utilities, which
+     must not turn record cells into vertically stacked blocks. */
+  .repo-page #contracts-table > thead { display: table-header-group; }
+  .repo-page #contracts-table > tbody { display: table-row-group; }
+  .repo-page #contracts-table > :is(thead, tbody) > tr { display: table-row; }
+  .repo-page #contracts-table > :is(thead, tbody) > tr > :is(th, td) {
+    display: table-cell;
   }
+  .repo-page #contracts-table th { vertical-align: middle; }
+  .repo-page #contracts-table td { vertical-align: middle; }
   .repo-page #contracts-table th.tbl-th,
   .repo-page #contracts-table td.repo-cell {
-    padding: 16px 12px;
+    padding: 8px 12px;
     overflow: hidden;
   }
   .repo-page #contracts-table tbody tr.wq-row-selected td,
@@ -42,13 +50,17 @@
   .repo-page .assignee-chip-empty .assignee-chip-name.repo-empty-label { color: var(--ink-700, var(--text-secondary)); }
   .repo-page #contracts-table th[data-col="select"],
   .repo-page #contracts-table td[data-col="select"] {
-    position: sticky; left: 0; z-index: 3; width: 44px; min-width: 44px; max-width: 44px;
-    background-color: var(--card-bg, #fff); padding-left: 12px; padding-right: 8px;
+    position: sticky; left: 0; z-index: 3; box-sizing: border-box;
+    width: 40px; min-width: 40px; max-width: 40px;
+    background-color: var(--card-bg, #fff); padding-left: 8px; padding-right: 8px; text-align: center;
+  }
+  .repo-page #contracts-table [data-col="select"] input[type="checkbox"] {
+    display: block; width: 16px; height: 16px; margin: 0 auto;
   }
   .repo-page #contracts-table thead th[data-col="select"] { z-index: 6; }
   .repo-page #contracts-table th[data-col="title"],
   .repo-page #contracts-table td[data-col="title"] {
-    position: sticky; left: 44px; z-index: 3; min-width: 260px; width: 24%;
+    position: sticky; left: 40px; z-index: 3; min-width: 260px; width: 24%;
     background-color: var(--card-bg, #fff);
     box-shadow: 1px 0 0 var(--line, var(--card-border));
   }
@@ -72,14 +84,16 @@
     background-color: var(--primary-subtle);
   }
   .repo-page .repo-title-stack { display: grid; gap: 4px; min-width: 0; }
+  .repo-page .repo-contract-heading {
+    display: flex; align-items: center; gap: 7px; min-width: 0;
+  }
   .repo-page .repo-title-meta {
     display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-width: 0;
   }
-  .repo-page .repo-status-sep {
-    color: var(--ink-500, var(--text-muted)); font-size: 12px; font-weight: 600; line-height: 1;
-  }
   .repo-page .repo-exception-badge { flex: 0 0 auto; }
   .repo-page .repo-contract-title {
+    min-width: 0;
+    flex: 0 1 auto;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -110,6 +124,29 @@
   .repo-page #contracts-table th[data-col="stage"],
   .repo-page #contracts-table td[data-col="stage"] { min-width: 145px; width: 145px; }
   .repo-page .repo-stage-badge {
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .repo-page #contracts-table th[data-col="status"],
+  .repo-page #contracts-table td[data-col="status"] { min-width: 118px; width: 10%; }
+  .repo-page .repo-status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .repo-page .repo-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    background: var(--status-neutral-fg);
+  }
+  .repo-page .repo-status-dot--progress { background: var(--status-progress-fg); }
+  .repo-page .repo-status-dot--attention { background: var(--status-pending-fg); }
+  .repo-page .repo-status-dot--danger { background: var(--status-danger-fg); }
+  .repo-page .repo-status-dot--special { background: var(--status-special-fg); }
+  .repo-page .repo-status-dot--success { background: var(--status-positive-fg); }
+  .repo-page .repo-status-badge {
     display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .repo-page #contracts-table th[data-col="owner"],
@@ -254,9 +291,10 @@
             <label><input type="checkbox" data-col-toggle="type" checked> Type</label>
             <label><input type="checkbox" data-col-toggle="counterparty" checked> Counterparty</label>
             <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
+            <label><input type="checkbox" data-col-toggle="status" checked> Status</label>
             <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
             <label><input type="checkbox" data-col-toggle="activity"> Latest activity</label>
-            <label><input type="checkbox" data-col-toggle="key_date" checked> Key date</label>
+            <label><input type="checkbox" data-col-toggle="key_date" checked> Next key date</label>
             <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
           </div>
         </div>
@@ -275,7 +313,7 @@
       <label>Counterparty<select id="counterparty-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All counterparties</option>{% for counterparty in repository_counterparties %}<option value="{{ counterparty }}">{{ counterparty }}</option>{% endfor %}</select></label>
       <label>Risk level<select id="risk-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">All risk levels</option>{% for value, label in risk_levels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
       <label>Approval state<select id="approval-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">Any approval state</option>{% for value, label in approval_states %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
-      <label>Expiry<select id="expiry-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">Any key date</option><option value="30">Expiring in 30 days</option></select></label>
+      <label>Next key date<select id="expiry-filter-select" class="dc-ds-control select-base px-3 py-2 rounded-lg border"><option value="">Any next key date</option><option value="30">Expiring in 30 days</option></select></label>
     </div>
   </section>
 
@@ -286,6 +324,10 @@
   <div class="dc-ds-table-wrap table-sticky">
     <table id="contracts-table" class="dc-ds-table dc-ds-table--fixed w-full text-sm" data-table-core="server" aria-label="Contracts repository">
       <caption class="sr-only">Contracts repository — sortable and filterable contract records.</caption>
+      <colgroup>
+        <col class="repo-select-col">
+        <col span="10">
+      </colgroup>
       <thead class="tbl-head">
         <tr>
           <th class="tbl-th" scope="col" data-col="select"><input type="checkbox" id="select-all" aria-label="Select all contracts"></th>
@@ -293,14 +335,15 @@
           <th class="tbl-th" scope="col" data-col="type">Type</th>
           <th class="tbl-th" scope="col" data-col="counterparty">Counterparty</th>
           <th class="tbl-th" scope="col" data-col="stage" data-column-key="stage" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="stage">Stage<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
+          <th class="tbl-th" scope="col" data-col="status" data-column-key="status" aria-sort="none"><button type="button" class="repo-sort-btn" data-sort="status">Status<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
           <th class="tbl-th" scope="col" data-col="owner">Owner</th>
+          <th class="tbl-th wq-col-num" scope="col" data-col="key_date">Next key date</th>
           <th class="tbl-th" scope="col" data-col="activity" data-column-key="updated" aria-sort="descending"><button type="button" class="repo-sort-btn" data-sort="updated">Latest activity<span class="repo-sort-ind" aria-hidden="true"></span></button></th>
-          <th class="tbl-th wq-col-num" scope="col" data-col="key_date">Key date</th>
           <th class="tbl-th wq-col-num" scope="col" data-col="value">Value</th>
           <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
-      <tbody id="contracts-tbody"><tr><td colspan="10" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading contracts…</td></tr></tbody>
+      <tbody id="contracts-tbody"><tr><td colspan="11" class="px-5 py-20 text-center c-muted" role="status" aria-live="polite">Loading contracts…</td></tr></tbody>
     </table>
   </div>
   <div id="pagination-container" class="dc-ds-table-pagination" aria-live="polite"></div>

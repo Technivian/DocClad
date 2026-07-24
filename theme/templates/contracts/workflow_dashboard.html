@@ -37,7 +37,7 @@
   }
   .workflow-ops-page #workflow-ops-table th,
   .workflow-ops-page #workflow-ops-table td {
-    vertical-align: top; padding: 16px 12px; overflow: hidden;
+    vertical-align: middle; padding: 8px 12px; overflow: hidden;
   }
   .workflow-ops-page #workflow-ops-table [data-col].is-hidden { display: none; }
   /* Default visible set fills the row; optional cols share space when enabled. */
@@ -151,7 +151,7 @@
               <label><input type="checkbox" data-col-toggle="type" checked> Type</label>
               <label><input type="checkbox" data-col-toggle="stage" checked> Stage</label>
               <label><input type="checkbox" data-col-toggle="owner" checked> Owner</label>
-              <label><input type="checkbox" data-col-toggle="key_date" checked> Key date</label>
+              <label><input type="checkbox" data-col-toggle="key_date" checked> Next key date</label>
               <label><input type="checkbox" data-col-toggle="value" checked> Value</label>
               <label><input type="checkbox" data-col-toggle="progress" checked> Progress</label>
               <label><input type="checkbox" data-col-toggle="business_unit"> Business unit</label>
@@ -232,14 +232,14 @@
         <tr>
           <th class="tbl-th" scope="col" data-col="workflow">Workflow</th>
           <th class="tbl-th" scope="col" data-col="type">Type</th>
-          <th class="tbl-th" scope="col" data-col="stage">Stage</th>
-          <th class="tbl-th" scope="col" data-col="owner">Owner</th>
-          <th class="tbl-th" scope="col" data-col="key_date">Key date</th>
-          <th class="tbl-th wq-col-num" scope="col" data-col="value">Value</th>
-          <th class="tbl-th" scope="col" data-col="progress">Progress</th>
           <th class="tbl-th" scope="col" data-col="business_unit">Business unit</th>
           <th class="tbl-th" scope="col" data-col="jurisdiction">Jurisdiction</th>
+          <th class="tbl-th" scope="col" data-col="stage">Stage</th>
+          <th class="tbl-th" scope="col" data-col="owner">Owner</th>
+          <th class="tbl-th" scope="col" data-col="key_date">Next key date</th>
           <th class="tbl-th" scope="col" data-col="agreement_date">Agreement date</th>
+          <th class="tbl-th" scope="col" data-col="progress">Progress</th>
+          <th class="tbl-th wq-col-num" scope="col" data-col="value">Value</th>
           <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>
@@ -257,10 +257,12 @@
             </div>
           </td>
           <td data-col="type"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.agreement_type }}">{{ row.agreement_type }}</span></td>
+          <td data-col="business_unit"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.business_unit }}">{{ row.business_unit|default:"—" }}</span></td>
+          <td data-col="jurisdiction"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.jurisdiction }}">{{ row.jurisdiction|default:"—" }}</span></td>
           <td data-col="stage"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral workflow-ops-stage-badge">{{ row.stage }}</span></td>
           <td data-col="owner"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.owner_label }}">{{ row.owner_label }}</span></td>
           <td data-col="key_date">{% if row.key_date %}{{ row.key_date|date:"j M Y" }}{% else %}—{% endif %}</td>
-          <td class="wq-col-num" data-col="value">{% if row.value %}{{ row.value|money:row.currency }}{% else %}—{% endif %}</td>
+          <td data-col="agreement_date">{% if row.agreement_date %}{{ row.agreement_date|date:"j M Y" }}{% else %}—{% endif %}</td>
           <td data-col="progress">
             <div class="workflow-ops-progress" aria-label="{{ row.progress_percentage }} percent complete">
               <div class="workflow-ops-progress__track" aria-hidden="true">
@@ -269,9 +271,7 @@
               <span>{{ row.progress_percentage }}%</span>
             </div>
           </td>
-          <td data-col="business_unit"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.business_unit }}">{{ row.business_unit|default:"—" }}</span></td>
-          <td data-col="jurisdiction"><span class="workflow-ops-cell-text dc-ds-table-cell-text" title="{{ row.jurisdiction }}">{{ row.jurisdiction|default:"—" }}</span></td>
-          <td data-col="agreement_date">{% if row.agreement_date %}{{ row.agreement_date|date:"j M Y" }}{% else %}—{% endif %}</td>
+          <td class="wq-col-num" data-col="value">{% if row.value %}{{ row.value|money:row.currency }}{% else %}—{% endif %}</td>
           <td data-col="actions">
             <details class="wq-kebab repo-row-menu">
               <summary aria-label="More actions for {{ row.display_name }}" class="wq-kebab-trigger">&#8942;</summary>

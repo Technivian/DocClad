@@ -57,6 +57,15 @@ class MyWorkPageTests(TestCase):
         self.assertContains(response, 'id="my-work-root"')
         self.assertContains(response, 'id="my-work-search"')
         self.assertContains(response, 'Refresh')
+        self.assertContains(response, 'my-work-toolbar-actions')
+        self.assertContains(response, 'class="my-work-scope-tabs" role="group"')
+        self.assertNotContains(response, '<nav class="my-work-scope-tabs"')
+        self.assertContains(response, 'id="my-work-filters-toggle"')
+        self.assertContains(response, '>Filters</button>')
+        content = response.content.decode()
+        self.assertLess(content.index('id="my-work-search"'), content.index('id="my-work-filters-toggle"'))
+        self.assertLess(content.index('my-work-inline-summary'), content.index('id="my-work-search"'))
+        self.assertNotIn('my-work-summary-wrap', content)
 
     def test_my_work_shows_assigned_approval(self):
         ApprovalRequest.objects.create(

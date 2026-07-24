@@ -34,7 +34,7 @@
   }
   .legal-hub-page #legal-hub-table th,
   .legal-hub-page #legal-hub-table td {
-    vertical-align: top; padding: 16px 12px; overflow: hidden;
+    vertical-align: middle; padding: 8px 12px; overflow: hidden;
   }
   .legal-hub-page #legal-hub-table th[data-col="severity"],
   .legal-hub-page #legal-hub-table td[data-col="severity"] { min-width: 96px; width: 10%; }
@@ -173,8 +173,8 @@
           <th scope="col" data-col="signal">Signal</th>
           <th scope="col" data-col="source">Source</th>
           <th scope="col" data-col="matter">Matter/Client</th>
-          <th scope="col" data-col="owner">Owner</th>
           <th scope="col" data-col="status">Status</th>
+          <th scope="col" data-col="owner">Owner</th>
           <th scope="col" data-col="due">Due/Age</th>
           <th scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
         </tr>
@@ -225,6 +225,9 @@
             <span class="c-dim">Unlinked</span>
             {% endif %}
           </td>
+          <td data-col="status">
+            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ signal.status_display }}</span>
+          </td>
           <td data-col="owner">
             {% if signal.owner %}
             {% assignee_chip signal.owner %}
@@ -233,9 +236,6 @@
             {% else %}
             <span class="c-dim">Unassigned</span>
             {% endif %}
-          </td>
-          <td data-col="status">
-            <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ signal.status_display }}</span>
           </td>
           <td data-col="due">
             {% if signal.due_date %}{{ signal.due_date|due_countdown }}{% else %}{{ signal.updated_at|date:"d M Y" }}{% endif %}

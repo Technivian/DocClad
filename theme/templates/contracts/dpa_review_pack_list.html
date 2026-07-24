@@ -63,8 +63,8 @@
   }
   .dpa-review-page #dpa-reviews-table th,
   .dpa-review-page #dpa-reviews-table td {
-    vertical-align: top;
-    padding: 14px 12px;
+    vertical-align: middle;
+    padding: 8px 12px;
     overflow: hidden;
     border-left: 0;
     border-right: 0;
@@ -259,7 +259,7 @@
             <div class="dpa-review-counterparty">{% if row.pack.counterparty %}{{ row.pack.counterparty.name }}{% else %}No counterparty{% endif %}</div>
             {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
             {% if row.priority_reason %}
-            {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+            {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=0 %}
             {% endif %}
           </td>
           <td data-col="role">

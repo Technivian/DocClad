@@ -74,7 +74,26 @@ use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 
 ## Tables
 
+- Standard operational tables use this semantic column order when the fields
+  are relevant: **Record → context/type → stage/status → owner → due/key date
+  → activity/value → actions**. Keep the primary record visible first; do not
+  add placeholder columns solely to satisfy the sequence.
+- Approved surface exceptions are deliberate: **My Work** keeps `Priority`
+  first because it is a personal action queue; **Legal Intelligence** keeps
+  `Severity` first because urgency is the primary decision signal; and the
+  **Contracts Repository** keeps its leading native selection checkbox because
+  it has implemented bulk actions. Do not add row-selection checkboxes to
+  tables without a supported bulk action and backend API.
+- Repository-like page tabs must be alternate views of the same object set.
+  They should not duplicate sidebar destinations or mix personal queues with
+  inventory views.
+- Use precise labels when the data supports them, such as `Next key date`,
+  `Assigned on`, or `Last updated`, instead of generic date headers.
 - Left-align text; right-align numeric and monetary values.
+- Authenticated tables use the compact density by default: `8px 12px` cell
+  padding, vertically centered content, and content-led rows that normally land
+  near the 44px compact-row target. Use a documented relaxed mode only when a
+  row's content genuinely needs more space.
 - Put every standard table in `.dc-ds-table-wrap`; it owns the 390px
   horizontal-overflow contract. Give `.dc-ds-table` a real `caption` and use
   `scope="col"` on column headers.
@@ -87,10 +106,30 @@ use `setup_action.html`; do not fork their icon/copy/arrow anatomy.
 - Use sticky headers only inside an explicit scroll container.
 - Sorting, filtering, selection, pagination, and column visibility require
   visible state and accessible names.
+- Rows provide shared hover and keyboard-focus feedback. Only rows with a real
+  destination or action use the pointer cursor; navigable rows must also expose
+  an equivalent keyboard interaction.
 - Use TanStack Table Core only for genuinely complex client-side tables. It is
   a behavior engine; Casefile owns the markup and appearance.
 - On mobile, preserve comparison through horizontal scrolling or switch to a
   documented record-list pattern. Do not silently hide critical columns.
+
+### Legacy table migration follow-up
+
+The following user-facing templates still contain legacy table markup and are
+not part of the shared-table normalization. Migrate them as a dedicated,
+behavior-preserving follow-up rather than folding them into operational table
+work: `audit_log_list.html`, `budget_detail.html`, `budget_list.html`,
+`client_list.html`, `compliance_checklist_list.html`, `conflict_check_list.html`,
+`contract_list.html`, `counterparty_list.html`, `data_inventory_list.html`,
+`document_compare.html`, `document_ocr_queue.html`, `dpa_playbook_list.html`,
+`dsar_list.html`, `ethical_wall_list.html`, `identity_telemetry_recovery_body.html`,
+`invoice_list.html`, `legal_hold_list.html`, `matter_list.html`,
+`privacy_dashboard.html`, `retention_policy_list.html`, `risk_log_list.html`,
+`signature_request_list.html`, `subprocessor_list.html`, `time_entry_list.html`,
+`trademark_request_list.html`, `transfer_record_list.html`,
+`trust_account_list.html`, and `workflow_template_detail.html`. Design-system
+examples and preview templates are likewise excluded from product migration.
 
 ## Empty States
 

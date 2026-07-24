@@ -2689,7 +2689,7 @@
 }
 .wf-table th,
 .wf-table td {
-  padding: 10px 12px;
+  padding: 8px 12px;
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid var(--hairline, var(--line));
@@ -3428,7 +3428,7 @@
 }
 .org-team-table th,
 .org-team-table td {
-  padding: 10px 12px;
+  padding: 8px 12px;
   vertical-align: middle;
 }
 .org-team-table tbody tr:hover {

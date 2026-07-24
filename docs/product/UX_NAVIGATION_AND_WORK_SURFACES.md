@@ -58,6 +58,10 @@ Must distinguish:
 - active contract;
 - expired or terminated contract.
 
+Repository tabs may narrow the same contract inventory, but they must not
+duplicate sidebar destinations or mix in personal queues or specialist
+workspaces.
+
 ### Command Center
 
 Organization-wide operational and risk overview.
@@ -147,6 +151,12 @@ Avoid generic:
 - In progress
 
 when a more specific state exists.
+
+## 6.1 Search scope
+
+- Global header search is product-wide and should use the label `Search CLM One`.
+- Surface search is local to the current object set and should use the surface noun, such as `Search contracts`.
+- Do not give two search inputs the same-looking label when they cover different scopes.
 
 ## 7. Page hierarchy
 

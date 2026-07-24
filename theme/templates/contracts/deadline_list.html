@@ -33,10 +33,10 @@
           <tr>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Deadline</th>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Type</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Priority</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
-            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
             <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Status</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Assigned To</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Due Date</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th">Priority</th>
             <th class="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide tbl-th"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
@@ -50,14 +50,14 @@
             </td>
             <td class="px-5 py-3.5 tbl-td">{{ deadline.get_deadline_type_display }}</td>
             <td class="px-5 py-3.5 tbl-td">
-              <span class="dc-ds-badge dc-ds-badge--sm {% if deadline.priority == 'CRITICAL' %}dc-ds-badge--danger{% elif deadline.priority == 'HIGH' or deadline.priority == 'MEDIUM' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ deadline.get_priority_display }}</span>
-            </td>
-            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}overdue-date font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
-            <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
-            <td class="px-5 py-3.5 tbl-td">
               {% if deadline.is_completed %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Done</span>
               {% elif deadline.is_overdue %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--danger">Overdue</span>
               {% else %}<span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ deadline.days_remaining }}d left</span>{% endif %}
+            </td>
+            <td class="px-5 py-3.5 tbl-td">{{ deadline.assigned_to.get_full_name|default:"Unassigned" }}</td>
+            <td class="px-5 py-3.5 tbl-td {% if deadline.is_overdue %}overdue-date font-medium{% endif %}">{{ deadline.due_date|date:"M d, Y" }}</td>
+            <td class="px-5 py-3.5 tbl-td">
+              <span class="dc-ds-badge dc-ds-badge--sm {% if deadline.priority == 'CRITICAL' %}dc-ds-badge--danger{% elif deadline.priority == 'HIGH' or deadline.priority == 'MEDIUM' %}dc-ds-badge--attention{% else %}dc-ds-badge--neutral{% endif %}">{{ deadline.get_priority_display }}</span>
             </td>
             <td class="px-5 py-3.5 tbl-td wq-col-action">
               <details class="wq-kebab">

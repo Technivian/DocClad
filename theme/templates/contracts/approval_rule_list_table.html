@@ -8,8 +8,8 @@
         <th class="tbl-th" scope="col" data-col="trigger">Trigger</th>
         <th class="tbl-th" scope="col" data-col="value">Value</th>
         <th class="tbl-th" scope="col" data-col="step">Step</th>
-        <th class="tbl-th" scope="col" data-col="sla">SLA (hrs)</th>
         <th class="tbl-th" scope="col" data-col="active">Active</th>
+        <th class="tbl-th" scope="col" data-col="sla">SLA (hrs)</th>
         <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
@@ -20,7 +20,6 @@
         <td data-col="trigger"><span class="routing-rule-cell" title="{{ item.get_trigger_type_display }}">{{ item.get_trigger_type_display }}</span></td>
         <td data-col="value"><span class="routing-rule-cell" title="{{ item.trigger_value }}">{{ item.trigger_value }}</span></td>
         <td data-col="step"><span class="routing-rule-cell" title="{{ item.get_approval_step_display }}">{{ item.get_approval_step_display }}</span></td>
-        <td data-col="sla" data-numeric>{{ item.sla_hours }}</td>
         <td data-col="active">
           {% if item.is_active %}
             {% include "design_system/status_badge.html" with label="Yes" tone="success" %}
@@ -28,6 +27,7 @@
             <span class="c-muted">No</span>
           {% endif %}
         </td>
+        <td data-col="sla" data-numeric>{{ item.sla_hours }}</td>
         <td data-col="actions">
           <a href="{% url 'contracts:approval_rule_update' item.pk %}" class="dc-ds-button dc-ds-button--quiet">Edit</a>
         </td>

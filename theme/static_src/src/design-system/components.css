@@ -1299,7 +1299,7 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 }
 
 .dc-ds-table th {
-  padding: 10px 16px;
+  padding: var(--space-8) var(--space-12);
   border-bottom: 1px solid var(--ds-color-border);
   background: var(--color-surface-table-head);
   color: var(--ds-color-text-muted);
@@ -1311,7 +1311,7 @@ body:has(.topbar-page-title:not(:empty)) .dc-ds-page-hero:not(:has(.dc-ds-action
 }
 
 .dc-ds-table td {
-  padding: 10px 16px;
+  padding: var(--space-8) var(--space-12);
   border-bottom: 1px solid var(--ds-color-border);
   vertical-align: middle;
 }

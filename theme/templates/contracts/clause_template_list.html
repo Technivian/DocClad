@@ -24,8 +24,8 @@
           <th scope="col">Title</th>
           <th scope="col">Category</th>
           <th scope="col">Scope</th>
-          <th scope="col">Version</th>
           <th scope="col">Status</th>
+          <th scope="col">Version</th>
           <th scope="col">Mandatory</th>
           <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
         </tr>
@@ -36,7 +36,6 @@
           <td><a href="{% url 'contracts:clause_template_detail' item.pk %}" class="c-link font-medium">{{ item.title }}</a></td>
           <td>{{ item.category|default:"-" }}</td>
           <td>{{ item.get_jurisdiction_scope_display }}</td>
-          <td data-numeric>v{{ item.version }}</td>
           <td>
             {% if item.is_approved %}
             <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--success">Approved</span>
@@ -44,6 +43,7 @@
             <span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">Draft</span>
             {% endif %}
           </td>
+          <td data-numeric>v{{ item.version }}</td>
           <td>
             {% if item.is_mandatory %}
             <span class="c-danger font-medium">Yes</span>

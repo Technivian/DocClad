@@ -60,8 +60,10 @@ body:has(.cc-v3) #djDebug { display: none !important; }
 .cc-v3-table-wrap { overflow-x: auto; }
 .cc-v3-table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: fixed; }
 .cc-v3-table th { height: 36px; padding: 0 var(--space-4); border-bottom: 1px solid var(--line); background: var(--card); color: var(--ink-500); font: var(--text-meta); font-weight: 500; text-align: left; }
-.cc-v3-table td { height: 61px; padding: var(--space-8) var(--space-4); border-bottom: 1px solid var(--hairline); color: var(--ink-700); font: var(--text-data); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
-.cc-v3-table tbody tr:hover { background: var(--well); }
+.cc-v3-table td { height: auto; padding: var(--space-8) var(--space-4); border-bottom: 1px solid var(--hairline); color: var(--ink-700); font: var(--text-data); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; }
+.cc-v3-table tbody tr { transition: background-color var(--duration-fast) var(--ease-standard); }
+.cc-v3-table tbody tr:hover,
+.cc-v3-table tbody tr:focus-within { background: var(--well); }
 .cc-v3-table th:first-child,
 .cc-v3-table td:first-child { width: 28%; }
 .cc-v3-table th:nth-child(2) { width: 18%; }
@@ -336,8 +338,8 @@ body:has(.cc-v3) .dc-ds-shell__topbar .nav-icon-search { display: none; }
 }
 .cc-v3-section-head h2 { font-size: 16px; font-weight: 650; }
 .cc-v3-section-head a { color: var(--color-feature-action); }
-.cc-v3-table th { height: 40px; background: var(--shell); }
-.cc-v3-table td { height: 64px; }
+.cc-v3-table th { height: 36px; background: var(--shell); }
+.cc-v3-table td { height: 52px; }
 .cc-v3-doc-icon { width: 36px; height: 36px; border-radius: 11px; }
 .cc-v3-doc-icon svg { width: 16px; height: 16px; }
 
@@ -1445,12 +1447,12 @@ body:has(.cc-v3) .dc-ds-shell__topbar .global-search-input {
 /* Recent Matters is a primary operational surface. Keep every field readable
    at normal desktop zoom, including the supporting contract type and states. */
 body:has(.cc-v3) .cc-v3-matters .cc-v3-table th {
-  height: 44px;
+  height: 40px;
   font-size: 13px;
   font-weight: 650;
 }
 .cc-v3-matters .cc-v3-table td {
-  height: 76px;
+  height: 60px;
   font-size: 14px;
   line-height: 1.45;
 }
@@ -1573,5 +1575,37 @@ body:has(.cc-v3) .cc-v3-matters .cc-v3-table th {
     height: var(--cc-v3-operational-stack-height);
     min-height: var(--cc-v3-operational-stack-height);
     padding-bottom: var(--space-16);
+  }
+}
+
+/* Rail cards are content-sized surfaces. Their action rows can grow when
+   labels wrap, so the grid must grow with them instead of letting a fixed
+   feature-row height push later rows beyond the card boundary. */
+.cc-v3-rail-card,
+.cc-v3-rail-body,
+.cc-v3-rail-list,
+.cc-v3-action-row,
+.cc-v3-deadline-row {
+  min-width: 0;
+}
+
+.cc-v3-rail-card {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 901px) {
+  body:has(.cc-v3) .cc-v3-rail {
+    grid-template-rows: auto auto;
+    grid-auto-rows: max-content;
+    align-items: start;
+  }
+
+  body:has(.cc-v3) .cc-v3-rail-card,
+  body:has(.cc-v3) .cc-v3-actions,
+  body:has(.cc-v3) .cc-v3-deadlines {
+    height: auto;
+    min-height: 0;
+    max-height: none;
   }
 }

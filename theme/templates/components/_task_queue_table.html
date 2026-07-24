@@ -5,10 +5,10 @@
     <tr>
       <th>Task</th>
       <th>Stage</th>
-      <th>Assigned to</th>
-      <th>Latest activity</th>
-      <th class="wq-col-num">Due</th>
       <th>Status</th>
+      <th>Assigned to</th>
+      <th class="wq-col-num">Due</th>
+      <th>Latest activity</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -16,21 +16,23 @@
     {% for row in rows %}
     <tr>
       <td>
-        {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=1 %}
+        {% include "components/_governance_priority.html" with priority_label=row.priority_label priority_reason=row.priority_reason priority_tone=row.priority_tone show_detail=0 %}
         <a href="{{ row.href }}" class="wq-item-link"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.title|truncatechars:44 }}</a>
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
       </td>
       <td>{% stage_dots row.contract %}</td>
-      <td>{% assignee_chip row.assignee %}</td>
-      <td>{% activity_line row.activity %}</td>
-      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.due_date|date:"d M Y" }}</td>
       <td><span class=" {{ row.status_badge_class }}">{{ row.status_label }}</span></td>
-      <td class="wq-approval-actions">
+      <td>{% assignee_chip row.assignee %}</td>
+      <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{{ row.due_date|date:"d M Y" }}</td>
+      <td>{% activity_line row.activity %}</td>
+      <td>
+        <div class="wq-approval-actions">
         {% if row.can_complete %}
         <button type="button" class="wq-approve-btn" data-task-action="complete" data-complete-url="{{ row.complete_url }}">Complete</button>
         {% endif %}
         <a href="{{ row.edit_url }}" class="wq-edit-link">Edit</a>
         <div class="wq-action-error" hidden></div>
+        </div>
       </td>
     </tr>
     {% empty %}

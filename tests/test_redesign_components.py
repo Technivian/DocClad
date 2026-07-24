@@ -1,5 +1,6 @@
 
 import os
+from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
@@ -75,11 +76,8 @@ class RedesignComponentsTestCase(TestCase):
         )
 
         response = self.client.get(reverse('contracts:contract_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Test Contract')
-        self.assertContains(response, 'Search active contract work...')
-        self.assertContains(response, 'All')
-        self.assertContains(response, 'New Contract')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:repository'))
 
     def test_navigation_structure(self):
         # The legacy sectioned sidebar has been removed from the product
@@ -105,6 +103,16 @@ class RedesignComponentsTestCase(TestCase):
         self.assertContains(response, 'css/command-center.css')
         self.assertContains(response, 'aria-label="Operational queues"')
         self.assertContains(response, 'aria-label="Governance controls"')
+
+    def test_command_center_rail_cards_are_content_sized(self):
+        """Wrapped queue rows must expand their card instead of overflowing it."""
+        stylesheet = Path(__file__).resolve().parents[1] / 'theme/static/css/command-center.css'
+        css = stylesheet.read_text()
+
+        self.assertIn('Rail cards are content-sized surfaces.', css)
+        self.assertIn('grid-template-rows: auto auto;', css)
+        self.assertIn('grid-auto-rows: max-content;', css)
+        self.assertIn('max-height: none;', css)
 
     def test_budget_list_matches_dashboard_style(self):
         Budget.objects.create(
@@ -180,7 +188,7 @@ class RedesignComponentsTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Search across contracts, matters, documents, and task signals with relevance ranking.')
-        self.assertContains(response, 'Search contracts and workflows…')
+        self.assertContains(response, 'Search CLM One')
         self.assertContains(response, 'Cases (1)')
         self.assertContains(response, contract.title)
 

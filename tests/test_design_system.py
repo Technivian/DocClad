@@ -1,5 +1,6 @@
 
 import os
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -254,7 +255,7 @@ class DesignSystemTests(TestCase):
         ).read_text()
         development = (root / 'config' / 'settings_development.py').read_text()
 
-        self.assertEqual(base.count('placeholder="Search contracts and workflows…"'), 2)
+        self.assertEqual(base.count('placeholder="Search CLM One"'), 2)
         for token in (
             '--color-control-selected-bg',
             '--color-control-selected-border',
@@ -458,6 +459,140 @@ class DesignSystemTests(TestCase):
             content = (template_root / 'components' / name).read_text()
             self.assertIn('dc-ds-table', content)
             self.assertIn('data-table-core="server"', content)
+
+    def test_authenticated_tables_share_compact_interaction_contract(self):
+        root = Path(settings.BASE_DIR)
+        components = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'components.css'
+        ).read_text()
+        premium = (
+            root / 'theme' / 'static_src' / 'src' / 'design-system' / 'premium.css'
+        ).read_text()
+        legacy = (
+            root / 'theme' / 'static_src' / 'src' / 'global-shell' / 'legacy-layout.css'
+        ).read_text()
+        repository_runtime = (
+            root / 'theme' / 'static' / 'js' / 'clmone-repository.js'
+        ).read_text()
+        my_work = (
+            root / 'theme' / 'templates' / 'contracts' / 'my_work.html'
+        ).read_text()
+        approval_queue = (
+            root / 'theme' / 'templates' / 'components' / '_approval_queue_table.html'
+        ).read_text()
+        task_queue = (
+            root / 'theme' / 'templates' / 'components' / '_task_queue_table.html'
+        ).read_text()
+
+        self.assertGreaterEqual(
+            components.count('padding: var(--space-8) var(--space-12)'),
+            2,
+        )
+        self.assertIn('table > tbody > tr:hover > td', premium)
+        self.assertIn('tr:is([data-href], .cursor-pointer):focus-visible', premium)
+        self.assertIn('.wq-table td', legacy)
+        self.assertIn('padding: 8px 12px', legacy)
+        self.assertIn('data-href="/contracts/${contract.id}/"', repository_runtime)
+        self.assertIn("e.key === 'Enter' || e.key === ' '", repository_runtime)
+        self.assertIn('renderStatusIndicator(contract)', repository_runtime)
+        self.assertIn('repo-status-badge', repository_runtime)
+        self.assertIn('vertical-align: middle; padding: 8px 12px', my_work)
+        self.assertNotIn('#my-work-table td { vertical-align: top', my_work)
+        self.assertIn('class="my-work-row-actions"', my_work)
+        self.assertNotIn('show_detail=1', my_work)
+        self.assertIn('<div class="wq-approval-actions"', approval_queue)
+        self.assertIn('<div class="wq-approval-actions">', task_queue)
+
+    def test_operational_table_hierarchy_and_selection_exceptions(self):
+        root = Path(settings.BASE_DIR)
+        templates = root / 'theme' / 'templates'
+
+        def assert_header_order(relative_path, ordered_tokens):
+            content = (templates / relative_path).read_text()
+            header_match = re.search(r'<thead[^>]*>(.*?)</thead>', content, re.DOTALL)
+            self.assertIsNotNone(header_match, relative_path)
+            header = header_match.group(1)
+            positions = [header.index(token) for token in ordered_tokens]
+            self.assertEqual(positions, sorted(positions), relative_path)
+
+        # The primary record stays first. Context precedes state, ownership,
+        # timing, activity/value, and row actions when those columns exist.
+        assert_header_order(
+            'components/_approval_queue_table.html',
+            ('data-col="title"', 'data-col="stage"', 'data-col="status"',
+             'data-col="assignee"', 'data-col="due"', 'data-col="activity"',
+             'data-col="actions"'),
+        )
+        assert_header_order(
+            'components/_obligations_matrix_table.html',
+            ('data-col="obligation"', 'data-col="contract"', 'data-col="status"',
+             'data-col="owner"', 'data-col="due"', 'data-col="actions"'),
+        )
+        assert_header_order(
+            'contracts/repository.html',
+            ('data-col="select"', 'data-col="title"', 'data-col="type"',
+             'data-col="stage"', 'data-col="status"', 'data-col="owner"', 'data-col="key_date"',
+             'data-col="activity"', 'data-col="value"', 'data-col="actions"'),
+        )
+        assert_header_order(
+            'contracts/workflow_dashboard.html',
+            ('data-col="workflow"', 'data-col="type"', 'data-col="business_unit"',
+             'data-col="stage"', 'data-col="owner"', 'data-col="key_date"',
+             'data-col="progress"', 'data-col="value"', 'data-col="actions"'),
+        )
+        assert_header_order(
+            'contracts/legal_intelligence_hub.html',
+            ('data-col="severity"', 'data-col="signal"', 'data-col="source"',
+             'data-col="status"', 'data-col="owner"', 'data-col="due"',
+             'data-col="actions"'),
+        )
+
+        my_work = (templates / 'contracts' / 'my_work.html').read_text()
+        my_work_header = re.search(r'<thead[^>]*>(.*?)</thead>', my_work, re.DOTALL).group(1)
+        self.assertIn('data-col="assigned">Assigned on</th>', my_work_header)
+        self.assertLess(my_work_header.index('data-col="priority"'), my_work_header.index('data-col="title"'))
+        self.assertLess(my_work_header.index('data-col="type"'), my_work_header.index('data-col="status"'))
+        self.assertLess(my_work_header.index('data-col="status"'), my_work_header.index('data-col="due"'))
+
+        repository = (templates / 'contracts' / 'repository.html').read_text()
+        repository_table = re.search(r'<table id="contracts-table".*?</table>', repository, re.DOTALL).group(0)
+        self.assertIn('id="select-all"', repository_table)
+        self.assertIn('dc-ds-table-selection', repository)
+
+        # No other normalized operational table advertises unsupported bulk selection.
+        for relative_path in (
+            'contracts/my_work.html',
+            'components/_approval_queue_table.html',
+            'components/_task_queue_table.html',
+            'components/_obligations_matrix_table.html',
+            'contracts/dpa_review_pack_list.html',
+            'contracts/legal_intelligence_hub.html',
+        ):
+            content = (templates / relative_path).read_text()
+            with self.subTest(table=relative_path):
+                self.assertNotIn('data-col="select"', content)
+                self.assertNotIn('dc-ds-table-selection', content)
+
+        repository_runtime = (root / 'theme' / 'static' / 'js' / 'clmone-repository.js').read_text()
+        self.assertIn('/contracts/api/contracts/bulk-update/', repository_runtime)
+        self.assertIn('repo-bulk-export', repository_runtime)
+        self.assertIn('renderRowActions(contract)', repository_runtime)
+        self.assertIn('data-approval-action="approve"', (templates / 'components' / '_approval_queue_table.html').read_text())
+        self.assertIn('data-task-action="complete"', (templates / 'components' / '_task_queue_table.html').read_text())
+
+    def test_table_hierarchy_documents_exceptions_and_legacy_follow_up(self):
+        root = Path(settings.BASE_DIR)
+        documentation = (root / 'docs' / 'design-system' / 'COMPONENTS.md').read_text()
+        self.assertIn('Record → context/type → stage/status → owner → due/key date', documentation)
+        for exception in ('**My Work**', '**Legal Intelligence**', '**Contracts Repository**'):
+            self.assertIn(exception, documentation)
+        for legacy_template in (
+            'audit_log_list.html',
+            'contract_list.html',
+            'privacy_dashboard.html',
+            'workflow_template_detail.html',
+        ):
+            self.assertIn(legacy_template, documentation)
 
     def test_clause_library_uses_shared_toast_implementation(self):
         root = Path(settings.BASE_DIR)

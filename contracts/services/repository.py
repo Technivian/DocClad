@@ -52,6 +52,21 @@ _REPO_STAGE_SHORT = {
 }
 
 
+def _repository_next_key_date(contract):
+    """Return the nearest truthful key date label/value for a contract row."""
+    candidates = []
+    renewal_date = getattr(contract, 'renewal_date', None)
+    end_date = getattr(contract, 'end_date', None)
+    if renewal_date:
+        candidates.append(('Renewal', renewal_date))
+    if end_date:
+        candidates.append(('Expiry', end_date))
+    if not candidates:
+        return '', None, None
+    label, value = min(candidates, key=lambda item: item[1])
+    return label, value, date_filter(value, 'j M Y')
+
+
 def _repository_next_action(contract, *, has_exception: bool) -> str:
     if has_exception:
         return 'Review exception'
@@ -97,7 +112,8 @@ class DjangoRepositoryService:
         activity_text, activity_time, activity_initial = activity_line_parts(activity_map.get(contract.pk))
 
         end_date = getattr(contract, 'end_date', None)
-        due_overdue = bool(end_date and end_date < date.today() and contract.status not in TERMINAL_STATUSES)
+        next_key_date_label, next_key_date, next_key_date_display = _repository_next_key_date(contract)
+        due_overdue = bool(next_key_date and next_key_date < date.today() and contract.status not in TERMINAL_STATUSES)
 
         raw_title = contract.title or ''
         raw_counterparty = getattr(contract, 'counterparty', '') or ''
@@ -147,6 +163,7 @@ class DjangoRepositoryService:
             value=float(contract.value) if hasattr(contract, 'value') and contract.value else None,
             start_date=contract.start_date.isoformat() if hasattr(contract, 'start_date') and contract.start_date else None,
             end_date=end_date.isoformat() if end_date else None,
+            next_key_date_label=next_key_date_label,
             owner=(contract.owner or contract.created_by).get_full_name() or (contract.owner or contract.created_by).username
             if (contract.owner or contract.created_by) else 'Unassigned',
             updated_at=contract.updated_at.isoformat() if hasattr(contract, 'updated_at') and contract.updated_at else None,
@@ -161,6 +178,7 @@ class DjangoRepositoryService:
             latest_activity_initial=activity_initial,
             value_display=money(contract.value, getattr(contract, 'currency', 'USD') or 'USD'),
             end_date_display=date_filter(end_date, 'j M Y') if end_date else None,
+            next_key_date_display=next_key_date_display,
             due_overdue=due_overdue,
             contract_type_display=type_display,
             contract_type_short=type_short,

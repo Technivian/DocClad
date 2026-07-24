@@ -5,10 +5,10 @@
       <tr>
         <th scope="col">Email</th>
         <th scope="col">Assigned role</th>
+        <th scope="col">Status</th>
         <th scope="col">Invited by</th>
         <th scope="col">Sent date</th>
         <th scope="col">Expiry date</th>
-        <th scope="col">Status</th>
         <th scope="col" class="text-right"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
@@ -17,10 +17,10 @@
       <tr>
         <td>{{ row.invitation.email }}</td>
         <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--neutral">{{ row.invitation.get_role_display }}</span></td>
+        <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status.tone }}">{{ row.status.label }}</span></td>
         <td class="c-muted">{{ row.invited_by }}</td>
         <td class="c-muted">{{ row.invitation.created_at|date:"j M Y" }}</td>
         <td class="c-muted">{% if row.invitation.expires_at %}{{ row.invitation.expires_at|date:"j M Y" }}{% else %}—{% endif %}</td>
-        <td><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status.tone }}">{{ row.status.label }}</span></td>
         <td class="text-right org-team-actions-cell">
           <details class="wq-kebab org-team-kebab">
             <summary class="wq-kebab-trigger" aria-label="Actions for invitation {{ row.invitation.email }}">⋯</summary>

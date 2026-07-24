@@ -90,17 +90,18 @@ class RepositoryControlsPreservedTests(TestCase):
         self.assertContains(response, 'High')
         self.assertContains(response, 'Pending')
         self.assertContains(response, reverse('contracts:repository'))
-        self.assertContains(response, reverse('dashboard'))
-        self.assertContains(response, reverse('contracts:approval_request_list'))
-        self.assertContains(response, reverse('contracts:signature_request_list'))
-        self.assertContains(response, reverse('contracts:risk_log_list'))
+        self.assertContains(response, 'All contracts')
+        self.assertContains(response, 'Active')
+        self.assertContains(response, 'Expiring')
+        self.assertContains(response, 'Completed')
+        self.assertContains(response, 'Archived')
 
     def test_new_stage_assignee_activity_columns_present(self):
         response = self.client.get(reverse('contracts:repository'))
         self.assertContains(response, 'Stage')
         self.assertContains(response, 'Owner')
         self.assertContains(response, 'Latest activity')
-        self.assertContains(response, 'Key date')
+        self.assertContains(response, 'Next key date')
         self.assertNotContains(response, 'Assigned owner')
         self.assertContains(response, '>Type</')
 
@@ -166,6 +167,7 @@ class RepositoryApiRowShapeTests(TestCase):
             'latest_activity_time': row['latest_activity_time'],
             'value_display': row['value_display'],
             'end_date_display': row['end_date_display'],
+            'next_key_date_display': row['next_key_date_display'],
         })
         self.assertNotIn('IN_PROGRESS', human_facing)
         for raw_name in ('ApprovalRequest', 'WorkflowStep', 'DSARRequest', 'CaseSignal'):
@@ -198,6 +200,8 @@ class RepositoryApiRowShapeTests(TestCase):
         self.assertEqual(row['contract_type_short'], 'MSA')
         self.assertEqual(row['contract_type_display'], 'Master Service Agreement')
         self.assertEqual(row['end_date_display'], '16 Jul 2027')
+        self.assertEqual(row['next_key_date_label'], 'Expiry')
+        self.assertEqual(row['next_key_date_display'], '16 Jul 2027')
         self.assertNotIn('Exception', row['title'])
         self.assertNotIn('Exception', row['counterparty'])
 
@@ -278,7 +282,5 @@ class LegacyContractListMigrationTests(TestCase):
             status='ACTIVE', created_by=self.user,
         )
         response = self.client.get(reverse('contracts:contract_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Legacy List Contract')
-        self.assertContains(response, 'Repository is now the canonical contract list')
-        self.assertContains(response, reverse('contracts:repository'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('contracts:repository'))

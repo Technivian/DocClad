@@ -7,11 +7,11 @@
     <tr>
       <th class="tbl-th" scope="col" data-col="title">Approval / Contract</th>
       <th class="tbl-th" scope="col" data-col="stage">Stage</th>
+      <th class="tbl-th" scope="col" data-col="status">Status</th>
       <th class="tbl-th" scope="col" data-col="requester">Requested by</th>
       <th class="tbl-th" scope="col" data-col="assignee">Assigned to</th>
-      <th class="tbl-th" scope="col" data-col="activity">Latest activity</th>
       <th class="tbl-th wq-col-num" scope="col" data-col="due">Due</th>
-      <th class="tbl-th" scope="col" data-col="status">Status</th>
+      <th class="tbl-th" scope="col" data-col="activity">Latest activity</th>
       <th class="tbl-th" scope="col" data-col="next_action">Next action</th>
       <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
     </tr>
@@ -24,19 +24,20 @@
         {% if row.meta %}<div class="wq-item-meta">{{ row.meta }}</div>{% endif %}
         {% include "components/_governance_blocked.html" with is_blocked=row.is_blocked blocking_issue=row.blocking_issue blocker_owner=row.blocker_owner %}
         {% if row.priority_reason %}
-        {% include "components/_governance_priority.html" with priority_label=row.priority_label|default:"" priority_reason=row.priority_reason priority_tone=row.priority_tone|default:"warning" show_detail=1 %}
+        {% include "components/_governance_priority.html" with priority_label=row.priority_label|default:"" priority_reason=row.priority_reason priority_tone=row.priority_tone|default:"warning" show_detail=0 %}
         {% endif %}
       </td>
       <td data-col="stage">{% stage_dots row.contract %}</td>
+      <td data-col="status"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
       <td data-col="requester">{% assignee_chip row.requester %}</td>
       <td data-col="assignee">
         {% include "components/_governance_coverage.html" with delegation=row.delegation assignee=row.assignee %}
       </td>
-      <td data-col="activity">{% activity_line row.activity %}</td>
       <td class="wq-col-num{% if row.due_overdue %} wq-due-overdue{% endif %}" data-col="due"{% if row.priority_reason %} title="{{ row.priority_reason }}"{% endif %}>{% if row.due_date %}{{ row.due_date|date:"j M Y" }}{% else %}<span class="c-dim">—</span>{% endif %}</td>
-      <td data-col="status"><span class="dc-ds-badge dc-ds-badge--sm dc-ds-badge--{{ row.status_badge_class|legacy_badge_tone }}">{{ row.status_label }}</span></td>
+      <td data-col="activity">{% activity_line row.activity %}</td>
       <td data-col="next_action"><span class="wq-next-action">{{ row.next_action }}</span></td>
-      <td class="wq-approval-actions" data-col="actions"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}>
+      <td data-col="actions">
+        <div class="wq-approval-actions"{% if row.suggest_decision_url %} data-suggest-decision-url="{{ row.suggest_decision_url }}"{% endif %}>
         {% if row.can_decide %}
         <button type="button" class="wq-approve-btn" data-approval-action="approve" data-approve-url="{{ row.approve_url }}">Approve</button>
         <button type="button" class="wq-reject-btn" data-approval-action="reject" data-reject-url="{{ row.reject_url }}">Reject</button>
@@ -61,6 +62,7 @@
           </div>
         </details>
         <div class="wq-action-error" hidden></div>
+        </div>
       </td>
     </tr>
     {% empty %}

@@ -54,7 +54,7 @@
             <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                 <div class="global-search-wrap">
                     {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
-                    <input type="search" name="q" class="global-search-input" placeholder="Search contracts and workflows…" value="{{ request.GET.q|default:'' }}">
+                    <input type="search" name="q" class="global-search-input" placeholder="Search CLM One" value="{{ request.GET.q|default:'' }}">
                 </div>
             </form>
             {% endif %}
@@ -199,7 +199,7 @@
                     <form method="get" action="{% url 'contracts:global_search' %}" class="global-search-form">
                         <div class="global-search-wrap">
                             {% include "design_system/icon.html" with name="search" class_name="global-search-icon" %}
-                            <input type="search" name="q" class="global-search-input" placeholder="Search contracts and workflows…" value="{{ request.GET.q|default:'' }}">
+                            <input type="search" name="q" class="global-search-input" placeholder="Search CLM One" value="{{ request.GET.q|default:'' }}">
                         </div>
                     </form>
                 </div>

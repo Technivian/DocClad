@@ -6,9 +6,9 @@
     <tr>
       <th class="tbl-th" scope="col" data-col="obligation">Obligation</th>
       <th class="tbl-th" scope="col" data-col="contract">Source contract</th>
+      <th class="tbl-th" scope="col" data-col="status">Status</th>
       <th class="tbl-th" scope="col" data-col="owner">Owner</th>
       <th class="tbl-th" scope="col" data-col="due">Due date</th>
-      <th class="tbl-th" scope="col" data-col="status">Status</th>
       <th class="tbl-th" scope="col" data-col="next_action">Next action</th>
       <th class="tbl-th" scope="col" data-col="actions"><span class="sr-only">Actions</span></th>
     </tr>
@@ -19,7 +19,7 @@
       <td data-col="obligation">
         <a href="{% url 'contracts:deadline_update' obligation.pk %}" class="wq-item-link"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>{{ obligation.title|truncatechars:60 }}</a>
         <div class="wq-item-meta">{{ obligation.get_deadline_type_display }}</div>
-        {% include "components/_governance_priority.html" with priority_label=obligation.priority_label priority_reason=obligation.priority_reason priority_tone=obligation.priority_tone show_detail=1 %}
+        {% include "components/_governance_priority.html" with priority_label=obligation.priority_label priority_reason=obligation.priority_reason priority_tone=obligation.priority_tone show_detail=0 %}
         {% include "components/_governance_blocked.html" with is_blocked=obligation.is_blocked blocking_issue=obligation.blocking_issue blocker_owner=obligation.blocker_owner %}
       </td>
       <td data-col="contract">
@@ -31,12 +31,12 @@
         <span class="c-dim">&mdash;</span>
         {% endif %}
       </td>
+      <td data-col="status"><span class="dc-ds-badge dc-ds-badge--{{ obligation|obligation_compliance_badge_class|legacy_badge_tone }}">{{ obligation|obligation_compliance_label }}</span></td>
       <td data-col="owner">{% include 'components/_assignee_chip.html' with user=obligation.assigned_to %}</td>
       <td data-col="due" class="{% if obligation.is_overdue %}wq-due-overdue{% endif %}"{% if obligation.priority_reason %} title="{{ obligation.priority_reason }}"{% endif %}>
         <div class="obligations-due-absolute">{{ obligation.due_date|date:"j M Y" }}</div>
         <div class="wq-item-meta">{{ obligation.due_date|due_relative_label }}</div>
       </td>
-      <td data-col="status"><span class="dc-ds-badge dc-ds-badge--{{ obligation|obligation_compliance_badge_class|legacy_badge_tone }}">{{ obligation|obligation_compliance_label }}</span></td>
       <td data-col="next_action"><span class="obligations-next-action">{{ obligation.next_action }}</span></td>
       <td class="wq-col-action" data-col="actions">
         <details class="wq-kebab obligation-actions-menu">
