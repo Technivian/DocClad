@@ -1386,6 +1386,7 @@ class Document(models.Model):
         skip_version_immutability = kwargs.pop('skip_version_immutability', False)
         update_fields = kwargs.get('update_fields')
         previous = None
+        locked_metadata_only_write = False
         if self.pk and not skip_version_immutability:
             previous = (
                 type(self).objects.filter(pk=self.pk)
@@ -1397,8 +1398,21 @@ class Document(models.Model):
                 .first()
             )
             if previous and previous.get('version_locked_at'):
-                from contracts.services.document_version_service import assert_document_version_immutable
-                assert_document_version_immutable(self, previous=previous)
+                # C-01: a tombstone/access-retention metadata write must not
+                # re-enter file hashing, OCR, or version materialisation for an
+                # already locked artifact. Those artifact paths can otherwise
+                # make a permitted non-file write look like a content update.
+                permitted_locked_metadata = {'is_deleted', 'deleted_at', 'deleted_by', 'updated_at'}
+                requested_fields = set(update_fields or ())
+                locked_metadata_only_write = bool(
+                    requested_fields and requested_fields <= permitted_locked_metadata
+                )
+                if not locked_metadata_only_write:
+                    from contracts.services.document_version_service import assert_document_version_immutable
+                    assert_document_version_immutable(self, previous=previous)
+
+        if locked_metadata_only_write:
+            return super().save(*args, **kwargs)
 
         if self.file:
             self.file_size = self.file.size
@@ -2953,6 +2967,178 @@ class Workflow(models.Model):
         return self.title
 
 
+class WorkflowVersionQuerySet(models.QuerySet):
+    """Do not permit bulk edits to a canonical workflow configuration."""
+
+    def update(self, **kwargs):
+        protected = {'definition', 'definition_id', 'version_number', 'configuration', 'configuration_checksum'}
+        blocked = sorted(protected & set(kwargs))
+        if blocked:
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError(
+                f'Canonical workflow version fields {blocked} cannot be bulk-updated.'
+            )
+        return super().update(**kwargs)
+
+
+class WorkflowVersionManager(models.Manager.from_queryset(WorkflowVersionQuerySet)):
+    pass
+
+
+class WorkflowDefinition(models.Model):
+    """Stable canonical workflow identity; versions carry all executable configuration."""
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='canonical_workflow_definitions',
+    )
+    key = models.CharField(max_length=80)
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, default='')
+    contract_type = models.CharField(max_length=32, default='NDA')
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='canonical_workflow_definitions_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'key'], name='canonical_wfdef_org_key_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'contract_type'], name='canonical_wfdef_org_type_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.key} ({self.organization_id})'
+
+
+class WorkflowVersion(models.Model):
+    """Immutable-on-publication workflow configuration snapshot."""
+
+    class State(models.TextChoices):
+        DRAFT = 'DRAFT', 'Draft'
+        PUBLISHED = 'PUBLISHED', 'Published'
+        SUPERSEDED = 'SUPERSEDED', 'Superseded'
+        ARCHIVED = 'ARCHIVED', 'Archived'
+
+    definition = models.ForeignKey(
+        WorkflowDefinition, on_delete=models.CASCADE, related_name='versions',
+    )
+    version_number = models.PositiveIntegerField()
+    state = models.CharField(max_length=16, choices=State.choices, default=State.DRAFT)
+    configuration = models.JSONField(default=dict, blank=True)
+    configuration_checksum = models.CharField(max_length=64, blank=True, default='')
+    validation_errors = models.JSONField(default=list, blank=True)
+    validated_at = models.DateTimeField(null=True, blank=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='canonical_workflow_versions_published',
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='canonical_workflow_versions_created',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = WorkflowVersionManager()
+
+    class Meta:
+        ordering = ['definition_id', '-version_number']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['definition', 'version_number'], name='canonical_wfver_definition_number_uniq',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['definition', 'state'], name='canon_wfver_def_state_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.definition.key} v{self.version_number}'
+
+    def save(self, *args, **kwargs):
+        allow_lifecycle_transition = kwargs.pop('allow_lifecycle_transition', False)
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).values(
+                'definition_id', 'version_number', 'configuration', 'configuration_checksum', 'state',
+            ).first()
+            if previous and previous['state'] in {
+                self.State.PUBLISHED, self.State.SUPERSEDED, self.State.ARCHIVED,
+            }:
+                immutable = ('definition_id', 'version_number', 'configuration', 'configuration_checksum')
+                if any(previous[field] != getattr(self, field) for field in immutable):
+                    from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                    raise CanonicalWorkflowError(
+                        'Published canonical workflow configuration is immutable; create a new draft version.'
+                    )
+                if previous['state'] != self.state and not allow_lifecycle_transition:
+                    from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                    raise CanonicalWorkflowError('Workflow version lifecycle transitions require the governed service.')
+        super().save(*args, **kwargs)
+
+
+class WorkflowInstance(models.Model):
+    """A live canonical runtime instance pinned to one immutable WorkflowVersion."""
+
+    class Status(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        COMPLETED = 'COMPLETED', 'Completed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='canonical_workflow_instances',
+    )
+    definition = models.ForeignKey(
+        WorkflowDefinition, on_delete=models.PROTECT, related_name='instances',
+    )
+    workflow_version = models.ForeignKey(
+        WorkflowVersion, on_delete=models.PROTECT, related_name='instances',
+    )
+    contract = models.OneToOneField(
+        Contract, on_delete=models.CASCADE, related_name='canonical_workflow_instance',
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    launch_rationale = models.CharField(max_length=500, blank=True, default='')
+    correlation_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    launched_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='canonical_workflow_instances_launched',
+    )
+    launched_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'status'], name='canonical_wfinst_org_status_ix'),
+            models.Index(fields=['workflow_version', 'status'], name='canonical_wfinst_ver_status_ix'),
+        ]
+
+    def __str__(self):
+        return f'{self.definition.key} instance {self.pk}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).values(
+                'organization_id', 'definition_id', 'workflow_version_id', 'contract_id',
+            ).first()
+            if previous and any(
+                previous[field] != getattr(self, field)
+                for field in ('organization_id', 'definition_id', 'workflow_version_id', 'contract_id')
+            ):
+                from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                raise CanonicalWorkflowError('A live workflow instance is permanently pinned to its definition and version.')
+        super().save(*args, **kwargs)
+
+
 class WorkflowStep(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending'
@@ -3780,6 +3966,142 @@ class SignatureRequest(models.Model):
         return self.sent_at <= timezone.now() - timedelta(days=threshold_days)
 
 
+class SignaturePacket(models.Model):
+    """Provider-neutral signature packet bound to a canonical execution chain."""
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SENT = 'SENT', 'Sent'
+        SIGNED = 'SIGNED', 'Signed'
+        DECLINED = 'DECLINED', 'Declined'
+        EXPIRED = 'EXPIRED', 'Expired'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='canonical_signature_packets',
+    )
+    workflow_instance = models.ForeignKey(
+        'WorkflowInstance', on_delete=models.PROTECT, related_name='signature_packets',
+    )
+    contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='canonical_signature_packets')
+    document_version = models.ForeignKey(
+        'DocumentVersion', on_delete=models.PROTECT, related_name='canonical_signature_packets',
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    provider_name = models.CharField(max_length=80, blank=True, default='')
+    provider_reference = models.CharField(max_length=191, blank=True, default='')
+    dispatch_idempotency_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    invalidated_at = models.DateTimeField(null=True, blank=True)
+    invalidation_reason = models.TextField(blank=True, default='')
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['workflow_instance', 'status'], name='canon_sigpacket_inst_ix'),
+            models.Index(fields=['organization', 'status'], name='canon_sigpacket_org_ix'),
+        ]
+
+    def __str__(self):
+        return f'Packet {self.pk} for {self.contract_id}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).values(
+                'organization_id', 'workflow_instance_id', 'contract_id', 'document_version_id',
+            ).first()
+            if previous and any(
+                previous[field] != getattr(self, field)
+                for field in ('organization_id', 'workflow_instance_id', 'contract_id', 'document_version_id')
+            ):
+                from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                raise CanonicalWorkflowError('A signature packet must remain bound to its original execution chain.')
+        super().save(*args, **kwargs)
+
+
+class SignatureEvidence(models.Model):
+    """Append-only provider-neutral signature receipt/evidence record."""
+
+    packet = models.ForeignKey(SignaturePacket, on_delete=models.CASCADE, related_name='evidence')
+    organization = models.ForeignKey(
+        Organization, on_delete=models.CASCADE, related_name='canonical_signature_evidence',
+    )
+    event_id = models.CharField(max_length=191)
+    event_type = models.CharField(max_length=80)
+    provider_name = models.CharField(max_length=80, blank=True, default='')
+    received_at = models.DateTimeField(default=timezone.now)
+    payload_hash = models.CharField(max_length=64, blank=True, default='')
+    evidence_payload = models.JSONField(default=dict, blank=True)
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['packet', 'event_id'], name='canonical_sigevidence_packet_event_uniq'),
+        ]
+        indexes = [
+            models.Index(fields=['organization', 'event_type'], name='canon_sigevidence_org_ix'),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+            raise CanonicalWorkflowError('Signature evidence is append-only and cannot be modified.')
+        super().save(*args, **kwargs)
+
+
+class ContractRecord(models.Model):
+    """Durable executed Contract Record with immutable canonical-chain provenance."""
+
+    contract = models.OneToOneField(Contract, on_delete=models.CASCADE, related_name='canonical_contract_record')
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name='canonical_contract_records',
+    )
+    workflow_instance = models.ForeignKey('WorkflowInstance', on_delete=models.PROTECT, related_name='contract_records')
+    workflow_version = models.ForeignKey('WorkflowVersion', on_delete=models.PROTECT, related_name='contract_records')
+    document_version = models.ForeignKey('DocumentVersion', on_delete=models.PROTECT, related_name='canonical_contract_records')
+    signature_packet = models.OneToOneField(SignaturePacket, on_delete=models.PROTECT, related_name='contract_record')
+    provenance_snapshot = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    provenance_locked_at = models.DateTimeField(default=timezone.now)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archived_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='canonical_contract_records_archived',
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'archived_at'], name='canon_record_org_archive_ix'),
+        ]
+
+    def save(self, *args, **kwargs):
+        allow_archive = kwargs.pop('allow_archive', False)
+        if self.pk:
+            previous = type(self).objects.filter(pk=self.pk).values(
+                'contract_id', 'organization_id', 'workflow_instance_id', 'workflow_version_id',
+                'document_version_id', 'signature_packet_id', 'provenance_snapshot',
+                'provenance_locked_at', 'archived_at', 'archived_by_id',
+            ).first()
+            immutable = (
+                'contract_id', 'organization_id', 'workflow_instance_id', 'workflow_version_id',
+                'document_version_id', 'signature_packet_id', 'provenance_snapshot', 'provenance_locked_at',
+            )
+            if previous and any(previous[field] != getattr(self, field) for field in immutable):
+                from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                raise CanonicalWorkflowError('Contract Record provenance is immutable.')
+            if previous and (
+                previous['archived_at'] != self.archived_at or previous['archived_by_id'] != self.archived_by_id
+            ) and not allow_archive:
+                from contracts.services.canonical_workflow_runtime import CanonicalWorkflowError
+
+                raise CanonicalWorkflowError('Contract Record archival requires the governed service.')
+        super().save(*args, **kwargs)
+
 class DataInventoryRecord(models.Model):
     class LawfulBasis(models.TextChoices):
         CONSENT = 'CONSENT', 'Consent'
@@ -4461,6 +4783,14 @@ class ApprovalRequirement(models.Model):
         Organization, on_delete=models.CASCADE, related_name='approval_requirements',
     )
     contract = models.ForeignKey(Contract, on_delete=models.CASCADE, related_name='approval_requirements')
+    workflow_instance = models.ForeignKey(
+        'WorkflowInstance',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approval_requirements',
+        help_text='Canonical workflow instance that opened this requirement, when applicable.',
+    )
     legacy_request = models.OneToOneField(
         'ApprovalRequest',
         on_delete=models.SET_NULL,

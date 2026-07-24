@@ -579,6 +579,14 @@ EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST = os.getenv(
     'EXCEPTION_CANONICAL_READ_ORG_ALLOWLIST', '',
 ).strip()
 
+# PDR-0006 canonical Workflow Definition → Version → Instance runtime.
+# This implementation is intentionally dormant until a separately governed,
+# named-environment activation.  An empty allowlist denies every workspace.
+CANONICAL_NDA_RUNTIME_ENABLED = _bool_env('CANONICAL_NDA_RUNTIME_ENABLED', default=False)
+CANONICAL_NDA_RUNTIME_ORG_ALLOWLIST = os.getenv(
+    'CANONICAL_NDA_RUNTIME_ORG_ALLOWLIST', '',
+).strip()
+
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '').strip()
 STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY', '').strip()
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '').strip()
