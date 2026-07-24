@@ -2,24 +2,25 @@
 
 **Programme ID:** PAR-APR-002  
 **Title:** Approval Requirement/Decision legacy cutover  
-**Status:** **Planned — blocked pending owner assignment, cutover plan, and implementation authorization.**  
+**Status:** **In progress — characterization only, effective when the narrowly scoped exception merges.**
 **Opened:** 2026-07-22 (residuals transferred from closed PAR-APR-001)  
 **Predecessor:** PAR-APR-001 (closed) · ADR-0013 (**Accepted** 2026-07-22T09:45:00Z)
 
-> **Authorization boundary:** ADR-0013 acceptance authorizes **planning only**. This checklist must be complete before PAR-APR-002 may move to **In progress** or any implementation work begins.
+> **Authorization boundary:** ADR-0013 acceptance authorizes **planning only**. The narrowly scoped [characterization exception](CHARACTERIZATION_EXCEPTION.md) is the sole exception: it permits tests and evidence only. It does not authorize reconciliation, cutover, authority, or retirement work.
 
 ---
 
-## 1. Ownership (not assigned)
+## 1. Ownership
 
 | Role | Owner | Status |
 |---|---|---|
-| Programme owner | _Unassigned_ | **Blocked** |
-| Engineering lead | _Unassigned_ | **Blocked** |
-| Product sign-off | _Unassigned_ | **Blocked** |
-| Security reviewer | _Unassigned_ | **Blocked** |
+| Programme owner | `@haroonwahed` | **Assigned — characterization exception only** |
+| Engineering lead | `@haroonwahed` | **Assigned — characterization exception only** |
+| Product sign-off | `@haroonwahed` | **Assigned — characterization exception only** |
+| Security reviewer | `@haroonwahed` | **Assigned — characterization exception only** |
 
-**Gate:** Record named owners in this section before cutover plan review.
+**Gate:** The named owners complete the characterization entry gate. Independent
+review requirements for higher-risk actions remain unchanged.
 
 ---
 
@@ -28,9 +29,10 @@
 - [x] Tranche-1 programme integration gate passed (`main` @ `c52d699a`)
 - [x] ADR-0013 **Accepted**
 - [x] PAR-APR-001 programme closure ratified
-- [ ] Named programme owner assigned
-- [ ] Cutover plan draft published under this folder
-- [ ] Implementation authorization recorded by programme governance
+- [x] Named programme, product, engineering, and security owners assigned for the characterization exception
+- [x] Characterization scope, rollback boundary, and exclusions published in `CHARACTERIZATION_EXCEPTION.md`
+- [x] Characterization implementation authorization recorded by the merged exception; it expires when the characterization PR merges
+- [ ] Cutover plan draft published under this folder (required before reconciliation or read cutover)
 
 ---
 
@@ -78,9 +80,10 @@ Transferred from PAR-APR-001 / ADR-0013 §6 non-goals:
 
 | Field | Value |
 |---|---|
-| **Authorized?** | **No** |
-| **Reason** | Owner unassigned; cutover plan not approved |
+| **Authorized?** | **Yes — characterization only, effective when the exception merges; expires when the characterization PR merges** |
+| **Reason** | Superseded only for the characterization exception |
 | **What ADR-0013 acceptance allows** | Planning, checklist maintenance, owner workshop |
-| **What it does not allow** | Code changes, legacy removal, dual-write sunset |
+| **What the exception additionally allows** | Characterization tests and evidence only; no behavioural change |
+| **What it does not allow** | Reconciliation, cutover, authority change, legacy removal, or dual-write sunset |
 
-**Next review gate:** Owner assignment workshop → cutover plan draft → governance implementation authorization vote.
+**Next review gate:** Characterization PR CI and normal review → separate authorization for residual reconciliation.
